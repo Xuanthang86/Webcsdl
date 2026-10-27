@@ -1,0 +1,6 @@
+{
+  "name": "Cổng Dữ Liệu Tổng Hợp KH&CN, Đổi Mới Sáng Tạo và Khởi Nghiệp",
+  "description": "Cổng dữ liệu tập trung quản lý, kết nối, tra cứu và khai thác dữ liệu về nhiệm vụ KH&CN, sáng kiến, chuyên gia, tổ chức và hệ sinh thái khởi nghiệp đổi mới sáng tạo cấp thành phố.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,1130 @@
+PROMPT XÂY DỰNG CỔNG DỮ LIỆU TỔNG HỢP KHOA HỌC, CÔNG NGHỆ, SÁNG KIẾN VÀ HỆ SINH THÁI KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO CẤP THÀNH PHỐ
+
+I. VAI TRÒ VÀ TRÁCH NHIỆM
+
+Hãy đóng vai một đội ngũ chuyên gia gồm:
+
+1. Kiến trúc sư giải pháp phần mềm và kiến trúc sư dữ liệu.
+2. Lập trình viên Full-stack cấp cao.
+3. Chuyên gia thiết kế cơ sở dữ liệu và tích hợp hệ thống.
+4. Chuyên gia phân tích nghiệp vụ quản lý nhà nước về khoa học, công nghệ và đổi mới sáng tạo.
+5. Chuyên gia thiết kế UX/UI cho cổng thông tin công cộng.
+6. Chuyên gia bảo mật ứng dụng, phân quyền và quản trị dữ liệu.
+7. Chuyên gia kiểm thử phần mềm, hiệu năng và triển khai vận hành.
+
+Nhiệm vụ là phân tích, thiết kế và trực tiếp triển khai một website hoàn chỉnh để quản lý, kết nối, cập nhật, tra cứu, khai thác và thống kê dữ liệu về khoa học và công nghệ, sáng kiến có tác động đối với thành phố, chuyên gia và hệ sinh thái khởi nghiệp đổi mới sáng tạo.
+
+Không chỉ đưa ra bản mô tả, bản thiết kế giao diện hoặc mã nguồn minh họa. Phải xây dựng phần mềm thực sự hoạt động, có frontend, backend, cơ sở dữ liệu, API, xác thực, phân quyền, quy trình nghiệp vụ và hướng dẫn triển khai.
+
+Tên dự án tạm gọi: CỔNG DỮ LIỆU TỔNG HỢP KH&CN, ĐỔI MỚI SÁNG TẠO VÀ KHỞI NGHIỆP THÀNH PHỐ.
+
+Tên thương hiệu, logo, tên cơ quan chủ quản, địa chỉ website, thông tin liên hệ và bộ nhận diện phải có thể thay đổi trong trang quản trị.
+
+II. MỤC TIÊU CỐT LÕI
+
+Xây dựng một cổng dữ liệu tập trung với các nguyên tắc bắt buộc:
+
+1. Chỉ có một địa chỉ website chính để người dân, doanh nghiệp, chuyên gia, nhà khoa học, nhà đầu tư và cơ quan quản lý truy cập.
+2. Có một giao diện tra cứu thống nhất. Người dùng lựa chọn loại dữ liệu muốn xem hoặc tìm kiếm trên toàn hệ thống.
+3. Tất cả các loại dữ liệu được quản lý trong cùng một nền tảng, cùng cơ chế tài khoản, phân quyền, kiểm duyệt, nhật ký và báo cáo.
+4. Không tạo những website hoặc cơ sở dữ liệu độc lập cho từng nhóm nghiệp vụ nếu không có yêu cầu tích hợp đặc biệt.
+5. Các bản ghi phải có khả năng liên kết hai chiều hoặc nhiều chiều theo quan hệ nghiệp vụ.
+6. Cho phép quản lý toàn bộ dữ liệu trong một trang quản trị tập trung, đồng thời hỗ trợ phân công cho nhiều phòng ban, đơn vị và cán bộ phụ trách.
+7. Người dùng chỉ xem được những dữ liệu được phép công khai; dữ liệu nội bộ, dữ liệu cá nhân và tài liệu hạn chế truy cập phải được bảo vệ.
+8. Thiết kế linh hoạt để bổ sung loại dữ liệu, trường dữ liệu, lĩnh vực, quy trình và báo cáo mới mà không phải xây dựng lại toàn bộ hệ thống.
+9. Giao diện tiếng Việt là mặc định, có khả năng bổ sung tiếng Anh.
+10. Tối ưu chi phí phát triển, lưu trữ và bảo trì; ưu tiên công nghệ phổ biến, mã nguồn có thể tự quản lý, hạn chế phụ thuộc dịch vụ trả phí.
+
+III. NGHIÊN CỨU THAM KHẢO TRƯỚC KHI PHÁT TRIỂN
+
+Nghiên cứu chức năng, mô hình dữ liệu, cách tổ chức tra cứu và quy trình của các nền tảng sau:
+
+* Hệ thống thông tin quốc gia về khoa học, công nghệ và đổi mới sáng tạo: https://sti.gov.vn/
+* Hệ thống quản lý nhiệm vụ KH&CN: https://stm.mst.gov.vn/
+* Cổng Sáng kiến KH&CN, ĐMST và CĐS: https://sangkien.gov.vn/
+* Cơ sở dữ liệu khởi nghiệp sáng tạo quốc gia: https://csdl.natec.gov.vn/
+* Trung tâm Khởi nghiệp sáng tạo TP.HCM: https://sihub.gov.vn/
+* Cổng thông tin hệ sinh thái khởi nghiệp BSSC: https://congthongtin.bssc.vn/
+* Cổng thông tin đổi mới sáng tạo Việt Nam: https://doimoisangtao.gov.vn/
+
+Đây là nguồn tham khảo nghiệp vụ, không phải yêu cầu sao chép giao diện, dữ liệu hoặc mã nguồn.
+
+Trước khi triển khai, hãy lập bảng phân tích gồm: chức năng tham khảo, vấn đề cần giải quyết, chức năng đề xuất, dữ liệu liên quan, vai trò sử dụng và tiêu chí nghiệm thu.
+
+Nếu một website không cung cấp dữ liệu công khai hoặc không cho phép truy cập một chức năng, hãy ghi nhận giới hạn đó, không suy đoán rằng chức năng đã tồn tại.
+
+IV. KIẾN TRÚC QUẢN LÝ DỮ LIỆU THỐNG NHẤT
+
+Thiết kế theo mô hình nền tảng dữ liệu tập trung, có các phân hệ nghiệp vụ và sử dụng chung cơ sở dữ liệu logic.
+
+Không được thiết kế từng phân hệ như một ứng dụng độc lập không liên kết với nhau.
+
+1. Các thành phần dùng chung
+
+Xây dựng các thành phần nền tảng:
+
+* Danh mục loại dữ liệu.
+* Danh mục lĩnh vực KH&CN và ngành kinh tế.
+* Danh mục công nghệ, sản phẩm và chuyên môn.
+* Danh mục đơn vị hành chính, địa bàn và cơ quan quản lý.
+* Danh mục tổ chức và cá nhân.
+* Danh mục nguồn kinh phí và chương trình hỗ trợ.
+* Danh mục trạng thái, mức độ công khai và trạng thái xác minh.
+* Tài khoản người dùng và tổ chức.
+* Quy trình tiếp nhận, kiểm duyệt và phê duyệt.
+* Tệp đính kèm, tài liệu, hình ảnh và minh chứng.
+* Quan hệ giữa các bản ghi.
+* Nhật ký hoạt động và lịch sử thay đổi.
+* Công cụ tìm kiếm, lọc, xuất dữ liệu và thống kê.
+
+2. Nguyên tắc thiết kế cơ sở dữ liệu
+
+Mỗi bản ghi phải có:
+
+* ID duy nhất.
+* Mã hồ sơ hoặc mã đối tượng.
+* Loại dữ liệu.
+* Tên hoặc tiêu đề.
+* Mô tả.
+* Lĩnh vực liên quan.
+* Đơn vị/cá nhân sở hữu hoặc phụ trách.
+* Nguồn dữ liệu.
+* Trạng thái nghiệp vụ.
+* Trạng thái xác minh.
+* Mức độ công khai.
+* Ngày tạo, ngày cập nhật.
+* Người tạo, người cập nhật.
+* Lịch sử thay đổi.
+* Danh sách quan hệ đến các bản ghi khác.
+
+Sử dụng khóa chính, khóa ngoại, ràng buộc dữ liệu và bảng quan hệ phù hợp. Không dùng tên hoặc chuỗi văn bản tự do làm khóa liên kết chính giữa các đối tượng.
+
+Chuẩn hóa dữ liệu dùng chung, hạn chế trùng lặp tổ chức, cá nhân, chuyên gia và doanh nghiệp.
+
+Không gộp tất cả dữ liệu vào một bảng khổng lồ hoặc chỉ lưu các đối tượng trong một trường JSON không có cấu trúc.
+
+Có thể dùng trường mở rộng có kiểm soát cho nhu cầu đặc thù, nhưng các trường quan trọng để lọc, thống kê, phân quyền và liên kết phải được thiết kế rõ ràng.
+
+V. CÁC NHÓM DỮ LIỆU VÀ TRƯỜNG THÔNG TIN
+
+Tất cả các nhóm dưới đây phải xuất hiện trong cùng hệ thống quản trị và được tích hợp vào cùng bộ máy tìm kiếm.
+
+PHÂN HỆ 1. NHIỆM VỤ, ĐỀ TÀI KHOA HỌC VÀ CÔNG NGHỆ
+
+Quản lý các nhiệm vụ nghiên cứu khoa học, nghiên cứu ứng dụng, phát triển công nghệ, thử nghiệm, chuyển giao và các loại nhiệm vụ khác theo danh mục được phê duyệt.
+
+Trường thông tin gồm:
+
+1. Mã nhiệm vụ.
+2. Tên nhiệm vụ/đề tài.
+3. Loại hình nhiệm vụ.
+4. Tóm tắt nội dung.
+5. Sự cần thiết và mục tiêu.
+6. Nội dung nghiên cứu chính.
+7. Lĩnh vực khoa học và công nghệ.
+8. Từ khóa.
+9. Địa bàn thực hiện và địa bàn dự kiến hưởng lợi.
+10. Cơ quan quản lý.
+11. Cơ quan chủ trì.
+12. Đơn vị phối hợp.
+13. Chủ nhiệm nhiệm vụ.
+14. Thành viên tham gia.
+15. Chuyên gia tư vấn, phản biện hoặc đánh giá.
+16. Phương thức tuyển chọn hoặc giao nhiệm vụ.
+17. Chương trình hoặc nguồn kinh phí.
+18. Tổng kinh phí được duyệt.
+19. Kinh phí ngân sách và nguồn đối ứng, nếu có.
+20. Thời gian bắt đầu và kết thúc dự kiến.
+21. Thời gian thực hiện thực tế.
+22. Các mốc tiến độ.
+23. Sản phẩm đầu ra dự kiến.
+24. Chỉ tiêu kết quả cần đạt.
+25. Tình trạng thực hiện.
+26. Báo cáo tiến độ.
+27. Kết quả nghiệm thu.
+28. Quyết định phê duyệt và nghiệm thu.
+29. Sản phẩm khoa học, bài báo, công bố, sáng chế hoặc giải pháp liên quan.
+30. Đơn vị tiếp nhận hoặc ứng dụng kết quả.
+31. Mức độ ứng dụng thực tế.
+32. Hiệu quả kinh tế, xã hội, môi trường hoặc quản lý.
+33. Khả năng chuyển giao và thương mại hóa.
+34. Tệp thuyết minh, báo cáo, quyết định và tài liệu minh chứng.
+35. Trạng thái công khai.
+
+Chức năng riêng: quản lý vòng đời từ đề xuất, thẩm định, phê duyệt, triển khai, báo cáo, nghiệm thu đến theo dõi ứng dụng và chuyển giao.
+
+Không bắt buộc mọi nhiệm vụ phải có cùng quy trình; quy trình cụ thể phải cấu hình được theo loại nhiệm vụ và quy định của cơ quan quản lý.
+
+PHÂN HỆ 2. SÁNG KIẾN CÓ TÁC ĐỘNG ĐỐI VỚI THÀNH PHỐ
+
+Quản lý sáng kiến, giải pháp cải tiến, mô hình quản lý, sáng kiến chuyển đổi số, giải pháp công nghệ và sáng kiến tạo hiệu quả đối với phát triển kinh tế - xã hội của thành phố.
+
+Trường thông tin gồm:
+
+1. Mã sáng kiến.
+2. Tên sáng kiến.
+3. Tóm tắt sáng kiến.
+4. Vấn đề thực tế cần giải quyết.
+5. Nội dung giải pháp.
+6. Tính mới và điểm khác biệt.
+7. Tác giả, đồng tác giả.
+8. Cơ quan, tổ chức hoặc đơn vị đề xuất.
+9. Người chịu trách nhiệm triển khai.
+10. Lĩnh vực áp dụng.
+11. Địa bàn áp dụng.
+12. Đối tượng thụ hưởng.
+13. Thời gian hình thành.
+14. Thời gian bắt đầu áp dụng.
+15. Tình trạng triển khai.
+16. Cơ quan tiếp nhận.
+17. Hội đồng hoặc người đánh giá.
+18. Quyết định công nhận, nếu có.
+19. Phạm vi ảnh hưởng được đề xuất.
+20. Phạm vi ảnh hưởng đã được công nhận.
+21. Khả năng áp dụng cấp đơn vị, cấp thành phố hoặc phạm vi rộng hơn theo quy định.
+22. Kết quả trước và sau khi áp dụng.
+23. Chi phí đầu tư.
+24. Chi phí tiết kiệm.
+25. Hiệu quả kinh tế.
+26. Hiệu quả xã hội.
+27. Hiệu quả quản lý nhà nước.
+28. Hiệu quả môi trường, nếu có.
+29. Số lượng đơn vị hoặc người hưởng lợi.
+30. Khả năng nhân rộng.
+31. Đơn vị đã áp dụng và đơn vị có nhu cầu áp dụng.
+32. Tài liệu minh chứng, hình ảnh, báo cáo, quyết định.
+33. Thông tin sở hữu trí tuệ và điều kiện sử dụng.
+34. Đề xuất hỗ trợ, kinh phí hoặc nhân rộng.
+35. Trạng thái công khai.
+
+Phải phân biệt rõ giữa phạm vi ảnh hưởng do người đề xuất khai báo và phạm vi đã được cơ quan có thẩm quyền công nhận. Không tự động xác nhận sáng kiến hoặc tự suy diễn mức độ ảnh hưởng.
+
+Chức năng riêng: tiếp nhận sáng kiến, kiểm tra trùng lặp, chuyển đơn vị xử lý, lấy ý kiến đánh giá, phê duyệt, theo dõi hiệu quả và nhân rộng.
+
+PHÂN HỆ 3. CHUYÊN GIA, NHÀ KHOA HỌC VÀ NHÀ NGHIÊN CỨU
+
+Trường thông tin gồm:
+
+1. Mã chuyên gia.
+2. Họ và tên.
+3. Chức danh khoa học, học vị.
+4. Chức vụ chuyên môn.
+5. Cơ quan công tác.
+6. Đơn vị trực thuộc.
+7. Lĩnh vực chuyên môn chính.
+8. Lĩnh vực chuyên môn phụ.
+9. Từ khóa chuyên môn.
+10. Trình độ đào tạo.
+11. Quá trình công tác.
+12. Kinh nghiệm nghiên cứu và thực tiễn.
+13. Các nhiệm vụ KH&CN đã tham gia.
+14. Các đề tài đã chủ trì.
+15. Công bố khoa học.
+16. Sáng chế, giải pháp và sản phẩm nghiên cứu.
+17. Kinh nghiệm tư vấn, phản biện và thẩm định.
+18. Kinh nghiệm thương mại hóa công nghệ.
+19. Kinh nghiệm hỗ trợ khởi nghiệp.
+20. Các hội đồng đã tham gia, nếu được phép công khai.
+21. Vai trò có thể đảm nhận.
+22. Địa bàn và hình thức hợp tác.
+23. Tình trạng sẵn sàng hợp tác.
+24. Thông tin liên hệ công khai được chuyên gia đồng ý cung cấp.
+25. Hồ sơ năng lực và tài liệu minh chứng.
+26. Trạng thái xác minh hồ sơ.
+27. Ngày cập nhật gần nhất.
+28. Trạng thái công khai và sự đồng ý công bố thông tin.
+
+Chức năng riêng: tìm chuyên gia theo chuyên môn, lĩnh vực, kinh nghiệm, công bố, nhiệm vụ đã tham gia và nhu cầu tư vấn; gợi ý chuyên gia phù hợp với một nhiệm vụ, sáng kiến hoặc dự án khởi nghiệp.
+
+Không công khai số định danh cá nhân, địa chỉ riêng, thông tin nhạy cảm hoặc thông tin liên hệ chưa được phép chia sẻ.
+
+PHÂN HỆ 4. TỔ CHỨC KHOA HỌC VÀ CÔNG NGHỆ
+
+Bao gồm viện nghiên cứu, trường đại học, trung tâm nghiên cứu, phòng thí nghiệm, tổ chức nghiên cứu và phát triển, doanh nghiệp KH&CN và các tổ chức liên quan.
+
+Trường thông tin gồm:
+
+1. Mã tổ chức.
+2. Tên đầy đủ và tên viết tắt.
+3. Loại hình tổ chức.
+4. Mã số doanh nghiệp hoặc mã định danh tổ chức, nếu phù hợp.
+5. Cơ quan chủ quản.
+6. Người đại diện hoặc đầu mối công khai.
+7. Địa chỉ trụ sở và địa bàn hoạt động.
+8. Lĩnh vực chuyên môn.
+9. Năng lực nghiên cứu.
+10. Phòng thí nghiệm, trang thiết bị và hạ tầng.
+11. Nhân lực khoa học.
+12. Các nhiệm vụ đã chủ trì hoặc phối hợp.
+13. Kết quả nghiên cứu và công nghệ.
+14. Sáng chế và sở hữu trí tuệ.
+15. Năng lực chuyển giao công nghệ.
+16. Nhu cầu hợp tác.
+17. Các chương trình hỗ trợ hoặc dự án tham gia.
+18. Website và thông tin liên hệ được công khai.
+19. Tài liệu pháp lý và hồ sơ xác minh.
+20. Trạng thái hoạt động.
+
+PHÂN HỆ 5. DOANH NGHIỆP KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO
+
+Trường thông tin gồm:
+
+1. Mã doanh nghiệp trên cổng.
+2. Tên doanh nghiệp.
+3. Tên thương hiệu.
+4. Mã số doanh nghiệp/mã số thuế, nếu được phép lưu trữ.
+5. Ngày thành lập.
+6. Loại hình pháp lý.
+7. Người đại diện và đầu mối liên hệ.
+8. Địa chỉ trụ sở.
+9. Địa bàn hoạt động.
+10. Website, email và kênh liên hệ công khai.
+11. Lĩnh vực kinh doanh.
+12. Lĩnh vực công nghệ.
+13. Bài toán thị trường đang giải quyết.
+14. Sản phẩm, dịch vụ.
+15. Công nghệ cốt lõi.
+16. Mô hình kinh doanh.
+17. Thị trường mục tiêu.
+18. Khách hàng mục tiêu.
+19. Giai đoạn phát triển.
+20. Quy mô nhân sự theo phạm vi được phép công bố.
+21. Tình trạng hoạt động.
+22. Doanh thu hoặc chỉ số tăng trưởng nếu doanh nghiệp tự nguyện công bố.
+23. Nhu cầu vốn và hợp tác.
+24. Các vòng gọi vốn và thông tin đầu tư được phép công khai.
+25. Nhà đầu tư liên quan.
+26. Chương trình ươm tạo, tăng tốc đã tham gia.
+27. Giải thưởng và thành tích.
+28. Sở hữu trí tuệ.
+29. Các nhiệm vụ KH&CN, sáng kiến và dự án liên quan.
+30. Hồ sơ pháp lý, hồ sơ năng lực và tài liệu giới thiệu.
+31. Trạng thái xác minh và công khai.
+
+Không mặc định mọi doanh nghiệp mới thành lập đều là doanh nghiệp khởi nghiệp đổi mới sáng tạo. Phải có tiêu chí phân loại và quy trình xác minh phù hợp.
+
+PHÂN HỆ 6. DỰ ÁN KHỞI NGHIỆP
+
+Phải quản lý dự án như một đối tượng độc lập, có liên kết đến doanh nghiệp, cá nhân sáng lập, ý tưởng, chuyên gia và nhà đầu tư.
+
+Trường thông tin gồm:
+
+1. Mã dự án.
+2. Tên dự án.
+3. Tóm tắt dự án.
+4. Vấn đề cần giải quyết.
+5. Giải pháp đề xuất.
+6. Sản phẩm hoặc dịch vụ.
+7. Công nghệ sử dụng.
+8. Điểm đổi mới sáng tạo.
+9. Lĩnh vực và thị trường.
+10. Địa bàn triển khai.
+11. Nhóm khách hàng mục tiêu.
+12. Quy mô thị trường và giả định kinh doanh.
+13. Mô hình doanh thu.
+14. Đội ngũ sáng lập và thành viên.
+15. Doanh nghiệp sở hữu hoặc đơn vị triển khai, nếu có.
+16. Giai đoạn phát triển.
+17. Tình trạng sản phẩm mẫu.
+18. Kết quả thử nghiệm và xác nhận nhu cầu thị trường.
+19. Đối tác và khách hàng.
+20. Nhu cầu vốn.
+21. Nguồn vốn đã huy động, nếu công khai.
+22. Nhu cầu chuyên gia và tư vấn.
+23. Nhu cầu công nghệ, thiết bị, thử nghiệm hoặc sản xuất.
+24. Chương trình hỗ trợ đã tham gia.
+25. Kế hoạch phát triển.
+26. Tài liệu giới thiệu và hồ sơ thuyết trình.
+27. Quyền sở hữu trí tuệ.
+28. Trạng thái dự án.
+29. Mức độ công khai.
+
+Chức năng riêng: giới thiệu dự án, tìm nhà đầu tư, kết nối chuyên gia, tìm đối tác, đăng ký chương trình hỗ trợ và theo dõi quá trình phát triển.
+
+Thông tin bí mật kinh doanh và tài liệu gọi vốn không được mặc định công khai.
+
+PHÂN HỆ 7. Ý TƯỞNG KHỞI NGHIỆP VÀ Ý TƯỞNG ĐỔI MỚI SÁNG TẠO
+
+Trường thông tin gồm:
+
+1. Mã ý tưởng.
+2. Tên ý tưởng.
+3. Tóm tắt ý tưởng.
+4. Vấn đề cần giải quyết.
+5. Giải pháp dự kiến.
+6. Giá trị khác biệt.
+7. Lĩnh vực.
+8. Công nghệ liên quan.
+9. Người đề xuất.
+10. Nhóm thực hiện.
+11. Đơn vị liên quan.
+12. Đối tượng thụ hưởng.
+13. Khách hàng hoặc người dùng mục tiêu.
+14. Khả năng phát triển thành sản phẩm, dự án hoặc doanh nghiệp.
+15. Mức độ hoàn thiện.
+16. Kết quả khảo sát hoặc kiểm chứng ban đầu.
+17. Nhu cầu tư vấn, công nghệ, vốn và đối tác.
+18. Nhu cầu bảo hộ sở hữu trí tuệ.
+19. Chương trình hoặc cuộc thi đã tham gia.
+20. Tài liệu, hình ảnh và bản mô tả.
+21. Trạng thái đánh giá.
+22. Kết quả đánh giá và đề xuất hỗ trợ.
+23. Mức độ công khai.
+
+Phải hỗ trợ chuyển đổi có kiểm soát từ ý tưởng thành dự án, sau đó thành doanh nghiệp khi đủ điều kiện, nhưng vẫn giữ lịch sử và liên kết với bản ghi ban đầu.
+
+PHÂN HỆ 8. NHÀ ĐẦU TƯ
+
+Bao gồm nhà đầu tư cá nhân, nhà đầu tư tổ chức, doanh nghiệp đầu tư và các chủ thể đầu tư hợp pháp khác.
+
+Trường thông tin gồm:
+
+1. Mã nhà đầu tư.
+2. Tên hiển thị.
+3. Loại nhà đầu tư.
+4. Tổ chức liên quan.
+5. Quốc gia hoặc thị trường hoạt động.
+6. Lĩnh vực đầu tư quan tâm.
+7. Giai đoạn đầu tư quan tâm.
+8. Quy mô đầu tư tối thiểu và tối đa nếu tự nguyện công bố.
+9. Hình thức đầu tư.
+10. Tiêu chí lựa chọn dự án.
+11. Khu vực địa lý quan tâm.
+12. Danh mục đầu tư công khai.
+13. Các dự án hoặc doanh nghiệp đã đầu tư.
+14. Nhu cầu hợp tác.
+15. Thông tin liên hệ được phép công khai.
+16. Hồ sơ xác minh.
+17. Trạng thái hoạt động và công khai.
+
+Không công khai dữ liệu tài chính riêng tư hoặc thông tin định danh không cần thiết.
+
+PHÂN HỆ 9. QUỸ ĐẦU TƯ
+
+Trường thông tin gồm:
+
+1. Mã quỹ.
+2. Tên quỹ.
+3. Loại quỹ.
+4. Công ty quản lý quỹ hoặc tổ chức quản lý.
+5. Thông tin pháp lý cần thiết.
+6. Địa chỉ và thị trường hoạt động.
+7. Lĩnh vực đầu tư.
+8. Giai đoạn đầu tư.
+9. Quy mô quỹ nếu được phép công bố.
+10. Quy mô đầu tư mỗi thương vụ.
+11. Tiêu chí đầu tư.
+12. Hình thức đầu tư.
+13. Danh mục đầu tư công khai.
+14. Đội ngũ quản lý và đầu mối liên hệ.
+15. Quy trình gửi hồ sơ.
+16. Chương trình đầu tư hoặc hỗ trợ doanh nghiệp.
+17. Trạng thái xác minh.
+18. Trạng thái công khai.
+
+Phải phân biệt quỹ đầu tư với nhà đầu tư cá nhân, công ty quản lý quỹ, chương trình tài trợ và nguồn vốn hỗ trợ của Nhà nước.
+
+PHÂN HỆ 10. TỔ CHỨC HỖ TRỢ VÀ PHÁT TRIỂN HỆ SINH THÁI
+
+Bao gồm:
+
+* Tổ chức ươm tạo.
+* Tổ chức tăng tốc khởi nghiệp.
+* Trung tâm đổi mới sáng tạo.
+* Không gian làm việc chung.
+* Vườn ươm công nghệ.
+* Trung tâm chuyển giao công nghệ.
+* Tổ chức tư vấn.
+* Hiệp hội và tổ chức kết nối doanh nghiệp.
+* Cơ sở đào tạo và đơn vị hỗ trợ nghiên cứu.
+* Tổ chức tài trợ và chương trình hỗ trợ hợp pháp.
+
+Trường thông tin gồm:
+
+1. Mã tổ chức.
+2. Tên tổ chức.
+3. Loại hình.
+4. Cơ quan chủ quản.
+5. Địa chỉ và địa bàn hoạt động.
+6. Lĩnh vực hỗ trợ.
+7. Đối tượng phục vụ.
+8. Dịch vụ cung cấp.
+9. Chương trình ươm tạo và tăng tốc.
+10. Tiêu chí tiếp nhận.
+11. Lịch tuyển chọn hoặc thời gian đăng ký.
+12. Hình thức hỗ trợ.
+13. Nguồn lực và cơ sở vật chất.
+14. Đội ngũ chuyên gia.
+15. Doanh nghiệp, dự án đã hỗ trợ.
+16. Kết quả và thành tích.
+17. Nhu cầu kết nối.
+18. Thông tin liên hệ.
+19. Tài liệu giới thiệu.
+20. Trạng thái xác minh và công khai.
+
+PHÂN HỆ 11. CÔNG NGHỆ, SẢN PHẨM VÀ KẾT QUẢ NGHIÊN CỨU
+
+Trường thông tin gồm:
+
+1. Mã công nghệ hoặc sản phẩm.
+2. Tên công nghệ/sản phẩm.
+3. Loại đối tượng.
+4. Mô tả.
+5. Vấn đề giải quyết.
+6. Lĩnh vực ứng dụng.
+7. Mức độ hoàn thiện công nghệ nếu có căn cứ.
+8. Tổ chức hoặc cá nhân sở hữu.
+9. Nguồn gốc công nghệ.
+10. Nhiệm vụ KH&CN liên quan.
+11. Sáng chế hoặc quyền sở hữu trí tuệ.
+12. Kết quả thử nghiệm.
+13. Điều kiện áp dụng.
+14. Khả năng chuyển giao.
+15. Nhu cầu chuyển giao.
+16. Đơn vị có nhu cầu tiếp nhận.
+17. Chi phí hoặc điều kiện chuyển giao được phép công khai.
+18. Tài liệu kỹ thuật.
+19. Trạng thái xác minh.
+20. Mức độ công khai.
+
+Hỗ trợ kết nối kết quả nghiên cứu với doanh nghiệp, dự án ứng dụng, sáng kiến và nhu cầu thực tế của thành phố.
+
+PHÂN HỆ 12. CHƯƠNG TRÌNH, CUỘC THI VÀ CƠ HỘI HỖ TRỢ
+
+Quản lý chương trình tài trợ, hỗ trợ nghiên cứu, cuộc thi khởi nghiệp, chương trình tăng tốc, học bổng nghiên cứu, hỗ trợ chuyển giao công nghệ và các cơ hội hợp tác.
+
+Trường thông tin gồm:
+
+* Mã chương trình.
+* Tên chương trình.
+* Đơn vị tổ chức.
+* Mục tiêu và nội dung.
+* Đối tượng đủ điều kiện.
+* Lĩnh vực ưu tiên.
+* Hình thức hỗ trợ.
+* Giá trị hỗ trợ và nguồn tài trợ nếu công khai.
+* Điều kiện tham gia.
+* Thời hạn đăng ký.
+* Quy trình xét chọn.
+* Hồ sơ yêu cầu.
+* Địa bàn áp dụng.
+* Đầu mối liên hệ.
+* Kết quả tuyển chọn.
+* Các tổ chức, cá nhân và dự án được hỗ trợ.
+* Trạng thái chương trình.
+
+PHÂN HỆ 13. NHU CẦU VÀ ĐỀ XUẤT KẾT NỐI
+
+Cho phép các chủ thể đăng nhu cầu và tìm kiếm đối tác trên cùng nền tảng:
+
+* Nhu cầu nghiên cứu hoặc đặt hàng nhiệm vụ KH&CN.
+* Nhu cầu ứng dụng kết quả nghiên cứu.
+* Nhu cầu chuyển giao công nghệ.
+* Nhu cầu chuyên gia tư vấn.
+* Nhu cầu thử nghiệm và kiểm định.
+* Nhu cầu phát triển sản phẩm.
+* Nhu cầu đầu tư và gọi vốn.
+* Nhu cầu đối tác kinh doanh.
+* Nhu cầu tham gia chương trình hỗ trợ.
+* Đề xuất giải quyết vấn đề của thành phố.
+* Đề xuất nhân rộng sáng kiến.
+
+Mỗi nhu cầu cần có mã, chủ thể đăng, mô tả, lĩnh vực, điều kiện, thời hạn, mức độ công khai, trạng thái xử lý và lịch sử kết nối.
+
+Phải có chức năng gửi yêu cầu kết nối, tiếp nhận, chấp thuận hoặc từ chối, trao đổi thông tin trong phạm vi cho phép và ghi nhận kết quả.
+
+PHÂN HỆ 14. CÁC NHÓM DỮ LIỆU MỞ RỘNG
+
+Thiết kế để có thể bổ sung:
+
+* Sáng chế và sở hữu trí tuệ.
+* Bài báo và công bố khoa học.
+* Thiết bị, phòng thí nghiệm và hạ tầng nghiên cứu.
+* Doanh nghiệp KH&CN.
+* Chuyên gia tư vấn và mạng lưới cố vấn.
+* Tổ chức nghiên cứu quốc tế.
+* Dữ liệu thống kê KH&CN và đổi mới sáng tạo.
+* Chính sách, văn bản và quy định.
+* Nhu cầu công nghệ của doanh nghiệp.
+* Dự án chuyển đổi số và phát triển đô thị.
+* Các loại dữ liệu đặc thù do thành phố yêu cầu.
+
+Các loại dữ liệu mở rộng phải dùng chung cơ chế phân quyền, kiểm duyệt, tìm kiếm, nhật ký và liên kết dữ liệu.
+
+VI. MÔ HÌNH LIÊN KẾT DỮ LIỆU ĐA CHIỀU
+
+Đây là yêu cầu kiến trúc bắt buộc.
+
+Ví dụ:
+
+1. Một chuyên gia có thể tham gia nhiều nhiệm vụ KH&CN, viết nhiều công bố, tư vấn nhiều sáng kiến và hỗ trợ nhiều dự án khởi nghiệp.
+2. Một nhiệm vụ KH&CN có thể liên kết với nhiều chuyên gia, tổ chức chủ trì, sản phẩm đầu ra, sáng chế và đơn vị ứng dụng.
+3. Một sáng kiến có thể liên kết với tác giả, đơn vị công nhận, cơ quan áp dụng, kết quả đo lường hiệu quả và các đơn vị nhân rộng.
+4. Một doanh nghiệp có thể sở hữu nhiều dự án, sản phẩm, công nghệ và sáng chế.
+5. Một dự án khởi nghiệp có thể liên kết với nhiều nhà sáng lập, chuyên gia, nhà đầu tư, quỹ đầu tư và tổ chức ươm tạo.
+6. Một nhà đầu tư hoặc quỹ đầu tư có thể quan tâm đến nhiều dự án.
+7. Một tổ chức có thể đồng thời là đơn vị chủ trì nhiệm vụ, đơn vị nghiên cứu, doanh nghiệp, tổ chức hỗ trợ hoặc đơn vị tiếp nhận sáng kiến, tùy theo tư cách pháp lý và nghiệp vụ.
+8. Một công nghệ có thể là kết quả của nhiều hoạt động nghiên cứu và được ứng dụng bởi nhiều doanh nghiệp.
+9. Một chương trình hỗ trợ có thể liên kết với nhiều dự án, doanh nghiệp, chuyên gia và tổ chức.
+
+Thiết kế các bảng quan hệ nhiều-nhiều phù hợp, có vai trò, thời gian hiệu lực, nguồn xác minh và trạng thái của mối quan hệ.
+
+Ví dụ các thực thể dùng chung:
+
+* organizations
+* persons
+* experts
+* science_tasks
+* initiatives
+* startups
+* startup_projects
+* startup_ideas
+* investors
+* investment_funds
+* support_organizations
+* technologies
+* research_outputs
+* programs
+* collaboration_needs
+* attachments
+* entity_relationships
+
+Danh sách trên là gợi ý kiến trúc, không phải danh sách bảng cố định. Có thể tách bảng con hoặc bổ sung bảng khi cần để bảo đảm chuẩn hóa dữ liệu.
+
+Đối với quan hệ tổng quát, phải có ràng buộc loại quan hệ, ID của các đối tượng, kiểm tra sự tồn tại của bản ghi, quy tắc xóa và tính toàn vẹn dữ liệu.
+
+Không cho phép xóa dây chuyền khiến mất lịch sử hoặc làm hỏng các quan hệ quan trọng.
+
+VII. GIAO DIỆN WEBSITE CÔNG KHAI
+
+1. Trang chủ
+
+Thiết kế hiện đại, chuyên nghiệp, dễ sử dụng, phù hợp cổng dữ liệu phục vụ cơ quan quản lý, doanh nghiệp, nhà khoa học và người dân.
+
+Trang chủ gồm:
+
+* Logo, tên cổng và thông tin cơ quan chủ quản.
+* Thanh điều hướng thống nhất.
+* Ô tìm kiếm lớn, dễ nhận biết.
+* Bộ chọn loại dữ liệu.
+* Bộ lọc lĩnh vực và địa bàn.
+* Các danh mục dữ liệu nổi bật.
+* Thống kê tổng quan có căn cứ từ dữ liệu thực.
+* Dữ liệu mới cập nhật.
+* Nhiệm vụ, sáng kiến, công nghệ và cơ hội hỗ trợ nổi bật.
+* Chuyên gia, tổ chức và doanh nghiệp đã xác minh.
+* Chương trình, cuộc thi và cơ hội kết nối.
+* Tin tức và thông báo.
+* Hướng dẫn khai thác dữ liệu.
+* Chân trang có thông tin liên hệ, chính sách dữ liệu và quyền riêng tư.
+
+Không dùng số liệu giả để tạo cảm giác hệ thống đã có dữ liệu. Khi chưa có dữ liệu, hiển thị trạng thái trống hoặc dữ liệu mẫu được ghi nhãn rõ ràng.
+
+2. Một bộ máy tìm kiếm thống nhất
+
+Người dùng có thể tìm theo hai cách:
+
+A. Tìm kiếm theo danh mục:
+
+* Tất cả dữ liệu.
+* Nhiệm vụ KH&CN.
+* Sáng kiến.
+* Chuyên gia.
+* Tổ chức KH&CN.
+* Doanh nghiệp khởi nghiệp.
+* Dự án khởi nghiệp.
+* Ý tưởng khởi nghiệp.
+* Nhà đầu tư.
+* Quỹ đầu tư.
+* Tổ chức hỗ trợ.
+* Công nghệ và kết quả nghiên cứu.
+* Chương trình hỗ trợ.
+* Nhu cầu kết nối.
+
+B. Tìm kiếm toàn hệ thống:
+
+Người dùng nhập một từ khóa, hệ thống trả về các kết quả thuộc mọi danh mục liên quan.
+
+Ví dụ nhập “trí tuệ nhân tạo” sẽ có thể tìm thấy nhiệm vụ nghiên cứu AI, chuyên gia AI, sáng kiến AI, doanh nghiệp AI, dự án AI, công nghệ AI và chương trình hỗ trợ liên quan.
+
+Bộ lọc cần có:
+
+* Loại dữ liệu.
+* Từ khóa.
+* Lĩnh vực chuyên môn.
+* Địa bàn.
+* Cơ quan hoặc tổ chức.
+* Năm hoặc khoảng thời gian.
+* Trạng thái.
+* Giai đoạn phát triển.
+* Loại hình công nghệ.
+* Nguồn vốn hoặc nhu cầu vốn, khi phù hợp.
+* Trạng thái xác minh.
+* Các bộ lọc đặc thù theo loại bản ghi.
+
+Kết quả tìm kiếm phải có phân trang, sắp xếp, bộ lọc kết hợp, URL có thể chia sẻ và khả năng quay lại trang kết quả trước đó.
+
+Không hiển thị dữ liệu chưa được công khai hoặc không được phép truy cập trong kết quả tìm kiếm.
+
+3. Trang danh sách
+
+Mỗi loại dữ liệu có trang danh sách riêng trong cùng website, với:
+
+* Bảng hoặc danh sách dạng thẻ.
+* Bộ lọc phù hợp.
+* Sắp xếp theo ngày, tên hoặc tiêu chí nghiệp vụ.
+* Phân trang.
+* Hiển thị trạng thái.
+* Xuất dữ liệu trong phạm vi được cấp quyền.
+* Liên kết đến bản ghi chi tiết.
+* Giao diện thân thiện trên điện thoại.
+
+4. Trang chi tiết dữ liệu
+
+Mỗi bản ghi có một trang chi tiết gồm:
+
+* Tên và mã bản ghi.
+* Thông tin tổng quan.
+* Các trường đặc thù.
+* Tổ chức và cá nhân liên quan.
+* Tài liệu được phép công khai.
+* Lịch sử hoặc tiến độ công khai nếu phù hợp.
+* Các bản ghi liên quan.
+* Nguồn và thời điểm cập nhật.
+* Trạng thái xác minh.
+* Nút gửi yêu cầu bổ sung hoặc đính chính.
+* Nút gửi yêu cầu kết nối nếu được phép.
+
+Ví dụ, trang chi tiết một sáng kiến phải hiển thị tác giả, đơn vị áp dụng, kết quả trước và sau, phạm vi ảnh hưởng, quyết định công nhận và các đơn vị đã nhân rộng nếu có dữ liệu.
+
+Trang chi tiết một chuyên gia có thể hiển thị nhiệm vụ đã tham gia, lĩnh vực chuyên môn, công bố và sáng kiến liên quan trong phạm vi công khai.
+
+5. Hồ sơ cá nhân và tổ chức
+
+Cho phép người dùng đăng ký tài khoản để:
+
+* Tạo và cập nhật hồ sơ.
+* Đề xuất bản ghi mới.
+* Nộp tài liệu minh chứng.
+* Gửi yêu cầu sửa thông tin.
+* Theo dõi trạng thái xử lý.
+* Quản lý nhu cầu kết nối.
+* Nhận thông báo.
+* Quản lý sự đồng ý công khai dữ liệu.
+
+Không cho phép người dùng tự ý sửa dữ liệu đã được cơ quan quản lý xác nhận mà không qua quy trình phê duyệt.
+
+VIII. CỔNG QUẢN TRỊ TẬP TRUNG
+
+Tất cả phân hệ phải được quản lý từ một trang quản trị thống nhất.
+
+1. Dashboard
+
+Hiển thị số liệu thực tế về:
+
+* Tổng số nhiệm vụ KH&CN.
+* Số nhiệm vụ đang thực hiện, đã nghiệm thu và đang chờ xử lý.
+* Tổng số sáng kiến và sáng kiến đã được công nhận.
+* Số chuyên gia và tổ chức.
+* Số doanh nghiệp, dự án và ý tưởng khởi nghiệp.
+* Số nhà đầu tư, quỹ đầu tư và tổ chức hỗ trợ.
+* Số công nghệ và kết quả nghiên cứu.
+* Hồ sơ mới chờ kiểm duyệt.
+* Hồ sơ bị trả lại hoặc cần bổ sung.
+* Tình trạng cập nhật dữ liệu của từng đơn vị.
+* Các chỉ số theo thời gian, lĩnh vực và địa bàn.
+
+Các con số phải được tính từ cơ sở dữ liệu, có quy tắc xác định rõ ràng và không tính trùng bản ghi.
+
+2. Quản lý dữ liệu
+
+Mỗi phân hệ cần có các thao tác phù hợp với quyền được cấp:
+
+* Xem danh sách.
+* Xem chi tiết.
+* Tạo mới.
+* Chỉnh sửa.
+* Gửi duyệt.
+* Phê duyệt hoặc từ chối.
+* Yêu cầu bổ sung.
+* Công khai hoặc thu hồi công khai.
+* Lưu trữ.
+* Khôi phục theo quyền.
+* Xuất dữ liệu.
+* Xem lịch sử thay đổi.
+* Liên kết hoặc gỡ liên kết giữa các bản ghi.
+* Phát hiện và xử lý bản ghi trùng lặp.
+
+Phải có tìm kiếm, lọc, phân trang và thao tác hàng loạt an toàn.
+
+3. Quản lý biểu mẫu
+
+Cho phép cấu hình một số thành phần của biểu mẫu mà không cần sửa mã nguồn, bao gồm:
+
+* Tên trường và nhãn hiển thị.
+* Loại trường.
+* Trường bắt buộc hoặc tùy chọn.
+* Danh mục lựa chọn.
+* Quy tắc kiểm tra dữ liệu.
+* Điều kiện hiển thị trường.
+* Thứ tự trường.
+* Hướng dẫn nhập liệu.
+* Quyền xem và sửa.
+* Trường được phép công khai.
+* Biểu mẫu theo từng loại đối tượng.
+
+Các trường cốt lõi phục vụ liên kết, bảo mật, thống kê và toàn vẹn dữ liệu vẫn phải có cấu trúc và ràng buộc ở backend.
+
+4. Quy trình phê duyệt
+
+Hỗ trợ quy trình có thể cấu hình theo từng nhóm dữ liệu:
+
+Bản nháp → Gửi duyệt → Tiếp nhận → Kiểm tra → Yêu cầu bổ sung hoặc chuyển chuyên môn → Phê duyệt → Công khai.
+
+Có thể bổ sung các trạng thái bị từ chối, tạm ẩn, hết hiệu lực hoặc lưu trữ.
+
+Mỗi lần chuyển trạng thái phải ghi nhận người thực hiện, thời điểm, lý do và nội dung liên quan.
+
+Không đồng nhất trạng thái xử lý hồ sơ với trạng thái xác minh hoặc mức độ công khai.
+
+IX. TÀI KHOẢN VÀ PHÂN QUYỀN
+
+Thiết kế phân quyền theo vai trò kết hợp phạm vi dữ liệu và quyền thao tác.
+
+Các vai trò mặc định:
+
+1. Super Admin: quản trị kỹ thuật và cấu hình toàn hệ thống.
+2. Admin hệ thống: quản lý người dùng, cấu hình và dữ liệu trong phạm vi được giao.
+3. Lãnh đạo cơ quan: xem báo cáo, theo dõi và phê duyệt theo thẩm quyền.
+4. Cán bộ quản lý dữ liệu: tiếp nhận, cập nhật, kiểm tra và xử lý hồ sơ được phân công.
+5. Chuyên gia thẩm định: xem và đánh giá hồ sơ được giao.
+6. Cán bộ của đơn vị cung cấp dữ liệu: quản lý dữ liệu thuộc đơn vị.
+7. Đại diện doanh nghiệp/tổ chức: quản lý hồ sơ của tổ chức mình.
+8. Chuyên gia/nhà khoa học: quản lý hồ sơ cá nhân và các đề xuất của mình.
+9. Nhà đầu tư: quản lý hồ sơ đầu tư và nhu cầu kết nối được phép.
+10. Người dùng công khai: tìm kiếm và xem dữ liệu công khai.
+
+Phải hỗ trợ tạo thêm vai trò, gán quyền theo nhóm dữ liệu, hành động và phạm vi quản lý.
+
+Kiểm tra quyền ở backend trên từng API. Không chỉ ẩn nút trên frontend để bảo vệ dữ liệu.
+
+Một cán bộ chỉ được sửa dữ liệu ngoài phạm vi của mình khi có quyền được cấp rõ ràng.
+
+X. NHẬP, CẬP NHẬT VÀ LÀM SẠCH DỮ LIỆU
+
+Xây dựng công cụ nhập dữ liệu từ Excel/CSV và xuất dữ liệu theo quyền.
+
+Quy trình nhập dữ liệu gồm:
+
+1. Tải tệp mẫu đúng loại dữ liệu.
+2. Tải tệp lên.
+3. Ánh xạ cột dữ liệu.
+4. Kiểm tra trường bắt buộc và kiểu dữ liệu.
+5. Chuẩn hóa danh mục.
+6. Phát hiện trùng lặp.
+7. Hiển thị bản xem trước.
+8. Thông báo lỗi theo từng dòng.
+9. Cho phép sửa hoặc tải danh sách lỗi.
+10. Xác nhận nhập.
+11. Ghi nhật ký kết quả nhập.
+12. Cho phép truy vết và xử lý lỗi.
+
+Không được tự động nhập dữ liệu sai cấu trúc hoặc ghi đè hàng loạt mà không có bước xác nhận.
+
+Hỗ trợ mã hóa và chuẩn hóa dữ liệu tiếng Việt, ngày tháng, mã đơn vị và danh mục dùng chung.
+
+Có cơ chế đối soát khi dữ liệu được nhập từ nhiều nguồn.
+
+Nếu có tích hợp API với hệ thống bên ngoài, phải xác định nguồn chính thức, quyền truy cập, định dạng, lịch đồng bộ và quy tắc xử lý xung đột.
+
+Không thu thập hoặc sao chép dữ liệu từ các website tham khảo khi không có quyền hợp pháp.
+
+XI. THỐNG KÊ, BÁO CÁO VÀ PHÂN TÍCH
+
+Cho phép thống kê theo:
+
+* Thời gian.
+* Lĩnh vực.
+* Địa bàn.
+* Đơn vị quản lý.
+* Cơ quan chủ trì.
+* Trạng thái.
+* Nguồn kinh phí.
+* Loại nhiệm vụ.
+* Loại sáng kiến.
+* Phạm vi ảnh hưởng.
+* Kết quả nghiên cứu.
+* Doanh nghiệp và giai đoạn phát triển.
+* Lĩnh vực công nghệ.
+* Nguồn vốn và nhu cầu đầu tư.
+* Mạng lưới chuyên gia.
+* Chương trình hỗ trợ.
+* Kết quả kết nối và chuyển giao.
+
+Cung cấp biểu đồ, bảng thống kê, bộ lọc và khả năng xuất báo cáo.
+
+Đối với sáng kiến, có thể thống kê chi phí tiết kiệm, số đơn vị áp dụng và các chỉ tiêu tác động nếu có dữ liệu xác thực.
+
+Đối với nhiệm vụ KH&CN, thống kê số nhiệm vụ, kinh phí, kết quả nghiệm thu, sản phẩm và tình hình ứng dụng.
+
+Đối với hệ sinh thái khởi nghiệp, thống kê doanh nghiệp, dự án, ý tưởng, hoạt động đầu tư và kết quả hỗ trợ.
+
+Không tự suy diễn hiệu quả kinh tế hoặc tác động xã hội từ dữ liệu thiếu căn cứ. Phải phân biệt dữ liệu khai báo, dữ liệu đã xác minh và dữ liệu được cơ quan có thẩm quyền công nhận.
+
+XII. CÔNG NGHỆ VÀ KIẾN TRÚC KỸ THUẬT
+
+Ưu tiên một kiến trúc đơn giản, dễ bảo trì, có khả năng mở rộng và hạn chế chi phí.
+
+Đề xuất mặc định:
+
+* Frontend: React + TypeScript + Vite.
+* Giao diện: CSS có cấu trúc, thiết kế responsive và bộ thành phần dùng chung.
+* Backend: Node.js + TypeScript + Express.
+* Cơ sở dữ liệu: PostgreSQL.
+* Truy cập dữ liệu: ORM phổ biến như Prisma hoặc công cụ tương đương.
+* API: REST API có tài liệu OpenAPI.
+* Xác thực: phiên đăng nhập bảo mật bằng cookie HttpOnly, Secure khi triển khai HTTPS và cấu hình SameSite phù hợp.
+* Tệp đính kèm: lưu trữ trên máy chủ hoặc object storage khi có nhu cầu.
+* Kiểm thử: unit test, integration test và end-to-end test.
+* Triển khai: Docker khi phù hợp, có hướng dẫn triển khai trên môi trường phổ thông.
+* Quản lý mã nguồn: Git.
+
+Có thể đề xuất công nghệ thay thế nếu chứng minh được ưu điểm về chi phí, độ ổn định, bảo mật và khả năng bảo trì.
+
+Không bắt buộc dùng microservices. Ưu tiên modular monolith cho giai đoạn đầu, phân chia module rõ ràng để giảm chi phí triển khai.
+
+Không mặc định sử dụng Elasticsearch, Redis, Kafka hoặc dịch vụ AI trả phí ngay từ đầu nếu PostgreSQL và kiến trúc cơ bản đã đáp ứng được nhu cầu.
+
+Chỉ bổ sung thành phần hạ tầng khi có yêu cầu hiệu năng hoặc nghiệp vụ thực tế.
+
+XIII. BẢO MẬT VÀ QUẢN TRỊ DỮ LIỆU
+
+Bắt buộc triển khai:
+
+* Phân quyền ở backend.
+* Kiểm tra dữ liệu đầu vào.
+* Chống SQL injection, XSS và CSRF phù hợp với kiến trúc xác thực.
+* Giới hạn số lần đăng nhập.
+* Bảo vệ phiên đăng nhập.
+* Quản lý vòng đời tài khoản.
+* Chính sách mật khẩu an toàn.
+* Quy trình đặt lại mật khẩu.
+* Nhật ký truy cập và thao tác quan trọng.
+* Giới hạn dung lượng, loại tệp và kiểm tra tệp tải lên.
+* Sao lưu và khôi phục dữ liệu.
+* Quản lý cấu hình và bí mật bằng biến môi trường.
+* Không đưa mật khẩu hoặc khóa bí mật vào mã nguồn.
+* HTTPS khi triển khai thực tế.
+* Kiểm soát quyền tải xuống và xuất dữ liệu.
+* Chính sách lưu trữ và xóa dữ liệu.
+* Cơ chế ghi nhận nguồn dữ liệu, sự đồng ý công khai và yêu cầu đính chính.
+
+Phân loại dữ liệu thành dữ liệu công khai, dữ liệu nội bộ, dữ liệu hạn chế truy cập và dữ liệu cá nhân cần bảo vệ.
+
+Việc công khai hồ sơ chuyên gia, doanh nghiệp và nhà đầu tư phải tuân thủ quy định pháp luật và phạm vi đồng ý của chủ thể dữ liệu.
+
+Các quyết định phê duyệt, nghiệm thu và công nhận phải được lưu cùng thông tin về thẩm quyền, thời điểm và tài liệu căn cứ.
+
+XIV. GIAO DIỆN VÀ TRẢI NGHIỆM NGƯỜI DÙNG
+
+Thiết kế theo phong cách cổng dữ liệu công hiện đại, đáng tin cậy, rõ ràng và dễ sử dụng.
+
+Yêu cầu:
+
+* Giao diện tiếng Việt chuẩn.
+* Responsive trên máy tính, máy tính bảng và điện thoại.
+* Điều hướng thống nhất.
+* Không tạo menu riêng biệt như các website độc lập cho từng phân hệ.
+* Màu sắc và nhận diện có thể cấu hình.
+* Phông chữ dễ đọc.
+* Biểu mẫu dài chia thành nhóm hoặc các bước.
+* Hiển thị rõ trường bắt buộc, lỗi và hướng dẫn.
+* Có trạng thái đang tải, không có dữ liệu và lỗi hệ thống.
+* Có thông báo sau thao tác.
+* Có xác nhận trước hành động quan trọng.
+* Có khả năng truy cập bằng bàn phím và nhãn hỗ trợ trình đọc màn hình.
+* Hỗ trợ phân trang và lọc hiệu quả.
+* Có trang 404 và trang lỗi thân thiện.
+* Không sử dụng dữ liệu giả như dữ liệu chính thức.
+
+Đối với hồ sơ dài, hỗ trợ lưu bản nháp và tiếp tục chỉnh sửa.
+
+XV. SEO, HIỆU NĂNG VÀ KHẢ NĂNG MỞ RỘNG
+
+* URL thân thiện và ổn định cho các bản ghi công khai.
+* Metadata và tiêu đề phù hợp từng trang.
+* Sitemap và robots.txt.
+* Phân trang phía backend.
+* Chỉ mục cơ sở dữ liệu cho trường tìm kiếm và bộ lọc.
+* Tránh truy vấn N+1.
+* Tối ưu kích thước tệp và hình ảnh.
+* Hạn chế tải dữ liệu không cần thiết.
+* Theo dõi lỗi và hiệu năng.
+* Có cơ chế nâng cấp cấu trúc dữ liệu bằng migration.
+* Có phiên bản API và tài liệu tích hợp.
+* Có thể bổ sung tiếng Anh, AI hỗ trợ tra cứu và bản đồ dữ liệu ở các giai đoạn sau.
+
+Không lập chỉ mục công cụ tìm kiếm đối với trang quản trị, dữ liệu hạn chế truy cập hoặc trang chứa thông tin không được phép công khai.
+
+XVI. KIỂM THỬ VÀ TIÊU CHÍ NGHIỆM THU
+
+Không được xem website là hoàn thành chỉ vì giao diện hiển thị được.
+
+Phải kiểm thử ít nhất các tình huống sau:
+
+1. Tạo, sửa, xem, tìm kiếm và lọc từng loại dữ liệu.
+2. Liên kết nhiều loại dữ liệu và truy cập qua lại giữa các bản ghi liên quan.
+3. Đăng ký, đăng nhập, đăng xuất và đặt lại mật khẩu.
+4. Kiểm tra phân quyền ở frontend và backend.
+5. Ngăn người dùng không có quyền xem dữ liệu hạn chế.
+6. Tiếp nhận, phê duyệt, từ chối và yêu cầu bổ sung hồ sơ.
+7. Nhập dữ liệu hợp lệ và xử lý tệp sai cấu trúc.
+8. Phát hiện dữ liệu trùng lặp.
+9. Xuất dữ liệu theo quyền.
+10. Kiểm tra nhật ký thay đổi.
+11. Kiểm tra giao diện trên thiết bị di động.
+12. Kiểm tra sao lưu và khôi phục.
+13. Kiểm tra hiệu năng với dữ liệu thử nghiệm có quy mô phù hợp.
+14. Kiểm tra các trường hợp lỗi và thao tác đồng thời.
+15. Kiểm tra dữ liệu được công khai sau khi phê duyệt.
+16. Kiểm tra không xuất hiện số liệu thống kê sai hoặc đếm trùng.
+
+Phải có dữ liệu kiểm thử được ghi nhãn rõ ràng, kịch bản kiểm thử và báo cáo kết quả thực tế.
+
+Không tuyên bố đã kiểm thử hoặc đạt tiêu chuẩn bảo mật khi chưa thực hiện kiểm thử tương ứng.
+
+XVII. QUẢN LÝ TIẾN ĐỘ PHÁT TRIỂN
+
+Triển khai theo các giai đoạn:
+
+Giai đoạn 1: Phân tích và kiến trúc
+
+* Phân tích yêu cầu.
+* Xây dựng sơ đồ nghiệp vụ.
+* Xây dựng mô hình dữ liệu.
+* Xây dựng sơ đồ quan hệ thực thể.
+* Xác định quyền.
+* Thiết kế API.
+* Thiết kế giao diện khung.
+* Xác định chi phí triển khai.
+
+Giai đoạn 2: Nền tảng và quản trị
+
+* Xây dựng frontend và backend.
+* Thiết lập cơ sở dữ liệu.
+* Xây dựng tài khoản, xác thực và phân quyền.
+* Xây dựng danh mục dùng chung.
+* Xây dựng nhật ký.
+* Xây dựng quản lý tệp và quy trình phê duyệt.
+
+Giai đoạn 3: Các phân hệ dữ liệu
+
+* Nhiệm vụ KH&CN.
+* Sáng kiến.
+* Chuyên gia.
+* Tổ chức KH&CN.
+* Doanh nghiệp khởi nghiệp.
+* Dự án khởi nghiệp.
+* Ý tưởng khởi nghiệp.
+* Nhà đầu tư.
+* Quỹ đầu tư.
+* Tổ chức hỗ trợ.
+* Công nghệ và kết quả nghiên cứu.
+* Chương trình hỗ trợ.
+* Nhu cầu kết nối.
+
+Giai đoạn 4: Liên kết và tìm kiếm
+
+* Tìm kiếm toàn hệ thống.
+* Bộ lọc đa tiêu chí.
+* Liên kết đa chiều.
+* Hồ sơ chi tiết.
+* Gợi ý dữ liệu liên quan.
+* Phát hiện dữ liệu trùng lặp.
+
+Giai đoạn 5: Thống kê và nhập dữ liệu
+
+* Dashboard.
+* Báo cáo.
+* Nhập Excel/CSV.
+* Xuất dữ liệu.
+* Đối soát và làm sạch dữ liệu.
+
+Giai đoạn 6: Hoàn thiện và triển khai
+
+* Kiểm thử.
+* Sửa lỗi.
+* Tối ưu hiệu năng.
+* Kiểm tra bảo mật.
+* Sao lưu và khôi phục.
+* Hướng dẫn triển khai.
+* Hướng dẫn quản trị.
+* Hướng dẫn người dùng.
+* Bàn giao mã nguồn và tài liệu.
+
+Sau mỗi giai đoạn phải có báo cáo nghiệm thu, danh sách tệp thay đổi, kết quả kiểm thử, lỗi còn tồn tại và điều kiện chuyển giai đoạn.
+
+Không tự ý chuyển giai đoạn khi các tiêu chí nghiệm thu đã thống nhất chưa đạt.
+
+XVIII. YÊU CẦU BÀN GIAO
+
+Bàn giao đầy đủ:
+
+1. Mã nguồn frontend.
+2. Mã nguồn backend.
+3. Schema cơ sở dữ liệu.
+4. Migration.
+5. Dữ liệu danh mục ban đầu hợp pháp.
+6. Tệp cấu hình mẫu.
+7. Danh sách biến môi trường.
+8. Tài liệu API.
+9. Tài liệu mô hình dữ liệu.
+10. Sơ đồ liên kết dữ liệu.
+11. Tài liệu phân quyền.
+12. Tài liệu cài đặt và chạy dự án.
+13. Hướng dẫn triển khai production.
+14. Hướng dẫn sao lưu và khôi phục.
+15. Hướng dẫn nhập và xuất dữ liệu.
+16. Tài khoản quản trị khởi tạo an toàn.
+17. Kịch bản và báo cáo kiểm thử.
+18. Danh sách lỗi chưa xử lý.
+19. Danh sách chi phí vận hành dự kiến.
+20. Hướng dẫn bảo trì và mở rộng.
+
+Không ghi cứng mật khẩu quản trị trong mã nguồn. Phải có cơ chế khởi tạo tài khoản quản trị an toàn.
+
+XIX. NGUYÊN TẮC KIỂM SOÁT CHI PHÍ
+
+Ưu tiên:
+
+* Công nghệ mã nguồn mở.
+* Một ứng dụng modular monolith.
+* Một cơ sở dữ liệu PostgreSQL dùng chung.
+* Một giao diện frontend.
+* Một backend API.
+* Hạ tầng dễ triển khai và sao lưu.
+* Công cụ quản lý mã nguồn miễn phí.
+* Không sử dụng dịch vụ trả phí nếu chưa có nhu cầu rõ ràng.
+* Không sử dụng AI trả phí làm điều kiện bắt buộc để website hoạt động.
+* Có thể thay thế nhà cung cấp lưu trữ mà không phải viết lại hệ thống.
+* Có dự toán chi phí tên miền, máy chủ, lưu trữ, sao lưu, email và bảo trì.
+
+Phải phân biệt chi phí ban đầu, chi phí vận hành hàng tháng và chi phí có thể phát sinh theo lưu lượng hoặc dung lượng.
+
+Không cam kết website vận hành miễn phí tuyệt đối nếu vẫn cần tên miền, máy chủ hoặc các dịch vụ có thu phí.
+
+XX. YÊU CẦU THỰC HIỆN CUỐI CÙNG
+
+Hãy bắt đầu bằng việc phân tích yêu cầu, xác định kiến trúc dữ liệu và quan hệ giữa các phân hệ trước khi triển khai giao diện và mã nguồn.
+
+Sau đó trực tiếp xây dựng từng giai đoạn, ưu tiên nền tảng dùng chung và liên kết dữ liệu ngay từ đầu.
+
+Mỗi chức năng phải có mã nguồn hoạt động, API thực tế, lưu trữ dữ liệu thật, kiểm tra quyền và kịch bản kiểm thử phù hợp.
+
+Không tạo các nút bấm giả, trang chỉ có giao diện, dữ liệu thống kê viết cứng hoặc chức năng chỉ hoạt động với dữ liệu mẫu.
+
+Không tự ý bỏ các trường nghiệp vụ quan trọng. Nếu phát hiện trường dữ liệu trùng lặp hoặc cần chuẩn hóa, phải giải thích cách thiết kế và bảo đảm vẫn đáp ứng đầy đủ nhu cầu quản lý.
+
+Nếu có nội dung chưa rõ, hãy nêu giả định và đề xuất phương án có thể điều chỉnh trong quản trị thay vì tự ý loại bỏ chức năng.
+
+Kết quả cuối cùng phải là một cổng dữ liệu thống nhất, dễ sử dụng, dễ bảo trì, chi phí hợp lý, có thể mở rộng, quản lý được tất cả các nhóm dữ liệu trong một nền tảng và cho phép người dùng tra cứu mọi thông tin được phép công khai từ một địa chỉ website duy nhất.
