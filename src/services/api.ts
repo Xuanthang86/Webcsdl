@@ -9,10 +9,23 @@ import {
   ConnectionMessage
 } from '../types';
 
+function getAuthHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
+  const headers: Record<string, string> = { ...extraHeaders };
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('portal_auth_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+  return headers;
+}
+
 export const api = {
   // Auth
   async getCurrentUser(): Promise<{ user: User; availableRoles: Array<{ role: string; label: string }> }> {
-    const res = await fetch('/api/auth/me');
+    const res = await fetch('/api/auth/me', {
+      headers: getAuthHeaders()
+    });
     const data = await res.json();
     return data;
   },
@@ -20,10 +33,14 @@ export const api = {
   async switchRole(role: string): Promise<User> {
     const res = await fetch('/api/auth/switch-role', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ role })
     });
     const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi chuyển đổi vai trò');
+    if (data.token && typeof window !== 'undefined') {
+      localStorage.setItem('portal_auth_token', data.token);
+    }
     return data.user;
   },
 
@@ -35,15 +52,26 @@ export const api = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Đăng nhập không thành công');
+    if (data.token && typeof window !== 'undefined') {
+      localStorage.setItem('portal_auth_token', data.token);
+    }
     return data.user;
   },
 
   async logout(): Promise<void> {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await fetch('/api/auth/logout', { 
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('portal_auth_token');
+    }
   },
 
   async getUsers(): Promise<User[]> {
-    const res = await fetch('/api/auth/users');
+    const res = await fetch('/api/users', {
+      headers: getAuthHeaders()
+    });
     const data = await res.json();
     return data.users || [];
   },
@@ -51,7 +79,7 @@ export const api = {
   async createUser(userData: Partial<User>): Promise<User> {
     const res = await fetch('/api/users', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(userData)
     });
     const data = await res.json();
@@ -62,7 +90,7 @@ export const api = {
   async updateUser(id: string, userData: Partial<User>): Promise<User> {
     const res = await fetch(`/api/users/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(userData)
     });
     const data = await res.json();
@@ -72,7 +100,8 @@ export const api = {
 
   async deleteUser(id: string): Promise<boolean> {
     const res = await fetch(`/api/users/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getAuthHeaders()
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Lỗi xóa tài khoản');
@@ -81,7 +110,9 @@ export const api = {
 
   // Config
   async getConfig(): Promise<SystemConfig> {
-    const res = await fetch('/api/config');
+    const res = await fetch('/api/config', {
+      headers: getAuthHeaders()
+    });
     const data = await res.json();
     return data.config;
   },
@@ -89,7 +120,7 @@ export const api = {
   async updateConfig(config: Partial<SystemConfig>): Promise<SystemConfig> {
     const res = await fetch('/api/config', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(config)
     });
     const data = await res.json();
@@ -98,7 +129,9 @@ export const api = {
 
   // Stats
   async getStats(): Promise<AggregatedStats> {
-    const res = await fetch('/api/stats');
+    const res = await fetch('/api/stats', {
+      headers: getAuthHeaders()
+    });
     const data = await res.json();
     return data.stats;
   },
@@ -120,7 +153,9 @@ export const api = {
     if (params.status) searchParams.set('status', params.status);
     if (params.verificationStatus) searchParams.set('verificationStatus', params.verificationStatus);
 
-    const res = await fetch(`/api/search?${searchParams.toString()}`);
+    const res = await fetch(`/api/search?${searchParams.toString()}`, {
+      headers: getAuthHeaders()
+    });
     return await res.json();
   },
 
@@ -129,13 +164,17 @@ export const api = {
     const searchParams = new URLSearchParams();
     if (sortBy) searchParams.set('sortBy', sortBy);
     if (order) searchParams.set('order', order);
-    const res = await fetch(`/api/modules/${moduleType}?${searchParams.toString()}`);
+    const res = await fetch(`/api/modules/${moduleType}?${searchParams.toString()}`, {
+      headers: getAuthHeaders()
+    });
     const json = await res.json();
     return json.data || [];
   },
 
   async getRecordById(moduleType: ModuleType, id: string): Promise<{ data: BaseEntity; relationships: EntityRelationship[] }> {
-    const res = await fetch(`/api/modules/${moduleType}/${id}`);
+    const res = await fetch(`/api/modules/${moduleType}/${id}`, {
+      headers: getAuthHeaders()
+    });
     const json = await res.json();
     return json;
   },
@@ -143,7 +182,7 @@ export const api = {
   async createRecord(moduleType: ModuleType, payload: any): Promise<BaseEntity> {
     const res = await fetch(`/api/modules/${moduleType}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
     const json = await res.json();
@@ -154,7 +193,7 @@ export const api = {
   async updateRecord(moduleType: ModuleType, id: string, payload: any): Promise<BaseEntity> {
     const res = await fetch(`/api/modules/${moduleType}/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
     const json = await res.json();
@@ -164,7 +203,8 @@ export const api = {
 
   async deleteRecord(moduleType: ModuleType, id: string): Promise<boolean> {
     const res = await fetch(`/api/modules/${moduleType}/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getAuthHeaders()
     });
     const json = await res.json();
     return json.success;
@@ -174,7 +214,7 @@ export const api = {
   async transitionWorkflow(moduleType: ModuleType, id: string, status: string, note?: string): Promise<BaseEntity> {
     const res = await fetch(`/api/modules/${moduleType}/${id}/workflow`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ status, note })
     });
     const json = await res.json();
@@ -185,7 +225,7 @@ export const api = {
   // Relationships
   async getRelationships(entityId?: string): Promise<EntityRelationship[]> {
     const url = entityId ? `/api/relationships?entityId=${entityId}` : '/api/relationships';
-    const res = await fetch(url);
+    const res = await fetch(url, { headers: getAuthHeaders() });
     const json = await res.json();
     return json.data || [];
   },
@@ -193,7 +233,7 @@ export const api = {
   async createRelationship(rel: Omit<EntityRelationship, 'id' | 'createdAt'>): Promise<EntityRelationship> {
     const res = await fetch('/api/relationships', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(rel)
     });
     const json = await res.json();
@@ -201,7 +241,10 @@ export const api = {
   },
 
   async deleteRelationship(id: string): Promise<boolean> {
-    const res = await fetch(`/api/relationships/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/relationships/${id}`, { 
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
     const json = await res.json();
     return json.success;
   },
@@ -210,7 +253,7 @@ export const api = {
   async importRecords(moduleType: ModuleType, items: any[]): Promise<{ importedCount: number; errors: string[]; duplicates: string[] }> {
     const res = await fetch(`/api/import/${moduleType}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ items })
     });
     const json = await res.json();
@@ -224,7 +267,9 @@ export const api = {
 
   // Audit Logs
   async getAuditLogs(limit = 100): Promise<AuditLog[]> {
-    const res = await fetch(`/api/audit-logs?limit=${limit}`);
+    const res = await fetch(`/api/audit-logs?limit=${limit}`, {
+      headers: getAuthHeaders()
+    });
     const json = await res.json();
     return json.logs || [];
   },
@@ -232,7 +277,7 @@ export const api = {
   // Connections
   async getConnections(needId?: string): Promise<ConnectionMessage[]> {
     const url = needId ? `/api/connections?needId=${needId}` : '/api/connections';
-    const res = await fetch(url);
+    const res = await fetch(url, { headers: getAuthHeaders() });
     const json = await res.json();
     return json.data || [];
   },
@@ -248,7 +293,7 @@ export const api = {
   }): Promise<ConnectionMessage> {
     const res = await fetch('/api/connections', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
     const json = await res.json();
@@ -259,7 +304,7 @@ export const api = {
   async updateConnectionStatus(id: string, status: 'accepted' | 'declined'): Promise<boolean> {
     const res = await fetch(`/api/connections/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ status })
     });
     const json = await res.json();
@@ -274,7 +319,7 @@ export const api = {
   async restoreBackup(snapshot: any): Promise<boolean> {
     const res = await fetch('/api/restore', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(snapshot)
     });
     const json = await res.json();
@@ -289,14 +334,19 @@ export const api = {
     passedTests: number;
     results: Array<{ id: number; name: string; passed: boolean; message: string; durationMs: number }>;
   }> {
-    const res = await fetch('/api/test-suite/run', { method: 'POST' });
+    const res = await fetch('/api/test-suite/run', { 
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
     const json = await res.json();
     return json.data;
   },
 
   // Form Management (Section VIII.3)
   async getFormConfig(moduleType: string): Promise<any> {
-    const res = await fetch(`/api/forms/${moduleType}`);
+    const res = await fetch(`/api/forms/${moduleType}`, {
+      headers: getAuthHeaders()
+    });
     const json = await res.json();
     return json.config || { customFields: [] };
   },
@@ -304,7 +354,7 @@ export const api = {
   async updateFormConfig(moduleType: string, config: any): Promise<any> {
     const res = await fetch(`/api/forms/${moduleType}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(config)
     });
     const json = await res.json();

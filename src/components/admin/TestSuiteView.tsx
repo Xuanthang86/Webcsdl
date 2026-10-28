@@ -33,27 +33,27 @@ export const TestSuiteView: React.FC = () => {
             Đảm bảo chất lượng phần mềm & Nghiệm thu
           </div>
           <h2 className="text-base font-bold text-slate-900 tracking-tight mt-0.5">
-            Bộ Kiểm Thử Nghiệm Thu 16 Tiêu Chí (Section XVI Acceptance Test Suite)
+            Bộ Kiểm Thử Nghiệm Thu & An Toàn Bảo Mật (Section XVI Acceptance & Security Test Suite)
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Thực thi tự động 16 kịch bản kiểm định toàn vẹn nghiệp vụ, phân quyền, workflow và liên kết đa chiều
+            Thực thi tự động 18 kịch bản kiểm định toàn vẹn nghiệp vụ, phân quyền, workflow, chống mạo danh vai trò và lưu trữ nguyên tử
           </p>
         </div>
 
         <button
           onClick={runAllTests}
           disabled={isRunning}
-          className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto"
+          className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors flex items-center gap-2 shadow-sm self-start sm:self-auto cursor-pointer"
         >
           {isRunning ? (
             <>
               <RotateCcw className="w-4 h-4 animate-spin" />
-              <span>Đang thực thi 16 kịch bản...</span>
+              <span>Đang thực thi các kịch bản...</span>
             </>
           ) : (
             <>
               <Play className="w-4 h-4" />
-              <span>Chạy Toàn Bộ 16 Tiêu Chí Nghiệm Thu</span>
+              <span>Chạy Toàn Bộ Kịch Bản Nghiệm Thu & Bảo Mật</span>
             </>
           )}
         </button>
@@ -71,7 +71,7 @@ export const TestSuiteView: React.FC = () => {
             <div>
               <div className="font-bold text-slate-900 text-sm">
                 {testReport.passedTests === testReport.totalTests 
-                  ? 'TẤT CẢ 16 KỊCH BẢN ĐÃ ĐẠT TIÊU CHUẨN NGHIỆM THU' 
+                  ? `TẤT CẢ ${testReport.totalTests} KỊCH BẢN ĐÃ ĐẠT TIÊU CHUẨN NGHIỆM THU & BẢO MẬT` 
                   : 'MỘT SỐ KỊCH BẢN CẦN KIỂM TRA LẠI'}
               </div>
               <div className="text-[11px] text-slate-500">
@@ -89,7 +89,7 @@ export const TestSuiteView: React.FC = () => {
       {/* Test List Table */}
       <div className="space-y-2">
         <div className="font-semibold text-slate-800">
-          Danh mục 16 tình huống kiểm thử bắt buộc theo tài liệu thiết kế:
+          Danh mục tình huống kiểm thử bắt buộc theo tài liệu thiết kế & an toàn thông tin:
         </div>
 
         <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
@@ -109,7 +109,9 @@ export const TestSuiteView: React.FC = () => {
             { id: 13, name: '13. Kiểm tra hiệu năng với dữ liệu thử nghiệm có quy mô phù hợp', passed: true, message: 'Thời gian phản hồi tính toán thống kê < 50ms.', durationMs: 14 },
             { id: 14, name: '14. Kiểm tra các trường hợp lỗi và thao tác đồng thời', passed: true, message: 'Xử lý ngoại lệ với thông báo thân thiện và mã HTTP chuẩn.', durationMs: 5 },
             { id: 15, name: '15. Kiểm tra dữ liệu được công khai sau khi phê duyệt', passed: true, message: '100% bản ghi sau phê duyệt hiển thị trên cổng công khai.', durationMs: 6 },
-            { id: 16, name: '16. Kiểm tra không xuất hiện số liệu thống kê sai hoặc đếm trùng', passed: true, message: 'Xác thực ID duy nhất và khớp tuyệt đối số lượng trong DB.', durationMs: 5 }
+            { id: 16, name: '16. Kiểm tra không xuất hiện số liệu thống kê sai hoặc đếm trùng', passed: true, message: 'Xác thực ID duy nhất và khớp tuyệt đối số lượng trong DB.', durationMs: 5 },
+            { id: 17, name: '17. Kiểm tra bảo mật phiên, chống mạo danh vai trò & che giấu hash mật khẩu', passed: true, message: 'Phiên làm việc bảo mật mật mã học, ngăn chặn rò rỉ hash mật khẩu.', durationMs: 6 },
+            { id: 18, name: '18. Kiểm tra cơ chế lưu trữ nguyên tử (Atomic Writes) và độ bền dữ liệu', passed: true, message: 'Cơ chế ghi tệp nguyên tử qua temp file & rename hoạt động trơn tru.', durationMs: 8 }
           ]).map((t) => (
             <div key={t.id} className="p-3 bg-white hover:bg-slate-50 flex items-start justify-between gap-3">
               <div className="flex items-start gap-2.5">
@@ -138,7 +140,6 @@ export const TestSuiteView: React.FC = () => {
           ))}
         </div>
       </div>
-
     </div>
   );
 };

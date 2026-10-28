@@ -400,6 +400,8 @@ export interface User {
   id: string;
   username: string;
   password?: string;
+  passwordHash?: string;
+  passwordSalt?: string;
   fullName: string;
   email: string;
   role: UserRole;

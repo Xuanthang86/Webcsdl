@@ -45,8 +45,10 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
   const [results, setResults] = useState<BaseEntity[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAdvancedModal, setShowAdvancedModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 12;
 
-  const fetchResults = async () => {
+  const fetchResults = async (isCurrentCheck?: () => boolean) => {
     setLoading(true);
     try {
       const data = await api.searchGlobal({
@@ -55,16 +57,27 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
         field: selectedField || undefined,
         status: statusFilter === 'all' ? undefined : statusFilter
       });
-      setResults(data.results || []);
+      if (!isCurrentCheck || isCurrentCheck()) {
+        setResults(data.results || []);
+        setCurrentPage(1);
+      }
     } catch (err) {
-      console.error(err);
+      if (!isCurrentCheck || isCurrentCheck()) {
+        console.error('Lỗi tìm kiếm dữ liệu:', err);
+      }
     } finally {
-      setLoading(false);
+      if (!isCurrentCheck || isCurrentCheck()) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchResults();
+    let active = true;
+    fetchResults(() => active);
+    return () => {
+      active = false;
+    };
   }, [selectedModule, selectedField, statusFilter]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -346,71 +359,131 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
         </div>
       ) : (
         /* ================= SINGLE MODULE GRID VIEW ================= */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {results.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => onViewDetail(item)}
-              className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:border-teal-400 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group"
-            >
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <span className="font-mono text-teal-800 font-semibold">{item.code}</span>
-                  <span aria-hidden="true">·</span>
-                  <span className="capitalize truncate">{MODULE_NAMES[item.moduleType] || item.moduleType}</span>
-                  {item.recognizedScope && (
-                    <>
-                      <span aria-hidden="true">·</span>
-                      <span className="text-amber-800 font-semibold">{item.recognizedScope}</span>
-                    </>
-                  )}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {results.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item) => (
+              <div
+                key={item.id}
+                onClick={() => onViewDetail(item)}
+                className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:border-teal-400 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span className="font-mono text-teal-800 font-semibold">{item.code}</span>
+                    <span aria-hidden="true">·</span>
+                    <span className="capitalize truncate">{MODULE_NAMES[item.moduleType] || item.moduleType}</span>
+                    {item.recognizedScope && (
+                      <>
+                        <span aria-hidden="true">·</span>
+                        <span className="text-amber-800 font-semibold">{item.recognizedScope}</span>
+                      </>
+                    )}
+                  </div>
+
+                  <h3 className="text-base font-bold text-slate-900 group-hover:text-teal-800 transition-colors line-clamp-2 leading-snug">
+                    {item.title}
+                  </h3>
+
+                  <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                    {item.description || item.problemSolved || 'Chưa cập nhật nội dung tóm tắt.'}
+                  </p>
+
+                  <div className="pt-2 border-t border-slate-100 space-y-1 text-xs">
+                    <div className="text-slate-500 truncate">
+                      <span className="text-slate-400">Đơn vị / Tác giả:</span> {item.ownerName || item.leadOrganization || '—'}
+                    </div>
+                    
+                    {item.costSavings && (
+                      <div className="text-emerald-700 font-mono">
+                        <span className="text-slate-400 font-sans">Tiết kiệm:</span> <span className="font-bold">{formatVND(item.costSavings)}/năm</span>
+                      </div>
+                    )}
+
+                    {item.totalBudgetApproved && (
+                      <div className="text-teal-800 font-mono">
+                        <span className="text-slate-400 font-sans">Kinh phí duyệt:</span> <span className="font-bold">{formatVND(item.totalBudgetApproved)}</span>
+                      </div>
+                    )}
+
+                    {item.publicationsCount !== undefined && (
+                      <div className="text-slate-700 font-mono">
+                        <span className="text-slate-400 font-sans">Công bố:</span> <span className="font-bold">{item.publicationsCount} bài báo ISI/Scopus</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <h3 className="text-base font-bold text-slate-900 group-hover:text-teal-800 transition-colors line-clamp-2 leading-snug">
-                  {item.title}
-                </h3>
-
-                <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
-                  {item.description || item.problemSolved || 'Chưa cập nhật nội dung tóm tắt.'}
-                </p>
-
-                <div className="pt-2 border-t border-slate-100 space-y-1 text-xs">
-                  <div className="text-slate-500 truncate">
-                    <span className="text-slate-400">Đơn vị / Tác giả:</span> {item.ownerName || item.leadOrganization || '—'}
-                  </div>
-                  
-                  {item.costSavings && (
-                    <div className="text-emerald-700 font-mono">
-                      <span className="text-slate-400 font-sans">Tiết kiệm:</span> <span className="font-bold">{formatVND(item.costSavings)}/năm</span>
-                    </div>
-                  )}
-
-                  {item.totalBudgetApproved && (
-                    <div className="text-teal-800 font-mono">
-                      <span className="text-slate-400 font-sans">Kinh phí duyệt:</span> <span className="font-bold">{formatVND(item.totalBudgetApproved)}</span>
-                    </div>
-                  )}
-
-                  {item.publicationsCount !== undefined && (
-                    <div className="text-slate-700 font-mono">
-                      <span className="text-slate-400 font-sans">Công bố:</span> <span className="font-bold">{item.publicationsCount} bài báo ISI/Scopus</span>
-                    </div>
-                  )}
+                <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                  <span className="flex items-center gap-1 text-[11px] text-emerald-700">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Xác thực chính thức
+                  </span>
+                  <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
+                    Xem chi tiết
+                    <ArrowRight className="w-3 h-3" />
+                  </span>
                 </div>
               </div>
+            ))}
+          </div>
 
-              <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                <span className="flex items-center gap-1 text-[11px] text-emerald-700">
-                  <CheckCircle2 className="w-3 h-3" />
-                  Xác thực chính thức
-                </span>
-                <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
-                  Xem chi tiết
-                  <ArrowRight className="w-3 h-3" />
-                </span>
+          {/* Pagination Controls */}
+          {results.length > PAGE_SIZE && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200 text-xs">
+              <div className="text-slate-500">
+                Hiển thị từ <strong className="text-slate-900 font-mono">{(currentPage - 1) * PAGE_SIZE + 1}</strong> đến{' '}
+                <strong className="text-slate-900 font-mono">{Math.min(currentPage * PAGE_SIZE, results.length)}</strong> trên{' '}
+                <strong className="text-slate-900 font-mono">{results.length}</strong> kết quả
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => {
+                    setCurrentPage(prev => Math.max(1, prev - 1));
+                    window.scrollTo({ top: 180, behavior: 'smooth' });
+                  }}
+                  className="px-3 py-1.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed font-medium text-slate-700 cursor-pointer"
+                >
+                  Trang trước
+                </button>
+
+                {Array.from({ length: Math.ceil(results.length / PAGE_SIZE) }).map((_, idx) => {
+                  const pageNum = idx + 1;
+                  return (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      onClick={() => {
+                        setCurrentPage(pageNum);
+                        window.scrollTo({ top: 180, behavior: 'smooth' });
+                      }}
+                      className={`w-8 h-8 rounded-lg font-medium font-mono text-xs cursor-pointer ${
+                        currentPage === pageNum
+                          ? 'bg-teal-800 text-white font-bold'
+                          : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  type="button"
+                  disabled={currentPage === Math.ceil(results.length / PAGE_SIZE)}
+                  onClick={() => {
+                    setCurrentPage(prev => Math.min(Math.ceil(results.length / PAGE_SIZE), prev + 1));
+                    window.scrollTo({ top: 180, behavior: 'smooth' });
+                  }}
+                  className="px-3 py-1.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed font-medium text-slate-700 cursor-pointer"
+                >
+                  Trang sau
+                </button>
               </div>
             </div>
-          ))}
+          )}
         </div>
       )}
 

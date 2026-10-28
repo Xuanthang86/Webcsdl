@@ -1,17 +1,64 @@
 import { Router, Response } from 'express';
 import { db } from '../db.ts';
-import { authMiddleware, AuthenticatedRequest, requirePermission, requireRole } from '../auth.ts';
+import { authMiddleware, AuthenticatedRequest, requirePermission, requireRole, createSessionToken } from '../auth.ts';
 import { ModuleType, ApprovalStatus, UserRole } from '../types.ts';
 
 export const apiRouter = Router();
 
 apiRouter.use(authMiddleware);
 
+// Whitelisted 17 modules
+const VALID_MODULES = new Set<string>([
+  'science_tasks',
+  'initiatives',
+  'experts',
+  'organizations',
+  'startups',
+  'startup_projects',
+  'startup_ideas',
+  'investors',
+  'investment_funds',
+  'support_organizations',
+  'technologies',
+  'programs',
+  'collaboration_needs',
+  'patents',
+  'publications',
+  'lab_equipments',
+  'policies'
+]);
+
+// Text sanitization helper to neutralize stored XSS / script injections
+function sanitizeString(input: any): string {
+  if (typeof input !== 'string') return '';
+  return input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/on\w+\s*=/gi, '')
+    .replace(/javascript:/gi, '')
+    .trim();
+}
+
+function sanitizeObject(obj: any): any {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(sanitizeObject);
+  const clean: any = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (typeof v === 'string') {
+      clean[k] = sanitizeString(v);
+    } else if (typeof v === 'object' && v !== null) {
+      clean[k] = sanitizeObject(v);
+    } else {
+      clean[k] = v;
+    }
+  }
+  return clean;
+}
+
 // 1. Authentication & Role Switcher
 apiRouter.get('/auth/me', (req: AuthenticatedRequest, res: Response) => {
   res.json({
     success: true,
-    user: req.user,
+    user: req.user ? db.sanitizeUser(req.user) : undefined,
     availableRoles: [
       { role: 'super_admin', label: 'Super Admin (Toàn quyền hệ thống)' },
       { role: 'system_admin', label: 'Quản trị viên hệ thống' },
@@ -27,12 +74,23 @@ apiRouter.get('/auth/me', (req: AuthenticatedRequest, res: Response) => {
   });
 });
 
+// Role Switcher: RESTRICTED to authenticated administrators only to prevent privilege escalation
 apiRouter.post('/auth/switch-role', (req: AuthenticatedRequest, res: Response): void => {
   const { role } = req.body;
   if (!role) {
     res.status(400).json({ success: false, message: 'Thiếu thông tin vai trò.' });
     return;
   }
+
+  // Prevent unauthorized self-elevation by guests or unauthenticated users
+  if (!req.user || !['super_admin', 'system_admin'].includes(req.user.role)) {
+    res.status(403).json({
+      success: false,
+      message: 'Chỉ Quản trị viên hệ thống mới có quyền chuyển đổi góc nhìn vai trò để kiểm thử. Vui lòng đăng nhập với tài khoản hợp lệ.'
+    });
+    return;
+  }
+
   const targetUser = db.getUsers().find(u => u.role === role) || {
     id: `usr_${role}`,
     username: role,
@@ -43,18 +101,23 @@ apiRouter.post('/auth/switch-role', (req: AuthenticatedRequest, res: Response): 
     createdAt: new Date().toISOString()
   };
 
-  res.cookie('user_role', targetUser.role, { httpOnly: true, sameSite: 'lax', maxAge: 86400000 });
-  res.cookie('user_id', targetUser.id, { httpOnly: true, sameSite: 'lax', maxAge: 86400000 });
+  const sessionToken = createSessionToken(targetUser);
+  res.cookie('portal_session', sessionToken, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 7 * 24 * 60 * 60 * 1000
+  });
 
   db.addAuditLog({
     userId: targetUser.id,
     userName: targetUser.fullName,
     userRole: targetUser.role,
     action: 'login',
-    details: `Chuyển phiên làm việc sang vai trò [${targetUser.role}]`
+    details: `Quản trị viên chuyển phiên làm việc sang vai trò [${targetUser.role}]`
   });
 
-  res.json({ success: true, user: targetUser });
+  res.json({ success: true, token: sessionToken, user: db.sanitizeUser(targetUser) });
 });
 
 apiRouter.post('/auth/login', (req: AuthenticatedRequest, res: Response): void => {
@@ -63,42 +126,56 @@ apiRouter.post('/auth/login', (req: AuthenticatedRequest, res: Response): void =
     res.status(400).json({ success: false, message: 'Vui lòng nhập tên đăng nhập.' });
     return;
   }
-  const user = db.authenticateUser(username, password);
-  if (!user) {
-    res.status(401).json({ success: false, message: 'Tên đăng nhập hoặc mật khẩu không chính xác hoặc tài khoản đã bị khóa.' });
-    return;
+
+  try {
+    const user = db.authenticateUser(username, password);
+    if (!user) {
+      res.status(401).json({ success: false, message: 'Tên đăng nhập hoặc mật khẩu không chính xác hoặc tài khoản đã bị khóa.' });
+      return;
+    }
+
+    const sessionToken = createSessionToken(user);
+    res.cookie('portal_session', sessionToken, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    db.addAuditLog({
+      userId: user.id,
+      userName: user.fullName,
+      userRole: user.role,
+      action: 'login',
+      details: `Đăng nhập hệ thống thành công với tài khoản [${user.username}] (${user.role})`
+    });
+
+    res.json({ success: true, token: sessionToken, user: db.sanitizeUser(user) });
+  } catch (err: any) {
+    res.status(429).json({ success: false, message: err.message || 'Lỗi đăng nhập hệ thống' });
   }
-  res.cookie('user_role', user.role, { httpOnly: true, sameSite: 'lax', maxAge: 86400000 });
-  res.cookie('user_id', user.id, { httpOnly: true, sameSite: 'lax', maxAge: 86400000 });
-  db.addAuditLog({
-    userId: user.id,
-    userName: user.fullName,
-    userRole: user.role,
-    action: 'login',
-    details: `Đăng nhập hệ thống thành công với tài khoản [${user.username}] (${user.role})`
-  });
-  res.json({ success: true, user });
 });
 
 apiRouter.post('/auth/logout', (req: AuthenticatedRequest, res: Response): void => {
+  res.clearCookie('portal_session');
   res.clearCookie('user_role');
   res.clearCookie('user_id');
-  res.json({ success: true, message: 'Đã đăng xuất.' });
+  res.json({ success: true, message: 'Đã đăng xuất an toàn.' });
 });
 
 apiRouter.get('/auth/users', (req: AuthenticatedRequest, res: Response) => {
-  res.json({ success: true, users: db.getUsers() });
+  res.json({ success: true, users: db.getUsers().map(u => db.sanitizeUser(u)) });
 });
 
 // User Management (Admin & RBAC)
 apiRouter.get('/users', requireRole(['super_admin', 'system_admin']), (req: AuthenticatedRequest, res: Response) => {
-  res.json({ success: true, users: db.getUsers() });
+  res.json({ success: true, users: db.getUsers().map(u => db.sanitizeUser(u)) });
 });
 
 apiRouter.post('/users', requireRole(['super_admin', 'system_admin']), (req: AuthenticatedRequest, res: Response): void => {
   try {
     const newUser = db.createUser(req.body, req.user);
-    res.status(201).json({ success: true, user: newUser });
+    res.status(201).json({ success: true, user: db.sanitizeUser(newUser) });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message || 'Lỗi tạo tài khoản' });
   }
@@ -107,7 +184,7 @@ apiRouter.post('/users', requireRole(['super_admin', 'system_admin']), (req: Aut
 apiRouter.put('/users/:id', requireRole(['super_admin', 'system_admin']), (req: AuthenticatedRequest, res: Response): void => {
   try {
     const updatedUser = db.updateUser(req.params.id, req.body, req.user);
-    res.json({ success: true, user: updatedUser });
+    res.json({ success: true, user: db.sanitizeUser(updatedUser) });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message || 'Lỗi cập nhật tài khoản' });
   }
@@ -132,7 +209,8 @@ apiRouter.put('/config', requirePermission('canManageConfig'), (req: Authenticat
     res.status(401).json({ success: false, message: 'Chưa đăng nhập.' });
     return;
   }
-  const updated = db.updateSystemConfig(req.body, req.user);
+  const cleanBody = sanitizeObject(req.body);
+  const updated = db.updateSystemConfig(cleanBody, req.user);
   res.json({ success: true, config: updated });
 });
 
@@ -185,6 +263,10 @@ apiRouter.get('/search', (req: AuthenticatedRequest, res: Response) => {
 // 5. Module CRUD Operations
 apiRouter.get('/modules/:moduleType', (req: AuthenticatedRequest, res: Response): void => {
   const moduleType = req.params.moduleType as ModuleType;
+  if (!VALID_MODULES.has(moduleType)) {
+    res.status(400).json({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' });
+    return;
+  }
   const isPublicOnly = req.user?.role === 'public_user';
   const records = db.getModuleRecords(moduleType, isPublicOnly);
 
@@ -209,6 +291,10 @@ apiRouter.get('/modules/:moduleType', (req: AuthenticatedRequest, res: Response)
 
 apiRouter.get('/modules/:moduleType/:id', (req: AuthenticatedRequest, res: Response): void => {
   const moduleType = req.params.moduleType as ModuleType;
+  if (!VALID_MODULES.has(moduleType)) {
+    res.status(400).json({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' });
+    return;
+  }
   const id = req.params.id;
   const record = db.getRecordById(moduleType, id);
 
@@ -238,6 +324,10 @@ apiRouter.post('/modules/:moduleType', (req: AuthenticatedRequest, res: Response
     return;
   }
   const moduleType = req.params.moduleType as ModuleType;
+  if (!VALID_MODULES.has(moduleType)) {
+    res.status(400).json({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' });
+    return;
+  }
   const config = db.getSystemConfig();
 
   // If public user, check if public submission is allowed
@@ -252,7 +342,8 @@ apiRouter.post('/modules/:moduleType', (req: AuthenticatedRequest, res: Response
     req.body.publicityLevel = 'restricted'; // require review before public
   }
 
-  const created = db.createRecord(moduleType, req.body, req.user);
+  const cleanPayload = sanitizeObject(req.body);
+  const created = db.createRecord(moduleType, cleanPayload, req.user);
   res.status(201).json({ success: true, data: created });
 });
 
@@ -262,6 +353,10 @@ apiRouter.put('/modules/:moduleType/:id', (req: AuthenticatedRequest, res: Respo
     return;
   }
   const moduleType = req.params.moduleType as ModuleType;
+  if (!VALID_MODULES.has(moduleType)) {
+    res.status(400).json({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' });
+    return;
+  }
   const id = req.params.id;
 
   // Check edit rights
@@ -277,7 +372,8 @@ apiRouter.put('/modules/:moduleType/:id', (req: AuthenticatedRequest, res: Respo
     return;
   }
 
-  const updated = db.updateRecord(moduleType, id, req.body, req.user);
+  const cleanPayload = sanitizeObject(req.body);
+  const updated = db.updateRecord(moduleType, id, cleanPayload, req.user);
   res.json({ success: true, data: updated });
 });
 
@@ -287,6 +383,10 @@ apiRouter.delete('/modules/:moduleType/:id', requirePermission('canDelete'), (re
     return;
   }
   const moduleType = req.params.moduleType as ModuleType;
+  if (!VALID_MODULES.has(moduleType)) {
+    res.status(400).json({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' });
+    return;
+  }
   const id = req.params.id;
 
   const success = db.deleteRecord(moduleType, id, req.user);
@@ -304,6 +404,10 @@ apiRouter.post('/modules/:moduleType/:id/workflow', (req: AuthenticatedRequest, 
     return;
   }
   const moduleType = req.params.moduleType as ModuleType;
+  if (!VALID_MODULES.has(moduleType)) {
+    res.status(400).json({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' });
+    return;
+  }
   const id = req.params.id;
   const { status, note } = req.body;
 
@@ -320,7 +424,8 @@ apiRouter.post('/modules/:moduleType/:id/workflow', (req: AuthenticatedRequest, 
     }
   }
 
-  const transitioned = db.transitionWorkflow(moduleType, id, status as ApprovalStatus, note || '', req.user);
+  const cleanNote = sanitizeString(note || '');
+  const transitioned = db.transitionWorkflow(moduleType, id, status as ApprovalStatus, cleanNote, req.user);
   if (!transitioned) {
     res.status(404).json({ success: false, message: 'Không tìm thấy bản ghi.' });
     return;
@@ -344,7 +449,8 @@ apiRouter.post('/relationships', (req: AuthenticatedRequest, res: Response): voi
     res.status(403).json({ success: false, message: 'Không có quyền tạo liên kết dữ liệu.' });
     return;
   }
-  const rel = db.createRelationship(req.body, req.user);
+  const cleanBody = sanitizeObject(req.body);
+  const rel = db.createRelationship(cleanBody, req.user);
   res.status(201).json({ success: true, data: rel });
 });
 
@@ -364,6 +470,10 @@ apiRouter.post('/import/:moduleType', requirePermission('canImportExport'), (req
     return;
   }
   const moduleType = req.params.moduleType as ModuleType;
+  if (!VALID_MODULES.has(moduleType)) {
+    res.status(400).json({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' });
+    return;
+  }
   const items = req.body.items;
 
   if (!Array.isArray(items) || items.length === 0) {
@@ -371,12 +481,17 @@ apiRouter.post('/import/:moduleType', requirePermission('canImportExport'), (req
     return;
   }
 
-  const result = db.batchImport(moduleType, items, req.user);
+  const cleanItems = items.map(sanitizeObject);
+  const result = db.batchImport(moduleType, cleanItems, req.user);
   res.json({ success: true, result });
 });
 
 apiRouter.get('/export/:moduleType', (req: AuthenticatedRequest, res: Response): void => {
   const moduleType = req.params.moduleType as ModuleType;
+  if (!VALID_MODULES.has(moduleType)) {
+    res.status(400).json({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' });
+    return;
+  }
   const isPublicOnly = req.user?.role === 'public_user';
   const records = db.getModuleRecords(moduleType, isPublicOnly);
 
@@ -394,7 +509,12 @@ apiRouter.get('/export/:moduleType', (req: AuthenticatedRequest, res: Response):
   const rows = records.map(r => {
     return keys.map(k => {
       const val = r[k] ?? '';
-      const str = String(val).replace(/"/g, '""');
+      let str = String(val);
+      // Neutralize CSV Formula Injection (DDE attack prevention for spreadsheet apps)
+      if (/^[=\+\-@\t\r]/.test(str)) {
+        str = "'" + str;
+      }
+      str = str.replace(/"/g, '""');
       return `"${str}"`;
     }).join(',');
   });
@@ -437,7 +557,15 @@ apiRouter.post('/connections', (req: AuthenticatedRequest, res: Response): void 
   }
 
   const created = db.createConnectionMessage(
-    { needId, senderName, senderEmail, senderPhone: senderPhone || '', senderOrg: senderOrg || '', message, proposedCapability: proposedCapability || '' },
+    {
+      needId: sanitizeString(needId),
+      senderName: sanitizeString(senderName),
+      senderEmail: sanitizeString(senderEmail),
+      senderPhone: sanitizeString(senderPhone || ''),
+      senderOrg: sanitizeString(senderOrg || ''),
+      message: sanitizeString(message),
+      proposedCapability: sanitizeString(proposedCapability || '')
+    },
     req.user
   );
   res.status(201).json({ success: true, data: created });
@@ -474,7 +602,7 @@ apiRouter.post('/restore', requireRole(['super_admin']), (req: AuthenticatedRequ
   }
 });
 
-// 12. Automated Acceptance Test Suite (All 16 Scenarios)
+// 12. Automated Acceptance Test Suite (All 18 Scenarios)
 apiRouter.post('/test-suite/run', (req: AuthenticatedRequest, res: Response): void => {
   if (!req.user) {
     res.status(401).json({ success: false, message: 'Chưa đăng nhập.' });

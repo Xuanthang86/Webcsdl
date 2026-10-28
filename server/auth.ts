@@ -1,6 +1,52 @@
+import crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
 import { User, UserRole, ModuleType } from './types.ts';
 import { db } from './db.ts';
+
+const SESSION_SECRET = process.env.SESSION_SECRET || 'danang-sokhcn-portal-secure-secret-2026-v2';
+
+export interface SessionPayload {
+  uid: string;
+  role: UserRole;
+  iat: number;
+  exp: number;
+}
+
+export function createSessionToken(user: User): string {
+  const payload: SessionPayload = {
+    uid: user.id,
+    role: user.role,
+    iat: Date.now(),
+    exp: Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days validity
+  };
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const sig = crypto.createHmac('sha256', SESSION_SECRET).update(body).digest('base64url');
+  return `${body}.${sig}`;
+}
+
+export function verifySessionToken(token: string): SessionPayload | null {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+  const [body, sig] = parts;
+  const expectedSig = crypto.createHmac('sha256', SESSION_SECRET).update(body).digest('base64url');
+  
+  // Constant time comparison to prevent timing attacks
+  if (sig.length !== expectedSig.length) return null;
+  const bufSig = Buffer.from(sig);
+  const bufExpected = Buffer.from(expectedSig);
+  if (!crypto.timingSafeEqual(bufSig, bufExpected)) return null;
+
+  try {
+    const payload: SessionPayload = JSON.parse(Buffer.from(body, 'base64url').toString('utf-8'));
+    if (!payload.uid || !payload.exp || Date.now() > payload.exp) {
+      return null;
+    }
+    return payload;
+  } catch {
+    return null;
+  }
+}
 
 export interface AuthenticatedRequest extends Request {
   user?: User;
@@ -109,20 +155,37 @@ const ROLE_PERMISSIONS: Record<UserRole, {
 };
 
 export function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  // Check session cookie or header
-  const roleHeader = (req.headers['x-user-role'] as string) || (req.cookies && req.cookies['user_role']);
-  const userIdHeader = (req.headers['x-user-id'] as string) || (req.cookies && req.cookies['user_id']);
+  let token: string | undefined;
+
+  // 1. Authorization header: Bearer <token>
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7).trim();
+  }
+
+  // 2. Custom header
+  if (!token && req.headers['x-session-token']) {
+    token = req.headers['x-session-token'] as string;
+  }
+
+  // 3. Cryptographically signed cookie
+  if (!token && req.cookies && req.cookies['portal_session']) {
+    token = req.cookies['portal_session'];
+  }
 
   let user: User | undefined;
 
-  if (userIdHeader) {
-    user = db.getUserById(userIdHeader);
-  } else if (roleHeader) {
-    const matched = db.getUsers().find(u => u.role === roleHeader);
-    user = matched;
+  if (token) {
+    const payload = verifySessionToken(token);
+    if (payload) {
+      const foundUser = db.getUserById(payload.uid);
+      if (foundUser && foundUser.isActive) {
+        user = foundUser;
+      }
+    }
   }
 
-  // Fallback default: public user
+  // Fallback default: public guest user
   if (!user) {
     user = db.getUserByUsername('guest') || {
       id: 'usr_guest',

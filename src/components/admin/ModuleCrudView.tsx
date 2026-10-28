@@ -81,6 +81,11 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   const [formStatus, setFormStatus] = useState<ApprovalStatus>('draft');
   const [formCostSavings, setFormCostSavings] = useState('');
   const [formBudget, setFormBudget] = useState('');
+  const [extraFields, setExtraFields] = useState<Record<string, any>>({});
+
+  const setExtra = (key: string, val: any) => {
+    setExtraFields(prev => ({ ...prev, [key]: val }));
+  };
 
   const isSuperUser = ['super_admin', 'system_admin'].includes(currentUser?.role || '');
   const canApprove = ['super_admin', 'system_admin', 'agency_leader'].includes(currentUser?.role || '');
@@ -122,6 +127,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     setFormStatus('draft');
     setFormCostSavings('');
     setFormBudget('');
+    setExtraFields({});
     setShowCreateModal(true);
   };
 
@@ -134,6 +140,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     setFormStatus(rec.status);
     setFormCostSavings(rec.costSavings ? String(rec.costSavings) : '');
     setFormBudget(rec.totalBudgetApproved ? String(rec.totalBudgetApproved) : '');
+    setExtraFields({ ...rec });
   };
 
   const handleSaveForm = async (e: React.FormEvent) => {
@@ -141,29 +148,24 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     if (!formTitle) return;
 
     try {
+      const payload: Record<string, any> = {
+        ...extraFields,
+        title: formTitle,
+        field: formField,
+        ownerName: formOwner,
+        description: formDesc,
+        status: formStatus,
+        costSavings: Number(formCostSavings) || extraFields.costSavings || undefined,
+        totalBudgetApproved: Number(formBudget) || extraFields.totalBudgetApproved || undefined
+      };
+
       if (editingRecord) {
-        await api.updateRecord(moduleType, editingRecord.id, {
-          title: formTitle,
-          field: formField,
-          ownerName: formOwner,
-          description: formDesc,
-          status: formStatus,
-          costSavings: Number(formCostSavings) || undefined,
-          totalBudgetApproved: Number(formBudget) || undefined,
-          updateNote: 'Chỉnh sửa thông tin từ giao diện quản trị'
-        });
+        payload.updateNote = 'Chỉnh sửa thông tin từ giao diện quản trị';
+        await api.updateRecord(moduleType, editingRecord.id, payload);
         showToast(`Đã cập nhật bản ghi [${editingRecord.code}] thành công`);
         setEditingRecord(null);
       } else {
-        await api.createRecord(moduleType, {
-          title: formTitle,
-          field: formField,
-          ownerName: formOwner,
-          description: formDesc,
-          status: formStatus,
-          costSavings: Number(formCostSavings) || undefined,
-          totalBudgetApproved: Number(formBudget) || undefined
-        });
+        await api.createRecord(moduleType, payload);
         showToast(`Đã tạo bản ghi mới thành công trong ${MODULE_NAMES[moduleType]}`);
         setShowCreateModal(false);
       }
@@ -508,106 +510,507 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
 
       {/* Create / Edit Modal */}
       {(showCreateModal || editingRecord) && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 text-xs">
-            <h2 className="text-base font-bold text-slate-900 pb-3 border-b border-slate-200">
-              {editingRecord ? `Chỉnh sửa bản ghi: [${editingRecord.code}]` : `Thêm mới ${MODULE_NAMES[moduleType]}`}
-            </h2>
-
-            <form onSubmit={handleSaveForm} className="pt-4 space-y-3.5">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[92vh] flex flex-col p-4 sm:p-6 shadow-2xl border border-slate-200 text-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">
-                  Tiêu đề / Tên đối tượng <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                  className="w-full h-9 px-3 border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-teal-700 font-medium"
-                />
+                <h2 className="text-base font-bold text-slate-900">
+                  {editingRecord ? `Chỉnh sửa bản ghi: [${editingRecord.code}]` : `Thêm mới bản ghi: ${MODULE_NAMES[moduleType]}`}
+                </h2>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Phân hệ {MODULE_NAMES[moduleType]} · Điền đầy đủ các thông tin chuyên ngành
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={() => { setShowCreateModal(false); setEditingRecord(null); }}
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleSaveForm} className="flex-1 overflow-y-auto pr-1 py-4 space-y-3.5">
+              {/* Core Information */}
+              <div className="space-y-3 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200">
+                <div className="text-[11px] font-bold text-teal-800 uppercase tracking-wider">
+                  1. Thông tin chung
+                </div>
+
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">
-                    Lĩnh vực
+                    Tiêu đề / Tên đối tượng <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    value={formField}
-                    onChange={(e) => setFormField(e.target.value)}
-                    className="w-full h-9 px-3 border border-slate-300 rounded-lg text-slate-900"
+                    required
+                    value={formTitle}
+                    onChange={(e) => setFormTitle(e.target.value)}
+                    className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-teal-700 font-medium"
                   />
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Lĩnh vực chuyên môn
+                    </label>
+                    <input
+                      type="text"
+                      value={formField}
+                      onChange={(e) => setFormField(e.target.value)}
+                      className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Đơn vị chủ trì / Chủ sở hữu
+                    </label>
+                    <input
+                      type="text"
+                      value={formOwner}
+                      onChange={(e) => setFormOwner(e.target.value)}
+                      className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">
-                    Đơn vị / Chủ quản
+                    Mô tả / Tóm tắt nội dung
                   </label>
-                  <input
-                    type="text"
-                    value={formOwner}
-                    onChange={(e) => setFormOwner(e.target.value)}
-                    className="w-full h-9 px-3 border border-slate-300 rounded-lg text-slate-900"
+                  <textarea
+                    rows={2}
+                    value={formDesc}
+                    onChange={(e) => setFormDesc(e.target.value)}
+                    className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">
-                  Mô tả / Tóm tắt nội dung
-                </label>
-                <textarea
-                  rows={3}
-                  value={formDesc}
-                  onChange={(e) => setFormDesc(e.target.value)}
-                  className="w-full p-2.5 border border-slate-300 rounded-lg text-slate-900"
-                />
+              {/* Module-Specific Fields */}
+              <div className="space-y-3 bg-teal-50/40 p-3.5 rounded-xl border border-teal-100">
+                <div className="text-[11px] font-bold text-teal-900 uppercase tracking-wider">
+                  2. Trường dữ liệu đặc thù phân hệ
+                </div>
+
+                {moduleType === 'science_tasks' && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Chủ nhiệm nhiệm vụ</label>
+                        <input
+                          type="text"
+                          value={extraFields.principalInvestigator || ''}
+                          onChange={(e) => setExtra('principalInvestigator', e.target.value)}
+                          placeholder="Họ tên chủ nhiệm..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Cơ quan chủ trì</label>
+                        <input
+                          type="text"
+                          value={extraFields.leadOrganization || ''}
+                          onChange={(e) => setExtra('leadOrganization', e.target.value)}
+                          placeholder="ĐH Đà Nẵng, Viện nghiên cứu..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Loại nhiệm vụ</label>
+                        <select
+                          value={extraFields.taskType || 'Nghiên cứu ứng dụng'}
+                          onChange={(e) => setExtra('taskType', e.target.value)}
+                          className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        >
+                          <option value="Nghiên cứu ứng dụng">Nghiên cứu ứng dụng</option>
+                          <option value="Nghiên cứu cơ bản">Nghiên cứu cơ bản</option>
+                          <option value="Phát triển công nghệ">Phát triển công nghệ</option>
+                          <option value="Chuyển giao công nghệ">Chuyển giao công nghệ</option>
+                          <option value="Sản xuất thử nghiệm">Sản xuất thử nghiệm</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Tiến độ thực hiện (%)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={extraFields.executionProgress ?? 100}
+                          onChange={(e) => setExtra('executionProgress', Number(e.target.value))}
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Kết quả nghiệm thu</label>
+                        <select
+                          value={extraFields.acceptanceResult || 'Đạt'}
+                          onChange={(e) => setExtra('acceptanceResult', e.target.value)}
+                          className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        >
+                          <option value="Xuất sắc">Xuất sắc</option>
+                          <option value="Đạt">Đạt</option>
+                          <option value="Đang triển khai">Đang triển khai</option>
+                          <option value="Chưa nghiệm thu">Chưa nghiệm thu</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Tổng kinh phí duyệt (VND)</label>
+                      <input
+                        type="number"
+                        value={formBudget}
+                        onChange={(e) => setFormBudget(e.target.value)}
+                        placeholder="VD: 850000000"
+                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {moduleType === 'initiatives' && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Phạm vi công nhận</label>
+                        <select
+                          value={extraFields.recognizedScope || 'Cấp thành phố'}
+                          onChange={(e) => setExtra('recognizedScope', e.target.value)}
+                          className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        >
+                          <option value="Cấp thành phố">Cấp thành phố</option>
+                          <option value="Cấp cơ sở">Cấp cơ sở</option>
+                          <option value="Toàn quốc">Toàn quốc</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Số Quyết định công nhận</label>
+                        <input
+                          type="text"
+                          value={extraFields.recognitionDecision || ''}
+                          onChange={(e) => setExtra('recognitionDecision', e.target.value)}
+                          placeholder="VD: 1245/QĐ-UBND"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Vấn đề thực tiễn giải quyết</label>
+                      <textarea
+                        rows={2}
+                        value={extraFields.problemSolved || ''}
+                        onChange={(e) => setExtra('problemSolved', e.target.value)}
+                        placeholder="Nêu vướng mắc thực tiễn sáng kiến đã xử lý..."
+                        className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Số tiền làm lợi / tiết kiệm (VND)</label>
+                      <input
+                        type="number"
+                        value={formCostSavings}
+                        onChange={(e) => setFormCostSavings(e.target.value)}
+                        placeholder="VD: 450000000"
+                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {moduleType === 'patents' && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Số văn bằng / đơn bảo hộ</label>
+                        <input
+                          type="text"
+                          value={extraFields.patentNumber || ''}
+                          onChange={(e) => setExtra('patentNumber', e.target.value)}
+                          placeholder="VD: VN 1-0028456"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Loại hình sở hữu trí tuệ</label>
+                        <select
+                          value={extraFields.ipType || 'Sáng chế'}
+                          onChange={(e) => setExtra('ipType', e.target.value)}
+                          className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        >
+                          <option value="Sáng chế">Sáng chế</option>
+                          <option value="Giải pháp hữu ích">Giải pháp hữu ích</option>
+                          <option value="Kiểu dáng công nghiệp">Kiểu dáng công nghiệp</option>
+                          <option value="Nhãn hiệu">Nhãn hiệu</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Ngày nộp đơn / cấp bằng</label>
+                        <input
+                          type="date"
+                          value={extraFields.filingDate || ''}
+                          onChange={(e) => setExtra('filingDate', e.target.value)}
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Lĩnh vực ứng dụng</label>
+                        <input
+                          type="text"
+                          value={extraFields.applicationArea || ''}
+                          onChange={(e) => setExtra('applicationArea', e.target.value)}
+                          placeholder="VD: Nông nghiệp công nghệ cao"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {moduleType === 'experts' && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Học hàm / Học vị</label>
+                        <input
+                          type="text"
+                          value={extraFields.academicTitle || ''}
+                          onChange={(e) => setExtra('academicTitle', e.target.value)}
+                          placeholder="GS.TS, PGS.TS, TS, ThS..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Cơ quan / Đơn vị công tác</label>
+                        <input
+                          type="text"
+                          value={extraFields.workplace || ''}
+                          onChange={(e) => setExtra('workplace', e.target.value)}
+                          placeholder="ĐH Bách Khoa - ĐH Đà Nẵng"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Hướng nghiên cứu trọng điểm</label>
+                        <input
+                          type="text"
+                          value={extraFields.researchTopics || ''}
+                          onChange={(e) => setExtra('researchTopics', e.target.value)}
+                          placeholder="Trí tuệ nhân tạo, Vật liệu mới..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Số bài báo & công bố KH</label>
+                        <input
+                          type="number"
+                          value={extraFields.publicationsCount || 0}
+                          onChange={(e) => setExtra('publicationsCount', Number(e.target.value))}
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {(['startups', 'startup_projects', 'startup_ideas'].includes(moduleType)) && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Đội ngũ sáng lập / Trưởng nhóm</label>
+                        <input
+                          type="text"
+                          value={extraFields.founders || ''}
+                          onChange={(e) => setExtra('founders', e.target.value)}
+                          placeholder="Họ tên các nhà sáng lập..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Giai đoạn phát triển</label>
+                        <select
+                          value={extraFields.fundingStage || 'Ươm tạo & Hạt giống'}
+                          onChange={(e) => setExtra('fundingStage', e.target.value)}
+                          className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        >
+                          <option value="Ý tưởng sơ khai">Ý tưởng sơ khai</option>
+                          <option value="Tiền ươm tạo">Tiền ươm tạo</option>
+                          <option value="Ươm tạo & Hạt giống">Ươm tạo & Hạt giống (Seed)</option>
+                          <option value="Tăng trưởng">Tăng trưởng (Series A+)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Mã số thuế / Giấy phép kinh doanh</label>
+                      <input
+                        type="text"
+                        value={extraFields.enterpriseTaxCode || ''}
+                        onChange={(e) => setExtra('enterpriseTaxCode', e.target.value)}
+                        placeholder="VD: 0401234567"
+                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900 font-mono"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {(['investors', 'investment_funds'].includes(moduleType)) && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Quy mô vốn quỹ (VND)</label>
+                        <input
+                          type="text"
+                          value={extraFields.fundSize || ''}
+                          onChange={(e) => setExtra('fundSize', e.target.value)}
+                          placeholder="VD: 50.000.000.000 VND"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Hạn mức đầu tư / dự án</label>
+                        <input
+                          type="text"
+                          value={extraFields.ticketSize || ''}
+                          onChange={(e) => setExtra('ticketSize', e.target.value)}
+                          placeholder="VD: 500tr - 2 tỷ"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Lĩnh vực trọng tâm</label>
+                        <input
+                          type="text"
+                          value={extraFields.targetSectors || ''}
+                          onChange={(e) => setExtra('targetSectors', e.target.value)}
+                          placeholder="AI, AgriTech, FinTech..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {moduleType === 'support_organizations' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Loại hình hỗ trợ</label>
+                      <select
+                        value={extraFields.facilityType || 'Vườn ươm doanh nghiệp'}
+                        onChange={(e) => setExtra('facilityType', e.target.value)}
+                        className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      >
+                        <option value="Vườn ươm doanh nghiệp">Vườn ươm doanh nghiệp</option>
+                        <option value="Không gian làm việc chung">Không gian làm việc chung (Co-working)</option>
+                        <option value="Trung tâm Đổi mới sáng tạo">Trung tâm Đổi mới sáng tạo</option>
+                        <option value="Lab chế thử trọng điểm">Lab chế thử trọng điểm</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Năng lực hỗ trợ (DN/năm)</label>
+                      <input
+                        type="text"
+                        value={extraFields.capacity || ''}
+                        onChange={(e) => setExtra('capacity', e.target.value)}
+                        placeholder="VD: 50 doanh nghiệp / năm"
+                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {moduleType === 'technologies' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Mức độ TRL (1 - 9)</label>
+                      <select
+                        value={extraFields.trlLevel || 'TRL 7 - Thử nghiệm thực tế'}
+                        onChange={(e) => setExtra('trlLevel', e.target.value)}
+                        className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      >
+                        <option value="TRL 4 - Đã kiểm chứng phòng lab">TRL 4 - Kiểm chứng phòng Lab</option>
+                        <option value="TRL 6 - Mẫu thử nghiệm quy mô nhỏ">TRL 6 - Mẫu thử nghiệm quy mô nhỏ</option>
+                        <option value="TRL 7 - Thử nghiệm thực tế">TRL 7 - Thử nghiệm thực tế</option>
+                        <option value="TRL 9 - Sẵn sàng thương mại hóa">TRL 9 - Sẵn sàng thương mại hóa</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Phương thức chuyển giao</label>
+                      <input
+                        type="text"
+                        value={extraFields.transferMethod || 'Chuyển giao quyền sở hữu & Li-xăng'}
+                        onChange={(e) => setExtra('transferMethod', e.target.value)}
+                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {moduleType === 'policies' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Số hiệu văn bản</label>
+                      <input
+                        type="text"
+                        value={extraFields.documentNumber || ''}
+                        onChange={(e) => setExtra('documentNumber', e.target.value)}
+                        placeholder="VD: 15/2026/NQ-HĐND"
+                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Cơ quan ban hành</label>
+                      <input
+                        type="text"
+                        value={extraFields.issuingAuthority || ''}
+                        onChange={(e) => setExtra('issuingAuthority', e.target.value)}
+                        placeholder="UBND TP Đà Nẵng / HĐND TP"
+                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Ngày có hiệu lực</label>
+                      <input
+                        type="date"
+                        value={extraFields.effectiveDate || ''}
+                        onChange={(e) => setExtra('effectiveDate', e.target.value)}
+                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {moduleType === 'initiatives' && (
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Chi phí tiết kiệm đo lường (VND)
-                  </label>
-                  <input
-                    type="number"
-                    value={formCostSavings}
-                    onChange={(e) => setFormCostSavings(e.target.value)}
-                    className="w-full h-9 px-3 border border-slate-300 rounded-lg font-mono text-slate-900"
-                  />
-                </div>
-              )}
-
-              {moduleType === 'science_tasks' && (
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Tổng kinh phí duyệt (VND)
-                  </label>
-                  <input
-                    type="number"
-                    value={formBudget}
-                    onChange={(e) => setFormBudget(e.target.value)}
-                    className="w-full h-9 px-3 border border-slate-300 rounded-lg font-mono text-slate-900"
-                  />
-                </div>
-              )}
-
-              <div>
+              {/* Status & Approvals */}
+              <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-200">
                 <label className="block font-semibold text-slate-700 mb-1">
-                  Trạng thái
+                  Trạng thái quy trình hồ sơ
                 </label>
                 <select
                   value={formStatus}
                   onChange={(e) => setFormStatus(e.target.value as ApprovalStatus)}
-                  className="w-full h-9 px-2.5 border border-slate-300 rounded-lg text-slate-900 font-medium"
+                  className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 font-medium"
                 >
-                  <option value="draft">Bản nháp</option>
-                  <option value="submitted">Gửi duyệt</option>
-                  <option value="under_review">Đang thẩm định</option>
-                  <option value="needs_revision">Yêu cầu bổ sung</option>
-                  <option value="approved">Đã phê duyệt</option>
-                  <option value="rejected">Từ chối</option>
+                  <option value="draft">Bản nháp (Draft)</option>
+                  <option value="submitted">Gửi duyệt (Submitted)</option>
+                  <option value="under_review">Đang thẩm định (Under Review)</option>
+                  <option value="needs_revision">Yêu cầu bổ sung (Needs Revision)</option>
+                  <option value="approved">Đã phê duyệt (Approved)</option>
+                  <option value="rejected">Từ chối (Rejected)</option>
                 </select>
               </div>
 
@@ -617,13 +1020,13 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                   onClick={() => { setShowCreateModal(false); setEditingRecord(null); }}
                   className="px-4 py-2 text-slate-600 hover:text-slate-900 font-semibold cursor-pointer"
                 >
-                  Hủy
+                  Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-teal-800 hover:bg-teal-700 text-white font-semibold rounded-lg cursor-pointer"
+                  className="px-5 py-2 bg-teal-800 hover:bg-teal-700 text-white font-semibold rounded-lg cursor-pointer shadow-xs"
                 >
-                  Lưu thay đổi
+                  {editingRecord ? 'Lưu thay đổi' : 'Tạo mới bản ghi'}
                 </button>
               </div>
             </form>

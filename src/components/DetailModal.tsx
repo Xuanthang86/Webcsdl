@@ -46,7 +46,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
   const handleDownloadFile = (fileName?: string) => {
     const docName = fileName || `Ho_so_${entity.code || entity.id}_${entity.title.slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_')}.txt`;
     const content = `================================================================================
-ỦY BAN NHÂN DÂN THÀNH PHỐ - SỞ KHOA HỌC VÀ CÔNG NGHỆ
+ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ
 CỔNG DỮ LIỆU TỔNG HỢP KH&CN, ĐỔI MỚI SÁNG TẠO VÀ KHỞI NGHIỆP CẤP THÀNH PHỐ
 ================================================================================
 HỒ SƠ THÔNG TIN TRÍCH XUẤT CHÍNH THỨC

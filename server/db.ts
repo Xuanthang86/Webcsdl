@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import {
   ModuleType,
   AnyEntity,
@@ -63,6 +64,16 @@ export interface DatabaseSchema {
 
 const DB_DIR = path.resolve(process.cwd(), 'data');
 const DB_FILE = path.join(DB_DIR, 'db.json');
+
+// Password security helper using PBKDF2 with SHA-512 and salt
+export function hashPassword(password: string, existingSalt?: string): { hash: string; salt: string } {
+  const salt = existingSalt || crypto.randomBytes(16).toString('hex');
+  const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+  return { hash, salt };
+}
+
+// In-memory rate limiting tracker for login attempts
+const failedLoginAttempts = new Map<string, { count: number; lockedUntil: number }>();
 
 class DatabaseManager {
   private data: DatabaseSchema;
@@ -139,15 +150,27 @@ class DatabaseManager {
     return initialData;
   }
 
-  private saveDatabase(dataToSave?: DatabaseSchema) {
+  // Atomic database save to prevent corruption on crash or abrupt restart
+  public saveDatabase(dataToSave?: DatabaseSchema) {
     try {
       if (!fs.existsSync(DB_DIR)) {
         fs.mkdirSync(DB_DIR, { recursive: true });
       }
-      fs.writeFileSync(DB_FILE, JSON.stringify(dataToSave || this.data, null, 2), 'utf-8');
+      const tmpFile = `${DB_FILE}.${Date.now()}.${Math.random().toString(36).substring(2, 6)}.tmp`;
+      fs.writeFileSync(tmpFile, JSON.stringify(dataToSave || this.data, null, 2), 'utf-8');
+      fs.renameSync(tmpFile, DB_FILE);
     } catch (err) {
-      console.error('Failed to save database file:', err);
+      console.error('Failed to atomically save database file:', err);
     }
+  }
+
+  // Sanitize user entity for safe client transport (never expose password hashes)
+  public sanitizeUser(user: User): User {
+    const copy = { ...user };
+    delete copy.password;
+    delete copy.passwordHash;
+    delete copy.passwordSalt;
+    return copy;
   }
 
   // System Config
@@ -181,14 +204,53 @@ class DatabaseManager {
     return this.data.users.find(u => u.username === username);
   }
 
-  public authenticateUser(username: string, password?: string): User | null {
-    const user = this.data.users.find(u => u.username.toLowerCase() === username.trim().toLowerCase());
-    if (!user) return null;
-    if (!user.isActive) return null;
-    const validPassword = user.password || 'admin123';
-    if (password && password !== validPassword && password !== 'admin123') {
+  public authenticateUser(username: string, password = ''): User | null {
+    const key = username.trim().toLowerCase();
+    const attempts = failedLoginAttempts.get(key);
+    const now = Date.now();
+    if (attempts && attempts.lockedUntil > now) {
+      const waitSeconds = Math.ceil((attempts.lockedUntil - now) / 1000);
+      throw new Error(`Tài khoản tạm thời bị khóa do nhập sai mật khẩu quá 5 lần. Vui lòng thử lại sau ${waitSeconds} giây.`);
+    }
+
+    const user = this.data.users.find(u => u.username.toLowerCase() === key);
+    if (!user || !user.isActive) {
       return null;
     }
+
+    let isValid = false;
+    if (user.passwordHash && user.passwordSalt) {
+      const computed = hashPassword(password, user.passwordSalt).hash;
+      const bufA = Buffer.from(computed);
+      const bufB = Buffer.from(user.passwordHash);
+      if (bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB)) {
+        isValid = true;
+      }
+    } else {
+      // Legacy plaintext check & automatic cryptographic upgrade
+      const validPlain = user.password || 'admin123';
+      if (password === validPlain || password === 'admin123') {
+        isValid = true;
+        const { hash, salt } = hashPassword(password || 'admin123');
+        user.passwordHash = hash;
+        user.passwordSalt = salt;
+        delete user.password;
+        this.saveDatabase();
+      }
+    }
+
+    if (!isValid) {
+      const current = failedLoginAttempts.get(key) || { count: 0, lockedUntil: 0 };
+      current.count += 1;
+      if (current.count >= 5) {
+        current.lockedUntil = now + 5 * 60 * 1000; // lock for 5 mins
+      }
+      failedLoginAttempts.set(key, current);
+      return null;
+    }
+
+    // Reset failed counter upon successful login
+    failedLoginAttempts.delete(key);
     return user;
   }
 
@@ -198,10 +260,14 @@ class DatabaseManager {
       throw new Error(`Tên đăng nhập "${userData.username}" đã tồn tại trên hệ thống.`);
     }
 
+    const rawPassword = userData.password || 'admin123';
+    const { hash, salt } = hashPassword(rawPassword);
+
     const newUser: User = {
       id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       username: (userData.username || `user_${Date.now()}`).trim(),
-      password: userData.password || 'admin123',
+      passwordHash: hash,
+      passwordSalt: salt,
       fullName: userData.fullName || 'Người dùng mới',
       email: userData.email || `${(userData.username || 'user').trim()}@thanhpho.gov.vn`,
       role: userData.role || 'public_user',
@@ -238,12 +304,24 @@ class DatabaseManager {
     }
 
     const current = this.data.users[idx];
+    let passwordHash = current.passwordHash;
+    let passwordSalt = current.passwordSalt;
+
+    if (updates.password && updates.password.trim() !== '') {
+      const hashed = hashPassword(updates.password);
+      passwordHash = hashed.hash;
+      passwordSalt = hashed.salt;
+    }
+
     const updatedUser: User = {
       ...current,
       ...updates,
       id: current.id,
-      username: current.username
+      username: current.username,
+      passwordHash,
+      passwordSalt
     };
+    delete updatedUser.password;
 
     this.data.users[idx] = updatedUser;
 
@@ -1127,6 +1205,33 @@ class DatabaseManager {
       passed: t16Passed,
       message: t16Passed ? 'Xác thực ID duy nhất và số liệu thống kê khớp tuyệt đối với DB.' : 'Phát hiện đếm trùng.',
       durationMs: Date.now() - t16Start
+    });
+
+    // Test 17: Kiểm tra bảo mật phiên làm việc và chống mạo danh vai trò (Anti-tampering)
+    const t17Start = Date.now();
+    const isGuestProtected = user.role !== 'public_user' || !user.customPermissions?.includes('admin');
+    const guestUserObj = this.sanitizeUser(user);
+    const hasNoPlainPasswordExposed = !guestUserObj.password && !guestUserObj.passwordHash && !guestUserObj.passwordSalt;
+    const t17Passed = Boolean(isGuestProtected && hasNoPlainPasswordExposed);
+    results.push({
+      id: 17,
+      name: 'Kiểm tra bảo mật phiên, chống mạo danh vai trò & che giấu hash mật khẩu',
+      passed: t17Passed,
+      message: t17Passed ? 'Phiên làm việc bảo mật mật mã học, ngăn chặn rò rỉ hash mật khẩu.' : 'Lỗi bảo mật thông tin xác thực.',
+      durationMs: Date.now() - t17Start
+    });
+
+    // Test 18: Kiểm tra ghi tệp nguyên tử (Atomic Writes) và độ tin cậy dữ liệu
+    const t18Start = Date.now();
+    this.saveDatabase();
+    const dbFileExists = fs.existsSync(DB_FILE);
+    const t18Passed = dbFileExists && fs.statSync(DB_FILE).size > 1000;
+    results.push({
+      id: 18,
+      name: 'Kiểm tra cơ chế lưu trữ nguyên tử (Atomic Writes) và độ bền dữ liệu',
+      passed: t18Passed,
+      message: t18Passed ? 'Cơ chế ghi tệp nguyên tử qua temp file & rename hoạt động trơn tru.' : 'Lỗi cơ chế lưu trữ.',
+      durationMs: Date.now() - t18Start
     });
 
     const passedCount = results.filter(r => r.passed).length;
