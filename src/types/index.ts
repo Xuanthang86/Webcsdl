@@ -102,6 +102,8 @@ export interface User {
   isActive: boolean;
   avatarUrl?: string;
   customPermissions?: string[];
+  managedModules?: string[];
+  organizationScope?: string;
   createdAt: string;
 }
 

@@ -17,7 +17,10 @@ import {
   Lock, 
   X, 
   Check, 
-  AlertCircle 
+  AlertCircle,
+  Layers,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 
 const ROLE_DEFINITIONS: Record<UserRole, { label: string; desc: string; color: string }> = {
@@ -32,6 +35,26 @@ const ROLE_DEFINITIONS: Record<UserRole, { label: string; desc: string; color: s
   investor_user: { label: 'Nhà đầu tư / Quỹ', desc: 'Xem thông tin dự án, kết nối đầu tư và đặt hàng', color: 'bg-violet-100 text-violet-800 border-violet-300' },
   public_user: { label: 'Công dân / Người dùng công khai', desc: 'Tra cứu thông tin công khai, gửi đề xuất sáng kiến trực tuyến', color: 'bg-slate-100 text-slate-700 border-slate-300' }
 };
+
+export const MANAGEABLE_MODULE_OPTIONS: Array<{ key: string; label: string; group: string }> = [
+  { key: 'science_tasks', label: '1. Nhiệm vụ, đề tài KH&CN', group: 'Nhiệm vụ & Đề tài' },
+  { key: 'initiatives', label: '2. Sáng kiến có tác dụng, ảnh hưởng TP', group: 'Sáng kiến' },
+  { key: 'patents', label: '3. Sáng chế & Sở hữu trí tuệ', group: 'Sở hữu trí tuệ' },
+  { key: 'experts', label: '4. Chuyên gia & Nhà khoa học', group: 'Chuyên gia' },
+  { key: 'startups', label: '5.1 Doanh nghiệp khởi nghiệp', group: 'Hệ sinh thái' },
+  { key: 'startup_projects', label: '5.2 Dự án khởi nghiệp', group: 'Hệ sinh thái' },
+  { key: 'startup_ideas', label: '5.3 Ý tưởng khởi nghiệp', group: 'Hệ sinh thái' },
+  { key: 'investors', label: '5.4 Nhà đầu tư', group: 'Hệ sinh thái' },
+  { key: 'investment_funds', label: '5.5 Quỹ đầu tư', group: 'Hệ sinh thái' },
+  { key: 'support_organizations', label: '5.6 Tổ chức hỗ trợ, Vườn ươm', group: 'Hệ sinh thái' },
+  { key: 'programs', label: '5.7 Chương trình hỗ trợ & Cơ hội', group: 'Hệ sinh thái' },
+  { key: 'organizations', label: 'Tổ chức KH&CN, Viện trường', group: 'Bổ trợ' },
+  { key: 'publications', label: 'Bài báo & Công bố khoa học', group: 'Bổ trợ' },
+  { key: 'technologies', label: 'Công nghệ & Kết quả nghiên cứu', group: 'Bổ trợ' },
+  { key: 'collaboration_needs', label: 'Nhu cầu kết nối & Đặt hàng TP', group: 'Bổ trợ' },
+  { key: 'lab_equipments', label: 'Thiết bị & Phòng thí nghiệm', group: 'Bổ trợ' },
+  { key: 'policies', label: 'Chính sách & Quy định', group: 'Bổ trợ' }
+];
 
 interface UserManagerViewProps {
   currentUser?: User;
@@ -58,6 +81,8 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
   const [formOrganization, setFormOrganization] = useState('');
   const [formRole, setFormRole] = useState<UserRole>('data_officer');
   const [formIsActive, setFormIsActive] = useState(true);
+  const [formManagedModules, setFormManagedModules] = useState<string[]>([]);
+  const [formOrgScope, setFormOrgScope] = useState('');
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -86,9 +111,11 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
     setFormFullName('');
     setFormEmail('');
     setFormPhone('');
-    setFormOrganization('Sở Khoa học và Công nghệ');
+    setFormOrganization('Sở Khoa học và Công nghệ Đà Nẵng');
     setFormRole('data_officer');
     setFormIsActive(true);
+    setFormManagedModules(['science_tasks', 'initiatives']);
+    setFormOrgScope('');
     setModalError(null);
     setShowCreateModal(true);
   };
@@ -103,7 +130,23 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
     setFormOrganization(u.organization || '');
     setFormRole(u.role);
     setFormIsActive(u.isActive);
+    setFormManagedModules(u.managedModules || []);
+    setFormOrgScope(u.organizationScope || '');
     setModalError(null);
+  };
+
+  const handleToggleModule = (modKey: string) => {
+    setFormManagedModules(prev => 
+      prev.includes(modKey) ? prev.filter(m => m !== modKey) : [...prev, modKey]
+    );
+  };
+
+  const handleSelectAllModules = () => {
+    if (formManagedModules.length === MANAGEABLE_MODULE_OPTIONS.length) {
+      setFormManagedModules([]);
+    } else {
+      setFormManagedModules(MANAGEABLE_MODULE_OPTIONS.map(m => m.key));
+    }
   };
 
   const handleSaveUser = async (e: React.FormEvent) => {
@@ -119,7 +162,9 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
           phone: formPhone,
           organization: formOrganization,
           role: formRole,
-          isActive: formIsActive
+          isActive: formIsActive,
+          managedModules: formManagedModules,
+          organizationScope: formOrgScope
         };
         if (formPassword.trim()) {
           updates.password = formPassword.trim();
@@ -141,7 +186,9 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
           phone: formPhone.trim(),
           organization: formOrganization.trim(),
           role: formRole,
-          isActive: formIsActive
+          isActive: formIsActive,
+          managedModules: formManagedModules,
+          organizationScope: formOrgScope
         });
         showToast(`Đã tạo tài khoản [${formUsername}] với vai trò [${formRole}]`);
         setShowCreateModal(false);
@@ -206,13 +253,13 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
             Quản Lý Tài Khoản & Phân Quyền Người Dùng
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Quản lý danh sách tài khoản, cấp phát vai trò, quyền thẩm định, phê duyệt và giám sát hoạt động
+            Quản lý danh sách tài khoản, cấp phát vai trò, quyền quản lý theo phân hệ dữ liệu và địa bàn/đơn vị
           </p>
         </div>
 
         <button
           onClick={handleOpenCreate}
-          className="px-4 py-2.5 bg-teal-800 hover:bg-teal-700 text-white rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors shadow-sm shrink-0 self-start sm:self-auto"
+          className="px-4 py-2.5 bg-teal-800 hover:bg-teal-700 text-white rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors shadow-sm shrink-0 self-start sm:self-auto cursor-pointer"
         >
           <UserPlus className="w-4 h-4" />
           <span>Thêm tài khoản mới</span>
@@ -236,11 +283,13 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
           <select
             value={roleFilter}
             onChange={e => setRoleFilter(e.target.value)}
-            className="w-full sm:w-auto px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-700"
+            className="w-full sm:w-auto px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-700 font-medium"
           >
             <option value="all">Tất cả vai trò ({users.length})</option>
             {Object.entries(ROLE_DEFINITIONS).map(([rKey, def]) => (
-              <option key={rKey} value={rKey}>{def.label}</option>
+              <option key={rKey} value={rKey}>
+                {def.label}
+              </option>
             ))}
           </select>
         </div>
@@ -248,14 +297,15 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
 
       {/* Users Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto max-w-full">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs text-slate-700">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
+              <tr>
                 <th className="py-3 px-4">Tài khoản & Họ tên</th>
-                <th className="py-3 px-4">Vai trò & Phân quyền</th>
+                <th className="py-3 px-4">Email / Điện thoại</th>
                 <th className="py-3 px-4">Đơn vị công tác</th>
-                <th className="py-3 px-4">Liên hệ</th>
+                <th className="py-3 px-4">Vai trò hệ thống</th>
+                <th className="py-3 px-4">Phân hệ quản lý</th>
                 <th className="py-3 px-4 text-center">Trạng thái</th>
                 <th className="py-3 px-4 text-right">Thao tác</th>
               </tr>
@@ -263,88 +313,124 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-slate-400">
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
                     Đang tải danh sách người dùng...
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-slate-500">
-                    Không tìm thấy tài khoản phù hợp với điều kiện tìm kiếm.
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    Không tìm thấy người dùng phù hợp với tiêu chí lọc.
                   </td>
                 </tr>
               ) : (
                 filteredUsers.map(u => {
-                  const roleDef = ROLE_DEFINITIONS[u.role] || { label: u.role, desc: '', color: 'bg-slate-100 text-slate-800 border-slate-200' };
+                  const roleDef = ROLE_DEFINITIONS[u.role] || { label: u.role, color: 'bg-slate-100 text-slate-700 border-slate-300' };
+                  const isSuperAdminRole = u.role === 'super_admin' || u.role === 'system_admin';
+
                   return (
-                    <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3 px-4">
+                    <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                      {/* Name & Username */}
+                      <td className="py-3.5 px-4">
                         <div className="font-bold text-slate-900">{u.fullName}</div>
-                        <div className="font-mono text-[11px] text-teal-800 font-semibold">@{u.username}</div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`inline-block px-2.5 py-1 rounded-md text-[11px] font-semibold border ${roleDef.color}`}>
-                          {roleDef.label}
-                        </span>
-                        <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-1 max-w-xs">{roleDef.desc}</div>
-                      </td>
-                      <td className="py-3 px-4 text-slate-600">
-                        <div className="flex items-center gap-1.5">
-                          <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span className="truncate max-w-[200px]">{u.organization || 'Sở KH&CN'}</span>
+                        <div className="text-[11px] font-mono text-teal-800 flex items-center gap-1">
+                          <span>@{u.username}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-slate-600 space-y-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <Mail className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span className="truncate max-w-[180px]">{u.email}</span>
-                        </div>
-                        {u.phone && (
-                          <div className="flex items-center gap-1.5 text-slate-400 font-mono text-[11px]">
-                            <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-                            <span>{u.phone}</span>
+
+                      {/* Contact */}
+                      <td className="py-3.5 px-4 space-y-0.5">
+                        <div className="text-slate-800 truncate">{u.email}</div>
+                        {u.phone && <div className="text-[11px] text-slate-500">{u.phone}</div>}
+                      </td>
+
+                      {/* Organization */}
+                      <td className="py-3.5 px-4">
+                        <div className="text-slate-800 font-medium">{u.organization || '—'}</div>
+                        {u.organizationScope && (
+                          <div className="text-[10px] text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200 inline-block mt-0.5">
+                            Phạm vi: {u.organizationScope}
                           </div>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-center">
-                        {u.isActive ? (
-                          <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded text-[11px] border border-emerald-200">
-                            <CheckCircle className="w-3 h-3" />
-                            Hoạt động
-                          </span>
+
+                      {/* Role Badge */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${roleDef.color}`}>
+                          {roleDef.label}
+                        </span>
+                      </td>
+
+                      {/* Managed Modules */}
+                      <td className="py-3.5 px-4 max-w-xs">
+                        {isSuperAdminRole ? (
+                          <span className="text-slate-600 font-medium text-[11px]">Toàn quyền 17 phân hệ</span>
+                        ) : u.managedModules && u.managedModules.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {u.managedModules.slice(0, 3).map(mKey => {
+                              const found = MANAGEABLE_MODULE_OPTIONS.find(o => o.key === mKey);
+                              return (
+                                <span key={mKey} className="px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] border border-slate-200">
+                                  {found ? found.label.replace(/^\d+\.\s*/, '') : mKey}
+                                </span>
+                              );
+                            })}
+                            {u.managedModules.length > 3 && (
+                              <span className="text-[10px] text-teal-800 font-semibold self-center">
+                                +{u.managedModules.length - 3} nữa
+                              </span>
+                            )}
+                          </div>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-rose-700 font-semibold bg-rose-50 px-2 py-0.5 rounded text-[11px] border border-rose-200">
-                            <XCircle className="w-3 h-3" />
-                            Đã khóa
-                          </span>
+                          <span className="text-slate-400 text-[11px] italic">Chưa chỉ định phân hệ</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right">
+
+                      {/* Status */}
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <button
+                          onClick={() => handleToggleStatus(u)}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors cursor-pointer ${
+                            u.isActive 
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                              : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
+                          }`}
+                          title="Bấm để thay đổi trạng thái kích hoạt"
+                        >
+                          {u.isActive ? (
+                            <>
+                              <CheckCircle className="w-3 h-3 text-emerald-600" />
+                              <span>Hoạt động</span>
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="w-3 h-3 text-rose-600" />
+                              <span>Đã khóa</span>
+                            </>
+                          )}
+                        </button>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => handleOpenEdit(u)}
-                            className="p-1.5 text-slate-600 hover:text-teal-800 hover:bg-slate-100 rounded-lg transition-colors"
-                            title="Chỉnh sửa tài khoản & phân quyền"
+                            className="p-1.5 text-slate-600 hover:text-teal-800 hover:bg-teal-50 rounded-lg transition-colors cursor-pointer"
+                            title="Chỉnh sửa thông tin & phân quyền"
                           >
-                            <Edit className="w-3.5 h-3.5" />
+                            <Edit className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => handleToggleStatus(u)}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                              u.isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50'
-                            }`}
-                            title={u.isActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
-                          >
-                            {u.isActive ? <Lock className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteUser(u)}
-                            disabled={u.role === 'super_admin'}
-                            className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
-                            title="Xóa tài khoản"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          
+                          {u.id !== currentUser?.id && u.role !== 'super_admin' && (
+                            <button
+                              onClick={() => handleDeleteUser(u)}
+                              className="p-1.5 text-slate-400 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                              title="Xóa tài khoản"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -356,44 +442,49 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
         </div>
       </div>
 
-      {/* Create / Edit User Modal */}
+      {/* Modal: Create or Edit User */}
       {(showCreateModal || editingUser) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95">
-            <div className="bg-slate-900 text-white p-4 flex items-center justify-between">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-teal-400" />
-                <h3 className="font-bold text-sm">
-                  {editingUser ? `Chỉnh Sửa & Phân Quyền: @${editingUser.username}` : 'Tạo Tài Khoản & Cấp Quyền Người Dùng Mới'}
-                </h3>
+                <div className="w-8 h-8 rounded-lg bg-teal-100 text-teal-800 flex items-center justify-center font-bold">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">
+                    {editingUser ? `Chỉnh sửa tài khoản: ${editingUser.username}` : 'Thêm tài khoản người dùng mới'}
+                  </h3>
+                  <p className="text-[11px] text-slate-500">Cấp phát tài khoản, vai trò và phân quyền các phân hệ dữ liệu</p>
+                </div>
               </div>
               <button
                 onClick={() => { setShowCreateModal(false); setEditingUser(null); }}
-                className="text-slate-400 hover:text-white p-1"
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveUser} className="p-5 space-y-4 max-h-[85vh] overflow-y-auto text-xs">
-              {modalError && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-                  <span>{modalError}</span>
-                </div>
-              )}
+            {modalError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{modalError}</span>
+              </div>
+            )}
 
+            <form onSubmit={handleSaveUser} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-700">Tên đăng nhập (username) *</label>
+                  <label className="font-semibold text-slate-700">Tên đăng nhập (Username) *</label>
                   <input
                     type="text"
                     value={formUsername}
-                    disabled={Boolean(editingUser)}
                     onChange={e => setFormUsername(e.target.value)}
-                    placeholder="vd: officer_hanoi"
+                    placeholder="vd: canbo.khoahoc"
+                    disabled={!!editingUser}
                     required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700 disabled:bg-slate-100 disabled:text-slate-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700 disabled:bg-slate-100 font-mono"
                   />
                 </div>
 
@@ -420,7 +511,7 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
                   onChange={e => setFormFullName(e.target.value)}
                   placeholder="vd: Nguyễn Văn An"
                   required
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700 font-medium"
                 />
               </div>
 
@@ -431,7 +522,7 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
                     type="email"
                     value={formEmail}
                     onChange={e => setFormEmail(e.target.value)}
-                    placeholder="an.nv@sokhcn.gov.vn"
+                    placeholder="an.nv@danang.gov.vn"
                     required
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700"
                   />
@@ -449,15 +540,28 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Cơ quan / Đơn vị công tác</label>
-                <input
-                  type="text"
-                  value={formOrganization}
-                  onChange={e => setFormOrganization(e.target.value)}
-                  placeholder="Phòng Quản lý Khoa học - Sở KH&CN"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700">Cơ quan / Đơn vị công tác</label>
+                  <input
+                    type="text"
+                    value={formOrganization}
+                    onChange={e => setFormOrganization(e.target.value)}
+                    placeholder="Phòng Quản lý KH&CN - Sở KH&CN Đà Nẵng"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700">Phạm vi ủy quyền (Quận/Huyện, Trường...)</label>
+                  <input
+                    type="text"
+                    value={formOrgScope}
+                    onChange={e => setFormOrgScope(e.target.value)}
+                    placeholder="vd: Đại học Bách Khoa, UBND Quận Hải Châu..."
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700"
+                  />
+                </div>
               </div>
 
               {/* Role Assignment */}
@@ -479,6 +583,52 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
                 </p>
               </div>
 
+              {/* Granular Module Permission Assignment (Checkboxes for 5 standardized groups) */}
+              <div className="space-y-2 pt-2 border-t border-slate-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="font-semibold text-slate-800 flex items-center gap-1.5">
+                      <Layers className="w-4 h-4 text-teal-700" />
+                      <span>Phân quyền quản lý theo phân hệ dữ liệu:</span>
+                    </label>
+                    <p className="text-[11px] text-slate-500">
+                      Chọn các loại cơ sở dữ liệu mà người dùng này được phép thêm, sửa, quản lý
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSelectAllModules}
+                    className="text-xs font-semibold text-teal-800 hover:underline"
+                  >
+                    {formManagedModules.length === MANAGEABLE_MODULE_OPTIONS.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200 max-h-48 overflow-y-auto">
+                  {MANAGEABLE_MODULE_OPTIONS.map(opt => {
+                    const isChecked = formManagedModules.includes(opt.key);
+                    return (
+                      <label 
+                        key={opt.key}
+                        className={`flex items-center gap-2 p-1.5 rounded-lg border cursor-pointer transition-colors text-[11px] ${
+                          isChecked 
+                            ? 'bg-teal-50 border-teal-300 text-teal-900 font-semibold' 
+                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => handleToggleModule(opt.key)}
+                          className="rounded text-teal-800 focus:ring-teal-700"
+                        />
+                        <span className="truncate">{opt.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Status toggle */}
               <div className="flex items-center gap-2 pt-2">
                 <input
@@ -497,13 +647,13 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
                 <button
                   type="button"
                   onClick={() => { setShowCreateModal(false); setEditingUser(null); }}
-                  className="px-4 py-2 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold"
+                  className="px-4 py-2 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold cursor-pointer"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-teal-800 hover:bg-teal-700 text-white rounded-xl font-semibold shadow-sm"
+                  className="px-5 py-2 bg-teal-800 hover:bg-teal-700 text-white rounded-xl font-semibold shadow-sm cursor-pointer"
                 >
                   {editingUser ? 'Lưu thay đổi phân quyền' : 'Tạo tài khoản'}
                 </button>

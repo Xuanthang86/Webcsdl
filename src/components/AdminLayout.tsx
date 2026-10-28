@@ -62,6 +62,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [modulesDropdownOpen, setModulesDropdownOpen] = useState(true);
   const [selectedEntityForRel, setSelectedEntityForRel] = useState<BaseEntity | null>(null);
 
+  const canManageUsers = currentUser?.role === 'super_admin' || currentUser?.role === 'system_admin';
+
   const handleSelectModule = (mod: ModuleType) => {
     setActiveModule(mod);
     setActiveTab('module_crud');
@@ -206,15 +208,17 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 <span>Cấu hình biểu mẫu & Ẩn/Hiện</span>
               </button>
 
-              <button
-                onClick={() => { setActiveTab('users'); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors ${
-                  activeTab === 'users' ? 'bg-teal-800 text-white' : 'hover:bg-slate-800 text-slate-300'
-                }`}
-              >
-                <Users className="w-4 h-4 text-teal-400 shrink-0" />
-                <span>Quản lý người dùng & Phân quyền</span>
-              </button>
+              {canManageUsers && (
+                <button
+                  onClick={() => { setActiveTab('users'); setSidebarOpen(false); }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors ${
+                    activeTab === 'users' ? 'bg-teal-800 text-white' : 'hover:bg-slate-800 text-slate-300'
+                  }`}
+                >
+                  <Users className="w-4 h-4 text-teal-400 shrink-0" />
+                  <span>Quản lý người dùng & Phân quyền</span>
+                </button>
+              )}
 
               <button
                 onClick={() => { setActiveTab('audit_logs'); setSidebarOpen(false); }}
@@ -301,7 +305,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             )}
 
             {activeTab === 'users' && (
-              <UserManagerView currentUser={currentUser} />
+              canManageUsers ? (
+                <UserManagerView currentUser={currentUser} />
+              ) : (
+                <div className="bg-white rounded-2xl p-8 border border-slate-200 text-center text-slate-500">
+                  Bạn không có quyền truy cập chức năng Quản lý người dùng & Phân quyền.
+                </div>
+              )
             )}
 
             {activeTab === 'audit_logs' && (

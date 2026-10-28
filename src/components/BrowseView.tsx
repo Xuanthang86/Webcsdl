@@ -82,9 +82,9 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
   const formatVND = (num?: number) => {
     if (!num) return '0 đ';
-    if (num >= 1000000000) return `${(num / 1000000000).toFixed(1)} tỷ`;
-    if (num >= 1000000) return `${(num / 1000000).toFixed(0)} triệu`;
-    return `${Number(num).toLocaleString()} đ`;
+    if (num >= 1000000000) return `${(num / 1000000000).toFixed(1).replace('.', ',')} tỷ đ`;
+    if (num >= 1000000) return `${(num / 1000000).toFixed(0)} triệu đ`;
+    return `${Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} đ`;
   };
 
   // Group results by module when selectedModule === 'all'

@@ -15,6 +15,12 @@ export const SystemConfigView: React.FC<SystemConfigViewProps> = ({ config, onCo
   const [restoreText, setRestoreText] = useState('');
   const [isRestoring, setIsRestoring] = useState(false);
 
+  React.useEffect(() => {
+    if (config) {
+      setFormData({ ...config });
+    }
+  }, [config]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -22,11 +28,12 @@ export const SystemConfigView: React.FC<SystemConfigViewProps> = ({ config, onCo
 
     try {
       const updated = await api.updateConfig(formData);
+      setFormData({ ...updated });
       onConfigUpdated(updated);
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      setTimeout(() => setSaveSuccess(false), 4000);
     } catch (err: any) {
-      alert(err.message || 'Lỗi cập nhật cấu hình');
+      alert(err.message || 'Lỗi cập nhật cấu hình hệ thống');
     } finally {
       setIsSaving(false);
     }

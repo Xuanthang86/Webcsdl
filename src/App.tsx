@@ -28,13 +28,13 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | undefined>();
   const [availableRoles, setAvailableRoles] = useState<Array<{ role: string; label: string }>>([]);
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({
-    portalName: 'CỔNG DỮ LIỆU TỔNG HỢP KH&CN, ĐỔI MỚI SÁNG TẠO VÀ KHỞI NGHIỆP',
-    governingAgency: 'ỦY BAN NHÂN DÂN THÀNH PHỐ - SỞ KHOA HỌC VÀ CÔNG NGHỆ',
-    cityArea: 'Thành phố Hà Nội & TP. Hồ Chí Minh',
-    contactEmail: 'sokhcn@thanhpho.gov.vn',
-    contactPhone: '024.3825.9999 / 028.3932.5555',
-    contactAddress: 'Tòa nhà Trung tâm Hành chính Thành phố',
-    websiteDomain: 'khcndmst.thanhpho.gov.vn',
+    portalName: 'Cổng dữ liệu Tổng hợp khoa học, công nghệ & khởi nghiệp đổi mới sáng tạo',
+    governingAgency: 'ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ',
+    cityArea: 'Thành phố Đà Nẵng',
+    contactEmail: 'sokhcn@danang.gov.vn',
+    contactPhone: '0236.3822.459 / 0236.3830.214',
+    contactAddress: 'Trung tâm Đổi mới sáng tạo Đà Nẵng',
+    websiteDomain: 'dost.danang.gov.vn',
     primaryColor: '#0f766e',
     enablePublicSubmissions: true,
     maintenanceMode: false,

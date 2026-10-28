@@ -80,6 +80,12 @@ class DatabaseManager {
         if (!parsed.publications) parsed.publications = initialPublications;
         if (!parsed.lab_equipments) parsed.lab_equipments = initialLabEquipments;
         if (!parsed.policies) parsed.policies = initialPolicies;
+        if (parsed.systemConfig) {
+          parsed.systemConfig.portalName = 'Cổng dữ liệu Tổng hợp khoa học, công nghệ & khởi nghiệp đổi mới sáng tạo';
+          parsed.systemConfig.governingAgency = 'ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ';
+          parsed.systemConfig.contactAddress = 'Trung tâm Đổi mới sáng tạo Đà Nẵng';
+          parsed.systemConfig.cityArea = 'Thành phố Đà Nẵng';
+        }
         return parsed;
       }
     } catch (err) {
@@ -204,6 +210,8 @@ class DatabaseManager {
       isActive: userData.isActive !== false,
       avatarUrl: userData.avatarUrl || '',
       customPermissions: userData.customPermissions || [],
+      managedModules: userData.managedModules || [],
+      organizationScope: userData.organizationScope || '',
       createdAt: new Date().toISOString()
     };
 
