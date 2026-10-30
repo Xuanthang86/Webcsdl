@@ -19,7 +19,7 @@ import {
 } from './types.ts';
 
 export const initialSystemConfig: SystemConfig = {
-  portalName: 'Cổng dữ liệu Tổng hợp khoa học, công nghệ & khởi nghiệp đổi mới sáng tạo',
+  portalName: 'Cổng dữ liệu Tổng hợp về khoa học, công nghệ & khởi nghiệp đổi mới sáng tạo thành phố Đà Nẵng',
   governingAgency: 'ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ',
   cityArea: 'Thành phố Đà Nẵng',
   contactEmail: 'sokhcn@danang.gov.vn',

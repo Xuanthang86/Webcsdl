@@ -12,8 +12,12 @@ export const SystemConfigView: React.FC<SystemConfigViewProps> = ({ config, onCo
   const [formData, setFormData] = useState<SystemConfig>({ ...config });
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [configError, setConfigError] = useState<string | null>(null);
   const [restoreText, setRestoreText] = useState('');
   const [isRestoring, setIsRestoring] = useState(false);
+  const [restoreSuccess, setRestoreSuccess] = useState<string | null>(null);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [showConfirmRestore, setShowConfirmRestore] = useState(false);
 
   React.useEffect(() => {
     if (config) {
@@ -25,6 +29,7 @@ export const SystemConfigView: React.FC<SystemConfigViewProps> = ({ config, onCo
     e.preventDefault();
     setIsSaving(true);
     setSaveSuccess(false);
+    setConfigError(null);
 
     try {
       const updated = await api.updateConfig(formData);
@@ -33,28 +38,37 @@ export const SystemConfigView: React.FC<SystemConfigViewProps> = ({ config, onCo
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
     } catch (err: any) {
-      alert(err.message || 'Lỗi cập nhật cấu hình hệ thống');
+      setConfigError(err.message || 'Lỗi cập nhật cấu hình hệ thống');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleRestore = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const executeRestore = async () => {
     if (!restoreText.trim()) return;
-    if (!window.confirm('CẢNH BÁO: Phục hồi snapshot sẽ ghi đè toàn bộ dữ liệu hiện tại bằng dữ liệu trong tệp sao lưu. Bạn có chắc chắn muốn thực hiện?')) return;
-
     setIsRestoring(true);
+    setRestoreError(null);
+    setRestoreSuccess(null);
+    setShowConfirmRestore(false);
+
     try {
       const parsed = JSON.parse(restoreText);
       await api.restoreBackup(parsed);
-      alert('Đã phục hồi cơ sở dữ liệu thành công! Tải lại trang để đồng bộ.');
-      window.location.reload();
+      setRestoreSuccess('Đã phục hồi cơ sở dữ liệu thành công! Đang tải lại...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (err: any) {
-      alert(err.message || 'Dữ liệu sao lưu không hợp lệ.');
+      setRestoreError(err.message || 'Dữ liệu sao lưu không hợp lệ.');
     } finally {
       setIsRestoring(false);
     }
+  };
+
+  const handleRestoreSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!restoreText.trim()) return;
+    setShowConfirmRestore(true);
   };
 
   return (
@@ -68,13 +82,19 @@ export const SystemConfigView: React.FC<SystemConfigViewProps> = ({ config, onCo
               Tùy biến nhận diện & Cấu hình cổng
             </div>
             <h2 className="text-base font-bold text-slate-900 tracking-tight mt-0.5">
-              Cấu Hình Nhận Diện Thương Hiệu & Cơ Quan Chủ Quản
+              Cấu hình nhận diện thương hiệu & cơ quan chủ quản
             </h2>
           </div>
           {saveSuccess && (
             <div className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200">
               <CheckCircle2 className="w-4 h-4" />
               Đã lưu thành công!
+            </div>
+          )}
+          {configError && (
+            <div className="flex items-center gap-1.5 text-rose-700 font-semibold bg-rose-50 px-3 py-1 rounded-lg border border-rose-200">
+              <ShieldAlert className="w-4 h-4" />
+              {configError}
             </div>
           )}
         </div>
@@ -232,7 +252,18 @@ export const SystemConfigView: React.FC<SystemConfigViewProps> = ({ config, onCo
         </div>
 
         {/* Restore Section */}
-        <form onSubmit={handleRestore} className="space-y-3 pt-2">
+        <form onSubmit={handleRestoreSubmit} className="space-y-3 pt-2">
+          {restoreSuccess && (
+            <div className="p-3 bg-emerald-50 text-emerald-800 rounded-lg border border-emerald-200 font-semibold">
+              ✓ {restoreSuccess}
+            </div>
+          )}
+          {restoreError && (
+            <div className="p-3 bg-rose-50 text-rose-800 rounded-lg border border-rose-200 font-semibold">
+              ⚠ {restoreError}
+            </div>
+          )}
+
           <label className="block font-semibold text-slate-700">
             Phục hồi dữ liệu từ bản sao lưu JSON:
           </label>
@@ -243,16 +274,48 @@ export const SystemConfigView: React.FC<SystemConfigViewProps> = ({ config, onCo
             placeholder="Dán nội dung tệp JSON sao lưu vào đây để khôi phục..."
             className="w-full p-3 font-mono text-[11px] bg-slate-50 border border-slate-300 rounded-xl text-slate-900"
           />
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={isRestoring || !restoreText.trim()}
-              className="px-4 py-2 bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
-            >
-              <Upload className="w-4 h-4" />
-              {isRestoring ? 'Đang phục hồi...' : 'Thực hiện phục hồi dữ liệu'}
-            </button>
-          </div>
+
+          {showConfirmRestore && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
+              <div className="font-bold text-amber-900 flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-amber-700" />
+                Xác nhận phục hồi bản sao lưu snapshot?
+              </div>
+              <p className="text-amber-800 text-[11px]">
+                Hành động này sẽ thay thế cơ sở dữ liệu hiện tại bằng dữ liệu sao lưu. Một bản sao lưu an toàn tự động sẽ được tạo trước khi áp dụng.
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={executeRestore}
+                  disabled={isRestoring}
+                  className="px-3.5 py-1.5 bg-red-700 hover:bg-red-800 text-white font-semibold rounded-lg text-xs"
+                >
+                  {isRestoring ? 'Đang phục hồi...' : 'Đồng ý phục hồi'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmRestore(false)}
+                  className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold rounded-lg text-xs"
+                >
+                  Hủy thao tác
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!showConfirmRestore && (
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={isRestoring || !restoreText.trim()}
+                className="px-4 py-2 bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+              >
+                <Upload className="w-4 h-4" />
+                {isRestoring ? 'Đang phục hồi...' : 'Thực hiện phục hồi dữ liệu'}
+              </button>
+            </div>
+          )}
         </form>
       </div>
 

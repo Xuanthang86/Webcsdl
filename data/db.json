@@ -1,6 +1,6 @@
 {
   "systemConfig": {
-    "portalName": "Cổng dữ liệu Tổng hợp khoa học, công nghệ & khởi nghiệp đổi mới sáng tạo",
+    "portalName": "Cổng dữ liệu Tổng hợp về khoa học, công nghệ & khởi nghiệp đổi mới sáng tạo thành phố Đà Nẵng",
     "governingAgency": "ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ",
     "cityArea": "Thành phố Đà Nẵng",
     "contactEmail": "sokhcn@thanhpho.gov.vn",
@@ -23,8 +23,8 @@
       "phone": "0901234567",
       "isActive": true,
       "createdAt": "2026-01-10T08:00:00Z",
-      "passwordHash": "a5cfde0cb201b8f1c7b62b3a811d88e3577a2739d4bc812fdfdb9e429d14e54408139679b0b851559f9ca02000b1e3addc6747163fe0631d357f9b871551ee16",
-      "passwordSalt": "b94ad690dcd94a064e57d1b2a97ccd2b"
+      "passwordHash": "c18c8501523c2c9212a178a8569c660dcf1c8c8fae7569f6e2c5c7e19e4d708c8cd0c4da50349dc24b1c359dbacc1d2f0d50065fd611733676ad41bbcb5ee7a2",
+      "passwordSalt": "d40c032cac1f936e37b88149e58c2a22"
     },
     {
       "id": "usr_sysadmin",
@@ -129,6 +129,75 @@
     }
   ],
   "science_tasks": [
+    {
+      "id": "task_003",
+      "code": "NV-KHCN-2026-003",
+      "moduleType": "science_tasks",
+      "title": "Phát triển nền tảng chuỗi khối (Blockchain) truy xuất nguồn gốc nông sản an toàn khép kín cho vành đai thực phẩm thành phố",
+      "taskType": "Chuyển giao công nghệ",
+      "description": "Áp dụng công nghệ sổ cái phân tán cho 20 hợp tác xã nông nghiệp công nghệ cao cung ứng rau củ quả an toàn cho siêu thị và chợ đầu mối.",
+      "field": "Nông nghiệp Công nghệ cao & Chuyển đổi số",
+      "ownerName": "Viện Khoa học Nông nghiệp Việt Nam",
+      "source": "Đề án Chuyển đổi số Nông nghiệp Thành phố",
+      "status": "under_review",
+      "verificationStatus": "pending",
+      "publicityLevel": "public",
+      "createdAt": "2026-02-14T11:00:00Z",
+      "updatedAt": "2026-03-15T09:00:00Z",
+      "createdBy": "Phạm Minh Đức",
+      "updatedBy": "Phạm Minh Đức",
+      "necessityObjectives": "Bảo đảm 100% lô hàng nông sản có mã định danh QR chống gian lận thương mại và minh bạch dư lượng thuốc BVTV.",
+      "mainContents": "Xây dựng smart contract theo dõi nhiệt độ bảo quản, nhật ký phân bón, tem điện tử chống giả.",
+      "keywords": [
+        "Blockchain",
+        "Truy xuất nguồn gốc",
+        "Nông sản an toàn",
+        "Smart Contract"
+      ],
+      "location": "Huyện Đông Anh, Mê Linh, Gia Lâm",
+      "managingAgency": "Sở Khoa học và Công nghệ phối hợp Sở Nông nghiệp & PTNT",
+      "leadOrganization": "Viện Khoa học Nông nghiệp Việt Nam",
+      "partnerOrganizations": [
+        "Công ty CP Công nghệ Nông nghiệp Xanh SmartAgri"
+      ],
+      "principalInvestigator": "TS. Nguyễn Mạnh Cường",
+      "members": [
+        "ThS. Lê Thúy Hằng",
+        "KS. Hoàng Đình Toàn"
+      ],
+      "experts": [
+        "PGS.TS. Hoàng Kim Oanh"
+      ],
+      "selectionMethod": "Đặt hàng",
+      "fundingProgram": "Chương trình KH&CN hỗ trợ chuyển đổi số cơ sở sản xuất",
+      "totalBudgetApproved": 1400000000,
+      "stateBudget": 1000000000,
+      "counterpartBudget": 400000000,
+      "expectedStartDate": "2026-03-01",
+      "expectedEndDate": "2027-02-28",
+      "actualDuration": "12 tháng",
+      "milestones": [
+        "Hoàn thành cổng tra cứu công dân (Tháng 6/2026)"
+      ],
+      "expectedOutputs": "Ứng dụng di động AgriTrace, cổng tra cứu dữ liệu chuỗi cung ứng.",
+      "kpiTargets": "Ít nhất 2.000 tấn rau quả được dán tem số hóa có kiểm định.",
+      "executionProgress": 30,
+      "acceptanceResult": "Chờ nghiệm thu",
+      "scientificProducts": [
+        "Phần mềm AgriTrace Mobile & Web Portal"
+      ],
+      "receivingUnit": "Chi cục Quản lý Chất lượng Nông Lâm sản và Thủy sản",
+      "applicationLevel": "Thử nghiệm",
+      "impactAssessment": "Bảo vệ sức khỏe cho trên 2.5 triệu người tiêu dùng nội thành.",
+      "commercializationFeasibility": "Có khả năng tự trang trải thông qua phí dịch vụ tem số hóa.",
+      "attachments": [
+        {
+          "name": "De_xuat_nhiem_vu.pdf",
+          "url": "/files/tasks/task_003_dexuat.pdf",
+          "size": "2.5 MB"
+        }
+      ]
+    },
     {
       "id": "task_001",
       "code": "NV-KHCN-2026-001",
@@ -279,78 +348,66 @@
           "size": "7.8 MB"
         }
       ]
-    },
-    {
-      "id": "task_003",
-      "code": "NV-KHCN-2026-003",
-      "moduleType": "science_tasks",
-      "title": "Phát triển nền tảng chuỗi khối (Blockchain) truy xuất nguồn gốc nông sản an toàn khép kín cho vành đai thực phẩm thành phố",
-      "taskType": "Chuyển giao công nghệ",
-      "description": "Áp dụng công nghệ sổ cái phân tán cho 20 hợp tác xã nông nghiệp công nghệ cao cung ứng rau củ quả an toàn cho siêu thị và chợ đầu mối.",
-      "field": "Nông nghiệp Công nghệ cao & Chuyển đổi số",
-      "ownerName": "Viện Khoa học Nông nghiệp Việt Nam",
-      "source": "Đề án Chuyển đổi số Nông nghiệp Thành phố",
-      "status": "under_review",
-      "verificationStatus": "pending",
-      "publicityLevel": "public",
-      "createdAt": "2026-02-14T11:00:00Z",
-      "updatedAt": "2026-03-15T09:00:00Z",
-      "createdBy": "Phạm Minh Đức",
-      "updatedBy": "Phạm Minh Đức",
-      "necessityObjectives": "Bảo đảm 100% lô hàng nông sản có mã định danh QR chống gian lận thương mại và minh bạch dư lượng thuốc BVTV.",
-      "mainContents": "Xây dựng smart contract theo dõi nhiệt độ bảo quản, nhật ký phân bón, tem điện tử chống giả.",
-      "keywords": [
-        "Blockchain",
-        "Truy xuất nguồn gốc",
-        "Nông sản an toàn",
-        "Smart Contract"
-      ],
-      "location": "Huyện Đông Anh, Mê Linh, Gia Lâm",
-      "managingAgency": "Sở Khoa học và Công nghệ phối hợp Sở Nông nghiệp & PTNT",
-      "leadOrganization": "Viện Khoa học Nông nghiệp Việt Nam",
-      "partnerOrganizations": [
-        "Công ty CP Công nghệ Nông nghiệp Xanh SmartAgri"
-      ],
-      "principalInvestigator": "TS. Nguyễn Mạnh Cường",
-      "members": [
-        "ThS. Lê Thúy Hằng",
-        "KS. Hoàng Đình Toàn"
-      ],
-      "experts": [
-        "PGS.TS. Hoàng Kim Oanh"
-      ],
-      "selectionMethod": "Đặt hàng",
-      "fundingProgram": "Chương trình KH&CN hỗ trợ chuyển đổi số cơ sở sản xuất",
-      "totalBudgetApproved": 1400000000,
-      "stateBudget": 1000000000,
-      "counterpartBudget": 400000000,
-      "expectedStartDate": "2026-03-01",
-      "expectedEndDate": "2027-02-28",
-      "actualDuration": "12 tháng",
-      "milestones": [
-        "Hoàn thành cổng tra cứu công dân (Tháng 6/2026)"
-      ],
-      "expectedOutputs": "Ứng dụng di động AgriTrace, cổng tra cứu dữ liệu chuỗi cung ứng.",
-      "kpiTargets": "Ít nhất 2.000 tấn rau quả được dán tem số hóa có kiểm định.",
-      "executionProgress": 30,
-      "acceptanceResult": "Chờ nghiệm thu",
-      "scientificProducts": [
-        "Phần mềm AgriTrace Mobile & Web Portal"
-      ],
-      "receivingUnit": "Chi cục Quản lý Chất lượng Nông Lâm sản và Thủy sản",
-      "applicationLevel": "Thử nghiệm",
-      "impactAssessment": "Bảo vệ sức khỏe cho trên 2.5 triệu người tiêu dùng nội thành.",
-      "commercializationFeasibility": "Có khả năng tự trang trải thông qua phí dịch vụ tem số hóa.",
-      "attachments": [
-        {
-          "name": "De_xuat_nhiem_vu.pdf",
-          "url": "/files/tasks/task_003_dexuat.pdf",
-          "size": "2.5 MB"
-        }
-      ]
     }
   ],
   "initiatives": [
+    {
+      "id": "init_003",
+      "code": "SK-TP-2026-003",
+      "moduleType": "initiatives",
+      "title": "Giải pháp thu gom và tái chế bã cà phê công nghiệp thành hạt nhựa sinh học phân hủy hoàn toàn phục vụ ngành bao bì xanh",
+      "description": "Quy trình thu gom bã thải từ chuỗi cà phê và cơ sở rang xay, xử lý nhiệt và ghép mạch este với polyme sinh học tạo hạt composite thân thiện môi trường thay thế túi nilon.",
+      "field": "Môi trường, Kinh tế tuần hoàn & Vật liệu xanh",
+      "ownerName": "Công ty TNHH Nhựa Sinh học GreenTech",
+      "source": "Cuộc thi Sáng tạo Xanh Đô thị",
+      "status": "under_review",
+      "verificationStatus": "pending",
+      "publicityLevel": "public",
+      "createdAt": "2026-02-18T14:00:00Z",
+      "updatedAt": "2026-03-10T10:00:00Z",
+      "createdBy": "Phạm Minh Đức",
+      "updatedBy": "Phạm Minh Đức",
+      "problemSolved": "Hàng ngàn tấn bã cà phê hàng tháng bị thải ra bãi chôn lấp phát sinh khí mê-tan gây hiệu ứng nhà kính.",
+      "solutionDetails": "Công nghệ khử dầu, sấy tầng sôi và ép đùn tạo hạt bio-resin có khả năng tự phân hủy trong đất sau 6-9 tháng.",
+      "noveltyPoints": "Tận dụng 100% nguồn bã phế thải đô thị, giá thành thấp hơn hạt nhựa PLA nhập khẩu 30%.",
+      "authors": [
+        "KS. Hoàng Minh Long",
+        "ThS. Đỗ Thị Thu"
+      ],
+      "proposingOrg": "Công ty TNHH Nhựa Sinh học GreenTech",
+      "implementingLead": "Hoàng Minh Long",
+      "applicationArea": "Khu công nghệ cao và hệ thống nhà hàng, chuỗi cà phê thành phố",
+      "beneficiaries": "Các chuỗi F&B, nhà máy bao bì sinh học và người tiêu dùng",
+      "conceptionDate": "2024-09-01",
+      "implementationDate": "2025-05-01",
+      "receivingAgency": "Chi cục Bảo vệ Môi trường - Sở TN&MT",
+      "proposedScope": "Cấp thành phố",
+      "recognizedScope": "Chưa công nhận",
+      "beforeAfterComparison": "Tái chế được 120 tấn bã cà phê/tháng; giảm phát thải 85 tấn CO2 tương đương.",
+      "investmentCost": 950000000,
+      "costSavings": 1500000000,
+      "economicImpact": "Tạo sản phẩm xuất khẩu giá trị cao sang thị trường EU và Nhật Bản.",
+      "socialImpact": "Lan tỏa lối sống xanh và nâng cao ý thức phân loại rác thải tại nguồn.",
+      "adminImpact": "Góp phần hiện thực hóa cam kết Net Zero của Thành phố đến năm 2040.",
+      "environmentalImpact": "Giảm tải cho bãi rác Nam Sơn và Đa Phước.",
+      "beneficiaryCount": 120000,
+      "scalabilityPotential": "Cao",
+      "appliedUnits": [
+        "Chuỗi Highlands Coffee",
+        "Cộng Cà Phê"
+      ],
+      "interestedUnits": [
+        "Tập đoàn Trung Nguyên",
+        "Vinamilk"
+      ],
+      "attachments": [
+        {
+          "name": "Chung_nhan_kiem_dinh_biodegradable.pdf",
+          "url": "/files/initiatives/init_003_chungnhan.pdf",
+          "size": "1.2 MB"
+        }
+      ]
+    },
     {
       "id": "init_001",
       "code": "SK-TP-2026-001",
@@ -474,66 +531,68 @@
           "size": "2.9 MB"
         }
       ]
-    },
-    {
-      "id": "init_003",
-      "code": "SK-TP-2026-003",
-      "moduleType": "initiatives",
-      "title": "Giải pháp thu gom và tái chế bã cà phê công nghiệp thành hạt nhựa sinh học phân hủy hoàn toàn phục vụ ngành bao bì xanh",
-      "description": "Quy trình thu gom bã thải từ chuỗi cà phê và cơ sở rang xay, xử lý nhiệt và ghép mạch este với polyme sinh học tạo hạt composite thân thiện môi trường thay thế túi nilon.",
-      "field": "Môi trường, Kinh tế tuần hoàn & Vật liệu xanh",
-      "ownerName": "Công ty TNHH Nhựa Sinh học GreenTech",
-      "source": "Cuộc thi Sáng tạo Xanh Đô thị",
-      "status": "under_review",
-      "verificationStatus": "pending",
-      "publicityLevel": "public",
-      "createdAt": "2026-02-18T14:00:00Z",
-      "updatedAt": "2026-03-10T10:00:00Z",
-      "createdBy": "Phạm Minh Đức",
-      "updatedBy": "Phạm Minh Đức",
-      "problemSolved": "Hàng ngàn tấn bã cà phê hàng tháng bị thải ra bãi chôn lấp phát sinh khí mê-tan gây hiệu ứng nhà kính.",
-      "solutionDetails": "Công nghệ khử dầu, sấy tầng sôi và ép đùn tạo hạt bio-resin có khả năng tự phân hủy trong đất sau 6-9 tháng.",
-      "noveltyPoints": "Tận dụng 100% nguồn bã phế thải đô thị, giá thành thấp hơn hạt nhựa PLA nhập khẩu 30%.",
-      "authors": [
-        "KS. Hoàng Minh Long",
-        "ThS. Đỗ Thị Thu"
-      ],
-      "proposingOrg": "Công ty TNHH Nhựa Sinh học GreenTech",
-      "implementingLead": "Hoàng Minh Long",
-      "applicationArea": "Khu công nghệ cao và hệ thống nhà hàng, chuỗi cà phê thành phố",
-      "beneficiaries": "Các chuỗi F&B, nhà máy bao bì sinh học và người tiêu dùng",
-      "conceptionDate": "2024-09-01",
-      "implementationDate": "2025-05-01",
-      "receivingAgency": "Chi cục Bảo vệ Môi trường - Sở TN&MT",
-      "proposedScope": "Cấp thành phố",
-      "recognizedScope": "Chưa công nhận",
-      "beforeAfterComparison": "Tái chế được 120 tấn bã cà phê/tháng; giảm phát thải 85 tấn CO2 tương đương.",
-      "investmentCost": 950000000,
-      "costSavings": 1500000000,
-      "economicImpact": "Tạo sản phẩm xuất khẩu giá trị cao sang thị trường EU và Nhật Bản.",
-      "socialImpact": "Lan tỏa lối sống xanh và nâng cao ý thức phân loại rác thải tại nguồn.",
-      "adminImpact": "Góp phần hiện thực hóa cam kết Net Zero của Thành phố đến năm 2040.",
-      "environmentalImpact": "Giảm tải cho bãi rác Nam Sơn và Đa Phước.",
-      "beneficiaryCount": 120000,
-      "scalabilityPotential": "Cao",
-      "appliedUnits": [
-        "Chuỗi Highlands Coffee",
-        "Cộng Cà Phê"
-      ],
-      "interestedUnits": [
-        "Tập đoàn Trung Nguyên",
-        "Vinamilk"
-      ],
-      "attachments": [
-        {
-          "name": "Chung_nhan_kiem_dinh_biodegradable.pdf",
-          "url": "/files/initiatives/init_003_chungnhan.pdf",
-          "size": "1.2 MB"
-        }
-      ]
     }
   ],
   "experts": [
+    {
+      "id": "exp_003",
+      "code": "CG-KHCN-003",
+      "moduleType": "experts",
+      "title": "TS. Nguyễn Mạnh Cường",
+      "description": "Chuyên gia Nông nghiệp Công nghệ cao, Công nghệ sinh học cây trồng và Quản lý chuỗi giá trị nông sản bền vững.",
+      "field": "Nông nghiệp & Công nghệ Sinh học",
+      "ownerName": "Viện Khoa học Nông nghiệp Việt Nam",
+      "source": "Hệ thống chuyên gia KH&CN Thành phố",
+      "status": "approved",
+      "verificationStatus": "verified",
+      "publicityLevel": "public",
+      "createdAt": "2025-07-20T08:00:00Z",
+      "updatedAt": "2026-02-15T14:00:00Z",
+      "createdBy": "Phạm Minh Đức",
+      "updatedBy": "Trần Thị Mai",
+      "academicTitle": "TS",
+      "position": "Trưởng bộ môn Công nghệ Sau thu hoạch",
+      "workplace": "Viện Khoa học Nông nghiệp Việt Nam",
+      "department": "Trung tâm Nghiên cứu & Phát triển Rau hoa quả",
+      "primaryField": "Nông nghiệp chính xác & Bảo quản sau thu hoạch",
+      "secondaryFields": [
+        "Truy xuất nguồn gốc chuỗi khối",
+        "Canh tác nhà màng thông minh",
+        "Tiêu chuẩn VietGAP/GlobalGAP"
+      ],
+      "specialtyKeywords": [
+        "Smart Agriculture",
+        "Post-harvest",
+        "Cold Chain",
+        "Traceability",
+        "Bio-fertilizer"
+      ],
+      "educationLevel": "Tiến sĩ Nông nghiệp tại Đại học Wageningen, Hà Lan",
+      "careerTimeline": "Công tác tại Viện KH Nông nghiệp từ năm 2010; Chủ nhiệm nhiều dự án hợp tác quốc tế với JICA, FAO.",
+      "researchExperience": "Chuyên sâu về tối ưu hóa chuỗi bảo quản lạnh cho rau quả và hoa tươi chất lượng cao.",
+      "linkedTasksCount": 5,
+      "headedTopicsCount": 3,
+      "publicationsCount": 28,
+      "patentsCount": 2,
+      "advisoryExperience": "Cố vấn xây dựng chuỗi cung ứng nông sản an toàn cho 10 huyện ngoại thành.",
+      "startupMentoringExperience": "Huấn luyện viên tại Vườn ươm Khởi nghiệp Nông nghiệp Việt Nam.",
+      "councilsJoined": [
+        "Hội đồng Khoa học Bộ Nông nghiệp & PTNT"
+      ],
+      "availableRoles": [
+        "Tư vấn triển khai dự án",
+        "Đánh giá tính khả thi công nghệ",
+        "Huấn luyện khởi nghiệp"
+      ],
+      "collaborationLocations": [
+        "Hà Nội",
+        "Vùng Đồng bằng Sông Hồng",
+        "Lâm Đồng"
+      ],
+      "collaborationReadiness": "Sẵn sàng",
+      "publicEmail": "cuong.nm@vaas.vn",
+      "consentPublic": true
+    },
     {
       "id": "exp_001",
       "code": "CG-KHCN-001",
@@ -654,65 +713,6 @@
       "publicEmail": "thanh.vd@hust.edu.vn",
       "publicPhone": "024.3869.xxxx",
       "consentPublic": true
-    },
-    {
-      "id": "exp_003",
-      "code": "CG-KHCN-003",
-      "moduleType": "experts",
-      "title": "TS. Nguyễn Mạnh Cường",
-      "description": "Chuyên gia Nông nghiệp Công nghệ cao, Công nghệ sinh học cây trồng và Quản lý chuỗi giá trị nông sản bền vững.",
-      "field": "Nông nghiệp & Công nghệ Sinh học",
-      "ownerName": "Viện Khoa học Nông nghiệp Việt Nam",
-      "source": "Hệ thống chuyên gia KH&CN Thành phố",
-      "status": "approved",
-      "verificationStatus": "verified",
-      "publicityLevel": "public",
-      "createdAt": "2025-07-20T08:00:00Z",
-      "updatedAt": "2026-02-15T14:00:00Z",
-      "createdBy": "Phạm Minh Đức",
-      "updatedBy": "Trần Thị Mai",
-      "academicTitle": "TS",
-      "position": "Trưởng bộ môn Công nghệ Sau thu hoạch",
-      "workplace": "Viện Khoa học Nông nghiệp Việt Nam",
-      "department": "Trung tâm Nghiên cứu & Phát triển Rau hoa quả",
-      "primaryField": "Nông nghiệp chính xác & Bảo quản sau thu hoạch",
-      "secondaryFields": [
-        "Truy xuất nguồn gốc chuỗi khối",
-        "Canh tác nhà màng thông minh",
-        "Tiêu chuẩn VietGAP/GlobalGAP"
-      ],
-      "specialtyKeywords": [
-        "Smart Agriculture",
-        "Post-harvest",
-        "Cold Chain",
-        "Traceability",
-        "Bio-fertilizer"
-      ],
-      "educationLevel": "Tiến sĩ Nông nghiệp tại Đại học Wageningen, Hà Lan",
-      "careerTimeline": "Công tác tại Viện KH Nông nghiệp từ năm 2010; Chủ nhiệm nhiều dự án hợp tác quốc tế với JICA, FAO.",
-      "researchExperience": "Chuyên sâu về tối ưu hóa chuỗi bảo quản lạnh cho rau quả và hoa tươi chất lượng cao.",
-      "linkedTasksCount": 5,
-      "headedTopicsCount": 3,
-      "publicationsCount": 28,
-      "patentsCount": 2,
-      "advisoryExperience": "Cố vấn xây dựng chuỗi cung ứng nông sản an toàn cho 10 huyện ngoại thành.",
-      "startupMentoringExperience": "Huấn luyện viên tại Vườn ươm Khởi nghiệp Nông nghiệp Việt Nam.",
-      "councilsJoined": [
-        "Hội đồng Khoa học Bộ Nông nghiệp & PTNT"
-      ],
-      "availableRoles": [
-        "Tư vấn triển khai dự án",
-        "Đánh giá tính khả thi công nghệ",
-        "Huấn luyện khởi nghiệp"
-      ],
-      "collaborationLocations": [
-        "Hà Nội",
-        "Vùng Đồng bằng Sông Hồng",
-        "Lâm Đồng"
-      ],
-      "collaborationReadiness": "Sẵn sàng",
-      "publicEmail": "cuong.nm@vaas.vn",
-      "consentPublic": true
     }
   ],
   "organizations": [
@@ -785,6 +785,55 @@
   ],
   "startups": [
     {
+      "id": "stp_002",
+      "code": "DN-KN-2026-002",
+      "moduleType": "startups",
+      "title": "Công ty Cổ phần Nền tảng Y tế Số Medlink Care",
+      "description": "Nền tảng kết nối hồ sơ bệnh án số hóa liên viện và quản lý điều trị bệnh nhân mãn tính tại nhà với sự trợ giúp của AI cảnh báo sớm biến chứng tim mạch.",
+      "field": "Công nghệ Y tế (MedTech) & Chuyển đổi số",
+      "ownerName": "ThS.BS. Lê Thu Thảo - Đồng sáng lập & Giám đốc Y khoa",
+      "source": "Cơ sở dữ liệu ĐMST Thành phố",
+      "status": "approved",
+      "verificationStatus": "verified",
+      "publicityLevel": "public",
+      "createdAt": "2025-05-10T10:00:00Z",
+      "updatedAt": "2026-03-12T11:00:00Z",
+      "createdBy": "Trần Thị Mai",
+      "updatedBy": "Trần Thị Mai",
+      "brandName": "Medlink Care AI",
+      "businessCode": "0108877665",
+      "foundedDate": "2024-02-14",
+      "legalType": "Công ty Cổ phần",
+      "representative": "Nguyễn Hải Đăng",
+      "headquarters": "Tòa nhà Technosoft, Phố Duy Tân, Dịch Vọng Hậu, Cầu Giấy",
+      "operationalArea": "Hà Nội và các bệnh viện vệ tinh vùng Đông Bắc",
+      "website": "https://medlinkcare.vn",
+      "publicEmail": "contact@medlinkcare.vn",
+      "publicPhone": "0912.888.777",
+      "coreTech": "Mô hình phân tích tín hiệu điện tim ECG 12 chuyển đạo thời gian thực, HL7 FHIR Gateway bảo mật chuẩn HIPAA",
+      "businessModel": "B2B2C hợp tác với các bệnh viện và phòng khám tư nhân, chia sẻ doanh thu gói theo dõi sức khỏe chủ động",
+      "targetMarket": "Bệnh nhân cao huyết áp, tiểu đường type 2 cần theo dõi y tế từ xa",
+      "targetCustomers": "Bệnh nhân tim mạch mãn tính, Bệnh viện công lập tuyến tỉnh/quận",
+      "developmentStage": "Tăng trưởng sơ khởi",
+      "teamSize": "24 nhân sự",
+      "growthMetrics": "Có 35.000 người dùng hoạt động hàng tháng (MAU) và liên kết với 12 bệnh viện lớn.",
+      "fundingNeeds": 22000000000,
+      "fundraisingRounds": [
+        "Pre-seed: 100.000 USD (Hanoi Angel Network, 2024)",
+        "Đang mở vòng Series Seed 1 triệu USD"
+      ],
+      "linkedInvestors": [
+        "Quỹ Đầu tư Khởi nghiệp Sáng tạo TP.HCM (HSIF)"
+      ],
+      "programsJoined": [
+        "Hanoi Biotech & MedTech Accelerator 2025"
+      ],
+      "awards": [
+        "Top 5 Sáng kiến Y tế Thông minh Quốc gia 2025"
+      ],
+      "ipRights": "01 Đơn đăng ký sáng chế thuật toán chẩn đoán rung nhĩ sớm trên thiết bị đeo; Chứng nhận bảo mật an toàn dữ liệu ISO 27001"
+    },
+    {
       "id": "stp_001",
       "code": "DN-KN-2026-001",
       "moduleType": "startups",
@@ -835,55 +884,6 @@
         "Top 10 Startup Nông nghiệp Xuất sắc Đông Nam Á"
       ],
       "ipRights": "01 Bằng Độc quyền Giải pháp hữu ích về Cảm biến đất quang học tự làm sạch; 02 Bản quyền phần mềm"
-    },
-    {
-      "id": "stp_002",
-      "code": "DN-KN-2026-002",
-      "moduleType": "startups",
-      "title": "Công ty Cổ phần Nền tảng Y tế Số Medlink Care",
-      "description": "Nền tảng kết nối hồ sơ bệnh án số hóa liên viện và quản lý điều trị bệnh nhân mãn tính tại nhà với sự trợ giúp của AI cảnh báo sớm biến chứng tim mạch.",
-      "field": "Công nghệ Y tế (MedTech) & Chuyển đổi số",
-      "ownerName": "ThS.BS. Lê Thu Thảo - Đồng sáng lập & Giám đốc Y khoa",
-      "source": "Cơ sở dữ liệu ĐMST Thành phố",
-      "status": "approved",
-      "verificationStatus": "verified",
-      "publicityLevel": "public",
-      "createdAt": "2025-05-10T10:00:00Z",
-      "updatedAt": "2026-03-12T11:00:00Z",
-      "createdBy": "Trần Thị Mai",
-      "updatedBy": "Trần Thị Mai",
-      "brandName": "Medlink Care AI",
-      "businessCode": "0108877665",
-      "foundedDate": "2024-02-14",
-      "legalType": "Công ty Cổ phần",
-      "representative": "Nguyễn Hải Đăng",
-      "headquarters": "Tòa nhà Technosoft, Phố Duy Tân, Dịch Vọng Hậu, Cầu Giấy",
-      "operationalArea": "Hà Nội và các bệnh viện vệ tinh vùng Đông Bắc",
-      "website": "https://medlinkcare.vn",
-      "publicEmail": "contact@medlinkcare.vn",
-      "publicPhone": "0912.888.777",
-      "coreTech": "Mô hình phân tích tín hiệu điện tim ECG 12 chuyển đạo thời gian thực, HL7 FHIR Gateway bảo mật chuẩn HIPAA",
-      "businessModel": "B2B2C hợp tác với các bệnh viện và phòng khám tư nhân, chia sẻ doanh thu gói theo dõi sức khỏe chủ động",
-      "targetMarket": "Bệnh nhân cao huyết áp, tiểu đường type 2 cần theo dõi y tế từ xa",
-      "targetCustomers": "Bệnh nhân tim mạch mãn tính, Bệnh viện công lập tuyến tỉnh/quận",
-      "developmentStage": "Tăng trưởng sơ khởi",
-      "teamSize": "24 nhân sự",
-      "growthMetrics": "Có 35.000 người dùng hoạt động hàng tháng (MAU) và liên kết với 12 bệnh viện lớn.",
-      "fundingNeeds": 22000000000,
-      "fundraisingRounds": [
-        "Pre-seed: 100.000 USD (Hanoi Angel Network, 2024)",
-        "Đang mở vòng Series Seed 1 triệu USD"
-      ],
-      "linkedInvestors": [
-        "Quỹ Đầu tư Khởi nghiệp Sáng tạo TP.HCM (HSIF)"
-      ],
-      "programsJoined": [
-        "Hanoi Biotech & MedTech Accelerator 2025"
-      ],
-      "awards": [
-        "Top 5 Sáng kiến Y tế Thông minh Quốc gia 2025"
-      ],
-      "ipRights": "01 Đơn đăng ký sáng chế thuật toán chẩn đoán rung nhĩ sớm trên thiết bị đeo; Chứng nhận bảo mật an toàn dữ liệu ISO 27001"
     }
   ],
   "startup_projects": [
@@ -1170,30 +1170,6 @@
   ],
   "collaboration_needs": [
     {
-      "id": "need_001",
-      "code": "NC-KN-2026-001",
-      "moduleType": "collaboration_needs",
-      "title": "Tìm kiếm đối tác tiếp nhận chuyển giao công nghệ vật liệu nano composite lọc nước thải y tế kháng kháng sinh",
-      "description": "Trường Đại học Bách Khoa cần tìm kiếm các công ty cơ điện môi trường, doanh nghiệp xử lý nước thải công nghiệp để thương mại hóa module xúc tác quang BioNanoClean.",
-      "field": "Công nghệ Môi trường & Thiết bị Y tế",
-      "ownerName": "Trường Đại học Bách Khoa (Nhóm GS.TS. Vũ Đình Thành)",
-      "source": "Cổng thông tin Chuyển giao Công nghệ Thành phố",
-      "status": "approved",
-      "verificationStatus": "verified",
-      "publicityLevel": "public",
-      "createdAt": "2026-02-01T10:00:00Z",
-      "updatedAt": "2026-03-05T16:00:00Z",
-      "createdBy": "Phạm Minh Đức",
-      "updatedBy": "Phạm Minh Đức",
-      "needType": "Nhu cầu chuyển giao công nghệ",
-      "posterType": "Viện trường",
-      "posterContact": "GS.TS. Vũ Đình Thành - Email: thanh.vd@hust.edu.vn - ĐT: 0977.112.233",
-      "detailedRequirements": "Doanh nghiệp tiếp nhận cần có xưởng cơ khí chế tạo bồn phản ứng inox, có giấy phép lắp đặt hệ thống xử lý môi trường y tế.",
-      "deadline": "2026-08-30",
-      "processingState": "Đang kết nối",
-      "connectionRequestsCount": 4
-    },
-    {
       "id": "need_002",
       "code": "NC-KN-2026-002",
       "moduleType": "collaboration_needs",
@@ -1216,6 +1192,30 @@
       "deadline": "2026-06-15",
       "processingState": "Mới đăng",
       "connectionRequestsCount": 7
+    },
+    {
+      "id": "need_001",
+      "code": "NC-KN-2026-001",
+      "moduleType": "collaboration_needs",
+      "title": "Tìm kiếm đối tác tiếp nhận chuyển giao công nghệ vật liệu nano composite lọc nước thải y tế kháng kháng sinh",
+      "description": "Trường Đại học Bách Khoa cần tìm kiếm các công ty cơ điện môi trường, doanh nghiệp xử lý nước thải công nghiệp để thương mại hóa module xúc tác quang BioNanoClean.",
+      "field": "Công nghệ Môi trường & Thiết bị Y tế",
+      "ownerName": "Trường Đại học Bách Khoa (Nhóm GS.TS. Vũ Đình Thành)",
+      "source": "Cổng thông tin Chuyển giao Công nghệ Thành phố",
+      "status": "approved",
+      "verificationStatus": "verified",
+      "publicityLevel": "public",
+      "createdAt": "2026-02-01T10:00:00Z",
+      "updatedAt": "2026-03-05T16:00:00Z",
+      "createdBy": "Phạm Minh Đức",
+      "updatedBy": "Phạm Minh Đức",
+      "needType": "Nhu cầu chuyển giao công nghệ",
+      "posterType": "Viện trường",
+      "posterContact": "GS.TS. Vũ Đình Thành - Email: thanh.vd@hust.edu.vn - ĐT: 0977.112.233",
+      "detailedRequirements": "Doanh nghiệp tiếp nhận cần có xưởng cơ khí chế tạo bồn phản ứng inox, có giấy phép lắp đặt hệ thống xử lý môi trường y tế.",
+      "deadline": "2026-08-30",
+      "processingState": "Đang kết nối",
+      "connectionRequestsCount": 4
     }
   ],
   "relationships": [
@@ -1338,6 +1338,1082 @@
     }
   ],
   "auditLogs": [
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "details": "TEST_CONCURRENT_2",
+      "id": "log_1793385774595_4aa",
+      "timestamp": "2026-10-30T18:42:54.595Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "details": "TEST_CONCURRENT_1",
+      "id": "log_1793385774595_kui",
+      "timestamp": "2026-10-30T18:42:54.595Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 0, trùng lặp 1, lỗi 0",
+      "id": "log_1793385774590_k0m",
+      "timestamp": "2026-10-30T18:42:54.590Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "delete",
+      "targetModule": "experts",
+      "targetId": "expe_1793385774584_1",
+      "targetTitle": "Chuyên gia Mẫu Import",
+      "details": "Xóa bản ghi [EXP-IMP-45841] khỏi hệ thống",
+      "id": "log_1793385774588_lfu",
+      "timestamp": "2026-10-30T18:42:54.588Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 1, trùng lặp 0, lỗi 1",
+      "id": "log_1793385774584_fxh",
+      "timestamp": "2026-10-30T18:42:54.584Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "delete",
+      "targetModule": "initiatives",
+      "targetId": "init_1793385774566",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Xóa bản ghi [INI-4566] khỏi hệ thống",
+      "id": "log_1793385774576_k4h",
+      "timestamp": "2026-10-30T18:42:54.576Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "approve",
+      "targetModule": "initiatives",
+      "targetId": "init_1793385774566",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-4566]: chuyển từ needs_revision -> approved. Ghi chú: Đạt yêu cầu",
+      "id": "log_1793385774574_s4a",
+      "timestamp": "2026-10-30T18:42:54.574Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "revise",
+      "targetModule": "initiatives",
+      "targetId": "init_1793385774566",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-4566]: chuyển từ submitted -> needs_revision. Ghi chú: Yêu cầu bổ sung tài liệu",
+      "id": "log_1793385774572_28v",
+      "timestamp": "2026-10-30T18:42:54.572Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "update",
+      "targetModule": "initiatives",
+      "targetId": "init_1793385774566",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-4566]: chuyển từ draft -> submitted. Ghi chú: Gửi duyệt",
+      "id": "log_1793385774570_4ly",
+      "timestamp": "2026-10-30T18:42:54.570Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "targetModule": "initiatives",
+      "targetId": "init_1793385774566",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Tạo mới bản ghi [INI-4566] trong phân hệ initiatives",
+      "id": "log_1793385774566_b0p",
+      "timestamp": "2026-10-30T18:42:54.566Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "delete",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793385774555",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Xóa bản ghi [SCI-4555] khỏi hệ thống",
+      "id": "log_1793385774564_kit",
+      "timestamp": "2026-10-30T18:42:54.564Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "update",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793385774555",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Chỉnh sửa bản ghi [SCI-4555] - Cập nhật trường",
+      "id": "log_1793385774558_p78",
+      "timestamp": "2026-10-30T18:42:54.558Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793385774555",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Tạo mới bản ghi [SCI-4555] trong phân hệ science_tasks",
+      "id": "log_1793385774555_ewb",
+      "timestamp": "2026-10-30T18:42:54.555Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "login",
+      "details": "Đăng nhập hệ thống thành công với tài khoản [superadmin] (super_admin)",
+      "id": "log_1793385774526_ahm",
+      "timestamp": "2026-10-30T18:42:54.526Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "update",
+      "details": "Người dùng [superadmin] tự đổi mật khẩu tài khoản thành công.",
+      "id": "log_1793385770182_2pd",
+      "timestamp": "2026-10-30T18:42:50.182Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "update",
+      "details": "Cập nhật tài khoản/phân quyền người dùng [superadmin]: vai trò super_admin, trạng thái Kích hoạt",
+      "id": "log_1793385770180_2as",
+      "timestamp": "2026-10-30T18:42:50.180Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "update",
+      "details": "Người dùng [superadmin] tự đổi mật khẩu tài khoản thành công.",
+      "id": "log_1793385770148_bgk",
+      "timestamp": "2026-10-30T18:42:50.148Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "update",
+      "details": "Cập nhật tài khoản/phân quyền người dùng [superadmin]: vai trò super_admin, trạng thái Kích hoạt",
+      "id": "log_1793385770145_euq",
+      "timestamp": "2026-10-30T18:42:50.145Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "login",
+      "details": "Đăng nhập hệ thống thành công với tài khoản [superadmin] (super_admin)",
+      "id": "log_1793385770093_us9",
+      "timestamp": "2026-10-30T18:42:50.093Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "details": "TEST_CONCURRENT_2",
+      "id": "log_1793385734942_rgx",
+      "timestamp": "2026-10-30T18:42:14.942Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "details": "TEST_CONCURRENT_1",
+      "id": "log_1793385734942_89s",
+      "timestamp": "2026-10-30T18:42:14.942Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 0, trùng lặp 1, lỗi 0",
+      "id": "log_1793385734937_jay",
+      "timestamp": "2026-10-30T18:42:14.937Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "delete",
+      "targetModule": "experts",
+      "targetId": "expe_1793385734934_1",
+      "targetTitle": "Chuyên gia Mẫu Import",
+      "details": "Xóa bản ghi [EXP-IMP-49341] khỏi hệ thống",
+      "id": "log_1793385734935_c3c",
+      "timestamp": "2026-10-30T18:42:14.935Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 1, trùng lặp 0, lỗi 1",
+      "id": "log_1793385734934_jfj",
+      "timestamp": "2026-10-30T18:42:14.934Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "delete",
+      "targetModule": "initiatives",
+      "targetId": "init_1793385734922",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Xóa bản ghi [INI-4922] khỏi hệ thống",
+      "id": "log_1793385734932_xld",
+      "timestamp": "2026-10-30T18:42:14.932Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "approve",
+      "targetModule": "initiatives",
+      "targetId": "init_1793385734922",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-4922]: chuyển từ needs_revision -> approved. Ghi chú: Đạt yêu cầu",
+      "id": "log_1793385734929_zz7",
+      "timestamp": "2026-10-30T18:42:14.929Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "revise",
+      "targetModule": "initiatives",
+      "targetId": "init_1793385734922",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-4922]: chuyển từ submitted -> needs_revision. Ghi chú: Yêu cầu bổ sung tài liệu",
+      "id": "log_1793385734927_clx",
+      "timestamp": "2026-10-30T18:42:14.927Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "update",
+      "targetModule": "initiatives",
+      "targetId": "init_1793385734922",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-4922]: chuyển từ draft -> submitted. Ghi chú: Gửi duyệt",
+      "id": "log_1793385734925_1ub",
+      "timestamp": "2026-10-30T18:42:14.925Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "targetModule": "initiatives",
+      "targetId": "init_1793385734922",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Tạo mới bản ghi [INI-4922] trong phân hệ initiatives",
+      "id": "log_1793385734922_39e",
+      "timestamp": "2026-10-30T18:42:14.922Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "delete",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793385734916",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Xóa bản ghi [SCI-4916] khỏi hệ thống",
+      "id": "log_1793385734920_qdl",
+      "timestamp": "2026-10-30T18:42:14.920Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "update",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793385734916",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Chỉnh sửa bản ghi [SCI-4916] - Cập nhật trường",
+      "id": "log_1793385734918_tmq",
+      "timestamp": "2026-10-30T18:42:14.918Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793385734916",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Tạo mới bản ghi [SCI-4916] trong phân hệ science_tasks",
+      "id": "log_1793385734916_ls6",
+      "timestamp": "2026-10-30T18:42:14.916Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "login",
+      "details": "Đăng nhập hệ thống thành công với tài khoản [superadmin] (super_admin)",
+      "id": "log_1793385734897_l09",
+      "timestamp": "2026-10-30T18:42:14.897Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "details": "TEST_CONCURRENT_2",
+      "id": "log_1793382037674_2i1",
+      "timestamp": "2026-10-30T17:40:37.674Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "details": "TEST_CONCURRENT_1",
+      "id": "log_1793382037674_aqv",
+      "timestamp": "2026-10-30T17:40:37.674Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 0, trùng lặp 1, lỗi 0",
+      "id": "log_1793382037670_371",
+      "timestamp": "2026-10-30T17:40:37.670Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "delete",
+      "targetModule": "experts",
+      "targetId": "expe_1793382037664_1",
+      "targetTitle": "Chuyên gia Mẫu Import",
+      "details": "Xóa bản ghi [EXP-IMP-76641] khỏi hệ thống",
+      "id": "log_1793382037666_159",
+      "timestamp": "2026-10-30T17:40:37.666Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 1, trùng lặp 0, lỗi 1",
+      "id": "log_1793382037664_v5n",
+      "timestamp": "2026-10-30T17:40:37.664Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "delete",
+      "targetModule": "initiatives",
+      "targetId": "init_1793382037652",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Xóa bản ghi [INI-7652] khỏi hệ thống",
+      "id": "log_1793382037662_3kn",
+      "timestamp": "2026-10-30T17:40:37.662Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "approve",
+      "targetModule": "initiatives",
+      "targetId": "init_1793382037652",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-7652]: chuyển từ needs_revision -> approved. Ghi chú: Đạt yêu cầu",
+      "id": "log_1793382037659_dbq",
+      "timestamp": "2026-10-30T17:40:37.659Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "revise",
+      "targetModule": "initiatives",
+      "targetId": "init_1793382037652",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-7652]: chuyển từ submitted -> needs_revision. Ghi chú: Yêu cầu bổ sung tài liệu",
+      "id": "log_1793382037657_3ky",
+      "timestamp": "2026-10-30T17:40:37.657Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "update",
+      "targetModule": "initiatives",
+      "targetId": "init_1793382037652",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-7652]: chuyển từ draft -> submitted. Ghi chú: Gửi duyệt",
+      "id": "log_1793382037655_5jy",
+      "timestamp": "2026-10-30T17:40:37.655Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "targetModule": "initiatives",
+      "targetId": "init_1793382037652",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Tạo mới bản ghi [INI-7652] trong phân hệ initiatives",
+      "id": "log_1793382037652_noe",
+      "timestamp": "2026-10-30T17:40:37.652Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "delete",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793382037646",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Xóa bản ghi [SCI-7646] khỏi hệ thống",
+      "id": "log_1793382037650_bl7",
+      "timestamp": "2026-10-30T17:40:37.650Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "update",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793382037646",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Chỉnh sửa bản ghi [SCI-7646] - Cập nhật trường",
+      "id": "log_1793382037648_rbr",
+      "timestamp": "2026-10-30T17:40:37.648Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793382037646",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Tạo mới bản ghi [SCI-7646] trong phân hệ science_tasks",
+      "id": "log_1793382037646_zjx",
+      "timestamp": "2026-10-30T17:40:37.646Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "login",
+      "details": "Đăng nhập hệ thống thành công với tài khoản [superadmin] (super_admin)",
+      "id": "log_1793382037627_gg6",
+      "timestamp": "2026-10-30T17:40:37.627Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "details": "TEST_CONCURRENT_2",
+      "id": "log_1793261355877_01h",
+      "timestamp": "2026-10-29T08:09:15.877Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "details": "TEST_CONCURRENT_1",
+      "id": "log_1793261355877_i12",
+      "timestamp": "2026-10-29T08:09:15.877Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 0, trùng lặp 1, lỗi 0",
+      "id": "log_1793261355871_4gb",
+      "timestamp": "2026-10-29T08:09:15.871Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "delete",
+      "targetModule": "experts",
+      "targetId": "expe_1793261355866_1",
+      "targetTitle": "Chuyên gia Mẫu Import",
+      "details": "Xóa bản ghi [EXP-IMP-58661] khỏi hệ thống",
+      "id": "log_1793261355868_j9t",
+      "timestamp": "2026-10-29T08:09:15.868Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 1, trùng lặp 0, lỗi 1",
+      "id": "log_1793261355866_h2o",
+      "timestamp": "2026-10-29T08:09:15.866Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "delete",
+      "targetModule": "initiatives",
+      "targetId": "init_1793261355851",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Xóa bản ghi [INI-5851] khỏi hệ thống",
+      "id": "log_1793261355864_62e",
+      "timestamp": "2026-10-29T08:09:15.864Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "approve",
+      "targetModule": "initiatives",
+      "targetId": "init_1793261355851",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-5851]: chuyển từ needs_revision -> approved. Ghi chú: Đạt yêu cầu",
+      "id": "log_1793261355861_avs",
+      "timestamp": "2026-10-29T08:09:15.861Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "revise",
+      "targetModule": "initiatives",
+      "targetId": "init_1793261355851",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-5851]: chuyển từ submitted -> needs_revision. Ghi chú: Yêu cầu bổ sung tài liệu",
+      "id": "log_1793261355859_dl7",
+      "timestamp": "2026-10-29T08:09:15.859Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "update",
+      "targetModule": "initiatives",
+      "targetId": "init_1793261355851",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-5851]: chuyển từ draft -> submitted. Ghi chú: Gửi duyệt",
+      "id": "log_1793261355857_145",
+      "timestamp": "2026-10-29T08:09:15.857Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "targetModule": "initiatives",
+      "targetId": "init_1793261355851",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Tạo mới bản ghi [INI-5851] trong phân hệ initiatives",
+      "id": "log_1793261355851_rbg",
+      "timestamp": "2026-10-29T08:09:15.851Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "delete",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793261355843",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Xóa bản ghi [SCI-5843] khỏi hệ thống",
+      "id": "log_1793261355849_m1c",
+      "timestamp": "2026-10-29T08:09:15.849Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "update",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793261355843",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Chỉnh sửa bản ghi [SCI-5843] - Cập nhật trường",
+      "id": "log_1793261355847_q04",
+      "timestamp": "2026-10-29T08:09:15.847Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793261355843",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Tạo mới bản ghi [SCI-5843] trong phân hệ science_tasks",
+      "id": "log_1793261355843_ka2",
+      "timestamp": "2026-10-29T08:09:15.843Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "login",
+      "details": "Đăng nhập hệ thống thành công với tài khoản [superadmin] (super_admin)",
+      "id": "log_1793261355814_d0u",
+      "timestamp": "2026-10-29T08:09:15.814Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "details": "TEST_CONCURRENT_2",
+      "id": "log_1793257726563_dfp",
+      "timestamp": "2026-10-29T07:08:46.563Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "details": "TEST_CONCURRENT_1",
+      "id": "log_1793257726563_g77",
+      "timestamp": "2026-10-29T07:08:46.563Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 0, trùng lặp 1, lỗi 0",
+      "id": "log_1793257726557_dji",
+      "timestamp": "2026-10-29T07:08:46.557Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "delete",
+      "targetModule": "experts",
+      "targetId": "expe_1793257726552_1",
+      "targetTitle": "Chuyên gia Mẫu Import",
+      "details": "Xóa bản ghi [EXP-IMP-65521] khỏi hệ thống",
+      "id": "log_1793257726555_zfi",
+      "timestamp": "2026-10-29T07:08:46.555Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 1, trùng lặp 0, lỗi 1",
+      "id": "log_1793257726552_0rs",
+      "timestamp": "2026-10-29T07:08:46.552Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "delete",
+      "targetModule": "initiatives",
+      "targetId": "init_1793257726540",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Xóa bản ghi [INI-6540] khỏi hệ thống",
+      "id": "log_1793257726548_cmq",
+      "timestamp": "2026-10-29T07:08:46.548Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "approve",
+      "targetModule": "initiatives",
+      "targetId": "init_1793257726540",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-6540]: chuyển từ needs_revision -> approved. Ghi chú: Đạt yêu cầu",
+      "id": "log_1793257726546_ypj",
+      "timestamp": "2026-10-29T07:08:46.546Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "revise",
+      "targetModule": "initiatives",
+      "targetId": "init_1793257726540",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-6540]: chuyển từ submitted -> needs_revision. Ghi chú: Yêu cầu bổ sung tài liệu",
+      "id": "log_1793257726544_vzo",
+      "timestamp": "2026-10-29T07:08:46.544Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "update",
+      "targetModule": "initiatives",
+      "targetId": "init_1793257726540",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-6540]: chuyển từ draft -> submitted. Ghi chú: Gửi duyệt",
+      "id": "log_1793257726542_emi",
+      "timestamp": "2026-10-29T07:08:46.542Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "targetModule": "initiatives",
+      "targetId": "init_1793257726540",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Tạo mới bản ghi [INI-6540] trong phân hệ initiatives",
+      "id": "log_1793257726540_ve8",
+      "timestamp": "2026-10-29T07:08:46.540Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "delete",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793257726527",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Xóa bản ghi [SCI-6527] khỏi hệ thống",
+      "id": "log_1793257726536_o0j",
+      "timestamp": "2026-10-29T07:08:46.536Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "update",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793257726527",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Chỉnh sửa bản ghi [SCI-6527] - Cập nhật trường",
+      "id": "log_1793257726531_y9j",
+      "timestamp": "2026-10-29T07:08:46.531Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "create",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793257726527",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Tạo mới bản ghi [SCI-6527] trong phân hệ science_tasks",
+      "id": "log_1793257726527_bvs",
+      "timestamp": "2026-10-29T07:08:46.527Z"
+    },
+    {
+      "userId": "usr_superadmin",
+      "userName": "Nguyễn Văn Toàn",
+      "userRole": "super_admin",
+      "action": "login",
+      "details": "Đăng nhập hệ thống thành công với tài khoản [superadmin] (super_admin)",
+      "id": "log_1793257726494_etw",
+      "timestamp": "2026-10-29T07:08:46.494Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 0, trùng lặp 1, lỗi 0",
+      "id": "log_1793257685194_f58",
+      "timestamp": "2026-10-29T07:08:05.194Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "delete",
+      "targetModule": "experts",
+      "targetId": "expe_1793257685189_1",
+      "targetTitle": "Chuyên gia Mẫu Import",
+      "details": "Xóa bản ghi [EXP-IMP-51891] khỏi hệ thống",
+      "id": "log_1793257685191_i1u",
+      "timestamp": "2026-10-29T07:08:05.192Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 1, trùng lặp 0, lỗi 1",
+      "id": "log_1793257685189_f3y",
+      "timestamp": "2026-10-29T07:08:05.189Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "delete",
+      "targetModule": "initiatives",
+      "targetId": "init_1793257685177",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Xóa bản ghi [INI-5177] khỏi hệ thống",
+      "id": "log_1793257685185_tfp",
+      "timestamp": "2026-10-29T07:08:05.185Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "approve",
+      "targetModule": "initiatives",
+      "targetId": "init_1793257685177",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-5177]: chuyển từ needs_revision -> approved. Ghi chú: Đạt yêu cầu",
+      "id": "log_1793257685184_c9j",
+      "timestamp": "2026-10-29T07:08:05.184Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "revise",
+      "targetModule": "initiatives",
+      "targetId": "init_1793257685177",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-5177]: chuyển từ submitted -> needs_revision. Ghi chú: Yêu cầu bổ sung tài liệu",
+      "id": "log_1793257685182_ed6",
+      "timestamp": "2026-10-29T07:08:05.182Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "update",
+      "targetModule": "initiatives",
+      "targetId": "init_1793257685177",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-5177]: chuyển từ draft -> submitted. Ghi chú: Gửi duyệt",
+      "id": "log_1793257685180_fhp",
+      "timestamp": "2026-10-29T07:08:05.180Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "create",
+      "targetModule": "initiatives",
+      "targetId": "init_1793257685177",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Tạo mới bản ghi [INI-5177] trong phân hệ initiatives",
+      "id": "log_1793257685178_gld",
+      "timestamp": "2026-10-29T07:08:05.178Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "delete",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793257685167",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Xóa bản ghi [SCI-5168] khỏi hệ thống",
+      "id": "log_1793257685174_5p2",
+      "timestamp": "2026-10-29T07:08:05.174Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "update",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793257685167",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Chỉnh sửa bản ghi [SCI-5168] - Cập nhật trường",
+      "id": "log_1793257685171_e68",
+      "timestamp": "2026-10-29T07:08:05.171Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "create",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793257685167",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Tạo mới bản ghi [SCI-5168] trong phân hệ science_tasks",
+      "id": "log_1793257685168_9kt",
+      "timestamp": "2026-10-29T07:08:05.168Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 0, trùng lặp 1, lỗi 0",
+      "id": "log_1793257685145_5c4",
+      "timestamp": "2026-10-29T07:08:05.145Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "delete",
+      "targetModule": "experts",
+      "targetId": "expe_1793257685136_1",
+      "targetTitle": "Chuyên gia Mẫu Import",
+      "details": "Xóa bản ghi [EXP-IMP-51361] khỏi hệ thống",
+      "id": "log_1793257685140_sa1",
+      "timestamp": "2026-10-29T07:08:05.140Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 1, trùng lặp 0, lỗi 1",
+      "id": "log_1793257685136_nbm",
+      "timestamp": "2026-10-29T07:08:05.136Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "delete",
+      "targetModule": "initiatives",
+      "targetId": "init_1793257685122",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Xóa bản ghi [INI-5122] khỏi hệ thống",
+      "id": "log_1793257685134_na4",
+      "timestamp": "2026-10-29T07:08:05.134Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "approve",
+      "targetModule": "initiatives",
+      "targetId": "init_1793257685122",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-5122]: chuyển từ needs_revision -> approved. Ghi chú: Đạt yêu cầu",
+      "id": "log_1793257685133_v79",
+      "timestamp": "2026-10-29T07:08:05.133Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "revise",
+      "targetModule": "initiatives",
+      "targetId": "init_1793257685122",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-5122]: chuyển từ submitted -> needs_revision. Ghi chú: Yêu cầu bổ sung tài liệu",
+      "id": "log_1793257685131_umj",
+      "timestamp": "2026-10-29T07:08:05.131Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "update",
+      "targetModule": "initiatives",
+      "targetId": "init_1793257685122",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-5122]: chuyển từ draft -> submitted. Ghi chú: Gửi duyệt",
+      "id": "log_1793257685124_d5o",
+      "timestamp": "2026-10-29T07:08:05.124Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "create",
+      "targetModule": "initiatives",
+      "targetId": "init_1793257685122",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Tạo mới bản ghi [INI-5122] trong phân hệ initiatives",
+      "id": "log_1793257685122_itt",
+      "timestamp": "2026-10-29T07:08:05.122Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "delete",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793257685110",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Xóa bản ghi [SCI-5110] khỏi hệ thống",
+      "id": "log_1793257685119_12x",
+      "timestamp": "2026-10-29T07:08:05.119Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "update",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793257685110",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Chỉnh sửa bản ghi [SCI-5110] - Cập nhật trường",
+      "id": "log_1793257685114_2l9",
+      "timestamp": "2026-10-29T07:08:05.114Z"
+    },
+    {
+      "userId": "usr_public",
+      "userName": "Khách vãng lai / Công dân",
+      "userRole": "public_user",
+      "action": "create",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793257685110",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Tạo mới bản ghi [SCI-5110] trong phân hệ science_tasks",
+      "id": "log_1793257685110_fm1",
+      "timestamp": "2026-10-29T07:08:05.110Z"
+    },
     {
       "userId": "usr_superadmin",
       "userName": "Nguyễn Văn Toàn",

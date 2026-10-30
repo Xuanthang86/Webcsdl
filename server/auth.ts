@@ -3,7 +3,37 @@ import { Request, Response, NextFunction } from 'express';
 import { User, UserRole, ModuleType } from './types.ts';
 import { db } from './db.ts';
 
+if (process.env.NODE_ENV === 'production' && (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32)) {
+  throw new Error('CRITICAL SECURITY ERROR: SESSION_SECRET must be defined and at least 32 characters long in production environments.');
+}
+
 const SESSION_SECRET = process.env.SESSION_SECRET || 'danang-sokhcn-portal-secure-secret-2026-v2';
+
+// In-memory set for revoked tokens (e.g. on logout or password change)
+const revokedTokenSignatures = new Set<string>();
+
+export function revokeToken(token: string): void {
+  if (!token || typeof token !== 'string') return;
+  const parts = token.split('.');
+  const sig = parts[1] || token;
+  revokedTokenSignatures.add(sig);
+
+  // Bound memory usage if many sessions are revoked
+  if (revokedTokenSignatures.size > 20000) {
+    const iter = revokedTokenSignatures.values();
+    for (let i = 0; i < 5000; i++) {
+      const item = iter.next().value;
+      if (item) revokedTokenSignatures.delete(item);
+    }
+  }
+}
+
+export function isTokenRevoked(token: string): boolean {
+  if (!token || typeof token !== 'string') return false;
+  const parts = token.split('.');
+  const sig = parts[1] || token;
+  return revokedTokenSignatures.has(sig);
+}
 
 export interface SessionPayload {
   uid: string;
@@ -26,6 +56,8 @@ export function createSessionToken(user: User): string {
 
 export function verifySessionToken(token: string): SessionPayload | null {
   if (!token || typeof token !== 'string') return null;
+  if (isTokenRevoked(token)) return null;
+
   const parts = token.split('.');
   if (parts.length !== 2) return null;
   const [body, sig] = parts;

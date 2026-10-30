@@ -20,7 +20,9 @@ import {
   AlertCircle,
   Layers,
   CheckSquare,
-  Square
+  Square,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 const ROLE_DEFINITIONS: Record<UserRole, { label: string; desc: string; color: string }> = {
@@ -75,6 +77,9 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
   // Form states
   const [formUsername, setFormUsername] = useState('');
   const [formPassword, setFormPassword] = useState('admin123');
+  const [formConfirmPassword, setFormConfirmPassword] = useState('admin123');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formFullName, setFormFullName] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('');
@@ -107,7 +112,10 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
 
   const handleOpenCreate = () => {
     setFormUsername('');
-    setFormPassword('admin123');
+    setFormPassword('');
+    setFormConfirmPassword('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setFormFullName('');
     setFormEmail('');
     setFormPhone('');
@@ -124,6 +132,9 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
     setEditingUser(u);
     setFormUsername(u.username);
     setFormPassword('');
+    setFormConfirmPassword('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setFormFullName(u.fullName);
     setFormEmail(u.email);
     setFormPhone(u.phone || '');
@@ -152,6 +163,33 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setModalError(null);
+
+    // Validate password match
+    if (editingUser) {
+      if (formPassword.trim()) {
+        if (formPassword !== formConfirmPassword) {
+          setModalError('Mật khẩu mới và xác nhận mật khẩu không trùng khớp.');
+          return;
+        }
+        if (formPassword.length < 6) {
+          setModalError('Mật khẩu mới phải có ít nhất 6 ký tự.');
+          return;
+        }
+      }
+    } else {
+      if (!formPassword) {
+        setModalError('Vui lòng nhập mật khẩu khởi tạo cho tài khoản.');
+        return;
+      }
+      if (formPassword !== formConfirmPassword) {
+        setModalError('Mật khẩu và xác nhận mật khẩu không trùng khớp.');
+        return;
+      }
+      if (formPassword.length < 6) {
+        setModalError('Mật khẩu phải có ít nhất 6 ký tự.');
+        return;
+      }
+    }
 
     try {
       if (editingUser) {
@@ -489,30 +527,69 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-700">
-                    {editingUser ? 'Mật khẩu mới (để trống nếu không đổi)' : 'Mật khẩu *'}
-                  </label>
+                  <label className="font-semibold text-slate-700">Họ và tên người dùng *</label>
                   <input
-                    type="password"
-                    value={formPassword}
-                    onChange={e => setFormPassword(e.target.value)}
-                    placeholder={editingUser ? 'Giữ nguyên mật khẩu' : 'Mật khẩu mặc định: admin123'}
-                    required={!editingUser}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700"
+                    type="text"
+                    value={formFullName}
+                    onChange={e => setFormFullName(e.target.value)}
+                    placeholder="vd: Nguyễn Văn An"
+                    required
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700 font-medium"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Họ và tên người dùng *</label>
-                <input
-                  type="text"
-                  value={formFullName}
-                  onChange={e => setFormFullName(e.target.value)}
-                  placeholder="vd: Nguyễn Văn An"
-                  required
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700 font-medium"
-                />
+              {/* Password and Confirm Password Row with Eye/EyeOff toggles */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700">
+                    {editingUser ? 'Mật khẩu mới (để trống nếu không đổi)' : 'Mật khẩu thiết lập *'}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={formPassword}
+                      onChange={e => setFormPassword(e.target.value)}
+                      placeholder={editingUser ? 'Nhập mật khẩu mới nếu muốn đổi' : 'Tối thiểu 6 ký tự'}
+                      required={!editingUser}
+                      className="w-full pl-3 pr-9 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700 bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded focus:outline-none"
+                      title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                      aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700">
+                    {editingUser ? 'Xác nhận mật khẩu mới' : 'Xác nhận mật khẩu *'}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={formConfirmPassword}
+                      onChange={e => setFormConfirmPassword(e.target.value)}
+                      placeholder={editingUser ? 'Nhập lại mật khẩu mới' : 'Nhập lại mật khẩu'}
+                      required={!editingUser || !!formPassword}
+                      className="w-full pl-3 pr-9 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700 bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded focus:outline-none"
+                      title={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                      aria-label={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

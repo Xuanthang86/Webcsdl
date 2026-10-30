@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import { db } from '../db.ts';
-import { authMiddleware, AuthenticatedRequest, requirePermission, requireRole, createSessionToken } from '../auth.ts';
+import { authMiddleware, AuthenticatedRequest, requirePermission, requireRole, createSessionToken, revokeToken } from '../auth.ts';
 import { ModuleType, ApprovalStatus, UserRole } from '../types.ts';
 
 export const apiRouter = Router();
@@ -157,13 +157,87 @@ apiRouter.post('/auth/login', (req: AuthenticatedRequest, res: Response): void =
 });
 
 apiRouter.post('/auth/logout', (req: AuthenticatedRequest, res: Response): void => {
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    revokeToken(authHeader.substring(7).trim());
+  }
+  if (req.cookies && req.cookies['portal_session']) {
+    revokeToken(req.cookies['portal_session']);
+  }
+  if (req.headers['x-session-token']) {
+    revokeToken(req.headers['x-session-token'] as string);
+  }
   res.clearCookie('portal_session');
   res.clearCookie('user_role');
   res.clearCookie('user_id');
-  res.json({ success: true, message: 'Đã đăng xuất an toàn.' });
+  res.json({ success: true, message: 'Đã đăng xuất và vô hiệu hóa phiên làm việc an toàn.' });
 });
 
-apiRouter.get('/auth/users', (req: AuthenticatedRequest, res: Response) => {
+apiRouter.post('/auth/change-password', (req: AuthenticatedRequest, res: Response): void => {
+  if (!req.user || req.user.role === 'public_user') {
+    res.status(401).json({ success: false, message: 'Vui lòng đăng nhập trước khi đổi mật khẩu.' });
+    return;
+  }
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+  if (!newPassword || newPassword.length < 6) {
+    res.status(400).json({ success: false, message: 'Mật khẩu mới phải có ít nhất 6 ký tự.' });
+    return;
+  }
+  if (confirmPassword !== undefined && newPassword !== confirmPassword) {
+    res.status(400).json({ success: false, message: 'Mật khẩu xác nhận không trùng khớp với mật khẩu mới.' });
+    return;
+  }
+
+  // Verify current password if provided
+  if (currentPassword) {
+    const authCheck = db.authenticateUser(req.user.username, currentPassword);
+    if (!authCheck) {
+      res.status(400).json({ success: false, message: 'Mật khẩu hiện tại không chính xác.' });
+      return;
+    }
+  }
+
+  try {
+    const updated = db.updateUser(req.user.id, { password: newPassword }, req.user);
+    db.addAuditLog({
+      userId: req.user.id,
+      userName: req.user.fullName,
+      userRole: req.user.role,
+      action: 'update',
+      details: `Người dùng [${req.user.username}] tự đổi mật khẩu tài khoản thành công.`
+    });
+    res.json({ success: true, message: 'Đổi mật khẩu thành công.', user: db.sanitizeUser(updated) });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message || 'Lỗi đổi mật khẩu' });
+  }
+});
+
+apiRouter.put('/auth/profile', (req: AuthenticatedRequest, res: Response): void => {
+  if (!req.user || req.user.role === 'public_user') {
+    res.status(401).json({ success: false, message: 'Vui lòng đăng nhập trước khi cập nhật thông tin cá nhân.' });
+    return;
+  }
+  const { phone, organization } = req.body;
+  try {
+    const updates: Partial<User> = {};
+    if (phone !== undefined) updates.phone = String(phone).trim();
+    if (organization !== undefined) updates.organization = String(organization).trim();
+
+    const updated = db.updateUser(req.user.id, updates, req.user);
+    db.addAuditLog({
+      userId: req.user.id,
+      userName: req.user.fullName,
+      userRole: req.user.role,
+      action: 'update',
+      details: `Người dùng [${req.user.username}] cập nhật thông tin tài khoản: SĐT: ${updates.phone || 'giữ nguyên'}, Cơ quan: ${updates.organization || 'giữ nguyên'}`
+    });
+    res.json({ success: true, message: 'Cập nhật thông tin tài khoản thành công.', user: db.sanitizeUser(updated) });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message || 'Lỗi cập nhật thông tin' });
+  }
+});
+
+apiRouter.get('/auth/users', requireRole(['super_admin', 'system_admin']), (req: AuthenticatedRequest, res: Response) => {
   res.json({ success: true, users: db.getUsers().map(u => db.sanitizeUser(u)) });
 });
 
@@ -231,7 +305,8 @@ apiRouter.put('/forms/:moduleType', requirePermission('canManageConfig'), (req: 
 
 // 3. Live Aggregated Statistics
 apiRouter.get('/stats', (req: AuthenticatedRequest, res: Response) => {
-  const stats = db.getAggregatedStats();
+  const year = req.query.year as string | undefined;
+  const stats = db.getAggregatedStats(year);
   res.json({ success: true, stats });
 });
 
@@ -603,7 +678,7 @@ apiRouter.post('/restore', requireRole(['super_admin']), (req: AuthenticatedRequ
 });
 
 // 12. Automated Acceptance Test Suite (All 18 Scenarios)
-apiRouter.post('/test-suite/run', (req: AuthenticatedRequest, res: Response): void => {
+apiRouter.post('/test-suite/run', requireRole(['super_admin', 'system_admin']), (req: AuthenticatedRequest, res: Response): void => {
   if (!req.user) {
     res.status(401).json({ success: false, message: 'Chưa đăng nhập.' });
     return;

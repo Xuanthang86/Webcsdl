@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../services/api';
 import { User } from '../types';
-import { ShieldCheck, Lock, User as UserIcon, AlertCircle, X, KeyRound, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Lock, User as UserIcon, AlertCircle, X, KeyRound, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
 interface AdminLoginModalProps {
   onClose: () => void;
@@ -11,6 +11,7 @@ interface AdminLoginModalProps {
 export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuccess }) => {
   const [username, setUsername] = useState('superadmin');
   const [password, setPassword] = useState('admin123');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,7 +48,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
               <ShieldCheck className="w-5 h-5 text-teal-300" />
             </div>
             <div>
-              <h3 className="font-bold text-base leading-tight">Đăng Nhập Cổng Quản Trị</h3>
+              <h3 className="font-bold text-base leading-tight">Đăng Nhập</h3>
               <p className="text-xs text-teal-200/80 mt-0.5">Xác thực quyền quản trị viên & cán bộ chuyên trách</p>
             </div>
           </div>
@@ -88,13 +89,22 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
             <div className="relative">
               <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Nhập mật khẩu"
                 required
-                className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-700 focus:outline-none"
+                className="w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-700 focus:outline-none"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded focus:outline-none"
+                title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 

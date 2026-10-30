@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BaseEntity, ModuleType } from '../types';
 import { api } from '../services/api';
-import { MODULE_OPTIONS, POPULAR_FIELDS } from './SearchHero';
+import { MODULE_OPTIONS, POPULAR_FIELDS, SPECIALIZED_FIELDS } from './SearchHero';
 import { MODULE_NAMES } from './admin/ModuleCrudView';
 import { AdvancedSearchModal } from './AdvancedSearchModal';
 import { 
@@ -19,8 +19,11 @@ import {
   ArrowRight,
   SlidersHorizontal,
   ChevronRight,
+  ChevronDown,
   Layers,
-  Database
+  Database,
+  Check,
+  X
 } from 'lucide-react';
 
 interface BrowseViewProps {
@@ -45,6 +48,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
   const [results, setResults] = useState<BaseEntity[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAdvancedModal, setShowAdvancedModal] = useState(false);
+  const [showFieldsPanel, setShowFieldsPanel] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 12;
 
@@ -80,6 +84,19 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
     };
   }, [selectedModule, selectedField, statusFilter]);
 
+  // Synchronize when parent navigates or passes new initial props
+  useEffect(() => {
+    if (initialModule) setSelectedModule(initialModule);
+  }, [initialModule]);
+
+  useEffect(() => {
+    if (initialSearchQuery !== undefined) setQuery(initialSearchQuery);
+  }, [initialSearchQuery]);
+
+  useEffect(() => {
+    if (initialField !== undefined) setSelectedField(initialField);
+  }, [initialField]);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchResults();
@@ -112,20 +129,24 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
     return groups;
   }, [results, selectedModule]);
 
+  const formatModuleTitle = (mod: string) => {
+    if (mod === 'all') return 'Tra cứu dữ liệu toàn hệ thống (phân loại từng phân hệ)';
+    if (mod === 'collaboration_needs') return 'Tra cứu nhu cầu kết nối & đặt hàng';
+    const name = MODULE_NAMES[mod as ModuleType];
+    if (name) {
+      return `Tra cứu ${name.charAt(0).toLowerCase() + name.slice(1)}`;
+    }
+    return `Tra cứu: ${mod}`;
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 overflow-x-hidden">
       
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
-          <div className="text-xs font-semibold text-teal-800 uppercase tracking-wider">
-            Giao diện tra cứu dữ liệu tích hợp toàn thành phố
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
-            {selectedModule === 'all' 
-              ? 'Tra Cứu Dữ Liệu Toàn Hệ Thống (Phân Loại Từng Phân Hệ)' 
-              : `Tra Cứu: ${MODULE_NAMES[selectedModule as ModuleType] || selectedModule}`
-            }
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            {formatModuleTitle(selectedModule)}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             Tìm kiếm theo từ khóa, lọc chuyên sâu theo lĩnh vực và xem tối đa 5 dữ liệu mỗi phân hệ khi xem tổng thể
@@ -188,42 +209,121 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
           </button>
         </form>
 
-        {/* Quick field chips and status toggle */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
-          <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto max-w-full">
-            <span className="text-slate-400 font-medium mr-1 shrink-0">Lĩnh vực:</span>
-            <button
-              onClick={() => setSelectedField('')}
-              className={`px-2.5 py-1 rounded-lg transition-colors shrink-0 text-xs ${
-                !selectedField ? 'bg-slate-900 text-white font-medium' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Tất cả
-            </button>
-            {POPULAR_FIELDS.map(f => (
+        {/* Quick field selector and status toggle */}
+        <div className="pt-3 border-t border-slate-100 text-xs space-y-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
               <button
-                key={f}
-                onClick={() => setSelectedField(selectedField === f ? '' : f)}
-                className={`px-2.5 py-1 rounded-lg transition-colors shrink-0 text-xs ${
-                  selectedField === f ? 'bg-teal-800 text-white font-medium' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                type="button"
+                onClick={() => setShowFieldsPanel(!showFieldsPanel)}
+                className={`px-3 py-1.5 rounded-xl font-semibold border flex items-center gap-1.5 transition-colors shadow-2xs ${
+                  selectedField 
+                    ? 'bg-teal-800 text-white border-teal-700' 
+                    : 'bg-teal-50 text-teal-900 border-teal-200 hover:bg-teal-100'
                 }`}
+                title="Mở danh sách 8 Lĩnh vực chuyên ngành"
               >
-                {f}
+                <Layers className="w-3.5 h-3.5 text-teal-600" />
+                <span>
+                  {selectedField 
+                    ? `Lĩnh vực: ${SPECIALIZED_FIELDS.find(f => f.name === selectedField)?.shortName || selectedField}` 
+                    : 'Lĩnh vực chuyên ngành'}
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showFieldsPanel ? 'rotate-180' : ''}`} />
               </button>
-            ))}
+
+              {selectedField && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedField('')}
+                  className="text-xs text-rose-700 hover:text-rose-900 font-semibold flex items-center gap-0.5 hover:underline"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Bỏ chọn</span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 text-slate-500 font-mono text-xs shrink-0">
+              {selectedModule !== 'all' && (
+                <button
+                  onClick={() => setSelectedModule('all')}
+                  className="text-teal-800 font-sans font-semibold hover:underline"
+                >
+                  ← Xem tất cả phân hệ
+                </button>
+              )}
+              <span>Tổng cộng: <strong className="text-slate-900 text-sm font-sans">{results.length}</strong> kết quả</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3 text-slate-500 font-mono text-xs shrink-0">
-            {selectedModule !== 'all' && (
+          {/* Active Field Filter Indicator */}
+          {selectedField && (
+            <div className="flex items-center gap-2 p-2 bg-teal-50 border border-teal-200 rounded-xl text-teal-900 text-xs">
+              <span className="font-semibold">Đang lọc theo Lĩnh vực chuyên ngành:</span>
+              <span className="font-bold underline">{selectedField}</span>
               <button
-                onClick={() => setSelectedModule('all')}
-                className="text-teal-800 font-sans font-semibold hover:underline"
+                onClick={() => setSelectedField('')}
+                className="ml-auto text-xs text-rose-700 hover:text-rose-900 font-semibold flex items-center gap-0.5 hover:underline"
               >
-                ← Xem tất cả phân hệ
+                <X className="w-3.5 h-3.5" />
+                <span>Bỏ lọc</span>
               </button>
-            )}
-            <span>Tổng cộng: <strong className="text-slate-900 text-sm font-sans">{results.length}</strong> kết quả</span>
-          </div>
+            </div>
+          )}
+
+          {/* Expandable Panel of 8 Standardized Disciplines when clicking 'Lĩnh vực chuyên ngành' */}
+          {showFieldsPanel && (
+            <div className="p-4 bg-slate-50 border border-teal-200 rounded-2xl shadow-xs animate-in fade-in duration-150 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                <div className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                  <Database className="w-4 h-4 text-teal-700" />
+                  <span>Chọn lĩnh vực chuyên ngành chuẩn hoá để tra cứu:</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowFieldsPanel(false)}
+                  className="text-xs text-slate-400 hover:text-slate-700"
+                >
+                  Đóng ✕
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+                {SPECIALIZED_FIELDS.map(sf => {
+                  const isSelected = selectedField === sf.name;
+                  return (
+                    <button
+                      key={sf.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedField(isSelected ? '' : sf.name);
+                        setShowFieldsPanel(false);
+                      }}
+                      className={`p-2.5 rounded-xl text-left transition-all border flex flex-col justify-between ${
+                        isSelected
+                          ? 'bg-teal-800 text-white border-teal-700 font-semibold shadow-xs'
+                          : 'bg-white hover:bg-teal-50/50 text-slate-800 border-slate-200 hover:border-teal-300'
+                      }`}
+                    >
+                      <div>
+                        <div className="text-[10px] font-semibold uppercase tracking-wider text-teal-600 mb-0.5">
+                          {sf.category}
+                        </div>
+                        <div className={`text-xs leading-snug font-medium ${isSelected ? 'text-white' : 'text-slate-900'}`}>
+                          {sf.name}
+                        </div>
+                      </div>
+                      <div className="mt-2 text-[10px] flex items-center justify-between opacity-80 pt-1 border-t border-slate-100">
+                        <span>{sf.shortName}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -287,14 +387,26 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                       className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs hover:border-teal-400 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group"
                     >
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                        <div className="flex items-center gap-2 text-[11px] text-slate-500 flex-wrap">
                           <span className="font-mono text-teal-800 font-semibold">{item.code}</span>
                           <span aria-hidden="true">·</span>
-                          <span className="truncate">{item.field || 'Đa ngành'}</span>
-                          {item.recognizedScope && (
+                          {item.moduleType === 'initiatives' ? (
                             <>
+                              <span className="text-teal-900 font-semibold truncate">Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
                               <span aria-hidden="true">·</span>
-                              <span className="text-amber-800 font-semibold">{item.recognizedScope}</span>
+                              <span className="text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 font-semibold">
+                                Sáng kiến đã công nhận {item.recognizedScope ? `(${item.recognizedScope})` : '(Cấp thành phố)'}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="truncate">{item.field || 'Đa ngành'}</span>
+                              {item.recognizedScope && (
+                                <>
+                                  <span aria-hidden="true">·</span>
+                                  <span className="text-amber-800 font-semibold">{item.recognizedScope}</span>
+                                </>
+                              )}
                             </>
                           )}
                         </div>
@@ -368,14 +480,26 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                 className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:border-teal-400 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group"
               >
                 <div className="space-y-2.5">
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
                     <span className="font-mono text-teal-800 font-semibold">{item.code}</span>
                     <span aria-hidden="true">·</span>
-                    <span className="capitalize truncate">{MODULE_NAMES[item.moduleType] || item.moduleType}</span>
-                    {item.recognizedScope && (
+                    {item.moduleType === 'initiatives' ? (
                       <>
+                        <span className="text-teal-900 font-semibold truncate">Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
                         <span aria-hidden="true">·</span>
-                        <span className="text-amber-800 font-semibold">{item.recognizedScope}</span>
+                        <span className="text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 font-semibold">
+                          Sáng kiến đã công nhận {item.recognizedScope ? `(${item.recognizedScope})` : '(Cấp thành phố)'}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="capitalize truncate">{MODULE_NAMES[item.moduleType] || item.moduleType}</span>
+                        {item.recognizedScope && (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <span className="text-amber-800 font-semibold">{item.recognizedScope}</span>
+                          </>
+                        )}
                       </>
                     )}
                   </div>

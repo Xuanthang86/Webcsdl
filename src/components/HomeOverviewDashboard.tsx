@@ -68,7 +68,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               <span>Bảng Chỉ Số Tổng Quan & Bức Tranh Dữ Liệu Thời Gian Thực</span>
             </div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-white">
-              Tổng quan Cơ sở dữ liệu KH&CN, ĐMST và Khởi nghiệp
+              Tổng quan Cơ sở dữ liệu KHCN & KNĐMST TP Đà Nẵng
             </h2>
             <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
               Dữ liệu quản lý nhà nước tập trung từ Sở Khoa học & Công nghệ thành phố Đà Nẵng, các Viện trường, Doanh nghiệp và Mạng lưới ĐMST

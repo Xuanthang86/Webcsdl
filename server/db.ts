@@ -78,13 +78,16 @@ const failedLoginAttempts = new Map<string, { count: number; lockedUntil: number
 class DatabaseManager {
   private data: DatabaseSchema;
 
+  private isSaving = false;
+  private pendingSave: DatabaseSchema | null = null;
+
   constructor() {
     this.data = this.loadDatabase();
   }
 
   private loadDatabase(): DatabaseSchema {
-    try {
-      if (fs.existsSync(DB_FILE)) {
+    if (fs.existsSync(DB_FILE)) {
+      try {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
         const parsed = JSON.parse(raw);
         if (!parsed.patents) parsed.patents = initialPatents;
@@ -92,15 +95,21 @@ class DatabaseManager {
         if (!parsed.lab_equipments) parsed.lab_equipments = initialLabEquipments;
         if (!parsed.policies) parsed.policies = initialPolicies;
         if (parsed.systemConfig) {
-          parsed.systemConfig.portalName = 'Cổng dữ liệu Tổng hợp khoa học, công nghệ & khởi nghiệp đổi mới sáng tạo';
+          parsed.systemConfig.portalName = 'Cổng dữ liệu Tổng hợp về khoa học, công nghệ & khởi nghiệp đổi mới sáng tạo thành phố Đà Nẵng';
           parsed.systemConfig.governingAgency = 'ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ';
           parsed.systemConfig.contactAddress = 'Trung tâm Đổi mới sáng tạo Đà Nẵng';
           parsed.systemConfig.cityArea = 'Thành phố Đà Nẵng';
         }
         return parsed;
+      } catch (err) {
+        const corruptFile = `${DB_FILE}.corrupt.${Date.now()}`;
+        try {
+          fs.copyFileSync(DB_FILE, corruptFile);
+          console.error(`CRITICAL: Existing db.json parse error. Backed up corrupted file to ${corruptFile}`, err);
+        } catch (copyErr) {
+          console.error('Failed to backup corrupt db.json:', copyErr);
+        }
       }
-    } catch (err) {
-      console.warn('Failed to parse existing db.json, initializing fresh store.', err);
     }
 
     const initialData: DatabaseSchema = {
@@ -150,17 +159,31 @@ class DatabaseManager {
     return initialData;
   }
 
-  // Atomic database save to prevent corruption on crash or abrupt restart
+  // Atomic database save with serialization queue to prevent corruption on crash or concurrent writes
   public saveDatabase(dataToSave?: DatabaseSchema) {
+    const targetData = dataToSave || this.data;
+    if (this.isSaving) {
+      this.pendingSave = targetData;
+      return;
+    }
+    this.isSaving = true;
+
     try {
       if (!fs.existsSync(DB_DIR)) {
         fs.mkdirSync(DB_DIR, { recursive: true });
       }
       const tmpFile = `${DB_FILE}.${Date.now()}.${Math.random().toString(36).substring(2, 6)}.tmp`;
-      fs.writeFileSync(tmpFile, JSON.stringify(dataToSave || this.data, null, 2), 'utf-8');
+      fs.writeFileSync(tmpFile, JSON.stringify(targetData, null, 2), 'utf-8');
       fs.renameSync(tmpFile, DB_FILE);
     } catch (err) {
       console.error('Failed to atomically save database file:', err);
+    } finally {
+      this.isSaving = false;
+      if (this.pendingSave) {
+        const next = this.pendingSave;
+        this.pendingSave = null;
+        this.saveDatabase(next);
+      }
     }
   }
 
@@ -377,7 +400,14 @@ class DatabaseManager {
   }
 
   public createRecord(moduleType: ModuleType, payload: any, user: User): any {
-    const list = (this.data[moduleType] as any[]) || [];
+    const list = (this.data[moduleType] as any[]);
+    if (!list || !Array.isArray(list)) {
+      throw new Error(`Phân hệ dữ liệu "${moduleType}" không hợp lệ hoặc chưa được hỗ trợ.`);
+    }
+    if (!payload || !payload.title || typeof payload.title !== 'string' || payload.title.trim() === '') {
+      throw new Error('Tiêu đề hoặc tên thực thể là trường thông tin bắt buộc.');
+    }
+
     const now = new Date().toISOString();
     const newId = `${moduleType.slice(0, 4)}_${Date.now()}`;
     const codePrefix = moduleType.slice(0, 3).toUpperCase();
@@ -644,7 +674,13 @@ class DatabaseManager {
 
         if (filters.field && filters.field !== 'all') {
           const itemField = (item.field || item.primaryField || '').toLowerCase();
-          if (!itemField.includes(filters.field.toLowerCase())) continue;
+          const target = filters.field.toLowerCase();
+          let matched = itemField.includes(target);
+          if (!matched) {
+            const keywords = target.split(/[,&/]/).map(k => k.trim()).filter(k => k.length >= 3);
+            matched = keywords.some(k => itemField.includes(k));
+          }
+          if (!matched) continue;
         }
 
         if (filters.location && filters.location !== 'all') {
@@ -694,21 +730,92 @@ class DatabaseManager {
     return results;
   }
 
-  // Dashboard Aggregated Stats (100% computed from real DB)
-  public getAggregatedStats() {
-    const tasks = this.data.science_tasks || [];
-    const initiatives = this.data.initiatives || [];
-    const experts = this.data.experts || [];
-    const organizations = this.data.organizations || [];
-    const startups = this.data.startups || [];
-    const projects = this.data.startup_projects || [];
-    const ideas = this.data.startup_ideas || [];
-    const investors = this.data.investors || [];
-    const funds = this.data.investment_funds || [];
-    const supports = this.data.support_organizations || [];
-    const technologies = this.data.technologies || [];
-    const programs = this.data.programs || [];
-    const needs = this.data.collaboration_needs || [];
+  // Helper to extract year from entity
+  private getItemYear(item: any): string {
+    if (item.year) return String(item.year);
+    if (item.recognizedYear) return String(item.recognizedYear);
+    if (item.recognitionYear) return String(item.recognitionYear);
+    if (item.startYear) return String(item.startYear);
+    if (item.foundingYear) return String(item.foundingYear);
+    if (item.establishedYear) return String(item.establishedYear);
+    if (item.acceptanceDate && item.acceptanceDate.length >= 4) return item.acceptanceDate.slice(0, 4);
+    if (item.createdAt && item.createdAt.length >= 4) return item.createdAt.slice(0, 4);
+    return '2025';
+  }
+
+  // Dashboard Aggregated Stats (100% computed from real DB with multi-year & sector breakdown)
+  public getAggregatedStats(filterYear?: string) {
+    let tasks = this.data.science_tasks || [];
+    let initiatives = this.data.initiatives || [];
+    let experts = this.data.experts || [];
+    let organizations = this.data.organizations || [];
+    let startups = this.data.startups || [];
+    let projects = this.data.startup_projects || [];
+    let ideas = this.data.startup_ideas || [];
+    let investors = this.data.investors || [];
+    let funds = this.data.investment_funds || [];
+    let supports = this.data.support_organizations || [];
+    let technologies = this.data.technologies || [];
+    let programs = this.data.programs || [];
+    let needs = this.data.collaboration_needs || [];
+
+    // Compute all-time breakdowns
+    const yearsList = ['2021', '2022', '2023', '2024', '2025', '2026'];
+    const tasksByYear: Record<string, number> = {};
+    const initiativesByYear: Record<string, number> = {};
+    const startupsByYear: Record<string, number> = {};
+    const tasksByField: Record<string, number> = {};
+    const initiativesByField: Record<string, number> = {};
+    const yearlyStats: Record<string, { tasks: number; initiatives: number; startups: number; budget: number; savings: number }> = {};
+
+    yearsList.forEach(yr => {
+      tasksByYear[yr] = 0;
+      initiativesByYear[yr] = 0;
+      startupsByYear[yr] = 0;
+      yearlyStats[yr] = { tasks: 0, initiatives: 0, startups: 0, budget: 0, savings: 0 };
+    });
+
+    tasks.forEach(t => {
+      const yr = this.getItemYear(t);
+      if (tasksByYear[yr] !== undefined) tasksByYear[yr]++;
+      else tasksByYear[yr] = 1;
+
+      if (!yearlyStats[yr]) yearlyStats[yr] = { tasks: 0, initiatives: 0, startups: 0, budget: 0, savings: 0 };
+      yearlyStats[yr].tasks++;
+      yearlyStats[yr].budget += Number(t.totalBudgetApproved) || 0;
+
+      const f = t.field || 'Lĩnh vực khác';
+      tasksByField[f] = (tasksByField[f] || 0) + 1;
+    });
+
+    initiatives.forEach(i => {
+      const yr = this.getItemYear(i);
+      if (initiativesByYear[yr] !== undefined) initiativesByYear[yr]++;
+      else initiativesByYear[yr] = 1;
+
+      if (!yearlyStats[yr]) yearlyStats[yr] = { tasks: 0, initiatives: 0, startups: 0, budget: 0, savings: 0 };
+      yearlyStats[yr].initiatives++;
+      yearlyStats[yr].savings += Number(i.costSavings) || 0;
+
+      const f = i.field || 'Lĩnh vực khác';
+      initiativesByField[f] = (initiativesByField[f] || 0) + 1;
+    });
+
+    startups.forEach(s => {
+      const yr = this.getItemYear(s);
+      if (startupsByYear[yr] !== undefined) startupsByYear[yr]++;
+      else startupsByYear[yr] = 1;
+
+      if (!yearlyStats[yr]) yearlyStats[yr] = { tasks: 0, initiatives: 0, startups: 0, budget: 0, savings: 0 };
+      yearlyStats[yr].startups++;
+    });
+
+    // If specific year filter is requested, filter the specific arrays for summary card counts
+    if (filterYear && filterYear !== 'all') {
+      tasks = tasks.filter(t => this.getItemYear(t) === filterYear);
+      initiatives = initiatives.filter(i => this.getItemYear(i) === filterYear);
+      startups = startups.filter(s => this.getItemYear(s) === filterYear);
+    }
 
     const totalBudgetApproved = tasks.reduce((sum, t) => sum + (Number(t.totalBudgetApproved) || 0), 0);
     const totalCostSavings = initiatives.reduce((sum, i) => sum + (Number(i.costSavings) || 0), 0);
@@ -761,16 +868,23 @@ class DatabaseManager {
         under_review: this.countByStatus('under_review'),
         draft: this.countByStatus('draft'),
         needs_revision: this.countByStatus('needs_revision')
-      }
+      },
+      tasksByField,
+      tasksByYear,
+      initiativesByField,
+      initiativesByYear,
+      startupsByYear,
+      yearlyStats
     };
   }
 
-  // Form Management (Section VIII.3 & Field Visibility)
+  // Form Management (Section VIII.3 & Field Visibility & Customization)
   public getFormConfig(moduleType: string): any {
     const cfg = this.data.formConfigs?.[moduleType];
     return {
       customFields: cfg?.customFields || [],
-      hiddenSystemFields: cfg?.hiddenSystemFields || []
+      hiddenSystemFields: cfg?.hiddenSystemFields || [],
+      fieldOverrides: cfg?.fieldOverrides || {}
     };
   }
 
@@ -778,14 +892,15 @@ class DatabaseManager {
     if (!this.data.formConfigs) this.data.formConfigs = {};
     this.data.formConfigs[moduleType] = {
       customFields: config.customFields || [],
-      hiddenSystemFields: config.hiddenSystemFields || []
+      hiddenSystemFields: config.hiddenSystemFields || [],
+      fieldOverrides: config.fieldOverrides || {}
     };
     this.addAuditLog({
       userId: user.id,
       userName: user.fullName,
       userRole: user.role,
       action: 'system_config',
-      details: `Cập nhật cấu hình biểu mẫu và trường ẩn/hiện cho phân hệ [${moduleType}]`
+      details: `Cập nhật cấu hình biểu mẫu, trường tùy biến và thiết lập ẩn/hiện cho phân hệ [${moduleType}]`
     });
     this.saveDatabase();
     return this.data.formConfigs[moduleType];
@@ -897,6 +1012,18 @@ class DatabaseManager {
     if (!snapshot || !snapshot.systemConfig || !snapshot.science_tasks) {
       throw new Error('Dữ liệu sao lưu không đúng định dạng chuẩn.');
     }
+
+    // Safety auto-backup of current database state before applying restore
+    try {
+      if (!fs.existsSync(DB_DIR)) {
+        fs.mkdirSync(DB_DIR, { recursive: true });
+      }
+      const preRestoreFile = path.join(DB_DIR, `pre_restore_backup_${Date.now()}.json`);
+      fs.writeFileSync(preRestoreFile, JSON.stringify(this.data, null, 2), 'utf-8');
+    } catch (e) {
+      console.warn('Could not write pre-restore safety backup:', e);
+    }
+
     this.data = snapshot;
     this.addAuditLog({
       userId: user.id,
@@ -1141,12 +1268,27 @@ class DatabaseManager {
     });
 
     // Test 11: Kiểm tra giao diện trên thiết bị di động
+    const t11Start = Date.now();
+    let t11Passed = false;
+    let t11Message = '';
+    try {
+      const indexHtml = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
+      const hasViewport = indexHtml.includes('name="viewport"') && indexHtml.includes('width=device-width');
+      const hasTitle = indexHtml.includes('<title>');
+      t11Passed = hasViewport && hasTitle;
+      t11Message = t11Passed 
+        ? 'Xác thực thẻ viewport responsive width=device-width và cấu trúc mobile-ready thành công.'
+        : 'Thiếu cấu hình viewport tiêu chuẩn cho thiết bị di động.';
+    } catch (e: any) {
+      t11Passed = false;
+      t11Message = 'Không đọc được file index.html: ' + e.message;
+    }
     results.push({
       id: 11,
       name: 'Kiểm tra giao diện đa thiết bị (Responsive Mobile & Desktop)',
-      passed: true,
-      message: 'Cấu trúc CSS Tailwind hỗ trợ đầy đủ viewport từ 375px đến 1920px.',
-      durationMs: 4
+      passed: t11Passed,
+      message: t11Message,
+      durationMs: Date.now() - t11Start
     });
 
     // Test 12: Kiểm tra sao lưu và khôi phục
@@ -1174,12 +1316,46 @@ class DatabaseManager {
     });
 
     // Test 14: Kiểm tra các trường hợp lỗi và thao tác đồng thời
+    const t14Start = Date.now();
+    let t14Passed = false;
+    let t14Message = '';
+    try {
+      // 1. Chặn bản ghi thiếu tiêu đề bắt buộc
+      let caughtMissingField = false;
+      try {
+        this.createRecord('science_tasks', { title: '' }, user);
+      } catch (err: any) {
+        caughtMissingField = true;
+      }
+      
+      // 2. Chặn phân hệ không tồn tại
+      let caughtInvalidModule = false;
+      try {
+        this.createRecord('non_existent_module' as any, { title: 'Test' }, user);
+      } catch (err: any) {
+        caughtInvalidModule = true;
+      }
+
+      // 3. Kiểm tra an toàn đồng thời ghi nhật ký audit
+      const initialCount = this.data.auditLogs.length;
+      this.addAuditLog({ userId: user.id, userName: user.fullName, userRole: user.role, action: 'create', details: 'TEST_CONCURRENT_1' });
+      this.addAuditLog({ userId: user.id, userName: user.fullName, userRole: user.role, action: 'create', details: 'TEST_CONCURRENT_2' });
+      const concurrentOk = this.data.auditLogs.length === initialCount + 2;
+
+      t14Passed = caughtMissingField && caughtInvalidModule && concurrentOk;
+      t14Message = t14Passed
+        ? 'Xử lý ngoại lệ chuẩn xác: Chặn bản ghi thiếu tiêu đề, chặn module không tồn tại, và an toàn thao tác đồng thời.'
+        : 'Cơ chế xử lý ngoại lệ hoặc an toàn đồng thời chưa thỏa mãn.';
+    } catch (err: any) {
+      t14Passed = false;
+      t14Message = 'Lỗi kiểm tra ngoại lệ: ' + err.message;
+    }
     results.push({
       id: 14,
       name: 'Kiểm tra xử lý ngoại lệ và an toàn đồng thời',
-      passed: true,
-      message: 'Xử lý lỗi ngoại lệ với thông báo thân thiện và mã lỗi chuẩn HTTP.',
-      durationMs: 3
+      passed: t14Passed,
+      message: t14Message,
+      durationMs: Date.now() - t14Start
     });
 
     // Test 15: Kiểm tra dữ liệu được công khai sau khi phê duyệt

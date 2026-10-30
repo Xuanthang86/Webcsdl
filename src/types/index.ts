@@ -164,6 +164,7 @@ export interface CustomFieldConfig {
 export interface ModuleFormConfig {
   customFields: CustomFieldConfig[];
   hiddenSystemFields?: string[];
+  fieldOverrides?: Record<string, { label?: string; placeholder?: string; helpText?: string; options?: string[] }>;
 }
 
 export interface AggregatedStats {
@@ -195,5 +196,11 @@ export interface AggregatedStats {
   pendingApprovalsCount: number;
   fieldBreakdown: Record<string, number>;
   statusBreakdown: Record<string, number>;
+  tasksByField?: Record<string, number>;
+  tasksByYear?: Record<string, number>;
+  initiativesByField?: Record<string, number>;
+  initiativesByYear?: Record<string, number>;
+  startupsByYear?: Record<string, number>;
+  yearlyStats?: Record<string, { tasks: number; initiatives: number; startups: number; budget: number; savings: number }>;
 }
 

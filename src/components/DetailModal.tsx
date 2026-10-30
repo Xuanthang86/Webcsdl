@@ -130,7 +130,17 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                 {entity.code}
               </span>
               <span aria-hidden="true">·</span>
-              <span className="capitalize">{entity.moduleType.replace('_', ' ')}</span>
+              {entity.moduleType === 'initiatives' ? (
+                <>
+                  <span className="text-teal-900 font-semibold">Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-semibold">
+                    Sáng kiến đã công nhận {entity.recognizedScope ? `(${entity.recognizedScope})` : '(Cấp thành phố)'}
+                  </span>
+                </>
+              ) : (
+                <span className="capitalize">{entity.moduleType.replace('_', ' ')}</span>
+              )}
               <span aria-hidden="true">·</span>
               <span>Cập nhật: {new Date(entity.updatedAt || entity.createdAt).toLocaleDateString('vi-VN')}</span>
             </div>

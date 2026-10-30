@@ -66,6 +66,12 @@ export default function App() {
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [connectEntityTarget, setConnectEntityTarget] = useState<BaseEntity | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
+
+  const showError = (msg: string) => {
+    setErrorToast(msg);
+    setTimeout(() => setErrorToast(null), 4000);
+  };
 
   const initAppData = async () => {
     try {
@@ -105,7 +111,42 @@ export default function App() {
 
   useEffect(() => {
     initAppData();
+
+    const handleAuthExpired = () => {
+      handleLogout();
+    };
+    window.addEventListener('portal:auth-expired', handleAuthExpired);
+    return () => window.removeEventListener('portal:auth-expired', handleAuthExpired);
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await api.logout();
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('portal_auth_token');
+      }
+      try {
+        const guestData = await api.getCurrentUser();
+        setCurrentUser(guestData.user);
+      } catch {
+        setCurrentUser({
+          id: 'usr_guest',
+          username: 'guest',
+          fullName: 'Khách vãng lai',
+          email: 'public@thanhpho.gov.vn',
+          role: 'public_user',
+          isActive: true,
+          createdAt: new Date().toISOString()
+        });
+      }
+      setCurrentView('home');
+      setSuccessToast('Đã đăng xuất an toàn khỏi hệ thống');
+      setTimeout(() => setSuccessToast(null), 3000);
+    }
+  };
 
   const handleSwitchRole = async (role: string) => {
     try {
@@ -117,7 +158,7 @@ export default function App() {
       const newStats = await api.getStats();
       setStats(newStats);
     } catch (err: any) {
-      alert(err.message || 'Lỗi chuyển đổi vai trò');
+      showError(err.message || 'Lỗi chuyển đổi vai trò');
     }
   };
 
@@ -167,13 +208,19 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-teal-100 selection:text-teal-900">
+    <div className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-teal-100 selection:text-teal-900">
       
-      {/* Toast Notification */}
+      {/* Toast Notifications */}
       {successToast && (
         <div className="fixed top-20 right-4 z-50 bg-teal-900 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold flex items-center gap-2 border border-teal-700 animate-in fade-in slide-in-from-top-2">
           <span>✓</span>
           <span>{successToast}</span>
+        </div>
+      )}
+      {errorToast && (
+        <div className="fixed top-20 right-4 z-50 bg-rose-900 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold flex items-center gap-2 border border-rose-700 animate-in fade-in slide-in-from-top-2">
+          <span>⚠</span>
+          <span>{errorToast}</span>
         </div>
       )}
 
@@ -192,6 +239,8 @@ export default function App() {
           onOpenSubmitModal={() => setShowSubmitModal(true)}
           onOpenAdminLogin={() => setShowAdminLoginModal(true)}
           onSelectCategory={(category) => handleNavigateBrowseWithCategory(category)}
+          onLogout={handleLogout}
+          onUserUpdated={(updatedUser) => setCurrentUser(updatedUser)}
         />
       )}
 
@@ -219,6 +268,7 @@ export default function App() {
       {currentView === 'browse' && (
         <main className="flex-1">
           <BrowseView
+            key={`${browseParams.moduleType || 'all'}_${browseParams.q || ''}_${browseParams.field || ''}`}
             initialSearchQuery={browseParams.q}
             initialModule={browseParams.moduleType}
             initialField={browseParams.field}
@@ -236,6 +286,7 @@ export default function App() {
           onConfigUpdated={(newCfg) => setSystemConfig(newCfg)}
           onViewDetail={handleOpenDetail}
           onBackToPublic={() => setCurrentView('home')}
+          onLogout={handleLogout}
         />
       )}
 

@@ -77,7 +77,7 @@ export const AuditLogView: React.FC = () => {
             <span>Bảo Mật & Quản Trị Dữ Liệu</span>
           </div>
           <h2 className="text-base font-bold text-slate-900 tracking-tight mt-0.5">
-            Nhật Ký Truy Vết Hệ Thống (Audit Logs)
+            Nhật ký truy vết hệ thống (Audit Logs)
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Ghi nhận toàn bộ thao tác tạo mới, cập nhật, xóa, phê duyệt, từ chối, nhập/xuất và đăng nhập

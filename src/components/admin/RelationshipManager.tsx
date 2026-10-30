@@ -29,6 +29,9 @@ export const RelationshipManager: React.FC<RelationshipManagerProps> = ({
   const [relationType, setRelationType] = useState('Chủ nhiệm nhiệm vụ');
 
   const [targetOptions, setTargetOptions] = useState<BaseEntity[]>([]);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadRelationships = async () => {
     setLoading(true);
@@ -69,6 +72,8 @@ export const RelationshipManager: React.FC<RelationshipManagerProps> = ({
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sourceId || !targetId) return;
+    setErrorMsg(null);
+    setSuccessMsg(null);
 
     try {
       await api.createRelationship({
@@ -81,19 +86,24 @@ export const RelationshipManager: React.FC<RelationshipManagerProps> = ({
         relationType,
         status: 'active'
       });
+      setSuccessMsg('Đã thiết lập quan hệ liên kết mới thành công.');
+      setTimeout(() => setSuccessMsg(null), 3500);
       await loadRelationships();
     } catch (err: any) {
-      alert(err.message || 'Lỗi tạo liên kết');
+      setErrorMsg(err.message || 'Lỗi tạo liên kết');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Xác nhận hủy liên kết đa chiều này?')) return;
+  const handleConfirmDelete = async (id: string) => {
+    setErrorMsg(null);
     try {
       await api.deleteRelationship(id);
+      setDeletingId(null);
+      setSuccessMsg('Đã hủy liên kết thành công.');
+      setTimeout(() => setSuccessMsg(null), 3500);
       await loadRelationships();
     } catch (err: any) {
-      alert(err.message || 'Lỗi xóa liên kết');
+      setErrorMsg(err.message || 'Lỗi xóa liên kết');
     }
   };
 
@@ -107,7 +117,7 @@ export const RelationshipManager: React.FC<RelationshipManagerProps> = ({
             Mô hình liên kết dữ liệu đa chiều (Cross-Entity Graph)
           </div>
           <h2 className="text-base font-bold text-slate-900 tracking-tight mt-0.5">
-            {initialEntity ? `Quan hệ liên kết của: [${initialEntity.code}] ${initialEntity.title}` : 'Quản Lý Tất Cả Quan Hệ Liên Kết Toàn Hệ Thống'}
+            {initialEntity ? `Quan hệ liên kết của: [${initialEntity.code}] ${initialEntity.title}` : 'Quản lý tất tả quan hệ liên kết toàn hệ thống'}
           </h2>
         </div>
         {onClose && (
@@ -116,6 +126,18 @@ export const RelationshipManager: React.FC<RelationshipManagerProps> = ({
           </button>
         )}
       </div>
+
+      {/* Notifications */}
+      {successMsg && (
+        <div className="p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg font-semibold">
+          ✓ {successMsg}
+        </div>
+      )}
+      {errorMsg && (
+        <div className="p-3 bg-rose-50 text-rose-800 border border-rose-200 rounded-lg font-semibold">
+          ⚠ {errorMsg}
+        </div>
+      )}
 
       {/* New Relation Form */}
       <form onSubmit={handleCreate} className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
@@ -219,13 +241,31 @@ export const RelationshipManager: React.FC<RelationshipManagerProps> = ({
                   </div>
                 </div>
 
-                <button
-                  onClick={() => handleDelete(rel.id)}
-                  title="Hủy liên kết"
-                  className="p-1.5 text-slate-400 hover:text-red-700 hover:bg-slate-100 rounded"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {deletingId === rel.id ? (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-red-700 font-semibold text-[11px]">Xác nhận?</span>
+                    <button
+                      onClick={() => handleConfirmDelete(rel.id)}
+                      className="px-2 py-1 bg-red-700 hover:bg-red-800 text-white rounded text-[11px] font-semibold"
+                    >
+                      Xóa
+                    </button>
+                    <button
+                      onClick={() => setDeletingId(null)}
+                      className="px-2 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-[11px]"
+                    >
+                      Hủy
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setDeletingId(rel.id)}
+                    title="Hủy liên kết"
+                    className="p-1.5 text-slate-400 hover:text-red-700 hover:bg-slate-100 rounded"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             ))}
           </div>

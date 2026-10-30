@@ -4,6 +4,7 @@ import { CheckCircle2, XCircle, Play, RotateCcw, ShieldCheck, Clock } from 'luci
 
 export const TestSuiteView: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [testReport, setTestReport] = useState<{
     timestamp: string;
     totalTests: number;
@@ -13,11 +14,12 @@ export const TestSuiteView: React.FC = () => {
 
   const runAllTests = async () => {
     setIsRunning(true);
+    setErrorMsg(null);
     try {
       const data = await api.runAcceptanceTests();
       setTestReport(data);
     } catch (err: any) {
-      alert(err.message || 'Lỗi chạy kịch bản kiểm thử');
+      setErrorMsg(err.message || 'Lỗi chạy kịch bản kiểm thử');
     } finally {
       setIsRunning(false);
     }
@@ -25,6 +27,12 @@ export const TestSuiteView: React.FC = () => {
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-6 text-xs">
+      {errorMsg && (
+        <div className="p-3 bg-rose-50 text-rose-800 border border-rose-200 rounded-lg font-semibold flex items-center gap-2">
+          <span>⚠</span>
+          <span>{errorMsg}</span>
+        </div>
+      )}
       
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200">
@@ -33,7 +41,7 @@ export const TestSuiteView: React.FC = () => {
             Đảm bảo chất lượng phần mềm & Nghiệm thu
           </div>
           <h2 className="text-base font-bold text-slate-900 tracking-tight mt-0.5">
-            Bộ Kiểm Thử Nghiệm Thu & An Toàn Bảo Mật (Section XVI Acceptance & Security Test Suite)
+            Bộ kiểm thử nghiệm thu & an toàn bảo mật (Section XVI acceptance & security test suite)
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Thực thi tự động 18 kịch bản kiểm định toàn vẹn nghiệp vụ, phân quyền, workflow, chống mạo danh vai trò và lưu trữ nguyên tử
@@ -53,7 +61,7 @@ export const TestSuiteView: React.FC = () => {
           ) : (
             <>
               <Play className="w-4 h-4" />
-              <span>Chạy Toàn Bộ Kịch Bản Nghiệm Thu & Bảo Mật</span>
+              <span>Chạy toàn bộ kịch bản nghiệm thu & bảo mật</span>
             </>
           )}
         </button>

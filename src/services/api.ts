@@ -20,14 +20,35 @@ function getAuthHeaders(extraHeaders: Record<string, string> = {}): Record<strin
   return headers;
 }
 
+async function parseJsonResponse<T = any>(res: Response): Promise<T> {
+  if (res.status === 401 && typeof window !== 'undefined') {
+    localStorage.removeItem('portal_auth_token');
+    window.dispatchEvent(new CustomEvent('portal:auth-expired'));
+  }
+
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const text = await res.text();
+    if (!res.ok) {
+      throw new Error(`Lỗi máy chủ (${res.status}): ${text.slice(0, 150) || res.statusText}`);
+    }
+    return text as unknown as T;
+  }
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || `Lỗi yêu cầu hệ thống (${res.status})`);
+  }
+  return data;
+}
+
 export const api = {
   // Auth
   async getCurrentUser(): Promise<{ user: User; availableRoles: Array<{ role: string; label: string }> }> {
     const res = await fetch('/api/auth/me', {
       headers: getAuthHeaders()
     });
-    const data = await res.json();
-    return data;
+    return parseJsonResponse(res);
   },
 
   async switchRole(role: string): Promise<User> {
@@ -36,8 +57,7 @@ export const api = {
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ role })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Lỗi chuyển đổi vai trò');
+    const data = await parseJsonResponse(res);
     if (data.token && typeof window !== 'undefined') {
       localStorage.setItem('portal_auth_token', data.token);
     }
@@ -50,8 +70,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Đăng nhập không thành công');
+    const data = await parseJsonResponse(res);
     if (data.token && typeof window !== 'undefined') {
       localStorage.setItem('portal_auth_token', data.token);
     }
@@ -59,20 +78,42 @@ export const api = {
   },
 
   async logout(): Promise<void> {
-    await fetch('/api/auth/logout', { 
-      method: 'POST',
-      headers: getAuthHeaders()
-    });
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('portal_auth_token');
+    try {
+      const res = await fetch('/api/auth/logout', { 
+        method: 'POST',
+        headers: getAuthHeaders()
+      });
+      await parseJsonResponse(res).catch(() => {});
+    } finally {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('portal_auth_token');
+      }
     }
+  },
+
+  async changePassword(params: { currentPassword?: string; newPassword: string; confirmPassword?: string }): Promise<{ success: boolean; message?: string; user?: User }> {
+    const res = await fetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(params)
+    });
+    return parseJsonResponse(res);
+  },
+
+  async updateProfile(params: { phone?: string; organization?: string }): Promise<{ success: boolean; message?: string; user?: User }> {
+    const res = await fetch('/api/auth/profile', {
+      method: 'PUT',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(params)
+    });
+    return parseJsonResponse(res);
   },
 
   async getUsers(): Promise<User[]> {
     const res = await fetch('/api/users', {
       headers: getAuthHeaders()
     });
-    const data = await res.json();
+    const data = await parseJsonResponse(res);
     return data.users || [];
   },
 
@@ -82,8 +123,7 @@ export const api = {
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(userData)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Lỗi tạo tài khoản');
+    const data = await parseJsonResponse(res);
     return data.user;
   },
 
@@ -93,8 +133,7 @@ export const api = {
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(userData)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Lỗi cập nhật tài khoản');
+    const data = await parseJsonResponse(res);
     return data.user;
   },
 
@@ -103,8 +142,7 @@ export const api = {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Lỗi xóa tài khoản');
+    const data = await parseJsonResponse(res);
     return data.success;
   },
 
@@ -113,7 +151,7 @@ export const api = {
     const res = await fetch('/api/config', {
       headers: getAuthHeaders()
     });
-    const data = await res.json();
+    const data = await parseJsonResponse(res);
     return data.config;
   },
 
@@ -123,16 +161,17 @@ export const api = {
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(config)
     });
-    const data = await res.json();
+    const data = await parseJsonResponse(res);
     return data.config;
   },
 
   // Stats
-  async getStats(): Promise<AggregatedStats> {
-    const res = await fetch('/api/stats', {
+  async getStats(year?: string): Promise<AggregatedStats> {
+    const url = year ? `/api/stats?year=${encodeURIComponent(year)}` : '/api/stats';
+    const res = await fetch(url, {
       headers: getAuthHeaders()
     });
-    const data = await res.json();
+    const data = await parseJsonResponse(res);
     return data.stats;
   },
 
@@ -156,7 +195,7 @@ export const api = {
     const res = await fetch(`/api/search?${searchParams.toString()}`, {
       headers: getAuthHeaders()
     });
-    return await res.json();
+    return await parseJsonResponse(res);
   },
 
   // Module records
@@ -167,7 +206,7 @@ export const api = {
     const res = await fetch(`/api/modules/${moduleType}?${searchParams.toString()}`, {
       headers: getAuthHeaders()
     });
-    const json = await res.json();
+    const json = await parseJsonResponse(res);
     return json.data || [];
   },
 
@@ -175,8 +214,7 @@ export const api = {
     const res = await fetch(`/api/modules/${moduleType}/${id}`, {
       headers: getAuthHeaders()
     });
-    const json = await res.json();
-    return json;
+    return parseJsonResponse(res);
   },
 
   async createRecord(moduleType: ModuleType, payload: any): Promise<BaseEntity> {
@@ -185,8 +223,7 @@ export const api = {
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.message || 'Lỗi tạo mới bản ghi');
+    const json = await parseJsonResponse(res);
     return json.data;
   },
 
@@ -196,8 +233,7 @@ export const api = {
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.message || 'Lỗi cập nhật bản ghi');
+    const json = await parseJsonResponse(res);
     return json.data;
   },
 
@@ -206,7 +242,7 @@ export const api = {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
-    const json = await res.json();
+    const json = await parseJsonResponse(res);
     return json.success;
   },
 
@@ -217,8 +253,7 @@ export const api = {
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ status, note })
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.message || 'Lỗi chuyển trạng thái quy trình');
+    const json = await parseJsonResponse(res);
     return json.data;
   },
 
@@ -226,7 +261,7 @@ export const api = {
   async getRelationships(entityId?: string): Promise<EntityRelationship[]> {
     const url = entityId ? `/api/relationships?entityId=${entityId}` : '/api/relationships';
     const res = await fetch(url, { headers: getAuthHeaders() });
-    const json = await res.json();
+    const json = await parseJsonResponse(res);
     return json.data || [];
   },
 
@@ -236,7 +271,7 @@ export const api = {
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(rel)
     });
-    const json = await res.json();
+    const json = await parseJsonResponse(res);
     return json.data;
   },
 
@@ -245,7 +280,7 @@ export const api = {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
-    const json = await res.json();
+    const json = await parseJsonResponse(res);
     return json.success;
   },
 
@@ -256,8 +291,7 @@ export const api = {
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ items })
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.message || 'Lỗi nhập dữ liệu');
+    const json = await parseJsonResponse(res);
     return json.result;
   },
 
@@ -270,7 +304,7 @@ export const api = {
     const res = await fetch(`/api/audit-logs?limit=${limit}`, {
       headers: getAuthHeaders()
     });
-    const json = await res.json();
+    const json = await parseJsonResponse(res);
     return json.logs || [];
   },
 
@@ -278,7 +312,7 @@ export const api = {
   async getConnections(needId?: string): Promise<ConnectionMessage[]> {
     const url = needId ? `/api/connections?needId=${needId}` : '/api/connections';
     const res = await fetch(url, { headers: getAuthHeaders() });
-    const json = await res.json();
+    const json = await parseJsonResponse(res);
     return json.data || [];
   },
 
@@ -296,8 +330,7 @@ export const api = {
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.message || 'Lỗi gửi yêu cầu kết nối');
+    const json = await parseJsonResponse(res);
     return json.data;
   },
 
@@ -307,7 +340,7 @@ export const api = {
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ status })
     });
-    const json = await res.json();
+    const json = await parseJsonResponse(res);
     return json.success;
   },
 
@@ -322,8 +355,7 @@ export const api = {
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(snapshot)
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.message || 'Lỗi phục hồi dữ liệu');
+    const json = await parseJsonResponse(res);
     return json.success;
   },
 
@@ -338,7 +370,7 @@ export const api = {
       method: 'POST',
       headers: getAuthHeaders()
     });
-    const json = await res.json();
+    const json = await parseJsonResponse(res);
     return json.data;
   },
 
@@ -347,7 +379,7 @@ export const api = {
     const res = await fetch(`/api/forms/${moduleType}`, {
       headers: getAuthHeaders()
     });
-    const json = await res.json();
+    const json = await parseJsonResponse(res);
     return json.config || { customFields: [] };
   },
 
@@ -357,7 +389,7 @@ export const api = {
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(config)
     });
-    const json = await res.json();
+    const json = await parseJsonResponse(res);
     return json.config;
   }
 };

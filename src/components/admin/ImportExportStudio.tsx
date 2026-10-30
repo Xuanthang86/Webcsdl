@@ -22,6 +22,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
     errors: string[];
     duplicates: string[];
   } | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   // Sample CSV Templates generator
   const getSampleCsv = (mod: ModuleType) => {
@@ -68,12 +69,13 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
   const handleExecuteImport = async () => {
     if (parsedRows.length === 0) return;
     setIsProcessing(true);
+    setImportError(null);
     try {
       const res = await api.importRecords(selectedModule, parsedRows);
       setImportResult(res);
       onImportComplete();
     } catch (err: any) {
-      alert(err.message || 'Lỗi nhập dữ liệu.');
+      setImportError(err.message || 'Lỗi nhập dữ liệu.');
     } finally {
       setIsProcessing(false);
     }
@@ -89,7 +91,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
             Công cụ Nhập, Chuẩn hóa & Làm sạch Dữ liệu
           </div>
           <h2 className="text-base font-bold text-slate-900 tracking-tight mt-0.5">
-            Nhập Dữ Liệu Hàng Loạt từ Excel / CSV
+            Nhập dữ liệu hàng loạt từ Excel / CSV
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Quy trình đối soát, kiểm tra trùng lặp và làm sạch theo tiêu chuẩn quản trị dữ liệu tập trung
@@ -205,6 +207,14 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Error Banner */}
+      {importError && (
+        <div className="p-4 bg-rose-50 rounded-xl border border-rose-200 text-rose-800 font-semibold flex items-center gap-2">
+          <span>⚠</span>
+          <span>{importError}</span>
         </div>
       )}
 

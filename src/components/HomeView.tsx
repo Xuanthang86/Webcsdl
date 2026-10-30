@@ -54,7 +54,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     return `${Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} đ`;
   };
 
-  // Safe label for recognition scope to prevent "Đã công nhận Chưa công nhận"
+  // Safe label for recognition scope to explicitly display "Sáng kiến đã công nhận"
   const renderRecognitionBadge = (scope?: string) => {
     if (!scope || scope === 'Chưa công nhận' || scope === 'Đang thẩm định') {
       return (
@@ -63,29 +63,30 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </span>
       );
     }
+    const scopeLabel = scope.includes('thành phố') || scope.includes('TP') ? 'Cấp thành phố' : scope;
     return (
-      <span className="text-amber-800 bg-amber-50 px-2 py-0.5 rounded text-[11px] font-semibold border border-amber-200">
-        Đã công nhận {scope}
+      <span className="text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded text-[11px] font-bold border border-amber-300">
+        Sáng kiến đã công nhận ({scopeLabel})
       </span>
     );
   };
 
   return (
-    <div className="space-y-12 pb-16">
+    <div className="pb-16 space-y-12">
       
-      {/* Top 1 & Top 2: Hero headline, lead-in, and clean search bar */}
-      <SearchHero
-        onSearch={onSearch}
-        onSelectCategory={(mod) => onNavigateBrowse(mod)}
-        activeCategory="all"
-      />
-
-      {/* Top 3: Executive Overview Dashboard */}
-      <HomeOverviewDashboard
-        stats={stats}
-        systemConfig={systemConfig}
-        onNavigateBrowse={onNavigateBrowse}
-      />
+      {/* Top Hero Search & Executive Overview Dashboard (seamlessly connected without white gap) */}
+      <div className="overflow-hidden">
+        <SearchHero
+          onSearch={onSearch}
+          onSelectCategory={(mod) => onNavigateBrowse(mod)}
+          activeCategory="all"
+        />
+        <HomeOverviewDashboard
+          stats={stats}
+          systemConfig={systemConfig}
+          onNavigateBrowse={onNavigateBrowse}
+        />
+      </div>
 
       {/* Section 1: Sáng kiến có tác dụng, ảnh hưởng đối với thành phố */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -117,7 +118,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
             >
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
-                  <span className="font-mono text-teal-800 font-semibold">{item.code}</span>
+                  <span className="font-mono text-teal-800 font-bold bg-teal-50 px-2 py-0.5 rounded border border-teal-200">{item.code}</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="text-teal-900 font-semibold text-[11px]">Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
                   <span aria-hidden="true">·</span>
                   {renderRecognitionBadge(item.recognizedScope)}
                 </div>

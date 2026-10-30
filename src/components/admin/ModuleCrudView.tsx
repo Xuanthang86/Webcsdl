@@ -44,7 +44,7 @@ export const MODULE_NAMES: Record<ModuleType, string> = {
   programs: 'Chương trình hỗ trợ & Cơ hội hỗ trợ',
   organizations: 'Tổ chức KH&CN, Viện trường',
   technologies: 'Công nghệ & Kết quả nghiên cứu',
-  collaboration_needs: 'Nhu cầu kết nối & Đặt hàng TP',
+  collaboration_needs: 'Nhu cầu kết nối & đặt hàng',
   publications: 'Bài báo & Công bố khoa học',
   lab_equipments: 'Thiết bị & Phòng thí nghiệm trọng điểm',
   policies: 'Chính sách, Văn bản & Quy định KH&CN'
@@ -63,6 +63,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [actionSuccessToast, setActionSuccessToast] = useState<string | null>(null);
+  const [actionErrorToast, setActionErrorToast] = useState<string | null>(null);
   
   // Modals state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -100,6 +101,11 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   const showToast = (msg: string) => {
     setActionSuccessToast(msg);
     setTimeout(() => setActionSuccessToast(null), 3500);
+  };
+
+  const showErrorToast = (msg: string) => {
+    setActionErrorToast(msg);
+    setTimeout(() => setActionErrorToast(null), 5000);
   };
 
   const loadData = async () => {
@@ -171,7 +177,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       }
       await loadData();
     } catch (err: any) {
-      alert(err.message || 'Lỗi lưu bản ghi');
+      showErrorToast(err.message || 'Lỗi lưu bản ghi');
     }
   };
 
@@ -184,7 +190,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       setDeleteConfirmRecord(null);
       await loadData();
     } catch (err: any) {
-      alert(err.message || 'Lỗi xóa bản ghi');
+      showErrorToast(err.message || 'Lỗi xóa bản ghi');
     } finally {
       setIsDeleting(false);
     }
@@ -200,7 +206,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       setWorkflowNote('');
       await loadData();
     } catch (err: any) {
-      alert(err.message || 'Lỗi chuyển trạng thái quy trình');
+      showErrorToast(err.message || 'Lỗi chuyển trạng thái quy trình');
     }
   };
 
@@ -250,15 +256,18 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
           <span>{actionSuccessToast}</span>
         </div>
       )}
+      {actionErrorToast && (
+        <div className="fixed top-20 right-6 z-50 bg-rose-900 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold flex items-center gap-2 border border-rose-700 animate-in fade-in">
+          <span>⚠</span>
+          <span>{actionErrorToast}</span>
+        </div>
+      )}
       
       {/* Top Header & Breadcrumb */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
         <div>
-          <div className="text-xs font-semibold text-teal-800 uppercase tracking-wider">
-            Phân hệ dữ liệu quản lý
-          </div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Quản Lý: {MODULE_NAMES[moduleType]}
+            Quản lý {MODULE_NAMES[moduleType]}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
             Tổng cộng: <span className="font-semibold text-slate-800 font-mono">{records.length}</span> bản ghi tích hợp
