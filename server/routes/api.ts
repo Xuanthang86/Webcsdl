@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { db } from '../db.ts';
 import { authMiddleware, AuthenticatedRequest, requirePermission, requireRole, createSessionToken, revokeToken } from '../auth.ts';
-import { ModuleType, ApprovalStatus, UserRole } from '../types.ts';
+import { ModuleType, ApprovalStatus, UserRole, User } from '../types.ts';
 
 export const apiRouter = Router();
 

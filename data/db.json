@@ -35,7 +35,9 @@
       "organization": "Phòng Quản lý Khoa học và Công nghệ",
       "phone": "0912345678",
       "isActive": true,
-      "createdAt": "2026-01-10T08:00:00Z"
+      "createdAt": "2026-01-10T08:00:00Z",
+      "passwordHash": "75ade7aaa60c0edc432354e9d92517120a0317eb82bd6f3e44908fb3865cc28492baaaf6f9b64badaa2b8bc4c8a51c51f6f795bcbae59849e454ea8ed7e0fdd4",
+      "passwordSalt": "10422bd36c5e5a3a1df7480870e89ca4"
     },
     {
       "id": "usr_leader",
@@ -44,9 +46,11 @@
       "email": "quan.lh@ubnd.gov.vn",
       "role": "agency_leader",
       "organization": "Lãnh đạo UBND Thành phố & Sở KH&CN",
-      "phone": "0988889999",
+      "phone": "0988.889.999",
       "isActive": true,
-      "createdAt": "2026-01-10T08:00:00Z"
+      "createdAt": "2026-01-10T08:00:00Z",
+      "passwordHash": "827681ff0c4baa9c9ddd994e1b563b5034993b348bee58d4bf5377ff413ce42dc5c639cf69aff9dcbc4b45d55c3aa12738236d2863c5454fab64147a30beb575",
+      "passwordSalt": "a3e59df3c4871cb94574cbdab1e0ef91"
     },
     {
       "id": "usr_officer",
@@ -1338,6 +1342,188 @@
     }
   ],
   "auditLogs": [
+    {
+      "userId": "usr_leader",
+      "userName": "TS. Lê Hoàng Quân",
+      "userRole": "agency_leader",
+      "action": "update",
+      "details": "Cập nhật tài khoản/phân quyền người dùng [leader]: vai trò agency_leader, trạng thái Kích hoạt",
+      "id": "log_1793533748847_wo1",
+      "timestamp": "2026-11-01T11:49:08.847Z"
+    },
+    {
+      "userId": "usr_leader",
+      "userName": "TS. Lê Hoàng Quân",
+      "userRole": "agency_leader",
+      "action": "login",
+      "details": "Đăng nhập hệ thống thành công với tài khoản [leader] (agency_leader)",
+      "id": "log_1793533748829_j4j",
+      "timestamp": "2026-11-01T11:49:08.829Z"
+    },
+    {
+      "userId": "usr_sysadmin",
+      "userName": "Trần Thị Mai",
+      "userRole": "system_admin",
+      "action": "create",
+      "details": "TEST_CONCURRENT_2",
+      "id": "log_1793533740924_x83",
+      "timestamp": "2026-11-01T11:49:00.924Z"
+    },
+    {
+      "userId": "usr_sysadmin",
+      "userName": "Trần Thị Mai",
+      "userRole": "system_admin",
+      "action": "create",
+      "details": "TEST_CONCURRENT_1",
+      "id": "log_1793533740924_12f",
+      "timestamp": "2026-11-01T11:49:00.924Z"
+    },
+    {
+      "userId": "usr_sysadmin",
+      "userName": "Trần Thị Mai",
+      "userRole": "system_admin",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 0, trùng lặp 1, lỗi 0",
+      "id": "log_1793533740919_igb",
+      "timestamp": "2026-11-01T11:49:00.919Z"
+    },
+    {
+      "userId": "usr_sysadmin",
+      "userName": "Trần Thị Mai",
+      "userRole": "system_admin",
+      "action": "delete",
+      "targetModule": "experts",
+      "targetId": "expe_1793533740914_1",
+      "targetTitle": "Chuyên gia Mẫu Import",
+      "details": "Xóa bản ghi [EXP-IMP-09141] khỏi hệ thống",
+      "id": "log_1793533740917_8ht",
+      "timestamp": "2026-11-01T11:49:00.917Z"
+    },
+    {
+      "userId": "usr_sysadmin",
+      "userName": "Trần Thị Mai",
+      "userRole": "system_admin",
+      "action": "import",
+      "targetModule": "experts",
+      "details": "Nhập khẩu tệp dữ liệu vào phân hệ experts: Thành công 1, trùng lặp 0, lỗi 1",
+      "id": "log_1793533740914_7qv",
+      "timestamp": "2026-11-01T11:49:00.914Z"
+    },
+    {
+      "userId": "usr_sysadmin",
+      "userName": "Trần Thị Mai",
+      "userRole": "system_admin",
+      "action": "delete",
+      "targetModule": "initiatives",
+      "targetId": "init_1793533740904",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Xóa bản ghi [INI-0904] khỏi hệ thống",
+      "id": "log_1793533740912_7xw",
+      "timestamp": "2026-11-01T11:49:00.912Z"
+    },
+    {
+      "userId": "usr_sysadmin",
+      "userName": "Trần Thị Mai",
+      "userRole": "system_admin",
+      "action": "approve",
+      "targetModule": "initiatives",
+      "targetId": "init_1793533740904",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-0904]: chuyển từ needs_revision -> approved. Ghi chú: Đạt yêu cầu",
+      "id": "log_1793533740910_02x",
+      "timestamp": "2026-11-01T11:49:00.910Z"
+    },
+    {
+      "userId": "usr_sysadmin",
+      "userName": "Trần Thị Mai",
+      "userRole": "system_admin",
+      "action": "revise",
+      "targetModule": "initiatives",
+      "targetId": "init_1793533740904",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-0904]: chuyển từ submitted -> needs_revision. Ghi chú: Yêu cầu bổ sung tài liệu",
+      "id": "log_1793533740908_gpl",
+      "timestamp": "2026-11-01T11:49:00.908Z"
+    },
+    {
+      "userId": "usr_sysadmin",
+      "userName": "Trần Thị Mai",
+      "userRole": "system_admin",
+      "action": "update",
+      "targetModule": "initiatives",
+      "targetId": "init_1793533740904",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Quy trình phê duyệt [INI-0904]: chuyển từ draft -> submitted. Ghi chú: Gửi duyệt",
+      "id": "log_1793533740906_9kb",
+      "timestamp": "2026-11-01T11:49:00.906Z"
+    },
+    {
+      "userId": "usr_sysadmin",
+      "userName": "Trần Thị Mai",
+      "userRole": "system_admin",
+      "action": "create",
+      "targetModule": "initiatives",
+      "targetId": "init_1793533740904",
+      "targetTitle": "Sáng kiến thử nghiệm quy trình",
+      "details": "Tạo mới bản ghi [INI-0904] trong phân hệ initiatives",
+      "id": "log_1793533740904_4mp",
+      "timestamp": "2026-11-01T11:49:00.904Z"
+    },
+    {
+      "userId": "usr_sysadmin",
+      "userName": "Trần Thị Mai",
+      "userRole": "system_admin",
+      "action": "delete",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793533740894",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Xóa bản ghi [SCI-0894] khỏi hệ thống",
+      "id": "log_1793533740901_4e5",
+      "timestamp": "2026-11-01T11:49:00.901Z"
+    },
+    {
+      "userId": "usr_sysadmin",
+      "userName": "Trần Thị Mai",
+      "userRole": "system_admin",
+      "action": "update",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793533740894",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Chỉnh sửa bản ghi [SCI-0894] - Cập nhật trường",
+      "id": "log_1793533740898_0ac",
+      "timestamp": "2026-11-01T11:49:00.898Z"
+    },
+    {
+      "userId": "usr_sysadmin",
+      "userName": "Trần Thị Mai",
+      "userRole": "system_admin",
+      "action": "create",
+      "targetModule": "science_tasks",
+      "targetId": "scie_1793533740894",
+      "targetTitle": "Đề tài kiểm thử tự động",
+      "details": "Tạo mới bản ghi [SCI-0894] trong phân hệ science_tasks",
+      "id": "log_1793533740894_456",
+      "timestamp": "2026-11-01T11:49:00.894Z"
+    },
+    {
+      "userId": "usr_sysadmin",
+      "userName": "Trần Thị Mai",
+      "userRole": "system_admin",
+      "action": "login",
+      "details": "Đăng nhập hệ thống thành công với tài khoản [sysadmin] (system_admin)",
+      "id": "log_1793533740853_t84",
+      "timestamp": "2026-11-01T11:49:00.853Z"
+    },
+    {
+      "userId": "usr_sysadmin",
+      "userName": "Trần Thị Mai",
+      "userRole": "system_admin",
+      "action": "login",
+      "details": "Đăng nhập hệ thống thành công với tài khoản [sysadmin] (system_admin)",
+      "id": "log_1793533735984_g3s",
+      "timestamp": "2026-11-01T11:48:55.984Z"
+    },
     {
       "userId": "usr_superadmin",
       "userName": "Nguyễn Văn Toàn",
