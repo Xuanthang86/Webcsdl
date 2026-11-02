@@ -1,7 +1,9 @@
-import { Router, Response } from 'express';
+import { Router } from 'express';
+import type { Response } from 'express';
 import { db } from '../db.ts';
-import { authMiddleware, AuthenticatedRequest, requirePermission, requireRole, createSessionToken, revokeToken } from '../auth.ts';
-import { ModuleType, ApprovalStatus, UserRole, User } from '../types.ts';
+import { authMiddleware, requirePermission, requireRole, createSessionToken, revokeToken } from '../auth.ts';
+import type { AuthenticatedRequest } from '../auth.ts';
+import type { ModuleType, ApprovalStatus, UserRole, User } from '../types.ts';
 
 export const apiRouter = Router();
 
