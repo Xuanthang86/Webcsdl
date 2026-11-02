@@ -208,5 +208,8 @@ export interface AggregatedStats {
   initiativesByYear?: Record<string, number>;
   startupsByYear?: Record<string, number>;
   yearlyStats?: Record<string, { tasks: number; initiatives: number; startups: number; budget: number; savings: number }>;
+  expertsByField?: Record<string, number>;
+  expertsByWorkplace?: Record<string, number>;
+  expertsByDegree?: Record<string, number>;
 }
 

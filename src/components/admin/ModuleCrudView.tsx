@@ -19,8 +19,10 @@ import {
   ChevronRight,
   ShieldAlert,
   AlertTriangle,
-  X
+  X,
+  Paperclip
 } from 'lucide-react';
+import { AttachmentManagerModal } from '../AttachmentManagerModal';
 
 interface ModuleCrudViewProps {
   moduleType: ModuleType;
@@ -76,6 +78,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   const [workflowNote, setWorkflowNote] = useState('');
   const [deleteConfirmRecord, setDeleteConfirmRecord] = useState<BaseEntity | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [attachmentEntity, setAttachmentEntity] = useState<BaseEntity | null>(null);
 
   // Form State for Create/Edit
   const [formTitle, setFormTitle] = useState('');
@@ -509,6 +512,14 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                           className="p-1.5 text-slate-400 hover:text-indigo-800 hover:bg-slate-100 rounded cursor-pointer"
                         >
                           <LinkIcon className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          onClick={() => setAttachmentEntity(item)}
+                          title="Quản lý tệp đính kèm & Media (ImageKit CDN)"
+                          className="p-1.5 text-slate-400 hover:text-teal-700 hover:bg-slate-100 rounded cursor-pointer"
+                        >
+                          <Paperclip className="w-3.5 h-3.5" />
                         </button>
 
                         {canApprove && (
@@ -1491,6 +1502,15 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Attachment Manager Modal (ImageKit CDN) */}
+      <AttachmentManagerModal
+        isOpen={!!attachmentEntity}
+        onClose={() => setAttachmentEntity(null)}
+        entityId={attachmentEntity?.id}
+        entityTitle={attachmentEntity?.title}
+        moduleType={moduleType}
+      />
 
     </div>
   );

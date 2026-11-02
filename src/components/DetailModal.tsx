@@ -17,8 +17,10 @@ import {
   Share2, 
   MessageSquarePlus, 
   FileCheck,
-  Download
+  Download,
+  Paperclip
 } from 'lucide-react';
+import { AttachmentManagerModal } from './AttachmentManagerModal';
 
 interface DetailModalProps {
   entity: BaseEntity | null;
@@ -40,6 +42,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
   const [reportNote, setReportNote] = useState('');
   const [showReportForm, setShowReportForm] = useState(false);
   const [reportSubmitted, setReportSubmitted] = useState(false);
+  const [showAttachments, setShowAttachments] = useState(false);
 
   if (!entity) return null;
 
@@ -163,6 +166,15 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
             >
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Tải tệp hồ sơ</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAttachments(true)}
+              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              title="Quản lý & xem tệp đính kèm / ImageKit CDN"
+            >
+              <Paperclip className="w-3.5 h-3.5 text-teal-700" />
+              <span className="hidden sm:inline">Tệp đính kèm</span>
             </button>
             <button
               onClick={handleCopyLink}
@@ -903,6 +915,14 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
         </div>
 
       </div>
+
+      <AttachmentManagerModal
+        isOpen={showAttachments}
+        onClose={() => setShowAttachments(false)}
+        entityId={entity.id}
+        entityTitle={entity.title}
+        moduleType={entity.moduleType}
+      />
     </div>
   );
 };

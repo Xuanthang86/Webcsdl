@@ -391,5 +391,69 @@ export const api = {
     });
     const json = await parseJsonResponse(res);
     return json.config;
+  },
+
+  // Cloudflare D1 & SQL Export / Reconcile
+  async exportD1Sql(download = false): Promise<string> {
+    const res = await fetch(`/api/d1/export-sql${download ? '?download=1' : ''}`, {
+      headers: getAuthHeaders()
+    });
+    return res.text();
+  },
+
+  async reconcileD1(): Promise<any> {
+    const res = await fetch('/api/d1/reconcile', {
+      headers: getAuthHeaders()
+    });
+    const json = await parseJsonResponse(res);
+    return json.data;
+  },
+
+  // ImageKit & Attachments
+  async getImageKitAuth(): Promise<{ token: string; expire: number; signature: string; publicKey: string; urlEndpoint: string }> {
+    const res = await fetch('/api/imagekit/auth', {
+      headers: getAuthHeaders()
+    });
+    return parseJsonResponse(res);
+  },
+
+  async uploadAttachment(data: {
+    fileName: string;
+    fileSize?: number;
+    mimeType?: string;
+    cdnUrl?: string;
+    entityId?: string;
+    moduleType?: string;
+    title?: string;
+  }): Promise<any> {
+    const res = await fetch('/api/imagekit/upload', {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(data)
+    });
+    const json = await parseJsonResponse(res);
+    return json.data;
+  },
+
+  async getAttachments(filter?: { entityId?: string; moduleType?: string }): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (filter?.entityId) params.append('entityId', filter.entityId);
+    if (filter?.moduleType) params.append('moduleType', filter.moduleType);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`/api/attachments${query}`, {
+      headers: getAuthHeaders()
+    });
+    const json = await parseJsonResponse(res);
+    return json.data || [];
+  },
+
+  async deleteAttachment(id: string): Promise<boolean> {
+    const res = await fetch(`/api/attachments/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    const json = await parseJsonResponse(res);
+    return json.success;
   }
 };
+

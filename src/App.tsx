@@ -21,10 +21,12 @@ import { DetailModal } from './components/DetailModal';
 import { PublicSubmitModal } from './components/PublicSubmitModal';
 import { ConnectionModal } from './components/ConnectionModal';
 import { AdminLoginModal } from './components/AdminLoginModal';
+import { AdvancedSearchModal } from './components/AdvancedSearchModal';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'home' | 'browse' | 'admin'>('home');
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
+  const [showAdvancedSearchModal, setShowAdvancedSearchModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | undefined>();
   const [availableRoles, setAvailableRoles] = useState<Array<{ role: string; label: string }>>([]);
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({
@@ -42,11 +44,18 @@ export default function App() {
   });
   const [stats, setStats] = useState<AggregatedStats | null>(null);
 
-  // Featured items for Home
-  const [featuredInitiatives, setFeaturedInitiatives] = useState<BaseEntity[]>([]);
+  // 10 Core & Ecosystem featured items (each showing top 3 newest)
   const [featuredTasks, setFeaturedTasks] = useState<BaseEntity[]>([]);
+  const [featuredInitiatives, setFeaturedInitiatives] = useState<BaseEntity[]>([]);
+  const [featuredPatents, setFeaturedPatents] = useState<BaseEntity[]>([]);
   const [featuredExperts, setFeaturedExperts] = useState<BaseEntity[]>([]);
   const [featuredStartups, setFeaturedStartups] = useState<BaseEntity[]>([]);
+  const [featuredSupportOrgs, setFeaturedSupportOrgs] = useState<BaseEntity[]>([]);
+  const [featuredProjects, setFeaturedProjects] = useState<BaseEntity[]>([]);
+  const [featuredIdeas, setFeaturedIdeas] = useState<BaseEntity[]>([]);
+  const [featuredWards, setFeaturedWards] = useState<BaseEntity[]>([]);
+  const [featuredUniversities, setFeaturedUniversities] = useState<BaseEntity[]>([]);
+  const [featuredPopularStartups, setFeaturedPopularStartups] = useState<BaseEntity[]>([]);
   const [featuredNeeds, setFeaturedNeeds] = useState<BaseEntity[]>([]);
   const [featuredPolicies, setFeaturedPolicies] = useState<BaseEntity[]>([]);
 
@@ -88,22 +97,50 @@ export default function App() {
       setSystemConfig(configData);
       setStats(statsData);
 
-      // 3. Load Featured Showcase Data
-      const [inits, tasks, experts, startups, needs, pols] = await Promise.all([
-        api.getModuleRecords('initiatives'),
+      // 3. Load Featured Showcase Data for all 10 types (top 3 each)
+      const [
+        tasks,
+        inits,
+        patents,
+        experts,
+        startups,
+        supportOrgs,
+        projects,
+        ideas,
+        wards,
+        universities,
+        popStartups,
+        needs,
+        pols
+      ] = await Promise.all([
         api.getModuleRecords('science_tasks'),
+        api.getModuleRecords('initiatives'),
+        api.getModuleRecords('patents'),
         api.getModuleRecords('experts'),
         api.getModuleRecords('startups'),
+        api.getModuleRecords('support_organizations'),
+        api.getModuleRecords('startup_projects'),
+        api.getModuleRecords('startup_ideas'),
+        api.getModuleRecords('wards'),
+        api.getModuleRecords('universities'),
+        api.getModuleRecords('featured_startups'),
         api.getModuleRecords('collaboration_needs'),
         api.getModuleRecords('policies')
       ]);
 
+      setFeaturedTasks(tasks.slice(0, 3));
       setFeaturedInitiatives(inits.slice(0, 3));
-      setFeaturedTasks(tasks.slice(0, 2));
+      setFeaturedPatents(patents.slice(0, 3));
       setFeaturedExperts(experts.slice(0, 3));
       setFeaturedStartups(startups.slice(0, 3));
-      setFeaturedNeeds(needs.slice(0, 2));
-      setFeaturedPolicies(pols.slice(0, 2));
+      setFeaturedSupportOrgs(supportOrgs.slice(0, 3));
+      setFeaturedProjects(projects.slice(0, 3));
+      setFeaturedIdeas(ideas.slice(0, 3));
+      setFeaturedWards(wards.slice(0, 3));
+      setFeaturedUniversities(universities.slice(0, 3));
+      setFeaturedPopularStartups(popStartups.slice(0, 3));
+      setFeaturedNeeds(needs.slice(0, 3));
+      setFeaturedPolicies(pols.slice(0, 3));
     } catch (err) {
       console.error('Lỗi khởi tạo cổng dữ liệu:', err);
     }
@@ -154,7 +191,6 @@ export default function App() {
       setCurrentUser(user);
       setSuccessToast(`Đã chuyển đổi sang vai trò: ${user.fullName} (${user.role})`);
       setTimeout(() => setSuccessToast(null), 3000);
-      // Reload stats
       const newStats = await api.getStats();
       setStats(newStats);
     } catch (err: any) {
@@ -207,6 +243,32 @@ export default function App() {
     initAppData();
   };
 
+  const handleAdminLoginSuccess = (user: User) => {
+    setCurrentUser(user);
+    setShowAdminLoginModal(false);
+    // Khi đăng nhập sẽ kiểm tra quyền tài khoản để chuyển giao diện truy cập phù hợp
+    const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'];
+    if (administrativeRoles.includes(user.role)) {
+      setCurrentView('admin');
+      setSuccessToast(`Đăng nhập thành công! Chuyển hướng đến Cổng Quản trị (${user.fullName})`);
+    } else {
+      setCurrentView('home');
+      setSuccessToast(`Đăng nhập thành công với vai trò: ${user.fullName}`);
+    }
+    setTimeout(() => setSuccessToast(null), 3500);
+  };
+
+  const handleApplyAdvancedSearch = (params: any) => {
+    setShowAdvancedSearchModal(false);
+    setBrowseParams({
+      q: params.q || '',
+      moduleType: params.moduleType || 'all',
+      field: params.field || ''
+    });
+    setCurrentView('browse');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-teal-100 selection:text-teal-900">
       
@@ -249,10 +311,17 @@ export default function App() {
         <main className="flex-1">
           <HomeView
             stats={stats}
-            featuredInitiatives={featuredInitiatives}
             featuredTasks={featuredTasks}
+            featuredInitiatives={featuredInitiatives}
+            featuredPatents={featuredPatents}
             featuredExperts={featuredExperts}
             featuredStartups={featuredStartups}
+            featuredSupportOrgs={featuredSupportOrgs}
+            featuredProjects={featuredProjects}
+            featuredIdeas={featuredIdeas}
+            featuredWards={featuredWards}
+            featuredUniversities={featuredUniversities}
+            featuredPopularStartups={featuredPopularStartups}
             featuredNeeds={featuredNeeds}
             featuredPolicies={featuredPolicies}
             systemConfig={systemConfig}
@@ -261,6 +330,7 @@ export default function App() {
             onViewDetail={handleOpenDetail}
             onOpenSubmitModal={() => setShowSubmitModal(true)}
             onOpenConnectModal={handleOpenConnectModal}
+            onOpenAdvancedSearch={() => setShowAdvancedSearchModal(true)}
           />
         </main>
       )}
@@ -325,17 +395,19 @@ export default function App() {
         />
       )}
 
+      {/* Advanced Search Modal */}
+      {showAdvancedSearchModal && (
+        <AdvancedSearchModal
+          onClose={() => setShowAdvancedSearchModal(false)}
+          onApplySearch={handleApplyAdvancedSearch}
+        />
+      )}
+
       {/* Admin Login Modal */}
       {showAdminLoginModal && (
         <AdminLoginModal
           onClose={() => setShowAdminLoginModal(false)}
-          onSuccess={(user) => {
-            setCurrentUser(user);
-            setShowAdminLoginModal(false);
-            setCurrentView('admin');
-            setSuccessToast(`Đăng nhập thành công với vai trò: ${user.fullName} (${user.role})`);
-            setTimeout(() => setSuccessToast(null), 3000);
-          }}
+          onSuccess={handleAdminLoginSuccess}
         />
       )}
 

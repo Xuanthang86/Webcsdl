@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BaseEntity, AggregatedStats, SystemConfig } from '../types';
 import { SearchHero } from './SearchHero';
 import { HomeOverviewDashboard } from './HomeOverviewDashboard';
@@ -9,24 +9,31 @@ import {
   Users, 
   Rocket, 
   FileText, 
-  MessageSquarePlus, 
-  ShieldCheck,
-  Building,
+  Award,
   Building2,
   MapPin,
   School,
   Star,
   Target,
-  GraduationCap
+  GraduationCap,
+  ExternalLink,
+  Layers
 } from 'lucide-react';
 
 interface HomeViewProps {
   stats: AggregatedStats | null;
-  featuredInitiatives: BaseEntity[];
   featuredTasks: BaseEntity[];
+  featuredInitiatives: BaseEntity[];
+  featuredPatents?: BaseEntity[];
   featuredExperts: BaseEntity[];
   featuredStartups: BaseEntity[];
-  featuredNeeds: BaseEntity[];
+  featuredSupportOrgs?: BaseEntity[];
+  featuredProjects?: BaseEntity[];
+  featuredIdeas?: BaseEntity[];
+  featuredWards?: BaseEntity[];
+  featuredUniversities?: BaseEntity[];
+  featuredPopularStartups?: BaseEntity[];
+  featuredNeeds?: BaseEntity[];
   featuredPolicies?: BaseEntity[];
   systemConfig: SystemConfig;
   onSearch: (params: { q: string; moduleType?: string; field?: string }) => void;
@@ -34,38 +41,46 @@ interface HomeViewProps {
   onViewDetail: (entity: BaseEntity) => void;
   onOpenSubmitModal: () => void;
   onOpenConnectModal: (entity: BaseEntity) => void;
+  onOpenAdvancedSearch?: () => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
   stats,
-  featuredInitiatives,
   featuredTasks,
+  featuredInitiatives,
+  featuredPatents = [],
   featuredExperts,
   featuredStartups,
-  featuredNeeds,
-  featuredPolicies = [],
+  featuredSupportOrgs = [],
+  featuredProjects = [],
+  featuredIdeas = [],
+  featuredWards = [],
+  featuredUniversities = [],
+  featuredPopularStartups = [],
   systemConfig,
   onSearch,
   onNavigateBrowse,
   onViewDetail,
   onOpenSubmitModal,
-  onOpenConnectModal
+  onOpenConnectModal,
+  onOpenAdvancedSearch
 }) => {
-  // Format currency with dots: 1.850.000.000 đ
+  const [activeEcosystemTab, setActiveEcosystemTab] = useState<'all' | 'startups' | 'support_organizations' | 'startup_projects' | 'startup_ideas' | 'wards' | 'universities' | 'featured_startups'>('all');
+
+  // Format currency with standard Vietnamese format: 6,5 tỷ đồng
   const formatVND = (num?: number) => {
-    if (!num) return '0 đ';
-    if (num >= 1000000000000) return `${(num / 1000000000000).toFixed(2).replace('.', ',')} nghìn tỷ đ`;
-    if (num >= 1000000000) return `${(num / 1000000000).toFixed(1).replace('.', ',')} tỷ đ`;
-    if (num >= 1000000) return `${(num / 1000000).toFixed(0)} triệu đ`;
-    return `${Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} đ`;
+    if (!num) return '0 đồng';
+    if (num >= 1000000000000) return `${(num / 1000000000000).toFixed(2).replace('.', ',')} nghìn tỷ đồng`;
+    if (num >= 1000000000) return `${(num / 1000000000).toFixed(1).replace('.', ',')} tỷ đồng`;
+    if (num >= 1000000) return `${(num / 1000000).toFixed(0)} triệu đồng`;
+    return `${Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} đồng`;
   };
 
-  // Safe label for recognition scope to explicitly display "Sáng kiến đã công nhận"
   const renderRecognitionBadge = (scope?: string) => {
     if (!scope || scope === 'Chưa công nhận' || scope === 'Đang thẩm định') {
       return (
         <span className="text-slate-600 bg-slate-100 px-2 py-0.5 rounded text-[11px] font-medium border border-slate-200">
-          Đang thẩm định / Chưa công nhận
+          Đang thẩm định
         </span>
       );
     }
@@ -78,441 +93,104 @@ export const HomeView: React.FC<HomeViewProps> = ({
   };
 
   return (
-    <div className="pb-16 space-y-12">
+    <div className="pb-16 space-y-10">
       
-      {/* Top Hero Search & Executive Overview Dashboard (seamlessly connected without white gap) */}
-      <div className="overflow-hidden">
-        <SearchHero
-          onSearch={onSearch}
-          onSelectCategory={(mod) => onNavigateBrowse(mod)}
-          activeCategory="all"
-        />
-        <HomeOverviewDashboard
-          stats={stats}
-          systemConfig={systemConfig}
-          onNavigateBrowse={onNavigateBrowse}
-        />
-      </div>
+      {/* 1. Dashboard (Nằm ngay phía dưới thanh header) */}
+      <HomeOverviewDashboard
+        stats={stats}
+        systemConfig={systemConfig}
+        onNavigateBrowse={onNavigateBrowse}
+      />
 
-      {/* Directory of 10 Standardized CSDL Modules */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-4 border-b border-slate-100">
+      {/* 2. Thanh tìm kiếm và các điều kiện phục vụ tìm kiếm (Có cả Tìm kiếm nâng cao) */}
+      <SearchHero
+        onSearch={onSearch}
+        onSelectCategory={(mod) => onNavigateBrowse(mod)}
+        activeCategory="all"
+        onOpenAdvancedSearch={onOpenAdvancedSearch}
+      />
+
+      {/* 3. Hiển thị chi tiết các loại dữ liệu, mỗi loại hiển thị 3 dữ liệu con mới nhất
+          Thứ tự chính xác:
+          1. Đề tài, nhiệm vụ
+          2. Sáng kiến có tác dụng, ảnh hưởng
+          3. Sáng chế & sở hữu trí tuệ
+          4. Chuyên gia & nhà khoa học
+          5. Dữ liệu Hệ sinh thái
+      */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+
+        {/* ================= 1. ĐỀ TÀI, NHIỆM VỤ KH&CN (3 dữ liệu con mới nhất) ================= */}
+        {/* Các trường: STT, Tên đề tài, Cấp quản lý, Cơ quan chủ trì, Chủ nhiệm đề tài, Thời gian thực hiện, Lĩnh vực */}
+        <section className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2 border-b border-slate-200">
             <div>
               <div className="text-[11px] font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-teal-600 animate-pulse" />
-                <span>Cơ cấu dữ liệu chuẩn hóa cấp thành phố</span>
+                <FileText className="w-3.5 h-3.5 text-teal-700" />
+                <span>1. Cơ sở dữ liệu Đề tài, Nhiệm vụ KH&CN</span>
               </div>
-              <h2 className="text-lg sm:text-xl font-bold text-slate-900 mt-0.5">
-                10 Cơ Sở Dữ Liệu Cốt Lõi Về KH&CN, Đổi Mới Sáng Tạo Và Khởi Nghiệp
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
+                Đề tài, Nhiệm vụ KH&CN Mới Nhất
               </h2>
             </div>
-            <span className="text-xs text-slate-500 font-medium">
-              Tra cứu nhanh dạng bảng chuẩn hoặc thẻ hồ sơ
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {[
-              { id: 'science_tasks', num: '1', title: 'Đề tài, nhiệm vụ KH&CN', icon: FileText, color: 'text-teal-700 bg-teal-50 border-teal-200' },
-              { id: 'initiatives', num: '2', title: 'Sáng kiến thành phố', icon: Lightbulb, color: 'text-amber-700 bg-amber-50 border-amber-200' },
-              { id: 'experts', num: '3', title: 'Chuyên gia KH&CN', icon: GraduationCap, color: 'text-blue-700 bg-blue-50 border-blue-200' },
-              { id: 'startups', num: '4', title: 'Doanh nghiệp KNST', icon: Rocket, color: 'text-rose-700 bg-rose-50 border-rose-200' },
-              { id: 'support_organizations', num: '5', title: 'Tổ chức trung gian', icon: Building2, color: 'text-cyan-700 bg-cyan-50 border-cyan-200' },
-              { id: 'startup_projects', num: '6', title: 'Dự án khởi nghiệp', icon: Target, color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
-              { id: 'startup_ideas', num: '7', title: 'Ý tưởng khởi nghiệp', icon: Lightbulb, color: 'text-yellow-700 bg-yellow-50 border-yellow-200' },
-              { id: 'wards', num: '8', title: 'Danh sách xã/phường', icon: MapPin, color: 'text-indigo-700 bg-indigo-50 border-indigo-200' },
-              { id: 'universities', num: '9', title: 'Trường ĐH / Cao đẳng', icon: School, color: 'text-violet-700 bg-violet-50 border-violet-200' },
-              { id: 'featured_startups', num: '10', title: 'DN khởi nghiệp tiêu biểu', icon: Star, color: 'text-amber-700 bg-amber-50 border-amber-200' }
-            ].map(item => {
-              const IconComp = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onNavigateBrowse(item.id)}
-                  className="flex flex-col p-3 rounded-xl border border-slate-200 hover:border-teal-500 hover:shadow-xs transition-all text-left bg-slate-50/50 hover:bg-white group cursor-pointer"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-mono font-bold text-slate-400 group-hover:text-teal-700">
-                      #{item.num}
-                    </span>
-                    <div className={`w-6 h-6 rounded-md flex items-center justify-center border ${item.color}`}>
-                      <IconComp className="w-3.5 h-3.5" />
-                    </div>
-                  </div>
-                  <div className="font-semibold text-slate-900 group-hover:text-teal-800 text-xs line-clamp-2 leading-tight">
-                    {item.title}
-                  </div>
-                  <div className="mt-2 text-[10px] text-teal-700 font-medium flex items-center gap-0.5 group-hover:underline">
-                    <span>Tra cứu ngay</span>
-                    <ArrowRight className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Section 1: Sáng kiến có tác dụng, ảnh hưởng đối với thành phố */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 pb-2 border-b border-slate-200">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-              Sáng kiến có tác dụng, ảnh hưởng đối với thành phố
-            </h2>
-            <p className="text-xs text-slate-500 mt-1">
-              Phân định minh bạch phạm vi đề xuất và phạm vi đã được UBND thành phố công nhận chính thức
-            </p>
-          </div>
-
-          <button
-            onClick={() => onNavigateBrowse('initiatives')}
-            className="text-xs font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 group whitespace-nowrap"
-          >
-            <span>Xem tất cả sáng kiến ({stats?.totalInitiatives || 0})</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {featuredInitiatives.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => onViewDetail(item)}
-              className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-teal-400 transition-all cursor-pointer flex flex-col justify-between group"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
-                  <span className="font-mono text-teal-800 font-bold bg-teal-50 px-2 py-0.5 rounded border border-teal-200">{item.code}</span>
-                  <span aria-hidden="true">·</span>
-                  <span className="text-teal-900 font-semibold text-[11px]">Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
-                  <span aria-hidden="true">·</span>
-                  {renderRecognitionBadge(item.recognizedScope)}
-                </div>
-
-                <h3 className="text-base font-bold text-slate-900 group-hover:text-teal-800 transition-colors line-clamp-2 leading-snug">
-                  {item.title}
-                </h3>
-
-                <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
-                  {item.description || item.problemSolved}
-                </p>
-
-                {/* Savings and Impact Box */}
-                <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-lg p-3 text-xs space-y-1">
-                  <div className="flex items-center justify-between text-emerald-950 font-mono">
-                    <span className="font-sans text-slate-500 text-[11px]">Chi phí tiết kiệm:</span>
-                    <span className="font-bold text-emerald-800 text-sm">{formatVND(item.costSavings)}/năm</span>
-                  </div>
-                  <div className="flex items-center justify-between text-slate-600 text-[11px]">
-                    <span className="text-slate-400">Đơn vị thụ hưởng:</span>
-                    <span className="font-medium truncate max-w-[150px]">{item.beneficiaries || item.proposingOrg}</span>
-                  </div>
-                </div>
-
-                <div className="text-[11px] text-slate-500 truncate">
-                  Tác giả / Cơ quan: <span className="font-medium text-slate-800">{item.ownerName || item.proposingOrg}</span>
-                </div>
-              </div>
-
-              <div className="pt-3 mt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                <span className="text-[11px]">Căn cứ: QĐ {item.recognitionDecision?.split(' ')[2] || 'UBND TP'}</span>
-                <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
-                  Xem hồ sơ
-                  <ArrowRight className="w-3 h-3" />
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Section 2: Nhiệm vụ & Đề tài KH&CN */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 pb-2 border-b border-slate-200">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-              Nhiệm vụ & Đề tài KH&CN
-            </h2>
-            <p className="text-xs text-slate-500 mt-1">
-              Quản lý trọn vẹn vòng đời từ tuyển chọn, phê duyệt, tiến độ, nghiệm thu đến chuyển giao kết quả
-            </p>
-          </div>
-
-          <button
-            onClick={() => onNavigateBrowse('science_tasks')}
-            className="text-xs font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 group whitespace-nowrap"
-          >
-            <span>Xem tất cả nhiệm vụ ({stats?.totalScienceTasks || 0})</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {featuredTasks.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => onViewDetail(item)}
-              className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs hover:shadow-md hover:border-teal-400 transition-all cursor-pointer flex flex-col justify-between group"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
-                  <span className="font-mono text-teal-800 font-semibold">{item.code}</span>
-                  <span aria-hidden="true">·</span>
-                  <span className="capitalize">{item.taskType}</span>
-                  <span aria-hidden="true">·</span>
-                  <span className="text-blue-700 font-medium">{item.field}</span>
-                </div>
-
-                <h3 className="text-lg font-bold text-slate-900 group-hover:text-teal-800 transition-colors leading-snug">
-                  {item.title}
-                </h3>
-
-                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                  {item.description}
-                </p>
-
-                {/* Progress & Budget Line */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 text-xs font-mono">
-                  <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
-                    <span className="text-slate-400 font-sans block text-[11px]">Kinh phí duyệt</span>
-                    <span className="font-bold text-slate-800">{formatVND(item.totalBudgetApproved)}</span>
-                  </div>
-                  <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
-                    <span className="text-slate-400 font-sans block text-[11px]">Tiến độ thực hiện</span>
-                    <span className="font-bold text-teal-800">{item.executionProgress || 70}%</span>
-                  </div>
-                  <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100 col-span-2 sm:col-span-1">
-                    <span className="text-slate-400 font-sans block text-[11px]">Nghiệm thu</span>
-                    <span className="font-bold text-emerald-700 font-sans">{item.acceptanceResult || 'Đang thực hiện'}</span>
-                  </div>
-                </div>
-
-                <div className="text-xs text-slate-600 space-y-1 pt-1">
-                  <div>Chủ nhiệm: <span className="font-semibold text-slate-800">{item.principalInvestigator}</span></div>
-                  <div>Cơ quan chủ trì: <span className="font-semibold text-slate-800">{item.leadOrganization}</span></div>
-                </div>
-              </div>
-
-              <div className="pt-3 mt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                <span className="text-[11px]">Đơn vị tiếp nhận: {item.receivingUnit || 'UBND TP Đà Nẵng'}</span>
-                <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
-                  Xem chi tiết
-                  <ArrowRight className="w-3 h-3" />
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Section 3: Chuyên gia & Khởi nghiệp (2-column layout) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* Col 1: Chuyên gia & Nhà khoa học */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">Chuyên gia & Nhà khoa học</h3>
-                <p className="text-[11px] text-slate-500">Mạng lưới nhà khoa học, chuyên gia tư vấn và thẩm định</p>
-              </div>
-              <button
-                onClick={() => onNavigateBrowse('experts')}
-                className="text-xs font-semibold text-teal-800 hover:underline flex items-center gap-1"
-              >
-                Tất cả ({stats?.totalExperts || 0}) →
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {featuredExperts.map((exp) => (
-                <div
-                  key={exp.id}
-                  onClick={() => onViewDetail(exp)}
-                  className="bg-white p-4 rounded-xl border border-slate-200 hover:border-teal-400 transition-all cursor-pointer shadow-xs flex items-start gap-3.5 group"
-                >
-                  <div className="w-10 h-10 rounded-full bg-teal-50 border border-teal-200 text-teal-800 flex items-center justify-center font-bold text-sm shrink-0">
-                    {exp.academicTitle || 'TS'}
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-slate-900 group-hover:text-teal-800 transition-colors text-sm">
-                        {exp.title}
-                      </h4>
-                      <span className="text-[11px] text-emerald-700 font-medium">Đã xác minh</span>
-                    </div>
-                    <div className="text-xs text-slate-600">
-                      {exp.position} · {exp.workplace}
-                    </div>
-                    <div className="text-[11px] text-slate-500 line-clamp-1">
-                      Chuyên môn: {exp.primaryField}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Col 2: Hệ sinh thái KNĐMST */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">Doanh nghiệp & Dự án khởi nghiệp</h3>
-                <p className="text-[11px] text-slate-500">Doanh nghiệp KH&CN, startup và mô hình đổi mới sáng tạo</p>
-              </div>
-              <button
-                onClick={() => onNavigateBrowse('startups')}
-                className="text-xs font-semibold text-teal-800 hover:underline flex items-center gap-1"
-              >
-                Tất cả ({stats?.totalStartups || 0}) →
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {featuredStartups.map((stp) => (
-                <div
-                  key={stp.id}
-                  onClick={() => onViewDetail(stp)}
-                  className="bg-white p-4 rounded-xl border border-slate-200 hover:border-teal-400 transition-all cursor-pointer shadow-xs flex items-start gap-3.5 group"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-purple-50 border border-purple-200 text-purple-800 flex items-center justify-center font-bold text-sm shrink-0">
-                    <Rocket className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-slate-900 group-hover:text-teal-800 transition-colors text-sm">
-                        {stp.title}
-                      </h4>
-                      <span className="text-[11px] font-mono text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
-                        {stp.developmentStage || 'Tăng trưởng'}
-                      </span>
-                    </div>
-                    <div className="text-xs text-slate-600 line-clamp-1">
-                      {stp.description}
-                    </div>
-                    <div className="text-[11px] text-slate-500 font-mono">
-                      Nhu cầu vốn: <span className="font-bold text-emerald-700">{formatVND(stp.fundingNeeds)}</span> · Công nghệ: {stp.coreTech?.split(',')[0]}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Section 4: Nhu cầu kết nối & Đặt hàng giải quyết bài toán Thành phố */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-r from-teal-900 to-slate-900 rounded-2xl p-6 sm:p-8 text-white space-y-6 shadow-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-xl sm:text-2xl font-bold tracking-tight">
-                Cổng đặt hàng bài toán công nghệ & Nhu cầu chuyển giao
-              </h3>
-              <p className="text-xs text-slate-300 mt-1 max-w-xl">
-                Cơ quan quản lý, viện trường và doanh nghiệp đăng tải các thách thức đô thị và nhu cầu tìm kiếm đối tác đồng hành.
-              </p>
-            </div>
-
             <button
-              onClick={() => onNavigateBrowse('collaboration_needs')}
-              className="px-4 py-2 bg-white text-teal-900 font-semibold rounded-lg text-xs hover:bg-slate-100 transition-colors shrink-0 shadow-xs"
+              onClick={() => onNavigateBrowse('science_tasks')}
+              className="text-xs font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 group whitespace-nowrap self-start sm:self-auto cursor-pointer"
             >
-              Xem tất cả nhu cầu kết nối →
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {featuredNeeds.map((need) => (
-              <div
-                key={need.id}
-                className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/15 space-y-3 flex flex-col justify-between"
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-[11px] text-teal-300">
-                    <span className="font-mono">{need.code}</span>
-                    <span className="bg-teal-800/80 px-2 py-0.5 rounded text-white font-medium">{need.needType}</span>
-                  </div>
-                  <h4 className="font-bold text-white text-sm line-clamp-2">
-                    {need.title}
-                  </h4>
-                  <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
-                    {need.description}
-                  </p>
-                  <div className="text-[11px] text-slate-400">
-                    Đơn vị đăng: <span className="text-white font-medium">{need.ownerName}</span> · Hạn chót: {need.deadline || '30/08/2026'}
-                  </div>
-                </div>
-
-                <div className="pt-2 flex items-center justify-between">
-                  <span className="text-[11px] text-teal-200">
-                    Đã có {need.connectionRequestsCount || 0} hồ sơ quan tâm
-                  </span>
-                  <button
-                    onClick={() => onOpenConnectModal(need)}
-                    className="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 shadow-xs"
-                  >
-                    <MessageSquarePlus className="w-3.5 h-3.5" />
-                    Ứng tuyển / Kết nối
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Section 5: Văn bản & Chính sách */}
-      {featuredPolicies.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 pb-2 border-b border-slate-200">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                Chính sách & Cơ chế khuyến khích KH&CN, Đổi mới sáng tạo
-              </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Các nghị quyết HĐND và quyết định UBND Thành phố hướng dẫn thủ tục, mức kinh phí hỗ trợ và ưu đãi
-              </p>
-            </div>
-
-            <button
-              onClick={() => onNavigateBrowse('policies')}
-              className="text-xs font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 group whitespace-nowrap"
-            >
-              <span>Xem tất cả văn bản</span>
+              <span>Xem tất cả đề tài ({stats?.totalScienceTasks || 0})</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {featuredPolicies.map((pol) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {featuredTasks.slice(0, 3).map((item, idx) => (
               <div
-                key={pol.id}
-                onClick={() => onViewDetail(pol)}
-                className="bg-white p-5 rounded-xl border border-slate-200 hover:border-teal-400 transition-all cursor-pointer shadow-xs flex flex-col justify-between group"
+                key={item.id}
+                onClick={() => onViewDetail(item)}
+                className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-teal-400 transition-all cursor-pointer flex flex-col justify-between group"
               >
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
-                    <span className="font-mono text-teal-800 font-semibold">{pol.code}</span>
-                    <span aria-hidden="true">·</span>
-                    <span className="font-medium text-slate-700">{pol.documentNumber}</span>
-                    <span aria-hidden="true">·</span>
-                    <span className="text-emerald-700 font-medium">Có hiệu lực</span>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-mono text-teal-800 font-bold bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                      STT {idx + 1} · {item.code}
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                      {item.managementLevel || item.managingAgency || 'Cấp Thành phố'}
+                    </span>
                   </div>
-                  <h4 className="font-bold text-slate-900 group-hover:text-teal-800 transition-colors text-sm leading-snug">
-                    {pol.title}
-                  </h4>
-                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                    {pol.description}
-                  </p>
+
+                  <h3 className="text-base font-bold text-slate-900 group-hover:text-teal-800 transition-colors line-clamp-2 leading-snug">
+                    {item.title}
+                  </h3>
+
+                  <div className="space-y-1.5 text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <div>
+                      <span className="text-slate-400 font-medium">Cơ quan chủ trì:</span>{' '}
+                      <span className="font-semibold text-slate-800">{item.leadOrganization || item.ownerName || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium">Chủ nhiệm đề tài:</span>{' '}
+                      <span className="font-semibold text-slate-900">{item.principalInvestigator || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium">Thời gian thực hiện:</span>{' '}
+                      <span className="font-mono font-medium text-slate-800">
+                        {item.executionTime || item.actualDuration || `${item.expectedStartDate || '2024'} - ${item.expectedEndDate || '2026'}`}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium">Lĩnh vực:</span>{' '}
+                      <span className="text-teal-800 font-medium">{item.field || 'Đa ngành'}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                  <span>Ban hành: {pol.issuingBody || 'UBND TP Đà Nẵng'}</span>
+
+                <div className="pt-3 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-emerald-700 font-semibold text-[11px]">
+                    {item.acceptanceResult ? `Nghiệm thu: ${item.acceptanceResult}` : 'Đang thực hiện'}
+                  </span>
                   <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
-                    Xem toàn văn
+                    Xem chi tiết
                     <ArrowRight className="w-3 h-3" />
                   </span>
                 </div>
@@ -520,32 +198,719 @@ export const HomeView: React.FC<HomeViewProps> = ({
             ))}
           </div>
         </section>
-      )}
 
-      {/* Section 6: CTA Hướng dẫn nộp đề xuất */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-2">
-            <h3 className="text-lg font-bold text-slate-900">
-              Bạn có sáng kiến, giải pháp cải tiến hoặc đề tài nghiên cứu muốn ứng dụng vào thành phố?
-            </h3>
-            <p className="text-xs text-slate-600 max-w-2xl leading-relaxed">
-              Cổng thông tin tiếp nhận hồ sơ trực tuyến liên tục 24/7. Các sáng kiến đủ điều kiện sẽ được Hội đồng Sáng kiến Thành phố thẩm định, công nhận và hỗ trợ kinh phí nhân rộng theo quy định của pháp luật.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
+        {/* ================= 2. SÁNG KIẾN CÓ TÁC DỤNG, ẢNH HƯỞNG ĐỐI VỚI THÀNH PHỐ (3 dữ liệu con mới nhất) ================= */}
+        {/* Các trường: STT, Năm công nhận, Tên sáng kiến, Tác giả, Chủ sở hữu, Địa chỉ chủ sở hữu, Lĩnh vực */}
+        <section className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2 border-b border-slate-200">
+            <div>
+              <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-600" />
+                <span>2. Cơ sở dữ liệu Sáng kiến cấp thành phố</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
+                Sáng Kiến Có Tác Dụng, Ảnh Hưởng Đối Với Thành Phố
+              </h2>
+            </div>
             <button
-              onClick={onOpenSubmitModal}
-              className="px-5 py-2.5 bg-teal-800 hover:bg-teal-700 text-white font-semibold text-xs rounded-lg transition-colors flex items-center gap-2 shadow-xs"
+              onClick={() => onNavigateBrowse('initiatives')}
+              className="text-xs font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 group whitespace-nowrap self-start sm:self-auto cursor-pointer"
             >
-              <span>Nộp hồ sơ trực tuyến</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>Xem tất cả sáng kiến ({stats?.totalInitiatives || 0})</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
-        </div>
-      </section>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {featuredInitiatives.slice(0, 3).map((item, idx) => (
+              <div
+                key={item.id}
+                onClick={() => onViewDetail(item)}
+                className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-amber-400 transition-all cursor-pointer flex flex-col justify-between group"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-mono text-amber-900 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                      STT {idx + 1} · Năm {item.recognitionYear || '2025'}
+                    </span>
+                    {renderRecognitionBadge(item.recognizedScope)}
+                  </div>
+
+                  <h3 className="text-base font-bold text-slate-900 group-hover:text-amber-800 transition-colors line-clamp-2 leading-snug">
+                    {item.title}
+                  </h3>
+
+                  <div className="space-y-1.5 text-xs text-slate-600 bg-amber-50/40 p-3 rounded-lg border border-amber-100">
+                    <div>
+                      <span className="text-slate-400 font-medium">Tác giả:</span>{' '}
+                      <span className="font-semibold text-slate-900">
+                        {Array.isArray(item.authors) ? item.authors.join(', ') : (item.authors || item.ownerName || '—')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium">Chủ sở hữu:</span>{' '}
+                      <span className="font-semibold text-slate-800">{item.ownerName || item.proposingOrg || '—'}</span>
+                    </div>
+                    <div className="truncate">
+                      <span className="text-slate-400 font-medium">Địa chỉ chủ sở hữu:</span>{' '}
+                      <span className="text-slate-700">{item.ownerAddress || item.applicationArea || 'Thành phố Đà Nẵng'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium">Lĩnh vực:</span>{' '}
+                      <span className="text-amber-900 font-medium">{item.field || 'Đa ngành'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-emerald-700 font-mono font-bold text-[11px]">
+                    Làm lợi: {formatVND(item.costSavings)}
+                  </span>
+                  <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
+                    Xem chi tiết
+                    <ArrowRight className="w-3 h-3" />
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ================= 3. SÁNG CHẾ & SỞ HỮU TRÍ TUỆ (3 dữ liệu con mới nhất) ================= */}
+        <section className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2 border-b border-slate-200">
+            <div>
+              <div className="text-[11px] font-bold text-purple-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Award className="w-3.5 h-3.5 text-purple-600" />
+                <span>3. Cơ sở dữ liệu Sáng chế & Sở hữu trí tuệ</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
+                Sáng Chế & Sở Hữu Trí Tuệ Mới Nhất
+              </h2>
+            </div>
+            <button
+              onClick={() => onNavigateBrowse('patents')}
+              className="text-xs font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 group whitespace-nowrap self-start sm:self-auto cursor-pointer"
+            >
+              <span>Xem tất cả sáng chế ({stats?.totalPatents || 0})</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {featuredPatents.slice(0, 3).map((item, idx) => (
+              <div
+                key={item.id}
+                onClick={() => onViewDetail(item)}
+                className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-purple-400 transition-all cursor-pointer flex flex-col justify-between group"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-mono text-purple-900 font-bold bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                      STT {idx + 1} · {item.patentNumber || item.code}
+                    </span>
+                    <span className="text-[11px] font-semibold text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                      {item.patentType || 'Bằng sáng chế'}
+                    </span>
+                  </div>
+
+                  <h3 className="text-base font-bold text-slate-900 group-hover:text-purple-800 transition-colors line-clamp-2 leading-snug">
+                    {item.title}
+                  </h3>
+
+                  <div className="space-y-1.5 text-xs text-slate-600 bg-purple-50/30 p-3 rounded-lg border border-purple-100">
+                    <div>
+                      <span className="text-slate-400 font-medium">Chủ sở hữu / Đơn vị:</span>{' '}
+                      <span className="font-semibold text-slate-800">{item.ownerName || item.organization || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium">Tác giả sáng chế:</span>{' '}
+                      <span className="font-semibold text-slate-900">{item.inventors || item.authors || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium">Lĩnh vực:</span>{' '}
+                      <span className="text-purple-900 font-medium">{item.field || 'Công nghệ kỹ thuật'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium">Ngày cấp bằng / Nộp đơn:</span>{' '}
+                      <span className="font-mono text-slate-700">{item.grantDate || item.filingDate || item.createdAt?.slice(0, 10)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-emerald-700 font-medium text-[11px]">Đã công bố hợp lệ</span>
+                  <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
+                    Xem chi tiết
+                    <ArrowRight className="w-3 h-3" />
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ================= 4. CHUYÊN GIA & NHÀ KHOA HỌC (3 dữ liệu con mới nhất) ================= */}
+        {/* Các trường: STT, Tên Chuyên gia, Năm sinh, Email, Điện thoại, Chuyên ngành */}
+        <section className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2 border-b border-slate-200">
+            <div>
+              <div className="text-[11px] font-bold text-blue-800 uppercase tracking-wider flex items-center gap-1.5">
+                <GraduationCap className="w-3.5 h-3.5 text-blue-600" />
+                <span>4. Cơ sở dữ liệu Chuyên gia & Nhà khoa học</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
+                Chuyên Gia & Nhà Khoa Học Tiêu Biểu
+              </h2>
+            </div>
+            <button
+              onClick={() => onNavigateBrowse('experts')}
+              className="text-xs font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 group whitespace-nowrap self-start sm:self-auto cursor-pointer"
+            >
+              <span>Xem tất cả chuyên gia ({stats?.totalExperts || 0})</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {featuredExperts.slice(0, 3).map((item, idx) => (
+              <div
+                key={item.id}
+                onClick={() => onViewDetail(item)}
+                className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col justify-between group"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-blue-50 border border-blue-200 text-blue-800 flex items-center justify-center font-bold text-sm shrink-0">
+                      {item.academicTitle || 'TS'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-blue-900 font-bold text-xs">STT {idx + 1}</span>
+                        <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          Đã xác minh
+                        </span>
+                      </div>
+                      <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-800 transition-colors truncate">
+                        {item.title || item.fullName}
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs text-slate-600 bg-blue-50/30 p-3 rounded-lg border border-blue-100">
+                    <div>
+                      <span className="text-slate-400 font-medium">Năm sinh:</span>{' '}
+                      <span className="font-mono font-semibold text-slate-800">{item.birthYear || '1978'}</span>
+                    </div>
+                    <div className="truncate">
+                      <span className="text-slate-400 font-medium">Email:</span>{' '}
+                      <span className="text-teal-800 font-medium">{item.email || item.publicEmail || 'chuyengia@danang.gov.vn'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium">Điện thoại:</span>{' '}
+                      <span className="font-mono text-slate-700">{item.phone || item.publicPhone || '0905.xxx.xxx'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium">Chuyên ngành:</span>{' '}
+                      <span className="font-semibold text-slate-900">{item.specialty || item.primaryField || item.field}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-[11px] text-slate-500 truncate max-w-[180px]">
+                    {item.workplace || item.organization || 'ĐH Đà Nẵng'}
+                  </span>
+                  <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
+                    Xem hồ sơ
+                    <ArrowRight className="w-3 h-3" />
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ================= 5. DỮ LIỆU HỆ SINH THÁI (Hiển thị các loại dữ liệu con, mỗi loại 3 dữ liệu mới nhất) ================= */}
+        {/* Bao gồm: DOANH NGHIỆP KHỞI NGHIỆP SÁNG TẠO, TỔ CHỨC TRUNG GIAN, DỰ ÁN KHỞI NGHIỆP, Ý TƯỞNG KHỞI NGHIỆP, DANH SÁCH XÃ/PHƯỜNG, TRƯỜNG ĐH/CĐ, DN KHỞI NGHIỆP TIÊU BIỂU */}
+        <section className="space-y-5 pt-4 border-t border-slate-200">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2 border-b border-slate-200">
+            <div>
+              <div className="text-[11px] font-bold text-rose-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Rocket className="w-3.5 h-3.5 text-rose-600" />
+                <span>5. Cơ sở dữ liệu Hệ sinh thái Khởi nghiệp Đổi mới sáng tạo</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
+                Dữ Liệu Hệ Sinh Thái Khởi Nghiệp Đổi Mới Sáng Tạo
+              </h2>
+            </div>
+            <button
+              onClick={() => onNavigateBrowse('startups')}
+              className="text-xs font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 group whitespace-nowrap self-start sm:self-auto cursor-pointer"
+            >
+              <span>Tra cứu toàn bộ Hệ sinh thái</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
+
+          {/* Sub-tabs for the 7 ecosystem child data types */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none text-xs">
+            <button
+              onClick={() => setActiveEcosystemTab('all')}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 cursor-pointer ${
+                activeEcosystemTab === 'all'
+                  ? 'bg-rose-800 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              Tất cả 7 loại dữ liệu con
+            </button>
+            <button
+              onClick={() => setActiveEcosystemTab('startups')}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 cursor-pointer ${
+                activeEcosystemTab === 'startups'
+                  ? 'bg-rose-800 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              Doanh nghiệp khởi nghiệp sáng tạo
+            </button>
+            <button
+              onClick={() => setActiveEcosystemTab('support_organizations')}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 cursor-pointer ${
+                activeEcosystemTab === 'support_organizations'
+                  ? 'bg-rose-800 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              Tổ chức trung gian
+            </button>
+            <button
+              onClick={() => setActiveEcosystemTab('startup_projects')}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 cursor-pointer ${
+                activeEcosystemTab === 'startup_projects'
+                  ? 'bg-rose-800 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              Dự án khởi nghiệp
+            </button>
+            <button
+              onClick={() => setActiveEcosystemTab('startup_ideas')}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 cursor-pointer ${
+                activeEcosystemTab === 'startup_ideas'
+                  ? 'bg-rose-800 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              Ý tưởng khởi nghiệp
+            </button>
+            <button
+              onClick={() => setActiveEcosystemTab('wards')}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 cursor-pointer ${
+                activeEcosystemTab === 'wards'
+                  ? 'bg-rose-800 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              Danh sách xã/phường
+            </button>
+            <button
+              onClick={() => setActiveEcosystemTab('universities')}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 cursor-pointer ${
+                activeEcosystemTab === 'universities'
+                  ? 'bg-rose-800 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              Trường Đại học/Cao đẳng
+            </button>
+            <button
+              onClick={() => setActiveEcosystemTab('featured_startups')}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 cursor-pointer ${
+                activeEcosystemTab === 'featured_startups'
+                  ? 'bg-rose-800 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              Doanh nghiệp tiêu biểu
+            </button>
+          </div>
+
+          <div className="space-y-8">
+
+            {/* 5.1 DOANH NGHIỆP KHỞI NGHIỆP SÁNG TẠO (3 dữ liệu con mới nhất) */}
+            {(activeEcosystemTab === 'all' || activeEcosystemTab === 'startups') && (
+              <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <Rocket className="w-4 h-4 text-rose-600" />
+                    <span>Doanh nghiệp khởi nghiệp sáng tạo</span>
+                  </h3>
+                  <button
+                    onClick={() => onNavigateBrowse('startups')}
+                    className="text-xs text-teal-800 font-semibold hover:underline"
+                  >
+                    Xem tất cả ({stats?.totalStartups || 0}) →
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {featuredStartups.slice(0, 3).map((item, idx) => (
+                    <div
+                      key={item.id}
+                      onClick={() => onViewDetail(item)}
+                      className="bg-slate-50 hover:bg-white p-4 rounded-xl border border-slate-200 hover:border-rose-400 transition-all cursor-pointer flex flex-col justify-between group"
+                    >
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-mono text-rose-900 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                            STT {idx + 1}
+                          </span>
+                          <span className="text-[11px] font-mono text-slate-500">
+                            Năm bắt đầu: {item.foundedYear || '2023'}
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-slate-900 group-hover:text-rose-800 transition-colors text-sm line-clamp-1">
+                          {item.title}
+                        </h4>
+                        <div className="text-xs text-slate-600 space-y-1">
+                          <div><span className="text-slate-400">Địa chỉ:</span> {item.address || 'Đà Nẵng'}</div>
+                          <div><span className="text-slate-400">Lĩnh vực:</span> <strong className="text-slate-800">{item.field}</strong></div>
+                          <div><span className="text-slate-400">Người đứng đầu:</span> {item.leaderName || item.ownerName} ({item.leaderPhone || '0905.xxx'})</div>
+                          <div className="line-clamp-2 text-[11px] text-slate-500 pt-1 border-t border-slate-200">
+                            <span className="font-semibold text-slate-700">Giải quyết vấn đề:</span> {item.problemSolved || item.description}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="pt-2 mt-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-400">
+                        <span>Nhân sự: {item.currentStaffCount || 15} người</span>
+                        <span className="text-teal-800 font-semibold group-hover:underline">Chi tiết →</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 5.2 TỔ CHỨC TRUNG GIAN (3 dữ liệu con mới nhất) */}
+            {/* Các trường: STT, Tên tổ chức, Địa chỉ */}
+            {(activeEcosystemTab === 'all' || activeEcosystemTab === 'support_organizations') && (
+              <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-cyan-600" />
+                    <span>Tổ chức trung gian hỗ trợ khởi nghiệp</span>
+                  </h3>
+                  <button
+                    onClick={() => onNavigateBrowse('support_organizations')}
+                    className="text-xs text-teal-800 font-semibold hover:underline"
+                  >
+                    Xem tất cả ({stats?.totalSupportOrgs || 0}) →
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {featuredSupportOrgs.slice(0, 3).map((item, idx) => (
+                    <div
+                      key={item.id}
+                      onClick={() => onViewDetail(item)}
+                      className="bg-slate-50 hover:bg-white p-4 rounded-xl border border-slate-200 hover:border-cyan-400 transition-all cursor-pointer flex flex-col justify-between group"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-mono text-cyan-900 font-bold bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                            STT {idx + 1}
+                          </span>
+                          <span className="text-[11px] text-cyan-700 font-medium">Tổ chức trung gian</span>
+                        </div>
+                        <h4 className="font-bold text-slate-900 group-hover:text-cyan-800 transition-colors text-sm line-clamp-2">
+                          {item.title}
+                        </h4>
+                        <div className="text-xs text-slate-600">
+                          <span className="text-slate-400">Địa chỉ:</span> {item.address || 'Thành phố Đà Nẵng'}
+                        </div>
+                      </div>
+                      <div className="pt-2 mt-3 border-t border-slate-200 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400">Đơn vị hỗ trợ</span>
+                        <span className="text-teal-800 font-semibold group-hover:underline">Chi tiết →</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 5.3 DỰ ÁN KHỞI NGHIỆP (3 dữ liệu con mới nhất) */}
+            {/* Các trường: STT, Tên dự án khởi nghiệp, Địa chỉ hoạt động, Lĩnh vực khởi nghiệp, Tóm tắt, Sản phẩm giải quyết vấn đề gì, Số thành viên, Người đứng đầu (SĐT, Email), Nơi ươm tạo, Năm bắt đầu */}
+            {(activeEcosystemTab === 'all' || activeEcosystemTab === 'startup_projects') && (
+              <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <Target className="w-4 h-4 text-emerald-600" />
+                    <span>Dự án khởi nghiệp</span>
+                  </h3>
+                  <button
+                    onClick={() => onNavigateBrowse('startup_projects')}
+                    className="text-xs text-teal-800 font-semibold hover:underline"
+                  >
+                    Xem tất cả ({stats?.totalProjects || 0}) →
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {featuredProjects.slice(0, 3).map((item, idx) => (
+                    <div
+                      key={item.id}
+                      onClick={() => onViewDetail(item)}
+                      className="bg-slate-50 hover:bg-white p-4 rounded-xl border border-slate-200 hover:border-emerald-400 transition-all cursor-pointer flex flex-col justify-between group"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-mono text-emerald-900 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            STT {idx + 1}
+                          </span>
+                          <span className="text-[11px] font-mono text-slate-500">Năm {item.startYear || '2024'}</span>
+                        </div>
+                        <h4 className="font-bold text-slate-900 group-hover:text-emerald-800 transition-colors text-sm line-clamp-2">
+                          {item.title}
+                        </h4>
+                        <div className="text-xs text-slate-600 space-y-1">
+                          <div><span className="text-slate-400">Lĩnh vực:</span> <strong>{item.field}</strong></div>
+                          <div><span className="text-slate-400">Người đứng đầu:</span> {item.leaderName || item.ownerName} ({item.leaderPhone || '0905.xxx'})</div>
+                          <div className="truncate"><span className="text-slate-400">Ươm tạo từ:</span> {item.incubator || 'Trung tâm ĐMST Đà Nẵng'}</div>
+                          <div className="line-clamp-2 text-[11px] text-slate-500 pt-1 border-t border-slate-200">
+                            <span className="font-semibold text-slate-700">Giải quyết:</span> {item.problemSolved || item.description}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="pt-2 mt-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-400">
+                        <span>{item.memberCount || 4} thành viên</span>
+                        <span className="text-teal-800 font-semibold group-hover:underline">Chi tiết →</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 5.4 Ý TƯỞNG KHỞI NGHIỆP (3 dữ liệu con mới nhất) */}
+            {/* Các trường: STT, Tên ý tưởng, Địa chỉ, Lĩnh vực, Xã/phường - Trường học, Tóm tắt, Vấn đề giải quyết, Số thành viên, Người đứng đầu, SĐT, Email, GV hướng dẫn, Đơn vị */}
+            {(activeEcosystemTab === 'all' || activeEcosystemTab === 'startup_ideas') && (
+              <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4 text-yellow-600" />
+                    <span>Ý tưởng khởi nghiệp</span>
+                  </h3>
+                  <button
+                    onClick={() => onNavigateBrowse('startup_ideas')}
+                    className="text-xs text-teal-800 font-semibold hover:underline"
+                  >
+                    Xem tất cả ({stats?.totalIdeas || 0}) →
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {featuredIdeas.slice(0, 3).map((item, idx) => (
+                    <div
+                      key={item.id}
+                      onClick={() => onViewDetail(item)}
+                      className="bg-slate-50 hover:bg-white p-4 rounded-xl border border-slate-200 hover:border-yellow-400 transition-all cursor-pointer flex flex-col justify-between group"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-mono text-yellow-900 font-bold bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200">
+                            STT {idx + 1}
+                          </span>
+                          <span className="text-[11px] text-amber-800 font-medium truncate max-w-[150px]">
+                            {item.wardSchool || 'Trường Đại học'}
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-slate-900 group-hover:text-yellow-800 transition-colors text-sm line-clamp-2">
+                          {item.title}
+                        </h4>
+                        <div className="text-xs text-slate-600 space-y-1">
+                          <div><span className="text-slate-400">Lĩnh vực:</span> <strong>{item.field}</strong></div>
+                          <div><span className="text-slate-400">Người đứng đầu:</span> {item.leaderName || item.ownerName} ({item.leaderPhone || '0905.xxx'})</div>
+                          <div><span className="text-slate-400">GV hướng dẫn:</span> {item.mentorTeacher || 'TS. Huỳnh Tấn Đạt'}</div>
+                          <div className="line-clamp-2 text-[11px] text-slate-500 pt-1 border-t border-slate-200">
+                            <span className="font-semibold text-slate-700">Giải quyết:</span> {item.problemSolved || item.description}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="pt-2 mt-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-400">
+                        <span>{item.memberCount || 3} thành viên</span>
+                        <span className="text-teal-800 font-semibold group-hover:underline">Chi tiết →</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 5.5 DANH SÁCH XÃ/PHƯỜNG (3 dữ liệu con mới nhất) */}
+            {/* Các trường: STT, Tên xã/phường, Địa chỉ */}
+            {(activeEcosystemTab === 'all' || activeEcosystemTab === 'wards') && (
+              <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-indigo-600" />
+                    <span>Danh sách xã/phường</span>
+                  </h3>
+                  <button
+                    onClick={() => onNavigateBrowse('wards')}
+                    className="text-xs text-teal-800 font-semibold hover:underline"
+                  >
+                    Xem tất cả ({stats?.totalWards || 0}) →
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {featuredWards.slice(0, 3).map((item, idx) => (
+                    <div
+                      key={item.id}
+                      onClick={() => onViewDetail(item)}
+                      className="bg-slate-50 hover:bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer flex flex-col justify-between group"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-mono text-indigo-900 font-bold bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                            STT {idx + 1}
+                          </span>
+                          <span className="text-[11px] text-indigo-700 font-medium">Địa bàn cơ sở</span>
+                        </div>
+                        <h4 className="font-bold text-slate-900 group-hover:text-indigo-800 transition-colors text-sm">
+                          {item.title}
+                        </h4>
+                        <div className="text-xs text-slate-600">
+                          <span className="text-slate-400">Địa chỉ:</span> {item.address || 'Quận Hải Châu, TP. Đà Nẵng'}
+                        </div>
+                      </div>
+                      <div className="pt-2 mt-3 border-t border-slate-200 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400">Đơn vị hành chính</span>
+                        <span className="text-teal-800 font-semibold group-hover:underline">Chi tiết →</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 5.6 TRƯỜNG ĐẠI HỌC/CAO ĐẲNG TRÊN ĐỊA BÀN (3 dữ liệu con mới nhất) */}
+            {/* Các trường: STT, Tên trường Đại học/Cao đẳng, Xã/phường, Địa chỉ */}
+            {(activeEcosystemTab === 'all' || activeEcosystemTab === 'universities') && (
+              <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <School className="w-4 h-4 text-violet-600" />
+                    <span>Trường Đại học / Cao đẳng trên địa bàn</span>
+                  </h3>
+                  <button
+                    onClick={() => onNavigateBrowse('universities')}
+                    className="text-xs text-teal-800 font-semibold hover:underline"
+                  >
+                    Xem tất cả ({stats?.totalUniversities || 0}) →
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {featuredUniversities.slice(0, 3).map((item, idx) => (
+                    <div
+                      key={item.id}
+                      onClick={() => onViewDetail(item)}
+                      className="bg-slate-50 hover:bg-white p-4 rounded-xl border border-slate-200 hover:border-violet-400 transition-all cursor-pointer flex flex-col justify-between group"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-mono text-violet-900 font-bold bg-violet-50 px-2 py-0.5 rounded border border-violet-200">
+                            STT {idx + 1}
+                          </span>
+                          <span className="text-[11px] text-violet-700 font-medium">Viện trường ĐMST</span>
+                        </div>
+                        <h4 className="font-bold text-slate-900 group-hover:text-violet-800 transition-colors text-sm line-clamp-2">
+                          {item.title}
+                        </h4>
+                        <div className="text-xs text-slate-600 space-y-1">
+                          <div><span className="text-slate-400">Xã/phường:</span> {item.ward || 'Phường Hòa Khánh Bắc'}</div>
+                          <div className="truncate"><span className="text-slate-400">Địa chỉ:</span> {item.address || 'Quận Liên Chiểu, TP. Đà Nẵng'}</div>
+                        </div>
+                      </div>
+                      <div className="pt-2 mt-3 border-t border-slate-200 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400">Nguồn lực KH&CN</span>
+                        <span className="text-teal-800 font-semibold group-hover:underline">Chi tiết →</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 5.7 DOANH NGHIỆP KHỞI NGHIỆP TIÊU BIỂU (3 dữ liệu con mới nhất) */}
+            {/* Các trường: STT, Tên dự án, Link website */}
+            {(activeEcosystemTab === 'all' || activeEcosystemTab === 'featured_startups') && (
+              <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <Star className="w-4 h-4 text-amber-600" />
+                    <span>Doanh nghiệp khởi nghiệp tiêu biểu</span>
+                  </h3>
+                  <button
+                    onClick={() => onNavigateBrowse('featured_startups')}
+                    className="text-xs text-teal-800 font-semibold hover:underline"
+                  >
+                    Xem tất cả ({stats?.totalFeaturedStartups || 0}) →
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {featuredPopularStartups.slice(0, 3).map((item, idx) => (
+                    <div
+                      key={item.id}
+                      onClick={() => onViewDetail(item)}
+                      className="bg-slate-50 hover:bg-white p-4 rounded-xl border border-slate-200 hover:border-amber-400 transition-all cursor-pointer flex flex-col justify-between group"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-mono text-amber-900 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                            STT {idx + 1}
+                          </span>
+                          <span className="text-[11px] text-amber-700 font-medium">Tiêu biểu thành phố</span>
+                        </div>
+                        <h4 className="font-bold text-slate-900 group-hover:text-amber-800 transition-colors text-sm line-clamp-2">
+                          {item.title}
+                        </h4>
+                        <div className="text-xs text-slate-600">
+                          <span className="text-slate-400">Link website:</span>{' '}
+                          {item.website ? (
+                            <a
+                              href={item.website}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-teal-700 hover:underline inline-flex items-center gap-0.5 font-medium"
+                            >
+                              {item.website} <ExternalLink className="w-3 h-3" />
+                            </a>
+                          ) : (
+                            <span className="text-slate-400">Đang cập nhật</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="pt-2 mt-3 border-t border-slate-200 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400">Mô hình tăng trưởng</span>
+                        <span className="text-teal-800 font-semibold group-hover:underline">Chi tiết →</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </div>
+        </section>
+
+      </div>
     </div>
   );
 };

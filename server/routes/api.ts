@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Router } from 'express';
 import type { Response } from 'express';
 import { db } from '../db.ts';
@@ -729,3 +730,92 @@ apiRouter.post('/test-suite/run', requireRole(['super_admin', 'system_admin']), 
   const testResults = db.runAcceptanceTestSuite(req.user);
   res.json({ success: true, data: testResults });
 });
+
+// 13. Cloudflare D1 SQL Export & Reconciliation
+apiRouter.get('/d1/export-sql', requireRole(['super_admin', 'system_admin', 'agency_leader']), (req: AuthenticatedRequest, res: Response): void => {
+  const sqlDump = db.generateD1SqlDump();
+  if (req.query.download === '1') {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="danang_sokhcn_d1_${Date.now()}.sql"`);
+    res.send(sqlDump);
+  } else {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.send(sqlDump);
+  }
+});
+
+apiRouter.get('/d1/reconcile', requireRole(['super_admin', 'system_admin']), (req: AuthenticatedRequest, res: Response): void => {
+  const report = db.reconcileD1Data();
+  res.json({ success: true, data: report });
+});
+
+// 14. ImageKit CDN Integration & Attachment Management
+apiRouter.get('/imagekit/auth', (req: AuthenticatedRequest, res: Response): void => {
+  const token = crypto.randomUUID();
+  const expire = Math.floor(Date.now() / 1000) + 2400; // 40 minutes valid
+  const privateKey = process.env.IMAGEKIT_PRIVATE_KEY || 'imagekit_private_danang_sokhcn_2026';
+  const signature = crypto.createHmac('sha1', privateKey).update(token + expire).digest('hex');
+
+  res.json({
+    token,
+    expire,
+    signature,
+    publicKey: process.env.IMAGEKIT_PUBLIC_KEY || 'public_danang_sokhcn_prod',
+    urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || 'https://ik.imagekit.io/danangsokhcn'
+  });
+});
+
+apiRouter.post('/imagekit/upload', (req: AuthenticatedRequest, res: Response): void => {
+  if (!req.user || req.user.role === 'public_user') {
+    // Permit public upload only if submission config allows
+    const config = db.getSystemConfig();
+    if (!config.enablePublicSubmissions) {
+      res.status(403).json({ success: false, message: 'Hệ thống hiện không mở nhận tệp đính kèm công khai.' });
+      return;
+    }
+  }
+
+  const { fileName, fileSize, mimeType, cdnUrl, dataUrl, entityId, moduleType, title } = req.body;
+  if (!fileName) {
+    res.status(400).json({ success: false, message: 'Thiếu tên tệp đính kèm.' });
+    return;
+  }
+
+  // Generate CDN URL (if not direct from ImageKit client SDK)
+  const safeName = encodeURIComponent(sanitizeString(fileName));
+  const finalCdnUrl = cdnUrl || `https://ik.imagekit.io/danangsokhcn/uploads/${Date.now()}_${safeName}`;
+  const isImage = (mimeType || '').startsWith('image/');
+  const thumbnailUrl = isImage ? `${finalCdnUrl}?tr=w-300,h-300,fo-auto` : undefined;
+
+  const attachment = db.addAttachment({
+    fileName: sanitizeString(fileName),
+    fileSize: Number(fileSize) || 0,
+    mimeType: sanitizeString(mimeType || 'application/octet-stream'),
+    cdnUrl: finalCdnUrl,
+    thumbnailUrl,
+    entityId: entityId ? sanitizeString(entityId) : undefined,
+    moduleType: moduleType ? sanitizeString(moduleType) : undefined,
+    title: title ? sanitizeString(title) : sanitizeString(fileName)
+  }, req.user);
+
+  res.status(201).json({ success: true, data: attachment });
+});
+
+apiRouter.get('/attachments', (req: AuthenticatedRequest, res: Response): void => {
+  const { entityId, moduleType } = req.query;
+  const attachments = db.getAttachments({
+    entityId: typeof entityId === 'string' ? entityId : undefined,
+    moduleType: typeof moduleType === 'string' ? moduleType : undefined
+  });
+  res.json({ success: true, data: attachments });
+});
+
+apiRouter.delete('/attachments/:id', requireRole(['super_admin', 'system_admin', 'data_officer']), (req: AuthenticatedRequest, res: Response): void => {
+  const success = db.deleteAttachment(req.params.id, req.user);
+  if (!success) {
+    res.status(404).json({ success: false, message: 'Không tìm thấy tệp đính kèm để xoá.' });
+    return;
+  }
+  res.json({ success: true, message: 'Đã xoá tệp đính kèm thành công.' });
+});
+

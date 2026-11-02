@@ -65,7 +65,7 @@ export const Footer: React.FC<FooterProps> = ({ config }) => {
         {/* Bottom copyright line: centered, with policy links directly underneath and centered */}
         <div className="pt-5 border-t border-slate-800 flex flex-col items-center justify-center text-center gap-2 text-xs">
           <div className="text-slate-300 font-medium leading-relaxed">
-            © 2026 ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ. Tất cả quyền được bảo lưu.
+            © 2026. Tất cả quyền được bảo lưu.
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-[11px] text-slate-500">
             <span className="hover:text-slate-300 transition-colors cursor-pointer">Chính sách dữ liệu mở</span>

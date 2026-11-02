@@ -1,31 +1,26 @@
 import React, { useState } from 'react';
-import { Search, Sparkles, Database, ArrowRight, ChevronDown, Check, Layers } from 'lucide-react';
+import { Search, Database, ArrowRight, ChevronDown, Check, Layers, SlidersHorizontal } from 'lucide-react';
 
 interface SearchHeroProps {
   onSearch: (params: { q: string; moduleType?: string; field?: string }) => void;
   onSelectCategory?: (mod: string) => void;
   activeCategory?: string;
+  onOpenAdvancedSearch?: () => void;
 }
 
 export const MODULE_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: 'all', label: 'Tất cả dữ liệu' },
+  { value: 'all', label: 'Tất cả cơ sở dữ liệu' },
   { value: 'science_tasks', label: '1. Đề tài, nhiệm vụ KH&CN' },
   { value: 'initiatives', label: '2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố' },
-  { value: 'experts', label: '3. Chuyên gia' },
-  { value: 'startups', label: '4. Doanh nghiệp khởi nghiệp sáng tạo' },
-  { value: 'support_organizations', label: '5. Tổ chức trung gian' },
-  { value: 'startup_projects', label: '6. Dự án khởi nghiệp' },
-  { value: 'startup_ideas', label: '7. Ý tưởng khởi nghiệp' },
-  { value: 'wards', label: '8. Danh sách xã/phường' },
-  { value: 'universities', label: '9. Trường Đại học/Cao đẳng trên địa bàn' },
-  { value: 'featured_startups', label: '10. Doanh nghiệp khởi nghiệp tiêu biểu' },
-  { value: 'organizations', label: 'Tổ chức KH&CN' },
-  { value: 'technologies', label: 'Công nghệ & Kết quả nghiên cứu' },
-  { value: 'patents', label: 'Sáng chế & Sở hữu trí tuệ' },
-  { value: 'publications', label: 'Bài báo & Công bố khoa học' },
-  { value: 'lab_equipments', label: 'Thiết bị & Phòng thí nghiệm trọng điểm' },
-  { value: 'policies', label: 'Chính sách, Văn bản & Quy định' },
-  { value: 'collaboration_needs', label: 'Nhu cầu kết nối & Hợp tác' }
+  { value: 'patents', label: '3. Sáng chế & Sở hữu trí tuệ' },
+  { value: 'experts', label: '4. Chuyên gia & Nhà khoa học' },
+  { value: 'startups', label: '5. Doanh nghiệp khởi nghiệp sáng tạo' },
+  { value: 'support_organizations', label: '6. Tổ chức trung gian' },
+  { value: 'startup_projects', label: '7. Dự án khởi nghiệp' },
+  { value: 'startup_ideas', label: '8. Ý tưởng khởi nghiệp' },
+  { value: 'wards', label: '9. Danh sách xã/phường' },
+  { value: 'universities', label: '10. Trường Đại học/Cao đẳng trên địa bàn' },
+  { value: 'featured_startups', label: '11. Doanh nghiệp khởi nghiệp tiêu biểu' }
 ];
 
 export interface SpecializedField {
@@ -49,16 +44,20 @@ export const SPECIALIZED_FIELDS: SpecializedField[] = [
 export const POPULAR_FIELDS = SPECIALIZED_FIELDS.map(f => f.name);
 
 export const SearchHero: React.FC<SearchHeroProps> = ({
-  onSearch
+  onSearch,
+  onOpenAdvancedSearch,
+  activeCategory = 'all'
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedModule, setSelectedModule] = useState(activeCategory);
   const [selectedField, setSelectedField] = useState('');
   const [showFieldsPanel, setShowFieldsPanel] = useState(false);
 
   const handleExecuteSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     onSearch({
-      q: searchTerm,
+      q: searchTerm.trim(),
+      moduleType: selectedModule === 'all' ? undefined : selectedModule,
       field: selectedField || undefined
     });
   };
@@ -67,129 +66,147 @@ export const SearchHero: React.FC<SearchHeroProps> = ({
     const nextField = selectedField === fieldName ? '' : fieldName;
     setSelectedField(nextField);
     onSearch({
-      q: searchTerm,
+      q: searchTerm.trim(),
+      moduleType: selectedModule === 'all' ? undefined : selectedModule,
       field: nextField || undefined
     });
   };
 
   return (
-    <div className="bg-gradient-to-b from-teal-900 to-slate-900 text-white pt-12 pb-14 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto text-center space-y-4">
+    <div className="bg-slate-900 text-white py-6 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
+      <div className="max-w-5xl mx-auto space-y-3.5">
         
-        {/* Lead-in badge with responsive font size */}
-        <div className="inline-flex items-center gap-2 text-xs sm:text-sm md:text-base font-semibold text-teal-200 bg-teal-800/40 border border-teal-700/50 px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full shadow-xs">
-          <Database className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-300 shrink-0" />
-          <span>Hệ thống Cơ sở dữ liệu thống nhất & tập trung thành phố Đà Nẵng</span>
-        </div>
+        {/* Main Search Input & Primary Filters */}
+        <form onSubmit={handleExecuteSearch} className="space-y-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center bg-white rounded-xl shadow-xl p-1.5 gap-2 text-slate-800 border border-slate-200">
+            
+            {/* Module Selector Filter */}
+            <div className="sm:w-56 shrink-0 relative border-b sm:border-b-0 sm:border-r border-slate-200 pb-1.5 sm:pb-0 sm:pr-2">
+              <select
+                value={selectedModule}
+                onChange={(e) => setSelectedModule(e.target.value)}
+                className="w-full h-11 px-3 bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
+                aria-label="Chọn loại dữ liệu tìm kiếm"
+              >
+                {MODULE_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        {/* Portal Headline */}
-        <h1 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight break-words">
-          Cổng dữ liệu Tổng hợp về khoa học, công nghệ & khởi nghiệp đổi mới sáng tạo thành phố Đà Nẵng
-        </h1>
-
-        <p className="text-xs sm:text-sm md:text-base text-slate-200 max-w-3xl mx-auto font-normal leading-relaxed">
-          Nền tảng tra cứu, kết nối, khai thác dữ liệu chính thức phục vụ cơ quan quản lý nhà nước, nhà khoa học, doanh nghiệp, nhà đầu tư và người dân.
-        </p>
-
-        {/* Search Bar */}
-        <form onSubmit={handleExecuteSearch} className="pt-2 max-w-2xl mx-auto">
-          <div className="flex items-center bg-white rounded-xl shadow-2xl p-1.5 gap-2 text-slate-800 border border-slate-200">
-            <div className="flex-1 relative flex items-center">
-              <Search className="w-5 h-5 text-slate-400 absolute left-3.5 pointer-events-none" />
+            {/* Keyword Input */}
+            <div className="flex-1 relative flex items-center min-w-0">
+              <Search className="w-5 h-5 text-slate-400 absolute left-3 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Nhập từ khóa tìm kiếm (đề tài, sáng kiến, chuyên gia, dự án, công nghệ, doanh nghiệp...)"
+                placeholder="Nhập từ khóa tìm kiếm (đề tài, sáng kiến, chuyên gia, dự án, doanh nghiệp, công nghệ...)"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-11 pl-11 pr-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none rounded-lg"
+                className="w-full h-11 pl-10 pr-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none"
               />
             </div>
 
+            {/* Search Execute Button */}
             <button
               type="submit"
-              className="h-11 px-4 sm:px-5 bg-teal-800 hover:bg-teal-700 text-white font-semibold text-xs sm:text-sm rounded-lg transition-colors flex items-center gap-1.5 shrink-0 shadow-sm"
+              className="h-11 px-5 bg-teal-800 hover:bg-teal-700 text-white font-semibold text-xs sm:text-sm rounded-lg transition-colors flex items-center justify-center gap-1.5 shrink-0 shadow-sm cursor-pointer"
             >
               <span>Tìm kiếm</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-        </form>
 
-        {/* Single Container for Specialized Fields */}
-        <div className="pt-2 flex flex-col items-center relative">
-          <div className="inline-flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowFieldsPanel(!showFieldsPanel)}
-              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all border shadow-xs ${
-                selectedField
-                  ? 'bg-teal-400 text-slate-950 border-teal-300 font-bold'
-                  : 'bg-teal-800/60 hover:bg-teal-700/80 text-teal-100 border-teal-600/50'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5 text-teal-300" />
-              <span>
-                {selectedField 
-                  ? `Lĩnh vực: ${SPECIALIZED_FIELDS.find(f => f.name === selectedField)?.shortName || selectedField}` 
-                  : 'Lĩnh vực chuyên ngành'}
-              </span>
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showFieldsPanel ? 'rotate-180' : ''}`} />
-            </button>
-
-            {selectedField && (
+          {/* Condition Bar: Lĩnh vực chuyên ngành + Tìm kiếm nâng cao button */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1 text-xs">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Lĩnh vực chuyên ngành dropdown toggle */}
               <button
                 type="button"
-                onClick={() => handleSelectSpecializedField(selectedField)}
-                className="text-xs text-rose-300 hover:text-white underline cursor-pointer inline-flex items-center gap-0.5"
+                onClick={() => setShowFieldsPanel(!showFieldsPanel)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border cursor-pointer ${
+                  selectedField
+                    ? 'bg-teal-400 text-slate-950 border-teal-300 font-bold'
+                    : 'bg-slate-800 hover:bg-slate-700 text-teal-200 border-slate-700'
+                }`}
               >
-                ✕ Bỏ chọn
+                <Layers className="w-3.5 h-3.5 text-teal-300" />
+                <span>
+                  {selectedField 
+                    ? `Lĩnh vực: ${SPECIALIZED_FIELDS.find(f => f.name === selectedField)?.shortName || selectedField}` 
+                    : 'Lĩnh vực chuyên ngành'}
+                </span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${showFieldsPanel ? 'rotate-180' : ''}`} />
+              </button>
+
+              {selectedField && (
+                <button
+                  type="button"
+                  onClick={() => handleSelectSpecializedField(selectedField)}
+                  className="text-xs text-rose-300 hover:text-white underline cursor-pointer"
+                >
+                  ✕ Bỏ chọn lĩnh vực
+                </button>
+              )}
+            </div>
+
+            {/* Nút Tìm kiếm nâng cao */}
+            {onOpenAdvancedSearch && (
+              <button
+                type="button"
+                onClick={onOpenAdvancedSearch}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-900/80 hover:bg-teal-800 text-teal-200 hover:text-white border border-teal-700/60 rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5 text-teal-400" />
+                <span>Tìm kiếm nâng cao</span>
               </button>
             )}
           </div>
+        </form>
 
-          {/* Dropdown showing the exact 8 standardized items when clicked */}
-          {showFieldsPanel && (
-            <div className="w-full max-w-2xl bg-slate-900/95 backdrop-blur-md border border-teal-600/60 rounded-2xl p-3 shadow-2xl text-left animate-in fade-in duration-150 mt-2 z-30">
-              <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-teal-800/80 px-1">
-                <div className="text-xs font-bold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <Database className="w-3.5 h-3.5" />
-                  <span>Danh mục 8 Lĩnh vực chuyên ngành</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowFieldsPanel(false)}
-                  className="text-xs text-slate-400 hover:text-white p-1"
-                >
-                  Đóng ✕
-                </button>
+        {/* Dropdown panel showing 8 standardized fields when opened */}
+        {showFieldsPanel && (
+          <div className="bg-slate-800/95 backdrop-blur-md border border-teal-600/50 rounded-xl p-3 shadow-2xl text-left animate-in fade-in duration-150">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-700 px-1 text-xs">
+              <div className="font-bold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Database className="w-3.5 h-3.5" />
+                <span>Danh mục 8 Lĩnh vực chuyên ngành chuẩn hóa</span>
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
-                {SPECIALIZED_FIELDS.map(sf => {
-                  const isSelected = selectedField === sf.name;
-                  return (
-                    <button
-                      key={sf.id}
-                      type="button"
-                      onClick={() => {
-                        handleSelectSpecializedField(sf.name);
-                        setShowFieldsPanel(false);
-                      }}
-                      className={`p-2.5 rounded-xl text-left transition-all border flex items-center justify-between gap-2 ${
-                        isSelected
-                          ? 'bg-teal-700 text-white border-teal-400 font-bold shadow-xs'
-                          : 'bg-white/5 hover:bg-white/10 text-slate-200 border-white/5 hover:border-teal-500/30'
-                      }`}
-                    >
-                      <span className="font-semibold text-slate-100">{sf.shortName}</span>
-                      {isSelected && <Check className="w-4 h-4 text-teal-300 shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowFieldsPanel(false)}
+                className="text-slate-400 hover:text-white p-1 cursor-pointer"
+              >
+                Đóng ✕
+              </button>
             </div>
-          )}
-        </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-1.5 text-xs">
+              {SPECIALIZED_FIELDS.map(sf => {
+                const isSelected = selectedField === sf.name;
+                return (
+                  <button
+                    key={sf.id}
+                    type="button"
+                    onClick={() => {
+                      handleSelectSpecializedField(sf.name);
+                      setShowFieldsPanel(false);
+                    }}
+                    className={`p-2 rounded-lg text-left transition-all border flex items-center justify-between gap-1.5 cursor-pointer ${
+                      isSelected
+                        ? 'bg-teal-700 text-white border-teal-400 font-bold shadow-xs'
+                        : 'bg-white/5 hover:bg-white/10 text-slate-200 border-white/5 hover:border-teal-500/30'
+                    }`}
+                  >
+                    <span className="font-medium text-slate-100 truncate">{sf.shortName}</span>
+                    {isSelected && <Check className="w-3.5 h-3.5 text-teal-300 shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

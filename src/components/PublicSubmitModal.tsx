@@ -82,7 +82,7 @@ export const PublicSubmitModal: React.FC<PublicSubmitModalProps> = ({ onClose, o
               Dịch vụ công trực tuyến
             </div>
             <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-              Nộp Hồ Sơ Đề Xuất & Sáng Kiến Đổi Mới Sáng Tạo
+              Nộp hồ sơ đề xuất & sáng kiến đổi mới sáng tạo
             </h2>
           </div>
           <button

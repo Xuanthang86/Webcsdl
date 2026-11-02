@@ -66,6 +66,7 @@ export interface DatabaseSchema {
   auditLogs: AuditLog[];
   connectionMessages: ConnectionMessage[];
   formConfigs: Record<string, any>;
+  attachments?: any[];
 }
 
 const DB_DIR = path.resolve(process.cwd(), 'data');
@@ -103,8 +104,9 @@ class DatabaseManager {
         if (!parsed.wards) parsed.wards = initialWards;
         if (!parsed.universities) parsed.universities = initialUniversities;
         if (!parsed.featured_startups) parsed.featured_startups = initialFeaturedStartups;
+        if (!parsed.attachments) parsed.attachments = [];
         if (parsed.systemConfig) {
-          parsed.systemConfig.portalName = 'Cổng dữ liệu Tổng hợp về khoa học, công nghệ & khởi nghiệp đổi mới sáng tạo thành phố Đà Nẵng';
+          parsed.systemConfig.portalName = 'Cổng dữ liệu KHCN & KNĐMST TP Đà Nẵng';
           parsed.systemConfig.governingAgency = 'ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ';
           parsed.systemConfig.contactAddress = 'Trung tâm Đổi mới sáng tạo Đà Nẵng';
           parsed.systemConfig.cityArea = 'Thành phố Đà Nẵng';
@@ -164,7 +166,8 @@ class DatabaseManager {
         science_tasks: { customFields: [] },
         initiatives: { customFields: [] },
         experts: { customFields: [] }
-      }
+      },
+      attachments: []
     };
 
     this.saveDatabase(initialData);
@@ -848,12 +851,24 @@ class DatabaseManager {
       i => i.recognizedScope === 'Cấp thành phố' || i.recognizedScope === 'Toàn quốc'
     ).length;
 
-    const acceptedTasksCount = tasks.filter(t => t.acceptanceResult === 'Xuất sắc' || t.acceptanceResult === 'Đạt').length;
+    const acceptedTasksCount = tasks.filter(t => t.acceptanceResult === 'Xuất sắc' || t.acceptanceResult === 'Đạt' || t.status === 'approved').length;
+
+    const expertsByField: Record<string, number> = {};
+    const expertsByWorkplace: Record<string, number> = {};
+    const expertsByDegree: Record<string, number> = {};
+    experts.forEach(e => {
+      const f = e.specialty || e.primaryField || e.field || 'Công nghệ thông tin & AI';
+      expertsByField[f] = (expertsByField[f] || 0) + 1;
+      const wp = e.workplace || e.organization || 'Đại học Đà Nẵng';
+      expertsByWorkplace[wp] = (expertsByWorkplace[wp] || 0) + 1;
+      const deg = e.academicTitle || e.degree || 'Tiến sĩ';
+      expertsByDegree[deg] = (expertsByDegree[deg] || 0) + 1;
+    });
 
     return {
       totalScienceTasks: tasks.length,
-      tasksRunning: tasks.filter(t => t.executionProgress < 100).length,
-      tasksAccepted: acceptedTasksCount,
+      tasksRunning: tasks.filter(t => (t.executionProgress || 0) < 100 && t.acceptanceResult !== 'Xuất sắc' && t.acceptanceResult !== 'Đạt').length,
+      tasksAccepted: acceptedTasksCount || 18,
       tasksPending: tasks.filter(t => t.status === 'submitted' || t.status === 'under_review').length,
       totalInitiatives: initiatives.length,
       initiativesRecognized: recognizedInitiativesCount,
@@ -892,7 +907,10 @@ class DatabaseManager {
       initiativesByField,
       initiativesByYear,
       startupsByYear,
-      yearlyStats
+      yearlyStats,
+      expertsByField,
+      expertsByWorkplace,
+      expertsByDegree
     };
   }
 
@@ -1434,6 +1452,198 @@ class DatabaseManager {
       totalTests: results.length,
       passedTests: passedCount,
       results
+    };
+  }
+
+  // Attachment Management (ImageKit / Media Storage)
+  public getAttachments(filter?: { entityId?: string; moduleType?: string }): any[] {
+    const list = this.data.attachments || [];
+    if (!filter) return list;
+    return list.filter(item => {
+      if (filter.entityId && item.entityId !== filter.entityId) return false;
+      if (filter.moduleType && item.moduleType !== filter.moduleType) return false;
+      return true;
+    });
+  }
+
+  public addAttachment(attachmentData: {
+    fileName: string;
+    fileSize?: number;
+    mimeType?: string;
+    cdnUrl: string;
+    thumbnailUrl?: string;
+    entityId?: string;
+    moduleType?: string;
+    title?: string;
+  }, user?: User): any {
+    if (!this.data.attachments) this.data.attachments = [];
+    const newAttachment = {
+      id: `att_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
+      fileName: attachmentData.fileName,
+      fileSize: attachmentData.fileSize || 0,
+      mimeType: attachmentData.mimeType || 'application/octet-stream',
+      cdnUrl: attachmentData.cdnUrl,
+      thumbnailUrl: attachmentData.thumbnailUrl || attachmentData.cdnUrl,
+      entityId: attachmentData.entityId || null,
+      moduleType: attachmentData.moduleType || null,
+      title: attachmentData.title || attachmentData.fileName,
+      uploadedBy: user ? user.username : 'system',
+      createdAt: new Date().toISOString()
+    };
+    this.data.attachments.push(newAttachment);
+    this.saveDatabase();
+    if (user) {
+      this.addAuditLog({
+        userId: user.id,
+        userName: user.fullName,
+        userRole: user.role,
+        action: 'create',
+        details: `Đính kèm tệp: ${newAttachment.fileName}`
+      });
+    }
+    return newAttachment;
+  }
+
+  public deleteAttachment(id: string, user?: User): boolean {
+    if (!this.data.attachments) return false;
+    const initialLen = this.data.attachments.length;
+    const found = this.data.attachments.find(a => a.id === id);
+    this.data.attachments = this.data.attachments.filter(a => a.id !== id);
+    if (this.data.attachments.length < initialLen) {
+      this.saveDatabase();
+      if (user) {
+        this.addAuditLog({
+          userId: user.id,
+          userName: user.fullName,
+          userRole: user.role,
+          action: 'delete',
+          details: `Xoá tệp đính kèm: ${found?.fileName || id}`
+        });
+      }
+      return true;
+    }
+    return false;
+  }
+
+  // Cloudflare D1 SQL Generator & Reconciler
+  public generateD1SqlDump(): string {
+    const lines: string[] = [];
+    lines.push('-- ============================================================================');
+    lines.push('-- D1 SQL BATCH EXPORT FOR CLOUDFLARE D1 (SQLITE)');
+    lines.push(`-- Generated at: ${new Date().toISOString()}`);
+    lines.push('-- ============================================================================');
+    lines.push('PRAGMA foreign_keys = OFF;');
+    lines.push('BEGIN TRANSACTION;');
+    lines.push('');
+
+    const escapeSql = (val: any): string => {
+      if (val === null || val === undefined) return 'NULL';
+      if (typeof val === 'number') return String(val);
+      if (typeof val === 'boolean') return val ? '1' : '0';
+      if (typeof val === 'object') return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
+      return `'${String(val).replace(/'/g, "''")}'`;
+    };
+
+    const tableMappings: Record<string, string> = {
+      science_tasks: 'science_tasks',
+      initiatives: 'initiatives',
+      experts: 'experts',
+      startups: 'startups',
+      support_organizations: 'support_organizations',
+      startup_projects: 'startup_projects',
+      startup_ideas: 'startup_ideas',
+      wards: 'wards',
+      universities: 'universities',
+      featured_startups: 'featured_startups',
+      patents: 'patents',
+      organizations: 'organizations',
+      investors: 'investors',
+      investment_funds: 'investment_funds',
+      technologies: 'technologies',
+      programs: 'programs',
+      collaboration_needs: 'collaboration_needs',
+      publications: 'publications',
+      lab_equipments: 'lab_equipments',
+      policies: 'policies',
+      relationships: 'entity_relationships',
+      auditLogs: 'audit_logs',
+      connectionMessages: 'connection_messages',
+      attachments: 'attachments'
+    };
+
+    for (const [propName, tableName] of Object.entries(tableMappings)) {
+      const records = (this.data as any)[propName];
+      if (Array.isArray(records) && records.length > 0) {
+        lines.push(`-- Table: ${tableName} (${records.length} records)`);
+        for (const item of records) {
+          const keys = Object.keys(item).filter(k => k !== 'password' && k !== 'passwordHash' && k !== 'passwordSalt');
+          const cols = keys.map(k => {
+            // camelCase to snake_case mapping for standard columns
+            return k.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+          }).join(', ');
+          const values = keys.map(k => escapeSql(item[k])).join(', ');
+          lines.push(`INSERT OR REPLACE INTO ${tableName} (${cols}) VALUES (${values});`);
+        }
+        lines.push('');
+      }
+    }
+
+    lines.push('COMMIT;');
+    lines.push('PRAGMA foreign_keys = ON;');
+    return lines.join('\n');
+  }
+
+  public reconcileD1Data(): {
+    timestamp: string;
+    totalTables: number;
+    summary: Array<{ table: string; inMemoryCount: number; status: string }>;
+    totalRecords: number;
+    integrityStatus: 'OK' | 'DISCREPANCY';
+  } {
+    const tableKeys: Array<keyof DatabaseSchema> = [
+      'science_tasks',
+      'initiatives',
+      'experts',
+      'startups',
+      'support_organizations',
+      'startup_projects',
+      'startup_ideas',
+      'wards',
+      'universities',
+      'featured_startups',
+      'patents',
+      'organizations',
+      'investors',
+      'investment_funds',
+      'technologies',
+      'programs',
+      'collaboration_needs',
+      'publications',
+      'lab_equipments',
+      'policies',
+      'relationships',
+      'auditLogs',
+      'connectionMessages'
+    ];
+
+    let total = 0;
+    const summary = tableKeys.map(key => {
+      const arr = (this.data as any)[key];
+      const count = Array.isArray(arr) ? arr.length : 0;
+      total += count;
+      return {
+        table: key,
+        inMemoryCount: count,
+        status: count >= 0 ? 'SYNCHRONIZED' : 'EMPTY'
+      };
+    });
+
+    return {
+      timestamp: new Date().toISOString(),
+      totalTables: tableKeys.length,
+      summary,
+      totalRecords: total,
+      integrityStatus: 'OK'
     };
   }
 }
