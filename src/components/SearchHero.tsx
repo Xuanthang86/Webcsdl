@@ -9,23 +9,23 @@ interface SearchHeroProps {
 
 export const MODULE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'all', label: 'Tất cả dữ liệu' },
-  { value: 'science_tasks', label: '1. Nhiệm vụ, Đề tài KH&CN' },
+  { value: 'science_tasks', label: '1. Đề tài, nhiệm vụ KH&CN' },
   { value: 'initiatives', label: '2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố' },
-  { value: 'patents', label: '3. Sáng chế & Sở hữu trí tuệ' },
-  { value: 'experts', label: '4. Chuyên gia & Nhà khoa học' },
-  { value: 'startups', label: '5.1 Doanh nghiệp khởi nghiệp' },
-  { value: 'startup_projects', label: '5.2 Dự án khởi nghiệp' },
-  { value: 'startup_ideas', label: '5.3 Ý tưởng khởi nghiệp' },
-  { value: 'investors', label: '5.4 Nhà đầu tư' },
-  { value: 'investment_funds', label: '5.5 Quỹ đầu tư' },
-  { value: 'support_organizations', label: '5.6 Tổ chức hỗ trợ, Vườn ươm' },
-  { value: 'programs', label: '5.7 Chương trình hỗ trợ & Cơ hội hỗ trợ' },
-  { value: 'organizations', label: 'Tổ chức KH&CN, Viện trường' },
-  { value: 'publications', label: 'Bài báo & Công bố khoa học' },
+  { value: 'experts', label: '3. Chuyên gia' },
+  { value: 'startups', label: '4. Doanh nghiệp khởi nghiệp sáng tạo' },
+  { value: 'support_organizations', label: '5. Tổ chức trung gian' },
+  { value: 'startup_projects', label: '6. Dự án khởi nghiệp' },
+  { value: 'startup_ideas', label: '7. Ý tưởng khởi nghiệp' },
+  { value: 'wards', label: '8. Danh sách xã/phường' },
+  { value: 'universities', label: '9. Trường Đại học/Cao đẳng trên địa bàn' },
+  { value: 'featured_startups', label: '10. Doanh nghiệp khởi nghiệp tiêu biểu' },
+  { value: 'organizations', label: 'Tổ chức KH&CN' },
   { value: 'technologies', label: 'Công nghệ & Kết quả nghiên cứu' },
-  { value: 'collaboration_needs', label: 'Tra cứu nhu cầu kết nối & đặt hàng' },
+  { value: 'patents', label: 'Sáng chế & Sở hữu trí tuệ' },
+  { value: 'publications', label: 'Bài báo & Công bố khoa học' },
   { value: 'lab_equipments', label: 'Thiết bị & Phòng thí nghiệm trọng điểm' },
-  { value: 'policies', label: 'Chính sách, Văn bản & Quy định' }
+  { value: 'policies', label: 'Chính sách, Văn bản & Quy định' },
+  { value: 'collaboration_needs', label: 'Nhu cầu kết nối & Hợp tác' }
 ];
 
 export interface SpecializedField {

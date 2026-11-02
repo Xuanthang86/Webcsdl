@@ -59,7 +59,10 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
     (stats.totalTechnologies || 0) +
     (stats.totalCollaborationNeeds || 0) +
     (stats.totalLabEquipments || 0) +
-    (stats.totalPolicies || 0)
+    (stats.totalPolicies || 0) +
+    (stats.totalWards || 0) +
+    (stats.totalUniversities || 0) +
+    (stats.totalFeaturedStartups || 0)
   ) : 0;
 
   return (

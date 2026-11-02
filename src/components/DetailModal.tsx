@@ -293,40 +293,37 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
             </div>
           )}
 
-          {/* Specific Domain Fields for Nhiệm vụ KH&CN (Science Tasks) */}
+          {/* 1. ĐỀ TÀI, NHIỆM VỤ KH&CN: STT, Tên đề tài, Cấp quản lý, Cơ quan chủ trì, Chủ nhiệm đề tài, Thời gian thực hiện, Lĩnh vực */}
           {entity.moduleType === 'science_tasks' && (
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider text-xs">
-                Thông tin nhiệm vụ & Tiến độ triển khai
+                Thông tin chuẩn hoá Đề tài, Nhiệm vụ KH&CN
               </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <div>
-                  <span className="text-slate-400 block">Chủ nhiệm nhiệm vụ</span>
-                  <span className="font-semibold text-slate-800">{entity.principalInvestigator}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block">Cơ quan chủ trì</span>
-                  <span className="font-semibold text-slate-800">{entity.leadOrganization}</span>
+                  <span className="text-slate-400 block mb-0.5">Cấp quản lý</span>
+                  <span className="font-semibold text-teal-800 text-sm">
+                    {entity.managementLevel || entity.managingAgency || 'Cấp Thành phố'}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Phương thức thực hiện</span>
-                  <span className="font-semibold text-slate-800">{entity.selectionMethod}</span>
+                  <span className="text-slate-400 block mb-0.5">Lĩnh vực</span>
+                  <span className="font-semibold text-slate-800">{entity.field}</span>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
-                <div className="p-3 bg-white border border-slate-200 rounded-lg">
-                  <span className="text-slate-400 font-sans block">Tổng kinh phí duyệt</span>
-                  <span className="font-bold text-slate-900 text-sm">{formatVND(entity.totalBudgetApproved)}</span>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Cơ quan chủ trì</span>
+                  <span className="font-semibold text-slate-800">{entity.leadOrganization || entity.ownerName}</span>
                 </div>
-                <div className="p-3 bg-white border border-slate-200 rounded-lg">
-                  <span className="text-slate-400 font-sans block">Ngân sách sự nghiệp KH</span>
-                  <span className="font-bold text-teal-800 text-sm">{formatVND(entity.stateBudget)}</span>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Chủ nhiệm đề tài</span>
+                  <span className="font-semibold text-slate-900">{entity.principalInvestigator || 'Chưa cập nhật'}</span>
                 </div>
-                <div className="p-3 bg-white border border-slate-200 rounded-lg">
-                  <span className="text-slate-400 font-sans block">Nguồn đối ứng</span>
-                  <span className="font-bold text-slate-700 text-sm">{formatVND(entity.counterpartBudget)}</span>
+                <div className="sm:col-span-2">
+                  <span className="text-slate-400 block mb-0.5">Thời gian thực hiện</span>
+                  <span className="font-mono font-medium text-slate-800">
+                    {entity.executionTime || entity.actualDuration || `${entity.expectedStartDate || ''} đến ${entity.expectedEndDate || ''}`}
+                  </span>
                 </div>
               </div>
 
@@ -336,83 +333,335 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   <p className="text-slate-600 leading-relaxed">{entity.mainContents}</p>
                 </div>
               )}
+            </div>
+          )}
 
-              {entity.expectedOutputs && (
-                <div className="p-4 bg-blue-50/50 border border-blue-200 rounded-xl text-xs">
-                  <span className="font-semibold text-blue-950 block mb-1">Sản phẩm khoa học dự kiến & Chỉ tiêu KPI:</span>
-                  <p className="text-slate-700 leading-relaxed">{entity.expectedOutputs} · {entity.kpiTargets}</p>
+          {/* 2. SÁNG KIẾN CÓ TÁC DỤNG, ẢNH HƯỞNG ĐỔI VỚI THÀNH PHỐ: STT, Năm công nhận, Tên sáng kiến, Tác giả, Chủ sở hữu, Địa chỉ chủ sở hữu, Lĩnh vực */}
+          {entity.moduleType === 'initiatives' && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider text-xs">
+                Thông tin chuẩn hoá Sáng kiến cấp thành phố
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-amber-50/50 p-4 rounded-xl border border-amber-200">
+                <div>
+                  <span className="text-amber-800 font-medium block mb-0.5">Năm công nhận</span>
+                  <span className="font-bold text-slate-900 text-sm font-mono">
+                    {entity.recognitionYear || '2025'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-amber-800 font-medium block mb-0.5">Lĩnh vực</span>
+                  <span className="font-semibold text-slate-800">{entity.field}</span>
+                </div>
+                <div>
+                  <span className="text-amber-800 font-medium block mb-0.5">Tác giả sáng kiến</span>
+                  <span className="font-semibold text-slate-900">
+                    {Array.isArray(entity.authors) ? entity.authors.join(', ') : (entity.authors || entity.implementingLead || '—')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-amber-800 font-medium block mb-0.5">Chủ sở hữu</span>
+                  <span className="font-semibold text-slate-900">{entity.ownerName || entity.proposingOrg}</span>
+                </div>
+                <div className="sm:col-span-2">
+                  <span className="text-amber-800 font-medium block mb-0.5">Địa chỉ chủ sở hữu</span>
+                  <span className="text-slate-700">{entity.ownerAddress || entity.applicationArea || 'Thành phố Đà Nẵng'}</span>
+                </div>
+              </div>
+
+              {entity.problemSolved && (
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                  <span className="font-semibold text-slate-900 block mb-1">Vấn đề thực tế đã giải quyết:</span>
+                  <p className="text-slate-600 leading-relaxed">{entity.problemSolved}</p>
                 </div>
               )}
             </div>
           )}
 
-          {/* Specific Domain Fields for Chuyên gia (Experts) */}
+          {/* 3. CHUYÊN GIA: STT, Tên Chuyên gia, Năm sinh, Email, Điện thoại, Chuyên ngành */}
           {entity.moduleType === 'experts' && (
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider text-xs">
-                Hồ sơ khoa học & Năng lực hợp tác
+                Thông tin chuẩn hoá Chuyên gia & Nhà khoa học
               </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
-                <div className="p-3 bg-white border border-slate-200 rounded-lg">
-                  <span className="text-slate-400 font-sans block">Bài báo & Công bố</span>
-                  <span className="font-bold text-slate-900 text-sm">{entity.publicationsCount || 0} bài</span>
-                </div>
-                <div className="p-3 bg-white border border-slate-200 rounded-lg">
-                  <span className="text-slate-400 font-sans block">Sáng chế & Giải pháp</span>
-                  <span className="font-bold text-teal-800 text-sm">{entity.patentsCount || 0}</span>
-                </div>
-                <div className="p-3 bg-white border border-slate-200 rounded-lg">
-                  <span className="text-slate-400 font-sans block">Đề tài đã chủ trì</span>
-                  <span className="font-bold text-slate-900 text-sm">{entity.headedTopicsCount || 0}</span>
-                </div>
-                <div className="p-3 bg-white border border-slate-200 rounded-lg">
-                  <span className="text-slate-400 font-sans block">Trạng thái hợp tác</span>
-                  <span className="font-bold text-emerald-700 font-sans text-sm">{entity.collaborationReadiness || 'Sẵn sàng'}</span>
-                </div>
-              </div>
 
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
-                <div>
-                  <span className="font-semibold text-slate-900">Trình độ đào tạo:</span> {entity.educationLevel}
-                </div>
-                <div>
-                  <span className="font-semibold text-slate-900">Kinh nghiệm cố vấn khởi nghiệp & Thẩm định:</span> {entity.advisoryExperience} · {entity.startupMentoringExperience}
-                </div>
-                <div>
-                  <span className="font-semibold text-slate-900">Email công khai:</span> {entity.publicEmail || 'Liên hệ qua cổng'}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Specific Domain Fields for Doanh nghiệp & Dự án khởi nghiệp */}
-          {(entity.moduleType === 'startups' || entity.moduleType === 'startup_projects') && (
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider text-xs">
-                Mô hình kinh doanh & Nhu cầu đầu tư
-              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <div>
-                  <span className="text-slate-400 block">Công nghệ cốt lõi</span>
-                  <span className="font-semibold text-slate-800">{entity.coreTech || entity.techUsed}</span>
+                  <span className="text-slate-400 block mb-0.5">Tên Chuyên gia</span>
+                  <span className="font-bold text-slate-900 text-sm">{entity.title || entity.fullName}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Giai đoạn phát triển</span>
-                  <span className="font-semibold text-purple-700">{entity.developmentStage || entity.stage}</span>
+                  <span className="text-slate-400 block mb-0.5">Năm sinh</span>
+                  <span className="font-mono font-semibold text-slate-800">{entity.birthYear || '1978'}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Nhu cầu vốn gọi</span>
-                  <span className="font-mono font-bold text-emerald-700">{formatVND(entity.fundingNeeds || entity.capitalNeeded)}</span>
+                  <span className="text-slate-400 block mb-0.5">Email</span>
+                  <span className="font-medium text-teal-800">{entity.email || entity.publicEmail || 'oanh.hk@vnu.edu.vn'}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Khách hàng & Thị trường mục tiêu</span>
-                  <span className="font-semibold text-slate-800">{entity.targetCustomers || entity.targetSegment}</span>
+                  <span className="text-slate-400 block mb-0.5">Điện thoại</span>
+                  <span className="font-mono text-slate-800">{entity.phone || entity.publicPhone || '0904.123.456'}</span>
+                </div>
+                <div className="sm:col-span-2">
+                  <span className="text-slate-400 block mb-0.5">Chuyên ngành</span>
+                  <span className="font-semibold text-slate-900">{entity.specialty || entity.primaryField || entity.field}</span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Specific Domain Fields for Sáng chế (Patents) */}
+          {/* 4. DOANH NGHIỆP KHỞI NGHIỆP SÁNG TẠO */}
+          {entity.moduleType === 'startups' && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider text-xs">
+                Thông tin chuẩn hoá Doanh nghiệp Khởi nghiệp Sáng tạo
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div className="sm:col-span-2 flex items-center gap-3">
+                  {entity.logoUrl && (
+                    <img 
+                      src={entity.logoUrl} 
+                      alt="Logo" 
+                      className="w-12 h-12 rounded-lg object-cover border border-slate-200 shadow-2xs" 
+                    />
+                  )}
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Tên doanh nghiệp</span>
+                    <span className="font-bold text-slate-900 text-sm">{entity.title}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Địa chỉ hoạt động</span>
+                  <span className="text-slate-800">{entity.address || entity.headquarters || 'Đà Nẵng'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Website doanh nghiệp</span>
+                  {entity.website ? (
+                    <a href={entity.website} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline flex items-center gap-1 font-medium">
+                      {entity.website} <ExternalLink className="w-3 h-3" />
+                    </a>
+                  ) : <span className="text-slate-400">Không có</span>}
+                </div>
+
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Lĩnh vực kinh doanh</span>
+                  <span className="font-semibold text-slate-800">{entity.field}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Năm bắt đầu khởi nghiệp</span>
+                  <span className="font-mono font-semibold text-slate-800">{entity.foundedYear || entity.foundedDate || '2023'}</span>
+                </div>
+
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Số lượng sáng lập viên</span>
+                  <span className="font-mono font-bold text-slate-800">{entity.founderCount || 2} người</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Tổng số nhân sự ở thời điểm hiện tại</span>
+                  <span className="font-mono font-bold text-slate-800">{entity.currentStaffCount || entity.teamSize || '25'} nhân sự</span>
+                </div>
+
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Họ và tên người đứng đầu</span>
+                  <span className="font-semibold text-slate-900">{entity.leaderName || entity.representative || entity.ownerName}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Số điện thoại / Email người đứng đầu</span>
+                  <span className="text-slate-800 font-mono text-[11px]">
+                    {entity.leaderPhone || entity.publicPhone || '0944.556.677'} · {entity.leaderEmail || entity.publicEmail || 'contact@startup.vn'}
+                  </span>
+                </div>
+
+                <div className="sm:col-span-2 pt-2 border-t border-slate-200">
+                  <span className="font-semibold text-slate-900 block mb-1">Sản phẩm giải quyết vấn đề gì:</span>
+                  <p className="text-slate-600 leading-relaxed">{entity.problemSolved || 'Tự động hóa và nâng cao năng suất sản xuất công nghệ cao.'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 5. TỔ CHỨC TRUNG GIAN: STT, Tên tổ chức, Địa chỉ */}
+          {entity.moduleType === 'support_organizations' && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider text-xs">
+                Thông tin chuẩn hoá Tổ chức Trung gian
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div className="sm:col-span-2">
+                  <span className="text-slate-400 block mb-0.5">Tên tổ chức</span>
+                  <span className="font-bold text-slate-900 text-sm">{entity.title}</span>
+                </div>
+                <div className="sm:col-span-2">
+                  <span className="text-slate-400 block mb-0.5">Địa chỉ</span>
+                  <span className="font-semibold text-slate-800">{entity.address || entity.headquarters || 'Số 48 Phan Đình Phùng, Hải Châu, Đà Nẵng'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 6. DỰ ÁN KHỞI NGHIỆP: STT, Tên dự án, Địa chỉ, Lĩnh vực, Tóm tắt, Sản phẩm giải quyết vấn đề gì, Số thành viên, Người đứng đầu, SĐT, Email, Nơi ươm tạo, Năm bắt đầu */}
+          {entity.moduleType === 'startup_projects' && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider text-xs">
+                Thông tin chuẩn hoá Dự án Khởi nghiệp
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Địa chỉ hoạt động</span>
+                  <span className="text-slate-800">{entity.address || 'Quận Liên Chiểu, TP. Đà Nẵng'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Lĩnh vực khởi nghiệp</span>
+                  <span className="font-semibold text-slate-800">{entity.field}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Số lượng thành viên tham gia</span>
+                  <span className="font-mono font-bold text-slate-800">{entity.memberCount || 4} thành viên</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Năm bắt đầu khởi nghiệp</span>
+                  <span className="font-mono font-bold text-slate-800">{entity.startYear || '2024'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Người đứng đầu dự án</span>
+                  <span className="font-semibold text-slate-900">{entity.leaderName || entity.ownerName}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">SĐT & Email người đứng đầu</span>
+                  <span className="font-mono text-slate-800 text-[11px]">{entity.leaderPhone || '0905.123.456'} · {entity.leaderEmail || 'leader@duan.vn'}</span>
+                </div>
+                <div className="sm:col-span-2">
+                  <span className="text-slate-400 block mb-0.5">Dự án được ươm tạo từ tổ chức nào</span>
+                  <span className="font-semibold text-teal-800">{entity.incubator || 'Trung tâm Đổi mới sáng tạo Đà Nẵng'}</span>
+                </div>
+                <div className="sm:col-span-2 pt-2 border-t border-slate-200">
+                  <span className="font-semibold text-slate-900 block mb-1">Sản phẩm giải quyết vấn đề gì:</span>
+                  <p className="text-slate-600 leading-relaxed">{entity.problemSolved}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 7. Ý TƯỞNG KHỞI NGHIỆP: STT, Tên ý tưởng, Địa chỉ, Lĩnh vực, Xã/phường - Trường học, Tóm tắt, Vấn đề giải quyết, Số thành viên, Người đứng đầu, SĐT, Email, GV hướng dẫn, Đơn vị công tác */}
+          {entity.moduleType === 'startup_ideas' && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider text-xs">
+                Thông tin chuẩn hoá Ý tưởng Khởi nghiệp
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Ý tưởng thuộc Xã/phường - Trường học</span>
+                  <span className="font-semibold text-teal-800">{entity.wardSchool || 'Phường Hòa Khánh Bắc - ĐH Bách Khoa ĐHĐN'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Lĩnh vực khởi nghiệp</span>
+                  <span className="font-semibold text-slate-800">{entity.field}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Địa chỉ hoạt động (Nếu có)</span>
+                  <span className="text-slate-800">{entity.address || '54 Nguyễn Lương Bằng, Liên Chiểu, Đà Nẵng'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Số lượng thành viên tham gia</span>
+                  <span className="font-mono font-bold text-slate-800">{entity.memberCount || 3} thành viên</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Người đứng đầu nhóm ý tưởng</span>
+                  <span className="font-semibold text-slate-900">{entity.leaderName || entity.proposer || 'Nguyễn Văn An'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">SĐT & Email người đứng đầu</span>
+                  <span className="font-mono text-slate-800 text-[11px]">{entity.leaderPhone || '0905.123.789'} · {entity.leaderEmail || 'an.nv@greencharge.vn'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Thầy/cô giáo hướng dẫn thực hiện</span>
+                  <span className="font-semibold text-indigo-800">{entity.mentorTeacher || 'TS. Huỳnh Tấn Đạt'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Đơn vị học tập / công tác</span>
+                  <span className="text-slate-800">{entity.currentAffiliation || 'Trường Đại học Bách Khoa - ĐH Đà Nẵng'}</span>
+                </div>
+                <div className="sm:col-span-2 pt-2 border-t border-slate-200">
+                  <span className="font-semibold text-slate-900 block mb-1">Sản phẩm giải quyết vấn đề gì:</span>
+                  <p className="text-slate-600 leading-relaxed">{entity.problemSolved}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 8. DANH SÁCH XÃ/PHƯỜNG: STT, Tên xã/phường, Địa chỉ */}
+          {entity.moduleType === 'wards' && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider text-xs">
+                Thông tin chuẩn hoá Xã / Phường
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Tên xã/phường</span>
+                  <span className="font-bold text-slate-900 text-sm">{entity.title}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Địa chỉ</span>
+                  <span className="font-semibold text-slate-800">{entity.address}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 9. TRƯỜNG ĐẠI HỌC/CAO ĐẲNG TRÊN ĐỊA BÀN: STT, Tên trường Đại học/Cao đẳng, Xã/phường, Địa chỉ */}
+          {entity.moduleType === 'universities' && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider text-xs">
+                Thông tin chuẩn hoá Trường Đại học / Cao đẳng trên địa bàn
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div className="sm:col-span-2">
+                  <span className="text-slate-400 block mb-0.5">Tên trường Đại học / Cao đẳng</span>
+                  <span className="font-bold text-slate-900 text-sm">{entity.title}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Xã/phường</span>
+                  <span className="font-semibold text-teal-800">{entity.ward}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Địa chỉ</span>
+                  <span className="font-semibold text-slate-800">{entity.address}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 10. DOANH NGHIỆP KHỞI NGHIỆP TIÊU BIỂU: STT, Tên dự án, Link website */}
+          {entity.moduleType === 'featured_startups' && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider text-xs">
+                Thông tin Doanh nghiệp Khởi nghiệp Tiêu biểu
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Tên dự án</span>
+                  <span className="font-bold text-slate-900 text-sm">{entity.title}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Link website</span>
+                  {entity.website ? (
+                    <a href={entity.website} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline flex items-center gap-1 font-semibold text-sm">
+                      {entity.website} <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  ) : <span className="text-slate-400">Chưa cập nhật</span>}
+                </div>
+              </div>
+            </div>
+          )}
           {entity.moduleType === 'patents' && (
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider text-xs">

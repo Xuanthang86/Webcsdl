@@ -31,23 +31,26 @@ interface ModuleCrudViewProps {
 }
 
 export const MODULE_NAMES: Record<ModuleType, string> = {
-  science_tasks: 'Nhiệm vụ, đề tài KH&CN',
-  initiatives: 'Sáng kiến có tác dụng, ảnh hưởng đối với thành phố',
-  patents: 'Sáng chế & Sở hữu trí tuệ',
-  experts: 'Chuyên gia & Nhà khoa học',
-  startups: 'Doanh nghiệp khởi nghiệp',
-  startup_projects: 'Dự án khởi nghiệp',
-  startup_ideas: 'Ý tưởng khởi nghiệp',
+  science_tasks: '1. Đề tài, nhiệm vụ KH&CN',
+  initiatives: '2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố',
+  experts: '3. Chuyên gia',
+  startups: '4. Doanh nghiệp khởi nghiệp sáng tạo',
+  support_organizations: '5. Tổ chức trung gian',
+  startup_projects: '6. Dự án khởi nghiệp',
+  startup_ideas: '7. Ý tưởng khởi nghiệp',
+  wards: '8. Danh sách xã/phường',
+  universities: '9. Trường Đại học/Cao đẳng trên địa bàn',
+  featured_startups: '10. Doanh nghiệp khởi nghiệp tiêu biểu',
+  organizations: 'Tổ chức KH&CN',
   investors: 'Nhà đầu tư',
   investment_funds: 'Quỹ đầu tư',
-  support_organizations: 'Tổ chức hỗ trợ, Vườn ươm',
-  programs: 'Chương trình hỗ trợ & Cơ hội hỗ trợ',
-  organizations: 'Tổ chức KH&CN, Viện trường',
   technologies: 'Công nghệ & Kết quả nghiên cứu',
-  collaboration_needs: 'Nhu cầu kết nối & đặt hàng',
+  programs: 'Chương trình hỗ trợ',
+  collaboration_needs: 'Nhu cầu kết nối & Hợp tác',
+  patents: 'Sáng chế & Sở hữu trí tuệ',
   publications: 'Bài báo & Công bố khoa học',
   lab_equipments: 'Thiết bị & Phòng thí nghiệm trọng điểm',
-  policies: 'Chính sách, Văn bản & Quy định KH&CN'
+  policies: 'Chính sách, Văn bản & Quy định'
 };
 
 export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
@@ -383,9 +386,91 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       >
                         {item.title}
                       </div>
-                      <div className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
-                        {item.description}
-                      </div>
+                      
+                      {/* Specialized Contextual Metadata per Module */}
+                      {moduleType === 'science_tasks' && (
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
+                          {item.managementLevel && <span className="bg-teal-50 text-teal-700 px-1.5 py-0.2 rounded border border-teal-200">{item.managementLevel}</span>}
+                          {item.principalInvestigator && <span>Chủ nhiệm: <strong className="text-slate-700">{item.principalInvestigator}</strong></span>}
+                          {item.executionTime && <span className="text-slate-400">· {item.executionTime}</span>}
+                        </div>
+                      )}
+
+                      {moduleType === 'initiatives' && (
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
+                          {item.recognitionYear && <span className="bg-amber-50 text-amber-800 font-semibold px-1.5 py-0.2 rounded border border-amber-200">Năm {item.recognitionYear}</span>}
+                          {item.authors && <span>Tác giả: <strong className="text-slate-700">{item.authors}</strong></span>}
+                          {item.ownerAddress && <span className="text-slate-400">· Đ/c: {item.ownerAddress}</span>}
+                        </div>
+                      )}
+
+                      {moduleType === 'experts' && (
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
+                          {item.birthYear && <span className="text-slate-600">Sinh: {item.birthYear}</span>}
+                          {item.email && <span className="text-teal-700">{item.email}</span>}
+                          {item.phone && <span className="text-slate-600">· ĐT: {item.phone}</span>}
+                          {item.specialty && <span className="bg-blue-50 text-blue-700 px-1.5 py-0.2 rounded border border-blue-200">{item.specialty}</span>}
+                        </div>
+                      )}
+
+                      {moduleType === 'startups' && (
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
+                          {item.address && <span>Đ/c: {item.address}</span>}
+                          {item.leaderName && <span>Đại diện: <strong className="text-slate-700">{item.leaderName}</strong> ({item.leaderPhone || item.leaderEmail})</span>}
+                          {item.foundedYear && <span className="text-slate-400">· Khởi nghiệp: {item.foundedYear}</span>}
+                          {item.website && <a href={item.website} target="_blank" rel="noreferrer" className="text-teal-600 hover:underline">Website</a>}
+                        </div>
+                      )}
+
+                      {moduleType === 'support_organizations' && item.address && (
+                        <div className="text-[10px] text-slate-500 mt-1">
+                          Địa chỉ: {item.address}
+                        </div>
+                      )}
+
+                      {moduleType === 'startup_projects' && (
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
+                          {item.address && <span>Đ/c: {item.address}</span>}
+                          {item.leaderName && <span>Trưởng dự án: <strong className="text-slate-700">{item.leaderName}</strong> ({item.leaderPhone})</span>}
+                          {item.incubator && <span className="bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded border border-emerald-200">Ươm tạo: {item.incubator}</span>}
+                          {item.startYear && <span className="text-slate-400">· Năm KN: {item.startYear}</span>}
+                        </div>
+                      )}
+
+                      {moduleType === 'startup_ideas' && (
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
+                          {item.wardSchool && <span className="bg-yellow-50 text-yellow-800 px-1.5 py-0.2 rounded border border-yellow-200">{item.wardSchool}</span>}
+                          {item.leaderName && <span>Trưởng nhóm: <strong className="text-slate-700">{item.leaderName}</strong> ({item.leaderPhone})</span>}
+                          {item.mentorTeacher && <span>GV hướng dẫn: {item.mentorTeacher}</span>}
+                        </div>
+                      )}
+
+                      {moduleType === 'wards' && item.address && (
+                        <div className="text-[10px] text-slate-500 mt-1">
+                          Địa chỉ: {item.address}
+                        </div>
+                      )}
+
+                      {moduleType === 'universities' && (
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
+                          {item.ward && <span className="bg-purple-50 text-purple-700 px-1.5 py-0.2 rounded border border-purple-200">{item.ward}</span>}
+                          {item.address && <span>Địa chỉ: {item.address}</span>}
+                        </div>
+                      )}
+
+                      {moduleType === 'featured_startups' && item.website && (
+                        <div className="text-[10px] mt-1">
+                          <a href={item.website} target="_blank" rel="noreferrer" className="text-teal-600 hover:underline">
+                            {item.website}
+                          </a>
+                        </div>
+                      )}
+
+                      {item.description && !['wards', 'universities', 'featured_startups'].includes(moduleType) && (
+                        <div className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
+                          {item.description}
+                        </div>
+                      )}
                     </td>
                     <td className="py-3 px-4 text-slate-600 truncate max-w-[160px]">
                       {item.field || item.primaryField || '—'}
@@ -603,18 +688,22 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                   2. Trường dữ liệu đặc thù phân hệ
                 </div>
 
+                {/* Module 1: ĐỀ TÀI, NHIỆM VỤ KH&CN */}
                 {moduleType === 'science_tasks' && (
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Chủ nhiệm nhiệm vụ</label>
-                        <input
-                          type="text"
-                          value={extraFields.principalInvestigator || ''}
-                          onChange={(e) => setExtra('principalInvestigator', e.target.value)}
-                          placeholder="Họ tên chủ nhiệm..."
-                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
-                        />
+                        <label className="block font-semibold text-slate-700 mb-1">Cấp quản lý</label>
+                        <select
+                          value={extraFields.managementLevel || 'Cấp Thành phố'}
+                          onChange={(e) => setExtra('managementLevel', e.target.value)}
+                          className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        >
+                          <option value="Cấp Quốc gia / Nhà nước">Cấp Quốc gia / Nhà nước</option>
+                          <option value="Cấp Bộ / Ngành">Cấp Bộ / Ngành</option>
+                          <option value="Cấp Thành phố">Cấp Thành phố</option>
+                          <option value="Cấp Cơ sở">Cấp Cơ sở</option>
+                        </select>
                       </div>
                       <div>
                         <label className="block font-semibold text-slate-700 mb-1">Cơ quan chủ trì</label>
@@ -622,28 +711,36 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                           type="text"
                           value={extraFields.leadOrganization || ''}
                           onChange={(e) => setExtra('leadOrganization', e.target.value)}
-                          placeholder="ĐH Đà Nẵng, Viện nghiên cứu..."
+                          placeholder="VD: Trường ĐH Bách Khoa - ĐH Đà Nẵng"
                           className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Loại nhiệm vụ</label>
-                        <select
-                          value={extraFields.taskType || 'Nghiên cứu ứng dụng'}
-                          onChange={(e) => setExtra('taskType', e.target.value)}
-                          className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
-                        >
-                          <option value="Nghiên cứu ứng dụng">Nghiên cứu ứng dụng</option>
-                          <option value="Nghiên cứu cơ bản">Nghiên cứu cơ bản</option>
-                          <option value="Phát triển công nghệ">Phát triển công nghệ</option>
-                          <option value="Chuyển giao công nghệ">Chuyển giao công nghệ</option>
-                          <option value="Sản xuất thử nghiệm">Sản xuất thử nghiệm</option>
-                        </select>
+                        <label className="block font-semibold text-slate-700 mb-1">Chủ nhiệm đề tài</label>
+                        <input
+                          type="text"
+                          value={extraFields.principalInvestigator || ''}
+                          onChange={(e) => setExtra('principalInvestigator', e.target.value)}
+                          placeholder="Họ và tên chủ nhiệm đề tài..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
                       </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Thời gian thực hiện</label>
+                        <input
+                          type="text"
+                          value={extraFields.executionTime || ''}
+                          onChange={(e) => setExtra('executionTime', e.target.value)}
+                          placeholder="VD: 2023 - 2025 hoặc 24 tháng"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
 
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block font-semibold text-slate-700 mb-1">Tiến độ thực hiện (%)</label>
                         <input
@@ -655,70 +752,54 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                           className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
                         />
                       </div>
-
                       <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Kết quả nghiệm thu</label>
-                        <select
-                          value={extraFields.acceptanceResult || 'Đạt'}
-                          onChange={(e) => setExtra('acceptanceResult', e.target.value)}
-                          className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
-                        >
-                          <option value="Xuất sắc">Xuất sắc</option>
-                          <option value="Đạt">Đạt</option>
-                          <option value="Đang triển khai">Đang triển khai</option>
-                          <option value="Chưa nghiệm thu">Chưa nghiệm thu</option>
-                        </select>
+                        <label className="block font-semibold text-slate-700 mb-1">Tổng kinh phí duyệt (VND)</label>
+                        <input
+                          type="number"
+                          value={formBudget}
+                          onChange={(e) => setFormBudget(e.target.value)}
+                          placeholder="VD: 850000000"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
+                        />
                       </div>
-                    </div>
-
-                    <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Tổng kinh phí duyệt (VND)</label>
-                      <input
-                        type="number"
-                        value={formBudget}
-                        onChange={(e) => setFormBudget(e.target.value)}
-                        placeholder="VD: 850000000"
-                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
-                      />
                     </div>
                   </div>
                 )}
 
+                {/* Module 2: SÁNG KIẾN CÓ TÁC DỤNG, ẢNH HƯỞNG ĐỐI VỚI THÀNH PHỐ */}
                 {moduleType === 'initiatives' && (
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Phạm vi công nhận</label>
-                        <select
-                          value={extraFields.recognizedScope || 'Cấp thành phố'}
-                          onChange={(e) => setExtra('recognizedScope', e.target.value)}
-                          className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
-                        >
-                          <option value="Cấp thành phố">Cấp thành phố</option>
-                          <option value="Cấp cơ sở">Cấp cơ sở</option>
-                          <option value="Toàn quốc">Toàn quốc</option>
-                        </select>
+                        <label className="block font-semibold text-slate-700 mb-1">Năm công nhận</label>
+                        <input
+                          type="number"
+                          value={extraFields.recognitionYear || ''}
+                          onChange={(e) => setExtra('recognitionYear', Number(e.target.value))}
+                          placeholder="VD: 2024"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
+                        />
                       </div>
                       <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Số Quyết định công nhận</label>
+                        <label className="block font-semibold text-slate-700 mb-1">Tác giả sáng kiến</label>
                         <input
                           type="text"
-                          value={extraFields.recognitionDecision || ''}
-                          onChange={(e) => setExtra('recognitionDecision', e.target.value)}
-                          placeholder="VD: 1245/QĐ-UBND"
+                          value={extraFields.authors || ''}
+                          onChange={(e) => setExtra('authors', e.target.value)}
+                          placeholder="Họ tên một hoặc các tác giả..."
                           className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Vấn đề thực tiễn giải quyết</label>
-                      <textarea
-                        rows={2}
-                        value={extraFields.problemSolved || ''}
-                        onChange={(e) => setExtra('problemSolved', e.target.value)}
-                        placeholder="Nêu vướng mắc thực tiễn sáng kiến đã xử lý..."
-                        className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      <label className="block font-semibold text-slate-700 mb-1">Địa chỉ chủ sở hữu</label>
+                      <input
+                        type="text"
+                        value={extraFields.ownerAddress || ''}
+                        onChange={(e) => setExtra('ownerAddress', e.target.value)}
+                        placeholder="Số nhà, đường, phường/xã, quận/huyện..."
+                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
                       />
                     </div>
 
@@ -735,6 +816,488 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                   </div>
                 )}
 
+                {/* Module 3: CHUYÊN GIA */}
+                {moduleType === 'experts' && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Năm sinh</label>
+                        <input
+                          type="number"
+                          value={extraFields.birthYear || ''}
+                          onChange={(e) => setExtra('birthYear', Number(e.target.value))}
+                          placeholder="VD: 1980"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Email liên hệ</label>
+                        <input
+                          type="email"
+                          value={extraFields.email || ''}
+                          onChange={(e) => setExtra('email', e.target.value)}
+                          placeholder="chuyengia@example.vn"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Điện thoại</label>
+                        <input
+                          type="text"
+                          value={extraFields.phone || ''}
+                          onChange={(e) => setExtra('phone', e.target.value)}
+                          placeholder="VD: 0905 123 456"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Chuyên ngành đào tạo / nghiên cứu</label>
+                        <input
+                          type="text"
+                          value={extraFields.specialty || ''}
+                          onChange={(e) => setExtra('specialty', e.target.value)}
+                          placeholder="Trí tuệ nhân tạo, Tự động hóa, Vi mạch..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Đơn vị công tác</label>
+                        <input
+                          type="text"
+                          value={extraFields.workplace || ''}
+                          onChange={(e) => setExtra('workplace', e.target.value)}
+                          placeholder="ĐH Bách Khoa, Viện Công nghệ..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Module 4: DOANH NGHIỆP KHỞI NGHIỆP SÁNG TẠO */}
+                {moduleType === 'startups' && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Địa chỉ hoạt động</label>
+                        <input
+                          type="text"
+                          value={extraFields.address || ''}
+                          onChange={(e) => setExtra('address', e.target.value)}
+                          placeholder="Địa chỉ trụ sở / văn phòng..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Website doanh nghiệp (nếu có)</label>
+                        <input
+                          type="url"
+                          value={extraFields.website || ''}
+                          onChange={(e) => setExtra('website', e.target.value)}
+                          placeholder="https://..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">File Logo doanh nghiệp (URL / Tên tệp)</label>
+                        <input
+                          type="text"
+                          value={extraFields.logoUrl || ''}
+                          onChange={(e) => setExtra('logoUrl', e.target.value)}
+                          placeholder="https://... hoặc /assets/logo.png"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Năm bắt đầu khởi nghiệp</label>
+                        <input
+                          type="number"
+                          value={extraFields.foundedYear || ''}
+                          onChange={(e) => setExtra('foundedYear', Number(e.target.value))}
+                          placeholder="VD: 2021"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Sản phẩm giải quyết vấn đề gì</label>
+                      <textarea
+                        rows={2}
+                        value={extraFields.problemSolved || ''}
+                        onChange={(e) => setExtra('problemSolved', e.target.value)}
+                        placeholder="Nêu rõ bài toán, nỗi đau thị trường hoặc vấn đề xã hội mà sản phẩm giải quyết..."
+                        className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Số lượng sáng lập viên</label>
+                        <input
+                          type="number"
+                          value={extraFields.founderCount || ''}
+                          onChange={(e) => setExtra('founderCount', Number(e.target.value))}
+                          placeholder="VD: 3"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Tổng số nhân sự ở thời điểm hiện tại</label>
+                        <input
+                          type="number"
+                          value={extraFields.currentStaffCount || ''}
+                          onChange={(e) => setExtra('currentStaffCount', Number(e.target.value))}
+                          placeholder="VD: 25"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Họ và tên người đứng đầu</label>
+                        <input
+                          type="text"
+                          value={extraFields.leaderName || ''}
+                          onChange={(e) => setExtra('leaderName', e.target.value)}
+                          placeholder="Họ tên CEO / Giám đốc..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">SĐT người đứng đầu</label>
+                        <input
+                          type="text"
+                          value={extraFields.leaderPhone || ''}
+                          onChange={(e) => setExtra('leaderPhone', e.target.value)}
+                          placeholder="09xx..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Email người đứng đầu</label>
+                        <input
+                          type="email"
+                          value={extraFields.leaderEmail || ''}
+                          onChange={(e) => setExtra('leaderEmail', e.target.value)}
+                          placeholder="ceo@startup.vn"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Module 5: TỔ CHỨC TRUNG GIAN */}
+                {moduleType === 'support_organizations' && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Địa chỉ hoạt động</label>
+                      <input
+                        type="text"
+                        value={extraFields.address || ''}
+                        onChange={(e) => setExtra('address', e.target.value)}
+                        placeholder="Số nhà, đường, quận/huyện, Đà Nẵng..."
+                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Loại hình hỗ trợ</label>
+                        <select
+                          value={extraFields.facilityType || 'Vườn ươm doanh nghiệp'}
+                          onChange={(e) => setExtra('facilityType', e.target.value)}
+                          className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        >
+                          <option value="Vườn ươm doanh nghiệp">Vườn ươm doanh nghiệp</option>
+                          <option value="Không gian làm việc chung">Không gian làm việc chung (Co-working)</option>
+                          <option value="Trung tâm Đổi mới sáng tạo">Trung tâm Đổi mới sáng tạo</option>
+                          <option value="Lab chế thử trọng điểm">Lab chế thử trọng điểm</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Năng lực hỗ trợ (DN/năm)</label>
+                        <input
+                          type="text"
+                          value={extraFields.capacity || ''}
+                          onChange={(e) => setExtra('capacity', e.target.value)}
+                          placeholder="VD: 50 doanh nghiệp / năm"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Module 6: DỰ ÁN KHỞI NGHIỆP */}
+                {moduleType === 'startup_projects' && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Địa chỉ hoạt động</label>
+                        <input
+                          type="text"
+                          value={extraFields.address || ''}
+                          onChange={(e) => setExtra('address', e.target.value)}
+                          placeholder="Địa chỉ hoạt động của dự án..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Năm bắt đầu khởi nghiệp</label>
+                        <input
+                          type="number"
+                          value={extraFields.startYear || ''}
+                          onChange={(e) => setExtra('startYear', Number(e.target.value))}
+                          placeholder="VD: 2023"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Sản phẩm giải quyết vấn đề gì</label>
+                      <textarea
+                        rows={2}
+                        value={extraFields.problemSolved || ''}
+                        onChange={(e) => setExtra('problemSolved', e.target.value)}
+                        placeholder="Nêu bài toán thực tiễn mà sản phẩm dự án giải quyết..."
+                        className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Số lượng thành viên tham gia</label>
+                        <input
+                          type="number"
+                          value={extraFields.memberCount || ''}
+                          onChange={(e) => setExtra('memberCount', Number(e.target.value))}
+                          placeholder="VD: 5"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Dự án được ươm tạo từ tổ chức nào</label>
+                        <input
+                          type="text"
+                          value={extraFields.incubator || ''}
+                          onChange={(e) => setExtra('incubator', e.target.value)}
+                          placeholder="Tên vườn ươm / Tự hình thành dự án"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Người đứng đầu dự án</label>
+                        <input
+                          type="text"
+                          value={extraFields.leaderName || ''}
+                          onChange={(e) => setExtra('leaderName', e.target.value)}
+                          placeholder="Họ tên trưởng dự án..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">SĐT người đứng đầu</label>
+                        <input
+                          type="text"
+                          value={extraFields.leaderPhone || ''}
+                          onChange={(e) => setExtra('leaderPhone', e.target.value)}
+                          placeholder="09xx..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Email người đứng đầu</label>
+                        <input
+                          type="email"
+                          value={extraFields.leaderEmail || ''}
+                          onChange={(e) => setExtra('leaderEmail', e.target.value)}
+                          placeholder="project@startup.vn"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Module 7: Ý TƯỞNG KHỞI NGHIỆP */}
+                {moduleType === 'startup_ideas' && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Địa chỉ hoạt động (Nếu có)</label>
+                        <input
+                          type="text"
+                          value={extraFields.address || ''}
+                          onChange={(e) => setExtra('address', e.target.value)}
+                          placeholder="Địa chỉ hoạt động nhóm..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Ý tưởng thuộc Xã/phường - Trường học</label>
+                        <input
+                          type="text"
+                          value={extraFields.wardSchool || ''}
+                          onChange={(e) => setExtra('wardSchool', e.target.value)}
+                          placeholder="VD: Phường Hòa Khánh Bắc - ĐH Bách Khoa Đà Nẵng"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Sản phẩm giải quyết vấn đề gì</label>
+                      <textarea
+                        rows={2}
+                        value={extraFields.problemSolved || ''}
+                        onChange={(e) => setExtra('problemSolved', e.target.value)}
+                        placeholder="Nêu vướng mắc thực tiễn hoặc nhu cầu mà ý tưởng nhắm tới..."
+                        className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Số lượng thành viên tham gia</label>
+                        <input
+                          type="number"
+                          value={extraFields.memberCount || ''}
+                          onChange={(e) => setExtra('memberCount', Number(e.target.value))}
+                          placeholder="VD: 4"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Thầy/cô giáo hướng dẫn</label>
+                        <input
+                          type="text"
+                          value={extraFields.mentorTeacher || ''}
+                          onChange={(e) => setExtra('mentorTeacher', e.target.value)}
+                          placeholder="Họ tên thầy/cô hướng dẫn (nếu có)..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Người đứng đầu nhóm</label>
+                        <input
+                          type="text"
+                          value={extraFields.leaderName || ''}
+                          onChange={(e) => setExtra('leaderName', e.target.value)}
+                          placeholder="Họ tên trưởng nhóm..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">SĐT người đứng đầu</label>
+                        <input
+                          type="text"
+                          value={extraFields.leaderPhone || ''}
+                          onChange={(e) => setExtra('leaderPhone', e.target.value)}
+                          placeholder="09xx..."
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Email người đứng đầu</label>
+                        <input
+                          type="email"
+                          value={extraFields.leaderEmail || ''}
+                          onChange={(e) => setExtra('leaderEmail', e.target.value)}
+                          placeholder="lead@startup.vn"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Nhóm đang học tập/công tác tại đơn vị nào? (Tên đơn vị & Địa chỉ)</label>
+                      <input
+                        type="text"
+                        value={extraFields.currentAffiliation || ''}
+                        onChange={(e) => setExtra('currentAffiliation', e.target.value)}
+                        placeholder="VD: Khoa CNTT, ĐH Sư phạm Kỹ thuật Đà Nẵng - 48 Cao Thắng, Hải Châu"
+                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Module 8: DANH SÁCH XÃ/PHƯỜNG */}
+                {moduleType === 'wards' && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Địa chỉ trụ sở / Khu vực</label>
+                      <input
+                        type="text"
+                        value={extraFields.address || ''}
+                        onChange={(e) => setExtra('address', e.target.value)}
+                        placeholder="VD: Quận Hải Châu, TP Đà Nẵng"
+                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Module 9: TRƯỜNG ĐẠI HỌC/CAO ĐẲNG TRÊN ĐỊA BÀN */}
+                {moduleType === 'universities' && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Xã / Phường trực thuộc</label>
+                        <input
+                          type="text"
+                          value={extraFields.ward || ''}
+                          onChange={(e) => setExtra('ward', e.target.value)}
+                          placeholder="VD: Phường Hòa Khánh Bắc, Liên Chiểu"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Địa chỉ chi tiết</label>
+                        <input
+                          type="text"
+                          value={extraFields.address || ''}
+                          onChange={(e) => setExtra('address', e.target.value)}
+                          placeholder="VD: 54 Nguyễn Lương Bằng, Liên Chiểu, TP Đà Nẵng"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Module 10: DOANH NGHIỆP KHỞI NGHIỆP TIÊU BIỂU */}
+                {moduleType === 'featured_startups' && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Link Website</label>
+                      <input
+                        type="url"
+                        value={extraFields.website || ''}
+                        onChange={(e) => setExtra('website', e.target.value)}
+                        placeholder="https://..."
+                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Phân hệ bổ sung: Sáng chế & SHTT */}
                 {moduleType === 'patents' && (
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -761,183 +1324,6 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                           <option value="Nhãn hiệu">Nhãn hiệu</option>
                         </select>
                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Ngày nộp đơn / cấp bằng</label>
-                        <input
-                          type="date"
-                          value={extraFields.filingDate || ''}
-                          onChange={(e) => setExtra('filingDate', e.target.value)}
-                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
-                        />
-                      </div>
-                      <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Lĩnh vực ứng dụng</label>
-                        <input
-                          type="text"
-                          value={extraFields.applicationArea || ''}
-                          onChange={(e) => setExtra('applicationArea', e.target.value)}
-                          placeholder="VD: Nông nghiệp công nghệ cao"
-                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {moduleType === 'experts' && (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Học hàm / Học vị</label>
-                        <input
-                          type="text"
-                          value={extraFields.academicTitle || ''}
-                          onChange={(e) => setExtra('academicTitle', e.target.value)}
-                          placeholder="GS.TS, PGS.TS, TS, ThS..."
-                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold"
-                        />
-                      </div>
-                      <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Cơ quan / Đơn vị công tác</label>
-                        <input
-                          type="text"
-                          value={extraFields.workplace || ''}
-                          onChange={(e) => setExtra('workplace', e.target.value)}
-                          placeholder="ĐH Bách Khoa - ĐH Đà Nẵng"
-                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Hướng nghiên cứu trọng điểm</label>
-                        <input
-                          type="text"
-                          value={extraFields.researchTopics || ''}
-                          onChange={(e) => setExtra('researchTopics', e.target.value)}
-                          placeholder="Trí tuệ nhân tạo, Vật liệu mới..."
-                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
-                        />
-                      </div>
-                      <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Số bài báo & công bố KH</label>
-                        <input
-                          type="number"
-                          value={extraFields.publicationsCount || 0}
-                          onChange={(e) => setExtra('publicationsCount', Number(e.target.value))}
-                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {(['startups', 'startup_projects', 'startup_ideas'].includes(moduleType)) && (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Đội ngũ sáng lập / Trưởng nhóm</label>
-                        <input
-                          type="text"
-                          value={extraFields.founders || ''}
-                          onChange={(e) => setExtra('founders', e.target.value)}
-                          placeholder="Họ tên các nhà sáng lập..."
-                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
-                        />
-                      </div>
-                      <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Giai đoạn phát triển</label>
-                        <select
-                          value={extraFields.fundingStage || 'Ươm tạo & Hạt giống'}
-                          onChange={(e) => setExtra('fundingStage', e.target.value)}
-                          className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
-                        >
-                          <option value="Ý tưởng sơ khai">Ý tưởng sơ khai</option>
-                          <option value="Tiền ươm tạo">Tiền ươm tạo</option>
-                          <option value="Ươm tạo & Hạt giống">Ươm tạo & Hạt giống (Seed)</option>
-                          <option value="Tăng trưởng">Tăng trưởng (Series A+)</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Mã số thuế / Giấy phép kinh doanh</label>
-                      <input
-                        type="text"
-                        value={extraFields.enterpriseTaxCode || ''}
-                        onChange={(e) => setExtra('enterpriseTaxCode', e.target.value)}
-                        placeholder="VD: 0401234567"
-                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900 font-mono"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {(['investors', 'investment_funds'].includes(moduleType)) && (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Quy mô vốn quỹ (VND)</label>
-                        <input
-                          type="text"
-                          value={extraFields.fundSize || ''}
-                          onChange={(e) => setExtra('fundSize', e.target.value)}
-                          placeholder="VD: 50.000.000.000 VND"
-                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900 font-mono"
-                        />
-                      </div>
-                      <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Hạn mức đầu tư / dự án</label>
-                        <input
-                          type="text"
-                          value={extraFields.ticketSize || ''}
-                          onChange={(e) => setExtra('ticketSize', e.target.value)}
-                          placeholder="VD: 500tr - 2 tỷ"
-                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
-                        />
-                      </div>
-                      <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Lĩnh vực trọng tâm</label>
-                        <input
-                          type="text"
-                          value={extraFields.targetSectors || ''}
-                          onChange={(e) => setExtra('targetSectors', e.target.value)}
-                          placeholder="AI, AgriTech, FinTech..."
-                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {moduleType === 'support_organizations' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Loại hình hỗ trợ</label>
-                      <select
-                        value={extraFields.facilityType || 'Vườn ươm doanh nghiệp'}
-                        onChange={(e) => setExtra('facilityType', e.target.value)}
-                        className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
-                      >
-                        <option value="Vườn ươm doanh nghiệp">Vườn ươm doanh nghiệp</option>
-                        <option value="Không gian làm việc chung">Không gian làm việc chung (Co-working)</option>
-                        <option value="Trung tâm Đổi mới sáng tạo">Trung tâm Đổi mới sáng tạo</option>
-                        <option value="Lab chế thử trọng điểm">Lab chế thử trọng điểm</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Năng lực hỗ trợ (DN/năm)</label>
-                      <input
-                        type="text"
-                        value={extraFields.capacity || ''}
-                        onChange={(e) => setExtra('capacity', e.target.value)}
-                        placeholder="VD: 50 doanh nghiệp / năm"
-                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
-                      />
                     </div>
                   </div>
                 )}

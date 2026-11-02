@@ -7,18 +7,21 @@ export const apiRouter = Router();
 
 apiRouter.use(authMiddleware);
 
-// Whitelisted 17 modules
+// Whitelisted modules
 const VALID_MODULES = new Set<string>([
   'science_tasks',
   'initiatives',
   'experts',
-  'organizations',
   'startups',
+  'support_organizations',
   'startup_projects',
   'startup_ideas',
+  'wards',
+  'universities',
+  'featured_startups',
+  'organizations',
   'investors',
   'investment_funds',
-  'support_organizations',
   'technologies',
   'programs',
   'collaboration_needs',
@@ -577,13 +580,51 @@ apiRouter.get('/export/:moduleType', (req: AuthenticatedRequest, res: Response):
     return;
   }
 
-  // Generate CSV columns
-  const keys = ['code', 'title', 'field', 'ownerName', 'status', 'verificationStatus', 'createdAt'];
-  const headers = ['Mã bản ghi', 'Tiêu đề / Tên', 'Lĩnh vực', 'Đơn vị / Cá nhân', 'Trạng thái', 'Xác minh', 'Ngày tạo'];
+  // Generate module-specific CSV columns matching official standards
+  let keys: string[] = ['code', 'title', 'field', 'ownerName', 'status', 'verificationStatus', 'createdAt'];
+  let headers: string[] = ['Mã bản ghi', 'Tiêu đề / Tên', 'Lĩnh vực', 'Đơn vị / Cá nhân', 'Trạng thái', 'Xác minh', 'Ngày tạo'];
 
-  const rows = records.map(r => {
+  if (moduleType === 'science_tasks') {
+    keys = ['stt', 'title', 'managementLevel', 'leadOrganization', 'principalInvestigator', 'executionTime', 'field'];
+    headers = ['STT', 'Tên đề tài', 'Cấp quản lý', 'Cơ quan chủ trì', 'Chủ nhiệm đề tài', 'Thời gian thực hiện', 'Lĩnh vực'];
+  } else if (moduleType === 'initiatives') {
+    keys = ['stt', 'recognitionYear', 'title', 'authors', 'ownerName', 'ownerAddress', 'field'];
+    headers = ['STT', 'Năm công nhận', 'Tên sáng kiến', 'Tác giả', 'Chủ sở hữu', 'Địa chỉ chủ sở hữu', 'Lĩnh vực'];
+  } else if (moduleType === 'experts') {
+    keys = ['stt', 'title', 'birthYear', 'email', 'phone', 'specialty'];
+    headers = ['STT', 'Tên Chuyên gia', 'Năm sinh', 'Email', 'Điện thoại', 'Chuyên ngành'];
+  } else if (moduleType === 'startups') {
+    keys = ['stt', 'title', 'address', 'website', 'logoUrl', 'field', 'description', 'problemSolved', 'founderCount', 'currentStaffCount', 'leaderName', 'leaderPhone', 'leaderEmail', 'foundedYear'];
+    headers = ['STT', 'Tên doanh nghiệp', 'Địa chỉ hoạt động', 'Website doanh nghiệp (nếu có)', 'File logo doanh nghiệp', 'Lĩnh vực kinh doanh', 'Tóm tắt về doanh nghiệp và sản phẩm', 'Sản phẩm giải quyết vấn đề gì', 'Số lượng sáng lập viên', 'Tổng số nhân sự ở thời điểm hiện tại', 'Họ và tên người đứng đầu doanh nghiệp', 'Số điện thoại người đứng đầu doanh nghiệp', 'Email người đứng đầu doanh nghiệp', 'Năm bắt đầu khởi nghiệp'];
+  } else if (moduleType === 'support_organizations') {
+    keys = ['stt', 'title', 'address'];
+    headers = ['STT', 'Tên tổ chức', 'Địa chỉ'];
+  } else if (moduleType === 'startup_projects') {
+    keys = ['stt', 'title', 'address', 'field', 'description', 'problemSolved', 'memberCount', 'leaderName', 'leaderPhone', 'leaderEmail', 'incubator', 'startYear'];
+    headers = ['STT', 'Tên dự án khởi nghiệp', 'Địa chỉ hoạt động', 'Lĩnh vực khởi nghiệp', 'Tóm tắt về dự án', 'Sản phẩm giải quyết vấn đề gì', 'Số lượng thành viên tham gia dự án', 'Họ và tên người đứng đầu dự án', 'Số điện thoại người đứng đầu dự án', 'Email người đứng đầu dự án', 'Dự án được ươm tạo từ tổ chức nào (Nếu có/Tự hình thành dự án)', 'Năm bắt đầu khởi nghiệp'];
+  } else if (moduleType === 'startup_ideas') {
+    keys = ['stt', 'title', 'address', 'field', 'wardSchool', 'description', 'problemSolved', 'memberCount', 'leaderName', 'leaderPhone', 'leaderEmail', 'mentorTeacher', 'currentAffiliation'];
+    headers = ['STT', 'Tên ý tưởng khởi nghiệp', 'Địa chỉ hoạt động (Nếu có)', 'Lĩnh vực khởi nghiệp', 'Ý tưởng thuộc Xã/phường - Trường học', 'Tóm tắt về ý tưởng (Khoảng 150-200 từ)', 'Sản phẩm giải quyết vấn đề gì', 'Số lượng thành viên tham gia ý tưởng khởi nghiệp', 'Người đứng đầu nhóm ý tưởng', 'Số điện thoại người đứng đầu', 'Email người đứng đầu', 'Tên thầy/cô giáo hướng dẫn thực hiện', 'Nhóm ý tưởng đang học tập/công tác tại đơn vị nào? (Tên đơn vị và Địa chỉ)'];
+  } else if (moduleType === 'wards') {
+    keys = ['stt', 'title', 'address'];
+    headers = ['STT', 'Tên xã/phường', 'Địa chỉ'];
+  } else if (moduleType === 'universities') {
+    keys = ['stt', 'title', 'ward', 'address'];
+    headers = ['STT', 'Tên trường Đại học/Cao đẳng', 'Xã/phường', 'Địa chỉ'];
+  } else if (moduleType === 'featured_startups') {
+    keys = ['stt', 'title', 'website'];
+    headers = ['STT', 'Tên dự án', 'Link website'];
+  }
+
+  const rows = records.map((r, idx) => {
     return keys.map(k => {
-      const val = r[k] ?? '';
+      let val: any;
+      if (k === 'stt') {
+        val = idx + 1;
+      } else {
+        val = r[k] ?? '';
+        if (Array.isArray(val)) val = val.join(', ');
+      }
       let str = String(val);
       // Neutralize CSV Formula Injection (DDE attack prevention for spreadsheet apps)
       if (/^[=\+\-@\t\r]/.test(str)) {

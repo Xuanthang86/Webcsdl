@@ -31,23 +31,26 @@ export type PublicityLevel =
   | 'internal';
 
 export type ModuleType =
-  | 'science_tasks'
-  | 'initiatives'
-  | 'experts'
-  | 'organizations'
-  | 'startups'
-  | 'startup_projects'
-  | 'startup_ideas'
-  | 'investors'
-  | 'investment_funds'
-  | 'support_organizations'
-  | 'technologies'
-  | 'programs'
-  | 'collaboration_needs'
-  | 'patents'
-  | 'publications'
-  | 'lab_equipments'
-  | 'policies';
+  | 'science_tasks'       // 1. Đề tài, nhiệm vụ KH&CN
+  | 'initiatives'         // 2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố
+  | 'experts'             // 3. Chuyên gia
+  | 'startups'            // 4. Doanh nghiệp khởi nghiệp sáng tạo
+  | 'support_organizations' // 5. Tổ chức trung gian
+  | 'startup_projects'    // 6. Dự án khởi nghiệp
+  | 'startup_ideas'       // 7. Ý tưởng khởi nghiệp
+  | 'wards'               // 8. Danh sách xã/phường
+  | 'universities'        // 9. Trường Đại học/Cao đẳng trên địa bàn
+  | 'featured_startups'   // 10. Doanh nghiệp khởi nghiệp tiêu biểu
+  | 'organizations'       // Tổ chức KH&CN
+  | 'investors'           // Nhà đầu tư
+  | 'investment_funds'    // Quỹ đầu tư
+  | 'technologies'        // Công nghệ & kết quả nghiên cứu
+  | 'programs'            // Chương trình, cuộc thi & cơ hội hỗ trợ
+  | 'collaboration_needs' // Nhu cầu & đề xuất kết nối
+  | 'patents'             // Sáng chế & Sở hữu trí tuệ
+  | 'publications'        // Bài báo & Công bố khoa học
+  | 'lab_equipments'      // Thiết bị & Phòng thí nghiệm
+  | 'policies';           // Chính sách, Văn bản & Quy định
 
 export interface BaseEntity {
   id: string;
@@ -192,6 +195,9 @@ export interface AggregatedStats {
   totalPublications?: number;
   totalLabEquipments?: number;
   totalPolicies?: number;
+  totalWards?: number;
+  totalUniversities?: number;
+  totalFeaturedStartups?: number;
   totalRelationships: number;
   pendingApprovalsCount: number;
   fieldBreakdown: Record<string, number>;

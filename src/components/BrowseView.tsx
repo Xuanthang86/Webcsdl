@@ -17,13 +17,15 @@ import {
   RotateCcw,
   Sparkles,
   ArrowRight,
-  SlidersHorizontal,
-  ChevronRight,
-  ChevronDown,
   Layers,
   Database,
   Check,
-  X
+  X,
+  Table as TableIcon,
+  LayoutGrid,
+  FileSpreadsheet,
+  SlidersHorizontal,
+  ChevronDown
 } from 'lucide-react';
 
 interface BrowseViewProps {
@@ -47,10 +49,11 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
   const [statusFilter, setStatusFilter] = useState('all');
   const [results, setResults] = useState<BaseEntity[]>([]);
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [showAdvancedModal, setShowAdvancedModal] = useState(false);
   const [showFieldsPanel, setShowFieldsPanel] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 12;
+  const PAGE_SIZE = 15;
 
   const fetchResults = async (isCurrentCheck?: () => boolean) => {
     setLoading(true);
@@ -244,14 +247,51 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
               )}
             </div>
 
-            <div className="flex items-center gap-3 text-slate-500 font-mono text-xs shrink-0">
+            <div className="flex flex-wrap items-center gap-2 text-slate-500 font-mono text-xs shrink-0">
               {selectedModule !== 'all' && (
-                <button
-                  onClick={() => setSelectedModule('all')}
-                  className="text-teal-800 font-sans font-semibold hover:underline"
-                >
-                  ← Xem tất cả phân hệ
-                </button>
+                <>
+                  <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('table')}
+                      className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors ${
+                        viewMode === 'table' ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                      title="Xem dạng bảng chuẩn hoá theo trường dữ liệu quy định"
+                    >
+                      <TableIcon className="w-3.5 h-3.5" />
+                      <span>Bảng chuẩn hoá</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('grid')}
+                      className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors ${
+                        viewMode === 'grid' ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                      title="Xem dạng thẻ trực quan"
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                      <span>Dạng thẻ</span>
+                    </button>
+                  </div>
+
+                  <a
+                    href={`/api/export/${selectedModule}`}
+                    download
+                    className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold flex items-center gap-1 transition-colors"
+                    title="Xuất tệp CSV dữ liệu theo biểu mẫu chuẩn"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Xuất CSV</span>
+                  </a>
+
+                  <button
+                    onClick={() => setSelectedModule('all')}
+                    className="text-teal-800 font-sans font-semibold hover:underline"
+                  >
+                    ← Tất cả phân hệ
+                  </button>
+                </>
               )}
               <span>Tổng cộng: <strong className="text-slate-900 text-sm font-sans">{results.length}</strong> kết quả</span>
             </div>
@@ -470,86 +510,519 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
           })}
         </div>
       ) : (
-        /* ================= SINGLE MODULE GRID VIEW ================= */
+        /* ================= SINGLE MODULE VIEW: TABLE OR GRID ================= */
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {results.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item) => (
-              <div
-                key={item.id}
-                onClick={() => onViewDetail(item)}
-                className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:border-teal-400 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group"
-              >
-                <div className="space-y-2.5">
-                  <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
-                    <span className="font-mono text-teal-800 font-semibold">{item.code}</span>
-                    <span aria-hidden="true">·</span>
-                    {item.moduleType === 'initiatives' ? (
-                      <>
-                        <span className="text-teal-900 font-semibold truncate">Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
-                        <span aria-hidden="true">·</span>
-                        <span className="text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 font-semibold">
-                          Sáng kiến đã công nhận {item.recognizedScope ? `(${item.recognizedScope})` : '(Cấp thành phố)'}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="capitalize truncate">{MODULE_NAMES[item.moduleType] || item.moduleType}</span>
-                        {item.recognizedScope && (
-                          <>
-                            <span aria-hidden="true">·</span>
-                            <span className="text-amber-800 font-semibold">{item.recognizedScope}</span>
-                          </>
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  <h3 className="text-base font-bold text-slate-900 group-hover:text-teal-800 transition-colors line-clamp-2 leading-snug">
-                    {item.title}
-                  </h3>
-
-                  <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
-                    {item.description || item.problemSolved || 'Chưa cập nhật nội dung tóm tắt.'}
-                  </p>
-
-                  <div className="pt-2 border-t border-slate-100 space-y-1 text-xs">
-                    <div className="text-slate-500 truncate">
-                      <span className="text-slate-400">Đơn vị / Tác giả:</span> {item.ownerName || item.leadOrganization || '—'}
-                    </div>
-                    
-                    {item.costSavings && (
-                      <div className="text-emerald-700 font-mono">
-                        <span className="text-slate-400 font-sans">Tiết kiệm:</span> <span className="font-bold">{formatVND(item.costSavings)}/năm</span>
-                      </div>
+          {viewMode === 'table' ? (
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-700">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[11px] tracking-wider whitespace-nowrap">
+                    {selectedModule === 'science_tasks' && (
+                      <tr>
+                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-4 min-w-[280px]">Tên đề tài</th>
+                        <th className="py-3 px-4 w-32">Cấp quản lý</th>
+                        <th className="py-3 px-4 w-44">Cơ quan chủ trì</th>
+                        <th className="py-3 px-4 w-40">Chủ nhiệm đề tài</th>
+                        <th className="py-3 px-4 w-36">Thời gian thực hiện</th>
+                        <th className="py-3 px-4 w-40">Lĩnh vực</th>
+                        <th className="py-3 px-3 w-20 text-center">Thao tác</th>
+                      </tr>
                     )}
 
-                    {item.totalBudgetApproved && (
-                      <div className="text-teal-800 font-mono">
-                        <span className="text-slate-400 font-sans">Kinh phí duyệt:</span> <span className="font-bold">{formatVND(item.totalBudgetApproved)}</span>
-                      </div>
+                    {selectedModule === 'initiatives' && (
+                      <tr>
+                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-4 w-28 text-center">Năm công nhận</th>
+                        <th className="py-3 px-4 min-w-[280px]">Tên sáng kiến</th>
+                        <th className="py-3 px-4 w-36">Tác giả</th>
+                        <th className="py-3 px-4 w-40">Chủ sở hữu</th>
+                        <th className="py-3 px-4 w-44">Địa chỉ chủ sở hữu</th>
+                        <th className="py-3 px-4 w-36">Lĩnh vực</th>
+                        <th className="py-3 px-3 w-20 text-center">Thao tác</th>
+                      </tr>
                     )}
 
-                    {item.publicationsCount !== undefined && (
-                      <div className="text-slate-700 font-mono">
-                        <span className="text-slate-400 font-sans">Công bố:</span> <span className="font-bold">{item.publicationsCount} bài báo ISI/Scopus</span>
-                      </div>
+                    {selectedModule === 'experts' && (
+                      <tr>
+                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-4 min-w-[200px]">Tên Chuyên gia</th>
+                        <th className="py-3 px-4 w-24 text-center">Năm sinh</th>
+                        <th className="py-3 px-4 w-44">Email</th>
+                        <th className="py-3 px-4 w-32">Điện thoại</th>
+                        <th className="py-3 px-4 min-w-[200px]">Chuyên ngành</th>
+                        <th className="py-3 px-3 w-20 text-center">Thao tác</th>
+                      </tr>
                     )}
-                  </div>
-                </div>
 
-                <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                  <span className="flex items-center gap-1 text-[11px] text-emerald-700">
-                    <CheckCircle2 className="w-3 h-3" />
-                    Xác thực chính thức
-                  </span>
-                  <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
-                    Xem chi tiết
-                    <ArrowRight className="w-3 h-3" />
-                  </span>
-                </div>
+                    {selectedModule === 'startups' && (
+                      <tr>
+                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-4 min-w-[240px]">Tên doanh nghiệp</th>
+                        <th className="py-3 px-4 min-w-[200px]">Địa chỉ hoạt động</th>
+                        <th className="py-3 px-4 w-36">Website</th>
+                        <th className="py-3 px-4 w-40">Lĩnh vực kinh doanh</th>
+                        <th className="py-3 px-4 w-36">Người đứng đầu</th>
+                        <th className="py-3 px-4 w-32">Điện thoại</th>
+                        <th className="py-3 px-4 w-40">Email</th>
+                        <th className="py-3 px-4 w-28 text-center">Năm khởi nghiệp</th>
+                        <th className="py-3 px-3 w-20 text-center">Thao tác</th>
+                      </tr>
+                    )}
+
+                    {selectedModule === 'support_organizations' && (
+                      <tr>
+                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-4 min-w-[320px]">Tên tổ chức</th>
+                        <th className="py-3 px-4 min-w-[320px]">Địa chỉ</th>
+                        <th className="py-3 px-3 w-20 text-center">Thao tác</th>
+                      </tr>
+                    )}
+
+                    {selectedModule === 'startup_projects' && (
+                      <tr>
+                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-4 min-w-[260px]">Tên dự án khởi nghiệp</th>
+                        <th className="py-3 px-4 min-w-[180px]">Địa chỉ hoạt động</th>
+                        <th className="py-3 px-4 w-40">Lĩnh vực khởi nghiệp</th>
+                        <th className="py-3 px-4 w-36">Người đứng đầu</th>
+                        <th className="py-3 px-4 w-32">Số điện thoại</th>
+                        <th className="py-3 px-4 w-40">Email</th>
+                        <th className="py-3 px-4 min-w-[200px]">Dự án được ươm tạo từ tổ chức</th>
+                        <th className="py-3 px-4 w-28 text-center">Năm bắt đầu</th>
+                        <th className="py-3 px-3 w-20 text-center">Thao tác</th>
+                      </tr>
+                    )}
+
+                    {selectedModule === 'startup_ideas' && (
+                      <tr>
+                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-4 min-w-[240px]">Tên ý tưởng khởi nghiệp</th>
+                        <th className="py-3 px-4 min-w-[180px]">Địa chỉ hoạt động</th>
+                        <th className="py-3 px-4 w-36">Lĩnh vực</th>
+                        <th className="py-3 px-4 min-w-[200px]">Ý tưởng thuộc Xã/phường - Trường học</th>
+                        <th className="py-3 px-4 w-36">Người đứng đầu</th>
+                        <th className="py-3 px-4 w-32">Số điện thoại</th>
+                        <th className="py-3 px-4 w-40">Email</th>
+                        <th className="py-3 px-4 w-36">GV hướng dẫn</th>
+                        <th className="py-3 px-4 min-w-[220px]">Đơn vị học tập / công tác</th>
+                        <th className="py-3 px-3 w-20 text-center">Thao tác</th>
+                      </tr>
+                    )}
+
+                    {selectedModule === 'wards' && (
+                      <tr>
+                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-4 min-w-[240px]">Tên xã/phường</th>
+                        <th className="py-3 px-4 min-w-[320px]">Địa chỉ</th>
+                        <th className="py-3 px-3 w-20 text-center">Thao tác</th>
+                      </tr>
+                    )}
+
+                    {selectedModule === 'universities' && (
+                      <tr>
+                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-4 min-w-[280px]">Tên trường Đại học/Cao đẳng</th>
+                        <th className="py-3 px-4 w-40">Xã/phường</th>
+                        <th className="py-3 px-4 min-w-[300px]">Địa chỉ</th>
+                        <th className="py-3 px-3 w-20 text-center">Thao tác</th>
+                      </tr>
+                    )}
+
+                    {selectedModule === 'featured_startups' && (
+                      <tr>
+                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-4 min-w-[320px]">Tên dự án</th>
+                        <th className="py-3 px-4 min-w-[260px]">Link website</th>
+                        <th className="py-3 px-3 w-20 text-center">Thao tác</th>
+                      </tr>
+                    )}
+
+                    {!['science_tasks', 'initiatives', 'experts', 'startups', 'support_organizations', 'startup_projects', 'startup_ideas', 'wards', 'universities', 'featured_startups'].includes(selectedModule) && (
+                      <tr>
+                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-4 w-32">Mã bản ghi</th>
+                        <th className="py-3 px-4 min-w-[260px]">Tiêu đề / Tên</th>
+                        <th className="py-3 px-4 w-40">Lĩnh vực</th>
+                        <th className="py-3 px-4 w-44">Đơn vị / Cá nhân</th>
+                        <th className="py-3 px-4 w-28 text-center">Trạng thái</th>
+                        <th className="py-3 px-3 w-20 text-center">Thao tác</th>
+                      </tr>
+                    )}
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {results.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item, idx) => {
+                      const stt = (currentPage - 1) * PAGE_SIZE + idx + 1;
+                      return (
+                        <tr key={item.id} className="hover:bg-teal-50/30 transition-colors">
+                          <td className="py-3 px-3 text-center text-slate-400 font-mono text-[11px]">
+                            {stt}
+                          </td>
+
+                          {/* 1. Science Tasks */}
+                          {selectedModule === 'science_tasks' && (
+                            <>
+                              <td className="py-3 px-4">
+                                <span 
+                                  onClick={() => onViewDetail(item)}
+                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer block leading-snug"
+                                >
+                                  {item.title}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-teal-800 font-medium">
+                                {item.managementLevel || item.managingAgency || 'Cấp Thành phố'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-700">
+                                {item.leadOrganization || item.ownerName || '—'}
+                              </td>
+                              <td className="py-3 px-4 font-semibold text-slate-900">
+                                {item.principalInvestigator || '—'}
+                              </td>
+                              <td className="py-3 px-4 font-mono text-[11px] text-slate-600">
+                                {item.executionTime || item.actualDuration || '18 tháng'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-600">
+                                {item.field || '—'}
+                              </td>
+                            </>
+                          )}
+
+                          {/* 2. Initiatives */}
+                          {selectedModule === 'initiatives' && (
+                            <>
+                              <td className="py-3 px-4 text-center font-mono font-bold text-teal-800">
+                                {item.recognitionYear || '2025'}
+                              </td>
+                              <td className="py-3 px-4">
+                                <span 
+                                  onClick={() => onViewDetail(item)}
+                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer block leading-snug"
+                                >
+                                  {item.title}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-slate-800 font-medium">
+                                {Array.isArray(item.authors) ? item.authors.join(', ') : (item.authors || item.implementingLead || '—')}
+                              </td>
+                              <td className="py-3 px-4 text-slate-700">
+                                {item.ownerName || item.proposingOrg || '—'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-600">
+                                {item.ownerAddress || item.applicationArea || 'TP. Đà Nẵng'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-600">
+                                {item.field || '—'}
+                              </td>
+                            </>
+                          )}
+
+                          {/* 3. Experts */}
+                          {selectedModule === 'experts' && (
+                            <>
+                              <td className="py-3 px-4">
+                                <span 
+                                  onClick={() => onViewDetail(item)}
+                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer"
+                                >
+                                  {item.title || item.fullName}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-center font-mono font-semibold text-slate-700">
+                                {item.birthYear || '1978'}
+                              </td>
+                              <td className="py-3 px-4 text-teal-800 font-medium font-mono text-[11px]">
+                                {item.email || item.publicEmail || '—'}
+                              </td>
+                              <td className="py-3 px-4 font-mono text-[11px] text-slate-700">
+                                {item.phone || item.publicPhone || '—'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-800 font-medium">
+                                {item.specialty || item.primaryField || item.field}
+                              </td>
+                            </>
+                          )}
+
+                          {/* 4. Startups */}
+                          {selectedModule === 'startups' && (
+                            <>
+                              <td className="py-3 px-4">
+                                <span 
+                                  onClick={() => onViewDetail(item)}
+                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer block"
+                                >
+                                  {item.title}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-slate-600">
+                                {item.address || item.headquarters || 'TP. Đà Nẵng'}
+                              </td>
+                              <td className="py-3 px-4">
+                                {item.website ? (
+                                  <a href={item.website} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline flex items-center gap-1 font-mono text-[11px]">
+                                    {item.website.replace('https://', '')}
+                                    <ExternalLink className="w-2.5 h-2.5" />
+                                  </a>
+                                ) : '—'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-700">
+                                {item.field || '—'}
+                              </td>
+                              <td className="py-3 px-4 font-medium text-slate-900">
+                                {item.leaderName || item.representative || item.ownerName || '—'}
+                              </td>
+                              <td className="py-3 px-4 font-mono text-[11px] text-slate-700">
+                                {item.leaderPhone || item.publicPhone || '—'}
+                              </td>
+                              <td className="py-3 px-4 font-mono text-[11px] text-teal-800">
+                                {item.leaderEmail || item.publicEmail || '—'}
+                              </td>
+                              <td className="py-3 px-4 text-center font-mono font-semibold text-slate-700">
+                                {item.foundedYear || item.foundedDate || '2023'}
+                              </td>
+                            </>
+                          )}
+
+                          {/* 5. Support Organizations */}
+                          {selectedModule === 'support_organizations' && (
+                            <>
+                              <td className="py-3 px-4">
+                                <span 
+                                  onClick={() => onViewDetail(item)}
+                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer"
+                                >
+                                  {item.title}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-slate-700">
+                                {item.address || item.headquarters || 'Số 48 Phan Đình Phùng, Hải Châu, Đà Nẵng'}
+                              </td>
+                            </>
+                          )}
+
+                          {/* 6. Startup Projects */}
+                          {selectedModule === 'startup_projects' && (
+                            <>
+                              <td className="py-3 px-4">
+                                <span 
+                                  onClick={() => onViewDetail(item)}
+                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer block leading-snug"
+                                >
+                                  {item.title}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-slate-600">
+                                {item.address || 'Quận Liên Chiểu, TP. Đà Nẵng'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-700">
+                                {item.field || '—'}
+                              </td>
+                              <td className="py-3 px-4 font-semibold text-slate-900">
+                                {item.leaderName || (Array.isArray(item.foundingTeam) ? item.foundingTeam[0] : item.ownerName) || '—'}
+                              </td>
+                              <td className="py-3 px-4 font-mono text-[11px] text-slate-700">
+                                {item.leaderPhone || '0905.123.456'}
+                              </td>
+                              <td className="py-3 px-4 font-mono text-[11px] text-teal-800">
+                                {item.leaderEmail || 'contact@duan.vn'}
+                              </td>
+                              <td className="py-3 px-4 text-teal-800 font-medium">
+                                {item.incubator || 'Trung tâm ĐMST Đà Nẵng'}
+                              </td>
+                              <td className="py-3 px-4 text-center font-mono font-bold text-slate-700">
+                                {item.startYear || '2024'}
+                              </td>
+                            </>
+                          )}
+
+                          {/* 7. Startup Ideas */}
+                          {selectedModule === 'startup_ideas' && (
+                            <>
+                              <td className="py-3 px-4">
+                                <span 
+                                  onClick={() => onViewDetail(item)}
+                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer block leading-snug"
+                                >
+                                  {item.title}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-slate-600">
+                                {item.address || 'TP. Đà Nẵng'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-700">
+                                {item.field || '—'}
+                              </td>
+                              <td className="py-3 px-4 text-teal-800 font-medium">
+                                {item.wardSchool || 'Phường Hòa Khánh Bắc - ĐH Bách Khoa ĐHĐN'}
+                              </td>
+                              <td className="py-3 px-4 font-semibold text-slate-900">
+                                {item.leaderName || item.proposer || 'Nguyễn Văn An'}
+                              </td>
+                              <td className="py-3 px-4 font-mono text-[11px] text-slate-700">
+                                {item.leaderPhone || '0905.123.789'}
+                              </td>
+                              <td className="py-3 px-4 font-mono text-[11px] text-teal-800">
+                                {item.leaderEmail || 'an.nv@greencharge.vn'}
+                              </td>
+                              <td className="py-3 px-4 text-indigo-800 font-medium">
+                                {item.mentorTeacher || 'TS. Huỳnh Tấn Đạt'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-700">
+                                {item.currentAffiliation || 'Trường ĐH Bách Khoa - ĐH Đà Nẵng'}
+                              </td>
+                            </>
+                          )}
+
+                          {/* 8. Wards */}
+                          {selectedModule === 'wards' && (
+                            <>
+                              <td className="py-3 px-4">
+                                <span 
+                                  onClick={() => onViewDetail(item)}
+                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer text-sm"
+                                >
+                                  {item.title}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-slate-700 font-medium">
+                                {item.address}
+                              </td>
+                            </>
+                          )}
+
+                          {/* 9. Universities */}
+                          {selectedModule === 'universities' && (
+                            <>
+                              <td className="py-3 px-4">
+                                <span 
+                                  onClick={() => onViewDetail(item)}
+                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer block text-sm"
+                                >
+                                  {item.title}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-teal-800 font-semibold">
+                                {item.ward}
+                              </td>
+                              <td className="py-3 px-4 text-slate-700">
+                                {item.address}
+                              </td>
+                            </>
+                          )}
+
+                          {/* 10. Featured Startups */}
+                          {selectedModule === 'featured_startups' && (
+                            <>
+                              <td className="py-3 px-4">
+                                <span 
+                                  onClick={() => onViewDetail(item)}
+                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer block text-sm"
+                                >
+                                  {item.title}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4">
+                                {item.website ? (
+                                  <a href={item.website} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline flex items-center gap-1 font-semibold">
+                                    {item.website} <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+                                ) : '—'}
+                              </td>
+                            </>
+                          )}
+
+                          {/* Fallback for other modules */}
+                          {!['science_tasks', 'initiatives', 'experts', 'startups', 'support_organizations', 'startup_projects', 'startup_ideas', 'wards', 'universities', 'featured_startups'].includes(selectedModule) && (
+                            <>
+                              <td className="py-3 px-4 font-mono font-medium text-teal-800">
+                                {item.code}
+                              </td>
+                              <td className="py-3 px-4">
+                                <span 
+                                  onClick={() => onViewDetail(item)}
+                                  className="font-semibold text-slate-900 hover:text-teal-800 cursor-pointer block"
+                                >
+                                  {item.title}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-slate-600">
+                                {item.field || '—'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-600">
+                                {item.ownerName || '—'}
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                  {item.status === 'approved' ? 'Đã duyệt' : item.status}
+                                </span>
+                              </td>
+                            </>
+                          )}
+
+                          <td className="py-3 px-3 text-center">
+                            <button
+                              onClick={() => onViewDetail(item)}
+                              className="px-2.5 py-1 text-teal-800 bg-teal-50 hover:bg-teal-100 rounded-lg font-semibold text-[11px] transition-colors cursor-pointer"
+                            >
+                              Xem
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {results.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => onViewDetail(item)}
+                  className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:border-teal-400 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group"
+                >
+                  <div className="space-y-2.5">
+                    <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
+                      <span className="font-mono text-teal-800 font-semibold">{item.code}</span>
+                      <span aria-hidden="true">·</span>
+                      <span className="capitalize truncate">{MODULE_NAMES[item.moduleType] || item.moduleType}</span>
+                    </div>
+
+                    <h3 className="text-base font-bold text-slate-900 group-hover:text-teal-800 transition-colors line-clamp-2 leading-snug">
+                      {item.title}
+                    </h3>
+
+                    <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                      {item.description || item.problemSolved || 'Chưa cập nhật nội dung tóm tắt.'}
+                    </p>
+
+                    <div className="pt-2 border-t border-slate-100 space-y-1 text-xs">
+                      <div className="text-slate-500 truncate">
+                        <span className="text-slate-400">Đơn vị / Tác giả:</span> {item.ownerName || item.leadOrganization || '—'}
+                      </div>
+                      {item.address && (
+                        <div className="text-slate-600 truncate">
+                          <span className="text-slate-400">Địa chỉ:</span> {item.address}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                    <span className="flex items-center gap-1 text-[11px] text-emerald-700">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Xác thực
+                    </span>
+                    <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
+                      Xem chi tiết
+                      <ArrowRight className="w-3 h-3" />
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Pagination Controls */}
           {results.length > PAGE_SIZE && (

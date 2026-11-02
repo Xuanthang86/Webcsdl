@@ -11,7 +11,13 @@ import {
   FileText, 
   MessageSquarePlus, 
   ShieldCheck,
-  Building
+  Building,
+  Building2,
+  MapPin,
+  School,
+  Star,
+  Target,
+  GraduationCap
 } from 'lucide-react';
 
 interface HomeViewProps {
@@ -87,6 +93,66 @@ export const HomeView: React.FC<HomeViewProps> = ({
           onNavigateBrowse={onNavigateBrowse}
         />
       </div>
+
+      {/* Directory of 10 Standardized CSDL Modules */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-4 border-b border-slate-100">
+            <div>
+              <div className="text-[11px] font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-teal-600 animate-pulse" />
+                <span>Cơ cấu dữ liệu chuẩn hóa cấp thành phố</span>
+              </div>
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 mt-0.5">
+                10 Cơ Sở Dữ Liệu Cốt Lõi Về KH&CN, Đổi Mới Sáng Tạo Và Khởi Nghiệp
+              </h2>
+            </div>
+            <span className="text-xs text-slate-500 font-medium">
+              Tra cứu nhanh dạng bảng chuẩn hoặc thẻ hồ sơ
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {[
+              { id: 'science_tasks', num: '1', title: 'Đề tài, nhiệm vụ KH&CN', icon: FileText, color: 'text-teal-700 bg-teal-50 border-teal-200' },
+              { id: 'initiatives', num: '2', title: 'Sáng kiến thành phố', icon: Lightbulb, color: 'text-amber-700 bg-amber-50 border-amber-200' },
+              { id: 'experts', num: '3', title: 'Chuyên gia KH&CN', icon: GraduationCap, color: 'text-blue-700 bg-blue-50 border-blue-200' },
+              { id: 'startups', num: '4', title: 'Doanh nghiệp KNST', icon: Rocket, color: 'text-rose-700 bg-rose-50 border-rose-200' },
+              { id: 'support_organizations', num: '5', title: 'Tổ chức trung gian', icon: Building2, color: 'text-cyan-700 bg-cyan-50 border-cyan-200' },
+              { id: 'startup_projects', num: '6', title: 'Dự án khởi nghiệp', icon: Target, color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+              { id: 'startup_ideas', num: '7', title: 'Ý tưởng khởi nghiệp', icon: Lightbulb, color: 'text-yellow-700 bg-yellow-50 border-yellow-200' },
+              { id: 'wards', num: '8', title: 'Danh sách xã/phường', icon: MapPin, color: 'text-indigo-700 bg-indigo-50 border-indigo-200' },
+              { id: 'universities', num: '9', title: 'Trường ĐH / Cao đẳng', icon: School, color: 'text-violet-700 bg-violet-50 border-violet-200' },
+              { id: 'featured_startups', num: '10', title: 'DN khởi nghiệp tiêu biểu', icon: Star, color: 'text-amber-700 bg-amber-50 border-amber-200' }
+            ].map(item => {
+              const IconComp = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onNavigateBrowse(item.id)}
+                  className="flex flex-col p-3 rounded-xl border border-slate-200 hover:border-teal-500 hover:shadow-xs transition-all text-left bg-slate-50/50 hover:bg-white group cursor-pointer"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-mono font-bold text-slate-400 group-hover:text-teal-700">
+                      #{item.num}
+                    </span>
+                    <div className={`w-6 h-6 rounded-md flex items-center justify-center border ${item.color}`}>
+                      <IconComp className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                  <div className="font-semibold text-slate-900 group-hover:text-teal-800 text-xs line-clamp-2 leading-tight">
+                    {item.title}
+                  </div>
+                  <div className="mt-2 text-[10px] text-teal-700 font-medium flex items-center gap-0.5 group-hover:underline">
+                    <span>Tra cứu ngay</span>
+                    <ArrowRight className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
       {/* Section 1: Sáng kiến có tác dụng, ảnh hưởng đối với thành phố */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

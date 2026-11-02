@@ -33,7 +33,10 @@ import {
   initialPatents,
   initialPublications,
   initialLabEquipments,
-  initialPolicies
+  initialPolicies,
+  initialWards,
+  initialUniversities,
+  initialFeaturedStartups
 } from './seedData.ts';
 
 export interface DatabaseSchema {
@@ -56,6 +59,9 @@ export interface DatabaseSchema {
   publications: any[];
   lab_equipments: any[];
   policies: any[];
+  wards: any[];
+  universities: any[];
+  featured_startups: any[];
   relationships: EntityRelationship[];
   auditLogs: AuditLog[];
   connectionMessages: ConnectionMessage[];
@@ -94,6 +100,9 @@ class DatabaseManager {
         if (!parsed.publications) parsed.publications = initialPublications;
         if (!parsed.lab_equipments) parsed.lab_equipments = initialLabEquipments;
         if (!parsed.policies) parsed.policies = initialPolicies;
+        if (!parsed.wards) parsed.wards = initialWards;
+        if (!parsed.universities) parsed.universities = initialUniversities;
+        if (!parsed.featured_startups) parsed.featured_startups = initialFeaturedStartups;
         if (parsed.systemConfig) {
           parsed.systemConfig.portalName = 'Cổng dữ liệu Tổng hợp về khoa học, công nghệ & khởi nghiệp đổi mới sáng tạo thành phố Đà Nẵng';
           parsed.systemConfig.governingAgency = 'ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ';
@@ -132,6 +141,9 @@ class DatabaseManager {
       publications: initialPublications,
       lab_equipments: initialLabEquipments,
       policies: initialPolicies,
+      wards: initialWards,
+      universities: initialUniversities,
+      featured_startups: initialFeaturedStartups,
       relationships: initialRelationships,
       auditLogs: initialAuditLogs,
       connectionMessages: [
@@ -646,13 +658,16 @@ class DatabaseManager {
           'science_tasks',
           'initiatives',
           'experts',
-          'organizations',
           'startups',
+          'support_organizations',
           'startup_projects',
           'startup_ideas',
+          'wards',
+          'universities',
+          'featured_startups',
+          'organizations',
           'investors',
           'investment_funds',
-          'support_organizations',
           'technologies',
           'programs',
           'collaboration_needs',
@@ -860,6 +875,9 @@ class DatabaseManager {
       totalPublications: (this.data.publications || []).length,
       totalLabEquipments: (this.data.lab_equipments || []).length,
       totalPolicies: (this.data.policies || []).length,
+      totalWards: (this.data.wards || []).length,
+      totalUniversities: (this.data.universities || []).length,
+      totalFeaturedStartups: (this.data.featured_startups || []).length,
       totalRelationships: this.data.relationships.length,
       pendingApprovalsCount,
       fieldBreakdown: this.computeFieldBreakdown(),

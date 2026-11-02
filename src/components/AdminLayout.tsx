@@ -17,6 +17,11 @@ import {
   Upload, 
   ShieldCheck, 
   Settings, 
+  Building2,
+  MapPin,
+  School,
+  Star,
+  Target,
   FileCheck, 
   MessageSquare, 
   Menu, 
@@ -67,7 +72,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [activeModule, setActiveModule] = useState<ModuleType>('science_tasks');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [ecosystemDropdownOpen, setEcosystemDropdownOpen] = useState(true);
+  const [coreListOpen, setCoreListOpen] = useState(true);
   const [auxiliaryDropdownOpen, setAuxiliaryDropdownOpen] = useState(false);
   const [selectedEntityForRel, setSelectedEntityForRel] = useState<BaseEntity | null>(null);
 
@@ -88,6 +93,19 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     setActiveModule(mod);
     setActiveTab('import_export');
   };
+
+  const coreModulesList: { mod: ModuleType; label: string; icon: any; color: string }[] = [
+    { mod: 'science_tasks', label: '1. Đề tài, nhiệm vụ KH&CN', icon: FileText, color: 'text-teal-400' },
+    { mod: 'initiatives', label: '2. Sáng kiến thành phố', icon: Lightbulb, color: 'text-amber-400' },
+    { mod: 'experts', label: '3. Chuyên gia', icon: GraduationCap, color: 'text-blue-400' },
+    { mod: 'startups', label: '4. Doanh nghiệp KNST', icon: Rocket, color: 'text-rose-400' },
+    { mod: 'support_organizations', label: '5. Tổ chức trung gian', icon: Building2, color: 'text-cyan-400' },
+    { mod: 'startup_projects', label: '6. Dự án khởi nghiệp', icon: Target, color: 'text-emerald-400' },
+    { mod: 'startup_ideas', label: '7. Ý tưởng khởi nghiệp', icon: Lightbulb, color: 'text-yellow-400' },
+    { mod: 'wards', label: '8. Danh sách xã/phường', icon: MapPin, color: 'text-indigo-400' },
+    { mod: 'universities', label: '9. Trường ĐH/Cao đẳng', icon: School, color: 'text-violet-400' },
+    { mod: 'featured_startups', label: '10. DN khởi nghiệp tiêu biểu', icon: Star, color: 'text-amber-300' }
+  ];
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row">
@@ -158,121 +176,41 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <span>Tổng quan & Chỉ số</span>
             </button>
 
-            {/* Section: 5 NHÓM CƠ SỞ DỮ LIỆU CHUẨN HOÁ */}
+            {/* Section: 10 NHÓM CƠ SỞ DỮ LIỆU CỐT LÕI */}
             <div className="pt-3 space-y-1">
-              <div className="px-3 py-1.5 text-[10px] font-bold text-teal-400 uppercase tracking-wider">
-                5 Nhóm Dữ Liệu Chuẩn Hoá
+              <div className="px-3 py-1.5 text-[10px] font-bold text-teal-400 uppercase tracking-wider flex items-center justify-between">
+                <span>10 CSDL Chuẩn Hóa Cốt Lõi</span>
+                <span className="text-[9px] bg-teal-900/80 text-teal-300 px-1.5 py-0.2 rounded font-mono">10</span>
               </div>
 
-              {/* 1. Nhiệm vụ, Đề tài KH&CN */}
-              <button
-                onClick={() => handleSelectModule('science_tasks')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  activeTab === 'module_crud' && activeModule === 'science_tasks'
-                    ? 'bg-teal-800 text-white font-semibold'
-                    : 'hover:bg-slate-800 text-slate-300'
-                }`}
-              >
-                <div className="flex items-center gap-2.5 truncate">
-                  <FileText className="w-4 h-4 text-teal-400 shrink-0" />
-                  <span className="truncate">1. Nhiệm vụ, Đề tài KH&CN</span>
-                </div>
-              </button>
-
-              {/* 2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố */}
-              <button
-                onClick={() => handleSelectModule('initiatives')}
-                className={`w-full flex items-start justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left ${
-                  activeTab === 'module_crud' && activeModule === 'initiatives'
-                    ? 'bg-teal-800 text-white font-semibold'
-                    : 'hover:bg-slate-800 text-slate-300'
-                }`}
-              >
-                <div className="flex items-start gap-2.5 text-left">
-                  <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                  <span className="whitespace-normal leading-snug text-left">2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
-                </div>
-              </button>
-
-              {/* 3. Sáng chế & Sở hữu trí tuệ */}
-              <button
-                onClick={() => handleSelectModule('patents')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  activeTab === 'module_crud' && activeModule === 'patents'
-                    ? 'bg-teal-800 text-white font-semibold'
-                    : 'hover:bg-slate-800 text-slate-300'
-                }`}
-              >
-                <div className="flex items-center gap-2.5 truncate">
-                  <Award className="w-4 h-4 text-purple-400 shrink-0" />
-                  <span className="truncate">3. Sáng chế & Sở hữu trí tuệ</span>
-                </div>
-              </button>
-
-              {/* 4. Chuyên gia & Nhà khoa học */}
-              <button
-                onClick={() => handleSelectModule('experts')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  activeTab === 'module_crud' && activeModule === 'experts'
-                    ? 'bg-teal-800 text-white font-semibold'
-                    : 'hover:bg-slate-800 text-slate-300'
-                }`}
-              >
-                <div className="flex items-center gap-2.5 truncate">
-                  <GraduationCap className="w-4 h-4 text-blue-400 shrink-0" />
-                  <span className="truncate">4. Chuyên gia & Nhà khoa học</span>
-                </div>
-              </button>
-
-              {/* 5. Dữ liệu Hệ sinh thái KNĐMST */}
-              <div className="pt-1">
-                <button
-                  onClick={() => setEcosystemDropdownOpen(!ecosystemDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                >
-                  <div className="flex items-center gap-2.5 truncate">
-                    <Rocket className="w-4 h-4 text-rose-400 shrink-0" />
-                    <span className="truncate">5. Dữ liệu Hệ sinh thái</span>
-                  </div>
-                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${ecosystemDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {ecosystemDropdownOpen && (
-                  <div className="mt-0.5 ml-4 pl-2 border-l border-slate-800 space-y-0.5">
-                    {[
-                      { mod: 'startups' as ModuleType, label: 'Doanh nghiệp khởi nghiệp' },
-                      { mod: 'startup_projects' as ModuleType, label: 'Dự án khởi nghiệp' },
-                      { mod: 'startup_ideas' as ModuleType, label: 'Ý tưởng khởi nghiệp' },
-                      { mod: 'investors' as ModuleType, label: 'Nhà đầu tư' },
-                      { mod: 'investment_funds' as ModuleType, label: 'Quỹ đầu tư' },
-                      { mod: 'support_organizations' as ModuleType, label: 'Tổ chức hỗ trợ, Vườn ươm' },
-                      { mod: 'programs' as ModuleType, label: 'Chương trình hỗ trợ & Cơ hội hỗ trợ' }
-                    ].map(item => (
-                      <button
-                        key={item.mod}
-                        onClick={() => handleSelectModule(item.mod)}
-                        className={`w-full text-left px-2.5 py-1.5 rounded-md text-[11px] truncate transition-colors ${
-                          activeTab === 'module_crud' && activeModule === item.mod
-                            ? 'bg-teal-900/70 text-teal-200 font-semibold'
-                            : 'hover:bg-slate-800/80 text-slate-400 hover:text-slate-200'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {coreModulesList.map((item) => {
+                const IconComponent = item.icon;
+                const isActive = activeTab === 'module_crud' && activeModule === item.mod;
+                return (
+                  <button
+                    key={item.mod}
+                    onClick={() => handleSelectModule(item.mod)}
+                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors text-left ${
+                      isActive
+                        ? 'bg-teal-800 text-white font-semibold'
+                        : 'hover:bg-slate-800 text-slate-300'
+                    }`}
+                  >
+                    <IconComponent className={`w-3.5 h-3.5 ${item.color} shrink-0`} />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                );
+              })}
 
               {/* Phân hệ Bổ trợ & Tri thức */}
-              <div className="pt-1">
+              <div className="pt-2">
                 <button
                   onClick={() => setAuxiliaryDropdownOpen(!auxiliaryDropdownOpen)}
                   className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
                 >
                   <div className="flex items-center gap-2.5 truncate">
                     <Layers className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span className="truncate">Các Phân Hệ Bổ Trợ</span>
+                    <span className="truncate">Các Phân Hệ Bổ Sung</span>
                   </div>
                   <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${auxiliaryDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -280,10 +218,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 {auxiliaryDropdownOpen && (
                   <div className="mt-0.5 ml-4 pl-2 border-l border-slate-800 space-y-0.5">
                     {[
+                      { mod: 'patents' as ModuleType, label: 'Sáng chế & Sở hữu trí tuệ' },
+                      { mod: 'investors' as ModuleType, label: 'Nhà đầu tư' },
+                      { mod: 'investment_funds' as ModuleType, label: 'Quỹ đầu tư' },
                       { mod: 'organizations' as ModuleType, label: 'Tổ chức KH&CN, Viện trường' },
                       { mod: 'publications' as ModuleType, label: 'Bài báo & Công bố khoa học' },
-                      { mod: 'technologies' as ModuleType, label: 'Công nghệ & Kết quả nghiên cứu' },
-                      { mod: 'collaboration_needs' as ModuleType, label: 'Tra cứu nhu cầu kết nối & đặt hàng' },
+                      { mod: 'technologies' as ModuleType, label: 'Công nghệ & Chuyển giao' },
+                      { mod: 'collaboration_needs' as ModuleType, label: 'Nhu cầu kết nối & Đặt hàng' },
+                      { mod: 'programs' as ModuleType, label: 'Chương trình & Cơ hội hỗ trợ' },
                       { mod: 'policies' as ModuleType, label: 'Chính sách, Văn bản & Biểu mẫu' },
                       { mod: 'lab_equipments' as ModuleType, label: 'Phòng thí nghiệm & Thiết bị' }
                     ].map(item => (

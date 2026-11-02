@@ -36,23 +36,26 @@ export type PublicityLevel =
   | 'internal';           // Nội bộ cơ quan quản lý
 
 export type ModuleType =
-  | 'science_tasks'       // 1. Nhiệm vụ, đề tài KH&CN
-  | 'initiatives'         // 2. Sáng kiến có tác động thành phố
-  | 'experts'             // 3. Chuyên gia, nhà khoa học
-  | 'organizations'       // 4. Tổ chức KH&CN
-  | 'startups'            // 5. Doanh nghiệp khởi nghiệp ĐMST
+  | 'science_tasks'       // 1. Đề tài, nhiệm vụ KH&CN
+  | 'initiatives'         // 2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố
+  | 'experts'             // 3. Chuyên gia
+  | 'startups'            // 4. Doanh nghiệp khởi nghiệp sáng tạo
+  | 'support_organizations' // 5. Tổ chức trung gian
   | 'startup_projects'    // 6. Dự án khởi nghiệp
-  | 'startup_ideas'       // 7. Ý tưởng khởi nghiệp & ĐMST
-  | 'investors'           // 8. Nhà đầu tư
-  | 'investment_funds'    // 9. Quỹ đầu tư
-  | 'support_organizations' // 10. Tổ chức hỗ trợ hệ sinh thái
-  | 'technologies'        // 11. Công nghệ & kết quả nghiên cứu
-  | 'programs'            // 12. Chương trình, cuộc thi & cơ hội hỗ trợ
-  | 'collaboration_needs' // 13. Nhu cầu & đề xuất kết nối
-  | 'patents'             // 14.1 Sáng chế & Sở hữu trí tuệ
-  | 'publications'        // 14.2 Bài báo & Công bố khoa học
-  | 'lab_equipments'      // 14.3 Thiết bị & Phòng thí nghiệm
-  | 'policies';           // 14.4 Chính sách, Văn bản & Quy định
+  | 'startup_ideas'       // 7. Ý tưởng khởi nghiệp
+  | 'wards'               // 8. Danh sách xã/phường
+  | 'universities'        // 9. Trường Đại học/Cao đẳng trên địa bàn
+  | 'featured_startups'   // 10. Doanh nghiệp khởi nghiệp tiêu biểu
+  | 'organizations'       // Tổ chức KH&CN
+  | 'investors'           // Nhà đầu tư
+  | 'investment_funds'    // Quỹ đầu tư
+  | 'technologies'        // Công nghệ & kết quả nghiên cứu
+  | 'programs'            // Chương trình, cuộc thi & cơ hội hỗ trợ
+  | 'collaboration_needs' // Nhu cầu & đề xuất kết nối
+  | 'patents'             // Sáng chế & Sở hữu trí tuệ
+  | 'publications'        // Bài báo & Công bố khoa học
+  | 'lab_equipments'      // Thiết bị & Phòng thí nghiệm
+  | 'policies';           // Chính sách, Văn bản & Quy định
 
 export interface BaseEntity {
   id: string;
@@ -363,6 +366,25 @@ export interface CollaborationNeed extends BaseEntity {
   connectionRequestsCount: number;
 }
 
+// 8. Danh sách xã/phường: STT, Tên xã/phường, Địa chỉ
+export interface WardEntity extends BaseEntity {
+  moduleType: 'wards';
+  address: string;
+}
+
+// 9. Trường Đại học/Cao đẳng trên địa bàn: STT, Tên trường Đại học/Cao đẳng, Xã/phường, Địa chỉ
+export interface UniversityEntity extends BaseEntity {
+  moduleType: 'universities';
+  ward: string;
+  address: string;
+}
+
+// 10. Doanh nghiệp khởi nghiệp tiêu biểu: STT, Tên dự án, Link website
+export interface FeaturedStartupEntity extends BaseEntity {
+  moduleType: 'featured_startups';
+  website: string;
+}
+
 export type AnyEntity =
   | ScienceTask
   | Initiative
@@ -376,7 +398,10 @@ export type AnyEntity =
   | SupportOrganization
   | TechnologyEntity
   | ProgramEntity
-  | CollaborationNeed;
+  | CollaborationNeed
+  | WardEntity
+  | UniversityEntity
+  | FeaturedStartupEntity;
 
 // Entity Relationship
 export interface EntityRelationship {

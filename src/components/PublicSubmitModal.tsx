@@ -121,10 +121,13 @@ export const PublicSubmitModal: React.FC<PublicSubmitModalProps> = ({ onClose, o
                   onChange={(e) => setSelectedModule(e.target.value as ModuleType)}
                   className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-teal-700 focus:outline-none"
                 >
-                  <option value="initiatives">Sáng kiến có tác động thành phố (Đề xuất công nhận)</option>
-                  <option value="science_tasks">Đề xuất đặt hàng / Nhiệm vụ KH&CN cấp thành phố</option>
-                  <option value="startup_ideas">Ý tưởng khởi nghiệp & Đổi mới sáng tạo</option>
-                  <option value="collaboration_needs">Đăng nhu cầu kết nối chuyển giao công nghệ</option>
+                  <option value="initiatives">2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</option>
+                  <option value="science_tasks">1. Đề xuất đề tài, nhiệm vụ KH&CN</option>
+                  <option value="startups">4. Đăng ký thông tin Doanh nghiệp khởi nghiệp sáng tạo</option>
+                  <option value="startup_projects">6. Đăng ký Dự án khởi nghiệp đổi mới sáng tạo</option>
+                  <option value="startup_ideas">7. Đăng ký Ý tưởng khởi nghiệp (Sinh viên / Thanh niên)</option>
+                  <option value="experts">3. Chuyên gia KH&CN đăng ký mạng lưới chuyên gia</option>
+                  <option value="collaboration_needs">Nhu cầu đặt hàng & Kết nối công nghệ</option>
                 </select>
               </div>
 
