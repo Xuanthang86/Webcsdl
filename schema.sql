@@ -1,3 +1,7 @@
+-- Initial Cloudflare D1 schema for Webcsdl.
+-- Creates 20 business tables and 6 system tables; no sample/demo data.
+PRAGMA foreign_keys = ON;
+
 -- ============================================================================
 -- CỔNG DỮ LIỆU TỔNG HỢP KH&CN, ĐỔI MỚI SÁNG TẠO VÀ KHỞI NGHIỆP TP ĐÀ NẴNG
 -- Cloudflare D1 (SQLite Engine) Schema Definition
@@ -23,7 +27,7 @@ CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    salt TEXT NOT NULL,
+    password_salt TEXT NOT NULL,
     full_name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     role TEXT NOT NULL,
@@ -270,68 +274,237 @@ CREATE TABLE IF NOT EXISTS patents (
 );
 
 -- Bảng Mối quan hệ liên kết dữ liệu (Graph Connections)
-CREATE TABLE IF NOT EXISTS entity_relationships (
-    id TEXT PRIMARY KEY,
-    source_id TEXT NOT NULL,
-    source_type TEXT NOT NULL,
-    source_title TEXT,
-    target_id TEXT NOT NULL,
-    target_type TEXT NOT NULL,
-    target_title TEXT,
-    relationship_type TEXT NOT NULL,
-    description TEXT,
-    created_by TEXT,
+CREATE TABLE IF NOT EXISTS relationships (
+    id TEXT PRIMARY KEY, source_id TEXT NOT NULL, source_type TEXT NOT NULL,
+    target_id TEXT NOT NULL, target_type TEXT NOT NULL,
+    relation_type TEXT NOT NULL DEFAULT 'relates_to', notes TEXT,
     created_at TEXT DEFAULT (datetime('now'))
 );
-
-CREATE INDEX IF NOT EXISTS idx_rel_source ON entity_relationships(source_id, source_type);
-CREATE INDEX IF NOT EXISTS idx_rel_target ON entity_relationships(target_id, target_type);
+CREATE INDEX IF NOT EXISTS idx_rel_source ON relationships(source_id, source_type);
+CREATE INDEX IF NOT EXISTS idx_rel_target ON relationships(target_id, target_type);
 
 -- Bảng Nhật ký kiểm toán (Audit Logs)
 CREATE TABLE IF NOT EXISTS audit_logs (
-    id TEXT PRIMARY KEY,
-    user_id TEXT,
-    user_name TEXT,
-    user_role TEXT,
-    action TEXT NOT NULL,
-    module TEXT,
-    entity_id TEXT,
-    details TEXT,
-    ip_address TEXT,
-    created_at TEXT DEFAULT (datetime('now'))
+    id TEXT PRIMARY KEY, user_id TEXT, user_name TEXT, user_role TEXT,
+    action TEXT NOT NULL, target_module TEXT, target_id TEXT, details TEXT,
+    timestamp TEXT DEFAULT (datetime('now'))
 );
-
-CREATE INDEX IF NOT EXISTS idx_audit_module ON audit_logs(module);
-CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_audit_module ON audit_logs(target_module);
+CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(timestamp);
 
 -- Bảng Yêu cầu Kết nối & Hợp tác Công nghệ
 CREATE TABLE IF NOT EXISTS connection_messages (
-    id TEXT PRIMARY KEY,
-    target_entity_id TEXT NOT NULL,
-    target_entity_type TEXT NOT NULL,
-    target_entity_title TEXT NOT NULL,
-    sender_name TEXT NOT NULL,
-    sender_email TEXT NOT NULL,
-    sender_phone TEXT,
-    sender_org TEXT,
-    message TEXT NOT NULL,
-    proposed_capability TEXT,
-    status TEXT DEFAULT 'pending',
-    created_at TEXT DEFAULT (datetime('now'))
+    id TEXT PRIMARY KEY, need_id TEXT, sender_name TEXT NOT NULL,
+    sender_email TEXT NOT NULL, sender_phone TEXT, sender_org TEXT,
+    message TEXT NOT NULL, proposed_capability TEXT,
+    status TEXT DEFAULT 'pending', created_at TEXT DEFAULT (datetime('now'))
 );
 
 -- Bảng Quản lý Tệp Đính kèm & ImageKit Assets
 CREATE TABLE IF NOT EXISTS attachments (
-    id TEXT PRIMARY KEY,
-    entity_id TEXT,
-    module_type TEXT,
-    file_name TEXT NOT NULL,
-    file_type TEXT,
-    file_size INTEGER DEFAULT 0,
-    cdn_url TEXT NOT NULL,
-    thumbnail_url TEXT,
-    uploaded_by TEXT,
+    id TEXT PRIMARY KEY, entity_id TEXT, module_type TEXT,
+    file_name TEXT NOT NULL, file_size INTEGER DEFAULT 0, mime_type TEXT,
+    cdn_url TEXT NOT NULL, thumbnail_url TEXT, title TEXT, uploaded_by TEXT,
     created_at TEXT DEFAULT (datetime('now'))
 );
-
 CREATE INDEX IF NOT EXISTS idx_attachments_entity ON attachments(entity_id, module_type);
+
+
+-- Additional business modules missing from the legacy schema.
+CREATE TABLE IF NOT EXISTS organizations (
+ id TEXT PRIMARY KEY, stt INTEGER, code TEXT, title TEXT, name TEXT, description TEXT,
+ field TEXT, owner_name TEXT, source TEXT, status TEXT DEFAULT 'draft',
+ verification_status TEXT DEFAULT 'unverified', publicity_level TEXT DEFAULT 'public',
+ history TEXT, data_json TEXT DEFAULT '{}', created_by TEXT, updated_by TEXT,
+ created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_organizations_status ON organizations(status);
+CREATE TABLE IF NOT EXISTS investors (
+ id TEXT PRIMARY KEY, stt INTEGER, code TEXT, title TEXT, name TEXT, description TEXT,
+ field TEXT, owner_name TEXT, source TEXT, status TEXT DEFAULT 'draft',
+ verification_status TEXT DEFAULT 'unverified', publicity_level TEXT DEFAULT 'public',
+ history TEXT, data_json TEXT DEFAULT '{}', created_by TEXT, updated_by TEXT,
+ created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_investors_status ON investors(status);
+CREATE TABLE IF NOT EXISTS investment_funds (
+ id TEXT PRIMARY KEY, stt INTEGER, code TEXT, title TEXT, name TEXT, description TEXT,
+ field TEXT, owner_name TEXT, source TEXT, status TEXT DEFAULT 'draft',
+ verification_status TEXT DEFAULT 'unverified', publicity_level TEXT DEFAULT 'public',
+ history TEXT, data_json TEXT DEFAULT '{}', created_by TEXT, updated_by TEXT,
+ created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_investment_funds_status ON investment_funds(status);
+CREATE TABLE IF NOT EXISTS technologies (
+ id TEXT PRIMARY KEY, stt INTEGER, code TEXT, title TEXT, name TEXT, description TEXT,
+ field TEXT, owner_name TEXT, source TEXT, status TEXT DEFAULT 'draft',
+ verification_status TEXT DEFAULT 'unverified', publicity_level TEXT DEFAULT 'public',
+ history TEXT, data_json TEXT DEFAULT '{}', created_by TEXT, updated_by TEXT,
+ created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_technologies_status ON technologies(status);
+CREATE TABLE IF NOT EXISTS programs (
+ id TEXT PRIMARY KEY, stt INTEGER, code TEXT, title TEXT, name TEXT, description TEXT,
+ field TEXT, owner_name TEXT, source TEXT, status TEXT DEFAULT 'draft',
+ verification_status TEXT DEFAULT 'unverified', publicity_level TEXT DEFAULT 'public',
+ history TEXT, data_json TEXT DEFAULT '{}', created_by TEXT, updated_by TEXT,
+ created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_programs_status ON programs(status);
+CREATE TABLE IF NOT EXISTS collaboration_needs (
+ id TEXT PRIMARY KEY, stt INTEGER, code TEXT, title TEXT, name TEXT, description TEXT,
+ field TEXT, owner_name TEXT, source TEXT, status TEXT DEFAULT 'draft',
+ verification_status TEXT DEFAULT 'unverified', publicity_level TEXT DEFAULT 'public',
+ history TEXT, data_json TEXT DEFAULT '{}', created_by TEXT, updated_by TEXT,
+ created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_collaboration_needs_status ON collaboration_needs(status);
+CREATE TABLE IF NOT EXISTS publications (
+ id TEXT PRIMARY KEY, stt INTEGER, code TEXT, title TEXT, name TEXT, description TEXT,
+ field TEXT, owner_name TEXT, source TEXT, status TEXT DEFAULT 'draft',
+ verification_status TEXT DEFAULT 'unverified', publicity_level TEXT DEFAULT 'public',
+ history TEXT, data_json TEXT DEFAULT '{}', created_by TEXT, updated_by TEXT,
+ created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_publications_status ON publications(status);
+CREATE TABLE IF NOT EXISTS lab_equipments (
+ id TEXT PRIMARY KEY, stt INTEGER, code TEXT, title TEXT, name TEXT, description TEXT,
+ field TEXT, owner_name TEXT, source TEXT, status TEXT DEFAULT 'draft',
+ verification_status TEXT DEFAULT 'unverified', publicity_level TEXT DEFAULT 'public',
+ history TEXT, data_json TEXT DEFAULT '{}', created_by TEXT, updated_by TEXT,
+ created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_lab_equipments_status ON lab_equipments(status);
+CREATE TABLE IF NOT EXISTS policies (
+ id TEXT PRIMARY KEY, stt INTEGER, code TEXT, title TEXT, name TEXT, description TEXT,
+ field TEXT, owner_name TEXT, source TEXT, status TEXT DEFAULT 'draft',
+ verification_status TEXT DEFAULT 'unverified', publicity_level TEXT DEFAULT 'public',
+ history TEXT, data_json TEXT DEFAULT '{}', created_by TEXT, updated_by TEXT,
+ created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_policies_status ON policies(status);
+
+-- Common API fields and storage for configurable/custom form fields.
+ALTER TABLE science_tasks ADD COLUMN description TEXT;
+ALTER TABLE science_tasks ADD COLUMN owner_name TEXT;
+ALTER TABLE science_tasks ADD COLUMN source TEXT;
+ALTER TABLE science_tasks ADD COLUMN verification_status TEXT DEFAULT 'unverified';
+ALTER TABLE science_tasks ADD COLUMN publicity_level TEXT DEFAULT 'public';
+ALTER TABLE science_tasks ADD COLUMN history TEXT;
+ALTER TABLE science_tasks ADD COLUMN acceptance_result TEXT;
+ALTER TABLE science_tasks ADD COLUMN total_budget_approved REAL DEFAULT 0;
+ALTER TABLE science_tasks ADD COLUMN data_json TEXT DEFAULT '{}';
+ALTER TABLE science_tasks ADD COLUMN updated_by TEXT;
+ALTER TABLE initiatives ADD COLUMN description TEXT;
+ALTER TABLE initiatives ADD COLUMN owner_name TEXT;
+ALTER TABLE initiatives ADD COLUMN source TEXT;
+ALTER TABLE initiatives ADD COLUMN verification_status TEXT DEFAULT 'unverified';
+ALTER TABLE initiatives ADD COLUMN publicity_level TEXT DEFAULT 'public';
+ALTER TABLE initiatives ADD COLUMN history TEXT;
+ALTER TABLE initiatives ADD COLUMN cost_savings REAL DEFAULT 0;
+ALTER TABLE initiatives ADD COLUMN data_json TEXT DEFAULT '{}';
+ALTER TABLE initiatives ADD COLUMN updated_by TEXT;
+ALTER TABLE experts ADD COLUMN code TEXT;
+ALTER TABLE experts ADD COLUMN title TEXT;
+ALTER TABLE experts ADD COLUMN description TEXT;
+ALTER TABLE experts ADD COLUMN owner_name TEXT;
+ALTER TABLE experts ADD COLUMN source TEXT;
+ALTER TABLE experts ADD COLUMN verification_status TEXT DEFAULT 'unverified';
+ALTER TABLE experts ADD COLUMN publicity_level TEXT DEFAULT 'public';
+ALTER TABLE experts ADD COLUMN history TEXT;
+ALTER TABLE experts ADD COLUMN data_json TEXT DEFAULT '{}';
+ALTER TABLE experts ADD COLUMN updated_by TEXT;
+ALTER TABLE startups ADD COLUMN code TEXT;
+ALTER TABLE startups ADD COLUMN title TEXT;
+ALTER TABLE startups ADD COLUMN description TEXT;
+ALTER TABLE startups ADD COLUMN owner_name TEXT;
+ALTER TABLE startups ADD COLUMN source TEXT;
+ALTER TABLE startups ADD COLUMN verification_status TEXT DEFAULT 'unverified';
+ALTER TABLE startups ADD COLUMN publicity_level TEXT DEFAULT 'public';
+ALTER TABLE startups ADD COLUMN history TEXT;
+ALTER TABLE startups ADD COLUMN data_json TEXT DEFAULT '{}';
+ALTER TABLE startups ADD COLUMN updated_by TEXT;
+ALTER TABLE support_organizations ADD COLUMN code TEXT;
+ALTER TABLE support_organizations ADD COLUMN title TEXT;
+ALTER TABLE support_organizations ADD COLUMN description TEXT;
+ALTER TABLE support_organizations ADD COLUMN owner_name TEXT;
+ALTER TABLE support_organizations ADD COLUMN source TEXT;
+ALTER TABLE support_organizations ADD COLUMN verification_status TEXT DEFAULT 'unverified';
+ALTER TABLE support_organizations ADD COLUMN publicity_level TEXT DEFAULT 'public';
+ALTER TABLE support_organizations ADD COLUMN history TEXT;
+ALTER TABLE support_organizations ADD COLUMN data_json TEXT DEFAULT '{}';
+ALTER TABLE support_organizations ADD COLUMN updated_by TEXT;
+ALTER TABLE startup_projects ADD COLUMN code TEXT;
+ALTER TABLE startup_projects ADD COLUMN description TEXT;
+ALTER TABLE startup_projects ADD COLUMN owner_name TEXT;
+ALTER TABLE startup_projects ADD COLUMN source TEXT;
+ALTER TABLE startup_projects ADD COLUMN verification_status TEXT DEFAULT 'unverified';
+ALTER TABLE startup_projects ADD COLUMN publicity_level TEXT DEFAULT 'public';
+ALTER TABLE startup_projects ADD COLUMN history TEXT;
+ALTER TABLE startup_projects ADD COLUMN data_json TEXT DEFAULT '{}';
+ALTER TABLE startup_projects ADD COLUMN updated_by TEXT;
+ALTER TABLE startup_ideas ADD COLUMN code TEXT;
+ALTER TABLE startup_ideas ADD COLUMN description TEXT;
+ALTER TABLE startup_ideas ADD COLUMN owner_name TEXT;
+ALTER TABLE startup_ideas ADD COLUMN source TEXT;
+ALTER TABLE startup_ideas ADD COLUMN verification_status TEXT DEFAULT 'unverified';
+ALTER TABLE startup_ideas ADD COLUMN publicity_level TEXT DEFAULT 'public';
+ALTER TABLE startup_ideas ADD COLUMN history TEXT;
+ALTER TABLE startup_ideas ADD COLUMN data_json TEXT DEFAULT '{}';
+ALTER TABLE startup_ideas ADD COLUMN updated_by TEXT;
+ALTER TABLE wards ADD COLUMN code TEXT;
+ALTER TABLE wards ADD COLUMN title TEXT;
+ALTER TABLE wards ADD COLUMN description TEXT;
+ALTER TABLE wards ADD COLUMN field TEXT;
+ALTER TABLE wards ADD COLUMN owner_name TEXT;
+ALTER TABLE wards ADD COLUMN source TEXT;
+ALTER TABLE wards ADD COLUMN verification_status TEXT DEFAULT 'unverified';
+ALTER TABLE wards ADD COLUMN publicity_level TEXT DEFAULT 'public';
+ALTER TABLE wards ADD COLUMN history TEXT;
+ALTER TABLE wards ADD COLUMN data_json TEXT DEFAULT '{}';
+ALTER TABLE wards ADD COLUMN updated_by TEXT;
+ALTER TABLE universities ADD COLUMN code TEXT;
+ALTER TABLE universities ADD COLUMN title TEXT;
+ALTER TABLE universities ADD COLUMN description TEXT;
+ALTER TABLE universities ADD COLUMN field TEXT;
+ALTER TABLE universities ADD COLUMN owner_name TEXT;
+ALTER TABLE universities ADD COLUMN source TEXT;
+ALTER TABLE universities ADD COLUMN verification_status TEXT DEFAULT 'unverified';
+ALTER TABLE universities ADD COLUMN publicity_level TEXT DEFAULT 'public';
+ALTER TABLE universities ADD COLUMN history TEXT;
+ALTER TABLE universities ADD COLUMN data_json TEXT DEFAULT '{}';
+ALTER TABLE universities ADD COLUMN updated_by TEXT;
+ALTER TABLE featured_startups ADD COLUMN code TEXT;
+ALTER TABLE featured_startups ADD COLUMN title TEXT;
+ALTER TABLE featured_startups ADD COLUMN description TEXT;
+ALTER TABLE featured_startups ADD COLUMN owner_name TEXT;
+ALTER TABLE featured_startups ADD COLUMN source TEXT;
+ALTER TABLE featured_startups ADD COLUMN verification_status TEXT DEFAULT 'unverified';
+ALTER TABLE featured_startups ADD COLUMN publicity_level TEXT DEFAULT 'public';
+ALTER TABLE featured_startups ADD COLUMN history TEXT;
+ALTER TABLE featured_startups ADD COLUMN data_json TEXT DEFAULT '{}';
+ALTER TABLE featured_startups ADD COLUMN updated_by TEXT;
+ALTER TABLE patents ADD COLUMN description TEXT;
+ALTER TABLE patents ADD COLUMN owner_name TEXT;
+ALTER TABLE patents ADD COLUMN source TEXT;
+ALTER TABLE patents ADD COLUMN verification_status TEXT DEFAULT 'unverified';
+ALTER TABLE patents ADD COLUMN publicity_level TEXT DEFAULT 'public';
+ALTER TABLE patents ADD COLUMN history TEXT;
+ALTER TABLE patents ADD COLUMN data_json TEXT DEFAULT '{}';
+ALTER TABLE patents ADD COLUMN updated_by TEXT;
+
+-- Default portal configuration (system setting, not sample business data).
+INSERT INTO system_config (
+  id, portal_name, governing_agency, contact_address, contact_email,
+  contact_phone, city_area, allow_public_submission, require_approval
+) VALUES (
+  'default',
+  'Cổng dữ liệu KHCN & KNĐMST TP Đà Nẵng',
+  'ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ',
+  'Trung tâm Đổi mới sáng tạo Đà Nẵng, 24 Trần Phú, Hải Châu, Đà Nẵng',
+  'sokhcn@danang.gov.vn',
+  '(0236) 3822 851',
+  'Thành phố Đà Nẵng',
+  1,
+  1
+);
