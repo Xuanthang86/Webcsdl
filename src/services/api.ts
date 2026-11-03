@@ -62,9 +62,6 @@ export const api = {
       body: JSON.stringify({ username, password })
     });
     const data = await parseJsonResponse(res);
-    if (data.token && typeof window !== 'undefined') {
-      localStorage.setItem('portal_auth_token', data.token);
-    }
     return data.user;
   },
 
