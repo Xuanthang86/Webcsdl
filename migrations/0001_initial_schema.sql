@@ -1,7 +1,5 @@
 -- Initial Cloudflare D1 schema for Webcsdl.
 -- Creates 20 business tables and 6 system tables; no sample/demo data.
-PRAGMA foreign_keys = ON;
-
 -- ============================================================================
 -- CỔNG DỮ LIỆU TỔNG HỢP KH&CN, ĐỔI MỚI SÁNG TẠO VÀ KHỞI NGHIỆP TP ĐÀ NẴNG
 -- Cloudflare D1 (SQLite Engine) Schema Definition
