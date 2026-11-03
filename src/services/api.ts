@@ -30,7 +30,11 @@ async function parseJsonResponse<T = any>(res: Response): Promise<T> {
   if (!contentType.includes('application/json')) {
     const text = await res.text();
     if (!res.ok) {
-      throw new Error(`Lỗi máy chủ (${res.status}): ${text.slice(0, 150) || res.statusText}`);
+      const isHtml = text.trim().startsWith('<');
+      const errorMsg = isHtml 
+        ? `Lỗi máy chủ (${res.status}): Dịch vụ tạm thời không phản hồi đúng định dạng JSON.` 
+        : `Lỗi máy chủ (${res.status}): ${text.slice(0, 150) || res.statusText}`;
+      throw new Error(errorMsg);
     }
     return text as unknown as T;
   }

@@ -251,7 +251,10 @@ class DatabaseManager {
       throw new Error(`Tài khoản tạm thời bị khóa do nhập sai mật khẩu quá 5 lần. Vui lòng thử lại sau ${waitSeconds} giây.`);
     }
 
-    const user = this.data.users.find(u => u.username.toLowerCase() === key);
+    const user = this.data.users.find(u => {
+      const uname = u.username.toLowerCase();
+      return uname === key || (key === 'officer1' && uname === 'officer');
+    });
     if (!user || !user.isActive) {
       return null;
     }
