@@ -133,13 +133,9 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
   }, [results, selectedModule]);
 
   const formatModuleTitle = (mod: string) => {
-    if (mod === 'all') return 'Tra cứu dữ liệu toàn hệ thống (phân loại từng phân hệ)';
-    if (mod === 'collaboration_needs') return 'Tra cứu nhu cầu kết nối & đặt hàng';
-    const name = MODULE_NAMES[mod as ModuleType];
-    if (name) {
-      return `Tra cứu ${name.charAt(0).toLowerCase() + name.slice(1)}`;
-    }
-    return `Tra cứu: ${mod}`;
+    if (mod === 'all') return 'Dữ liệu toàn hệ thống';
+    const rawName = MODULE_NAMES[mod as ModuleType] || mod;
+    return rawName.replace(/^\d+\.\s*/, '');
   };
 
   return (
@@ -387,7 +383,8 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
         /* Yêu cầu: Có 1 dòng là tên loại dữ liệu để phân loại giữa các dữ liệu, mỗi loại dữ liệu chỉ hiển thị 5 dữ liệu và có nút click để xem thêm */
         <div className="space-y-10">
           {Object.entries(groupedResults).map(([modKey, modItems]) => {
-            const modTitle = MODULE_NAMES[modKey as ModuleType] || modKey;
+            const rawTitle = MODULE_NAMES[modKey as ModuleType] || modKey;
+            const modTitle = rawTitle.replace(/^\d+\.\s*/, '');
             const displayItems = modItems.slice(0, 5);
             const remainingCount = modItems.length - 5;
 
@@ -435,7 +432,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                               <span className="text-teal-900 font-semibold truncate">Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
                               <span aria-hidden="true">·</span>
                               <span className="text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 font-semibold">
-                                Sáng kiến đã công nhận {item.recognizedScope ? `(${item.recognizedScope})` : '(Cấp thành phố)'}
+                                Năm công nhận: {item.recognitionYear || '2025'}
                               </span>
                             </>
                           ) : (

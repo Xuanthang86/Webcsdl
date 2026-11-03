@@ -43,8 +43,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
               <ShieldCheck className="w-5 h-5 text-teal-300" />
             </div>
             <div>
-              <h3 className="font-bold text-lg leading-tight">Đăng Nhập Quản Trị</h3>
-              <p className="text-sm text-teal-200/90 mt-0.5">Xác thực quyền quản trị viên & cán bộ chuyên trách</p>
+              <h3 className="font-bold text-lg leading-tight">Đăng nhập Quản trị</h3>
             </div>
           </div>
           <button

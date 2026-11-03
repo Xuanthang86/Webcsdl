@@ -1020,37 +1020,40 @@ export default {
         if (request.method === 'GET') {
           const entityId = url.searchParams.get('entityId');
           const moduleType = url.searchParams.get('moduleType');
-          if (env.DB) {
-            try {
-              let sql = 'SELECT * FROM attachments WHERE 1=1';
-              const params: any[] = [];
-              if (entityId) {
-                sql += ' AND entity_id = ?';
-                params.push(entityId);
-              }
-              if (moduleType) {
-                sql += ' AND module_type = ?';
-                params.push(moduleType);
-              }
-              const rows = await env.DB.prepare(sql).bind(...params).all();
-              return jsonResponse({ success: true, data: rows.results || [] }, 200, corsHeaders);
-            } catch (e: any) {
-              return jsonResponse({ success: true, data: [] }, 200, corsHeaders);
-            }
+          if (!env.DB) {
+            return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
           }
-          return jsonResponse({ success: true, data: [] }, 200, corsHeaders);
+          try {
+            let sql = 'SELECT * FROM attachments WHERE 1=1';
+            const params: any[] = [];
+            if (entityId) {
+              sql += ' AND entity_id = ?';
+              params.push(entityId);
+            }
+            if (moduleType) {
+              sql += ' AND module_type = ?';
+              params.push(moduleType);
+            }
+            const rows = await env.DB.prepare(sql).bind(...params).all();
+            return jsonResponse({ success: true, data: rows.results || [] }, 200, corsHeaders);
+          } catch (e: any) {
+            return jsonResponse({ success: false, message: 'Lỗi truy vấn tệp đính kèm: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
+          }
         }
 
         if (attId && request.method === 'DELETE') {
           if (currentUser.role === 'public_user') {
             return jsonResponse({ success: false, message: 'Chưa đăng nhập.' }, 401, corsHeaders);
           }
-          if (env.DB) {
-            try {
-              await env.DB.prepare('DELETE FROM attachments WHERE id = ?').bind(attId).run();
-            } catch {}
+          if (!env.DB) {
+            return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
           }
-          return jsonResponse({ success: true }, 200, corsHeaders);
+          try {
+            await env.DB.prepare('DELETE FROM attachments WHERE id = ?').bind(attId).run();
+            return jsonResponse({ success: true }, 200, corsHeaders);
+          } catch (e: any) {
+            return jsonResponse({ success: false, message: 'Lỗi xóa tệp đính kèm: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
+          }
         }
       }
 
@@ -1060,26 +1063,29 @@ export default {
 
         if (request.method === 'GET') {
           const entityId = url.searchParams.get('entityId');
-          if (env.DB) {
-            try {
-              let sql = 'SELECT * FROM relationships WHERE 1=1';
-              const params: any[] = [];
-              if (entityId) {
-                sql += ' AND (source_id = ? OR target_id = ?)';
-                params.push(entityId, entityId);
-              }
-              const rows = await env.DB.prepare(sql).bind(...params).all();
-              return jsonResponse({ success: true, data: rows.results || [] }, 200, corsHeaders);
-            } catch {
-              return jsonResponse({ success: true, data: [] }, 200, corsHeaders);
-            }
+          if (!env.DB) {
+            return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
           }
-          return jsonResponse({ success: true, data: [] }, 200, corsHeaders);
+          try {
+            let sql = 'SELECT * FROM relationships WHERE 1=1';
+            const params: any[] = [];
+            if (entityId) {
+              sql += ' AND (source_id = ? OR target_id = ?)';
+              params.push(entityId, entityId);
+            }
+            const rows = await env.DB.prepare(sql).bind(...params).all();
+            return jsonResponse({ success: true, data: rows.results || [] }, 200, corsHeaders);
+          } catch (e: any) {
+            return jsonResponse({ success: false, message: 'Lỗi truy vấn liên kết: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
+          }
         }
 
         if (request.method === 'POST') {
           if (currentUser.role === 'public_user') {
             return jsonResponse({ success: false, message: 'Chưa đăng nhập.' }, 401, corsHeaders);
+          }
+          if (!env.DB) {
+            return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
           }
           const body = await request.json().catch(() => ({})) as any;
           const newRel = {
@@ -1092,27 +1098,30 @@ export default {
             notes: body.notes || '',
             createdAt: new Date().toISOString()
           };
-          if (env.DB) {
-            try {
-              await env.DB.prepare(`
-                INSERT INTO relationships (id, source_id, source_type, target_id, target_type, relation_type, notes, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-              `).bind(newRel.id, newRel.sourceId, newRel.sourceType, newRel.targetId, newRel.targetType, newRel.relationType, newRel.notes, newRel.createdAt).run();
-            } catch {}
+          try {
+            await env.DB.prepare(`
+              INSERT INTO relationships (id, source_id, source_type, target_id, target_type, relation_type, notes, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `).bind(newRel.id, newRel.sourceId, newRel.sourceType, newRel.targetId, newRel.targetType, newRel.relationType, newRel.notes, newRel.createdAt).run();
+            return jsonResponse({ success: true, data: newRel }, 201, corsHeaders);
+          } catch (e: any) {
+            return jsonResponse({ success: false, message: 'Lỗi tạo liên kết: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
           }
-          return jsonResponse({ success: true, data: newRel }, 201, corsHeaders);
         }
 
         if (relId && request.method === 'DELETE') {
           if (currentUser.role === 'public_user') {
             return jsonResponse({ success: false, message: 'Chưa đăng nhập.' }, 401, corsHeaders);
           }
-          if (env.DB) {
-            try {
-              await env.DB.prepare('DELETE FROM relationships WHERE id = ?').bind(relId).run();
-            } catch {}
+          if (!env.DB) {
+            return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
           }
-          return jsonResponse({ success: true }, 200, corsHeaders);
+          try {
+            await env.DB.prepare('DELETE FROM relationships WHERE id = ?').bind(relId).run();
+            return jsonResponse({ success: true }, 200, corsHeaders);
+          } catch (e: any) {
+            return jsonResponse({ success: false, message: 'Lỗi xóa liên kết: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
+          }
         }
       }
 
@@ -1121,37 +1130,37 @@ export default {
         if (!['super_admin', 'system_admin', 'agency_leader', 'data_officer'].includes(currentUser.role)) {
           return jsonResponse({ success: false, message: 'Bạn không có quyền xem nhật ký hệ thống.' }, 403, corsHeaders);
         }
-        if (env.DB) {
-          try {
-            const limit = parseInt(url.searchParams.get('limit') || '100', 10);
-            const rows = await env.DB.prepare('SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT ?').bind(limit).all();
-            return jsonResponse({ success: true, logs: rows.results || [] }, 200, corsHeaders);
-          } catch {
-            return jsonResponse({ success: true, logs: [] }, 200, corsHeaders);
-          }
+        if (!env.DB) {
+          return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
         }
-        return jsonResponse({ success: true, logs: [] }, 200, corsHeaders);
+        try {
+          const limit = parseInt(url.searchParams.get('limit') || '100', 10);
+          const rows = await env.DB.prepare('SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT ?').bind(limit).all();
+          return jsonResponse({ success: true, logs: rows.results || [] }, 200, corsHeaders);
+        } catch (e: any) {
+          return jsonResponse({ success: false, message: 'Lỗi truy vấn nhật ký hệ thống: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
+        }
       }
 
       // P. Connections / Collaboration Messages
       if (url.pathname === '/api/connections') {
         if (request.method === 'GET') {
           const needId = url.searchParams.get('needId');
-          if (env.DB) {
-            try {
-              let sql = 'SELECT * FROM connection_messages WHERE 1=1';
-              const params: any[] = [];
-              if (needId) {
-                sql += ' AND need_id = ?';
-                params.push(needId);
-              }
-              const rows = await env.DB.prepare(sql).bind(...params).all();
-              return jsonResponse({ success: true, data: rows.results || [] }, 200, corsHeaders);
-            } catch {
-              return jsonResponse({ success: true, data: [] }, 200, corsHeaders);
-            }
+          if (!env.DB) {
+            return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
           }
-          return jsonResponse({ success: true, data: [] }, 200, corsHeaders);
+          try {
+            let sql = 'SELECT * FROM connection_messages WHERE 1=1';
+            const params: any[] = [];
+            if (needId) {
+              sql += ' AND need_id = ?';
+              params.push(needId);
+            }
+            const rows = await env.DB.prepare(sql).bind(...params).all();
+            return jsonResponse({ success: true, data: rows.results || [] }, 200, corsHeaders);
+          } catch (e: any) {
+            return jsonResponse({ success: false, message: 'Lỗi truy vấn tin nhắn kết nối: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
+          }
         }
 
         if (request.method === 'POST') {

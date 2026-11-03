@@ -96,15 +96,16 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   const coreModulesList: { mod: ModuleType; label: string; icon: any; color: string }[] = [
     { mod: 'science_tasks', label: '1. Đề tài, nhiệm vụ KH&CN', icon: FileText, color: 'text-teal-400' },
-    { mod: 'initiatives', label: '2. Sáng kiến thành phố', icon: Lightbulb, color: 'text-amber-400' },
-    { mod: 'experts', label: '3. Chuyên gia', icon: GraduationCap, color: 'text-blue-400' },
-    { mod: 'startups', label: '4. Doanh nghiệp KNST', icon: Rocket, color: 'text-rose-400' },
-    { mod: 'support_organizations', label: '5. Tổ chức trung gian', icon: Building2, color: 'text-cyan-400' },
-    { mod: 'startup_projects', label: '6. Dự án khởi nghiệp', icon: Target, color: 'text-emerald-400' },
-    { mod: 'startup_ideas', label: '7. Ý tưởng khởi nghiệp', icon: Lightbulb, color: 'text-yellow-400' },
-    { mod: 'wards', label: '8. Danh sách xã/phường', icon: MapPin, color: 'text-indigo-400' },
-    { mod: 'universities', label: '9. Trường ĐH/Cao đẳng', icon: School, color: 'text-violet-400' },
-    { mod: 'featured_startups', label: '10. DN khởi nghiệp tiêu biểu', icon: Star, color: 'text-amber-300' }
+    { mod: 'initiatives', label: '2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố', icon: Lightbulb, color: 'text-amber-400' },
+    { mod: 'patents', label: '3. Sáng chế & Sở hữu trí tuệ', icon: Award, color: 'text-purple-400' },
+    { mod: 'experts', label: '4. Chuyên gia & Nhà khoa học', icon: GraduationCap, color: 'text-blue-400' },
+    { mod: 'startups', label: '• Doanh nghiệp KN sáng tạo', icon: Rocket, color: 'text-rose-400' },
+    { mod: 'support_organizations', label: '• Tổ chức trung gian', icon: Building2, color: 'text-cyan-400' },
+    { mod: 'startup_projects', label: '• Dự án khởi nghiệp', icon: Target, color: 'text-emerald-400' },
+    { mod: 'startup_ideas', label: '• Ý tưởng khởi nghiệp', icon: Lightbulb, color: 'text-yellow-400' },
+    { mod: 'wards', label: '• Danh sách xã/phường', icon: MapPin, color: 'text-indigo-400' },
+    { mod: 'universities', label: '• Trường ĐH/Cao đẳng', icon: School, color: 'text-violet-400' },
+    { mod: 'featured_startups', label: '• DN khởi nghiệp tiêu biểu', icon: Star, color: 'text-amber-300' }
   ];
 
   return (
@@ -218,7 +219,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 {auxiliaryDropdownOpen && (
                   <div className="mt-0.5 ml-4 pl-2 border-l border-slate-800 space-y-0.5">
                     {[
-                      { mod: 'patents' as ModuleType, label: 'Sáng chế & Sở hữu trí tuệ' },
                       { mod: 'investors' as ModuleType, label: 'Nhà đầu tư' },
                       { mod: 'investment_funds' as ModuleType, label: 'Quỹ đầu tư' },
                       { mod: 'organizations' as ModuleType, label: 'Tổ chức KH&CN, Viện trường' },

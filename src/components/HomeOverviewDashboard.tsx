@@ -166,7 +166,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
 
               <div>
                 <div className="text-sm text-slate-300 font-medium line-clamp-2 leading-snug" title="2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố">
-                  2. Sáng kiến cấp thành phố
+                  2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold font-mono text-white mt-0.5">
                   {stats?.totalInitiatives || 0}

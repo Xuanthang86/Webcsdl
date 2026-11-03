@@ -124,12 +124,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <section className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2.5 border-b border-slate-200">
             <div>
-              <div className="text-xs font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-teal-700" />
-                <span>1. Cơ sở dữ liệu Đề tài, Nhiệm vụ KH&CN</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-1">
-                Đề tài, Nhiệm vụ KH&CN Mới Nhất
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                Đề tài, Nhiệm vụ KH&CN
               </h2>
             </div>
             <button
@@ -208,12 +204,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <section className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2.5 border-b border-slate-200">
             <div>
-              <div className="text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
-                <Lightbulb className="w-4 h-4 text-amber-600" />
-                <span>2. Cơ sở dữ liệu Sáng kiến cấp thành phố</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-1">
-                Sáng Kiến Có Tác Dụng, Ảnh Hưởng Đối Với Thành Phố
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                Sáng kiến có tác dụng, ảnh hưởng đối với thành phố
               </h2>
             </div>
             <button
@@ -240,9 +232,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-mono text-amber-900 font-bold bg-amber-50 px-2.5 py-0.5 rounded border border-amber-200">
-                        STT {idx + 1} · Năm {item.recognitionYear || '—'}
+                        STT {idx + 1}
                       </span>
-                      {renderRecognitionBadge(item.recognizedScope)}
+                      <span className="text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded text-xs font-bold border border-amber-300">
+                        Năm công nhận: {item.recognitionYear || '2025'}
+                      </span>
                     </div>
 
                     <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-amber-800 transition-colors line-clamp-2 leading-snug">
@@ -290,12 +284,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <section className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2.5 border-b border-slate-200">
             <div>
-              <div className="text-xs font-bold text-purple-800 uppercase tracking-wider flex items-center gap-1.5">
-                <Award className="w-4 h-4 text-purple-600" />
-                <span>3. Cơ sở dữ liệu Sáng chế & Sở hữu trí tuệ</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-1">
-                Sáng Chế & Sở Hữu Trí Tuệ Mới Nhất
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                Sáng chế & Sở hữu trí tuệ
               </h2>
             </div>
             <button
@@ -354,7 +344,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   </div>
 
                   <div className="pt-3 mt-4 border-t border-slate-100 flex items-center justify-between text-xs sm:text-sm">
-                    <span className="text-emerald-700 font-medium">Đã công bố hợp lệ</span>
+                    <span className="text-slate-500 font-medium">{item.field || 'Sở hữu trí tuệ'}</span>
                     <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1">
                       Xem chi tiết
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -370,12 +360,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <section className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2.5 border-b border-slate-200">
             <div>
-              <div className="text-xs font-bold text-blue-800 uppercase tracking-wider flex items-center gap-1.5">
-                <GraduationCap className="w-4 h-4 text-blue-600" />
-                <span>4. Cơ sở dữ liệu Chuyên gia & Nhà khoa học</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-1">
-                Chuyên Gia & Nhà Khoa Học Tiêu Biểu
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                Chuyên gia & Nhà khoa học
               </h2>
             </div>
             <button
@@ -456,19 +442,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <section className="space-y-5 pt-4 border-t border-slate-200">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2.5 border-b border-slate-200">
             <div>
-              <div className="text-xs font-bold text-rose-800 uppercase tracking-wider flex items-center gap-1.5">
-                <Rocket className="w-4 h-4 text-rose-600" />
-                <span>5. Cơ sở dữ liệu Hệ sinh thái Khởi nghiệp Đổi mới sáng tạo</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-1">
-                Dữ Liệu Hệ Sinh Thái Khởi Nghiệp Đổi Mới Sáng Tạo
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                Dữ liệu Hệ sinh thái Khởi nghiệp đổi mới sáng tạo
               </h2>
             </div>
             <button
               onClick={() => onNavigateBrowse('startups')}
               className="text-sm font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 group whitespace-nowrap self-start sm:self-auto cursor-pointer"
             >
-              <span>Tra cứu toàn bộ Hệ sinh thái</span>
+              <span>Tra cứu toàn bộ Dữ liệu Hệ sinh thái</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
