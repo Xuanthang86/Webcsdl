@@ -78,9 +78,13 @@ function hydrateModuleRow(row: any): any {
   } catch {
     custom = {};
   }
-  const result = { ...custom, ...row };
-  delete result.data_json;
-  return result;
+  const normalized: Record<string, any> = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (key === 'data_json') continue;
+    const camelKey = key.replace(/_([a-z])/g, (_match, letter) => letter.toUpperCase());
+    normalized[camelKey] = value;
+  }
+  return { ...normalized, ...custom };
 }
 
 // Helper: Origin & CSRF validation
