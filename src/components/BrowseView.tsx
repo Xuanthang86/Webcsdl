@@ -247,38 +247,40 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 text-slate-500 font-mono text-xs shrink-0">
+            <div className="w-full sm:w-auto flex flex-wrap items-center gap-2 text-slate-500 font-mono text-xs">
               {selectedModule !== 'all' && (
                 <>
                   <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
                     <button
                       type="button"
                       onClick={() => setViewMode('table')}
-                      className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors ${
+                      className={`px-2 sm:px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors ${
                         viewMode === 'table' ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
                       title="Xem dạng bảng chuẩn hoá theo trường dữ liệu quy định"
                     >
                       <TableIcon className="w-3.5 h-3.5" />
-                      <span>Bảng chuẩn hoá</span>
+                      <span className="hidden sm:inline">Bảng chuẩn hoá</span>
+                      <span className="sm:hidden">Bảng</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setViewMode('grid')}
-                      className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors ${
+                      className={`px-2 sm:px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors ${
                         viewMode === 'grid' ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
                       title="Xem dạng thẻ trực quan"
                     >
                       <LayoutGrid className="w-3.5 h-3.5" />
-                      <span>Dạng thẻ</span>
+                      <span className="hidden sm:inline">Dạng thẻ</span>
+                      <span className="sm:hidden">Thẻ</span>
                     </button>
                   </div>
 
                   <a
                     href={`/api/export/${selectedModule}`}
                     download
-                    className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold flex items-center gap-1 transition-colors"
+                    className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold flex items-center gap-1 transition-colors whitespace-nowrap shrink-0"
                     title="Xuất tệp CSV dữ liệu theo biểu mẫu chuẩn"
                   >
                     <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
@@ -287,13 +289,13 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                   <button
                     onClick={() => setSelectedModule('all')}
-                    className="text-teal-800 font-sans font-semibold hover:underline"
+                    className="text-teal-800 font-sans font-semibold hover:underline whitespace-nowrap"
                   >
-                    ← Tất cả phân hệ
+                    ← Tất cả
                   </button>
                 </>
               )}
-              <span>Tổng cộng: <strong className="text-slate-900 text-sm font-sans">{results.length}</strong> kết quả</span>
+              <span className="ml-auto sm:ml-0 text-slate-600">Tổng: <strong className="text-slate-900 text-xs sm:text-sm font-sans">{results.length}</strong> kết quả</span>
             </div>
           </div>
 
@@ -477,10 +479,25 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                       </div>
 
                       <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                        <span className="text-[11px] flex items-center gap-1 text-emerald-700">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Đã xác minh
-                        </span>
+                        {item.moduleType === 'science_tasks' ? (
+                          <span className="text-[11px] text-emerald-700 font-semibold">
+                            {item.acceptanceResult === 'Xuất sắc' || item.acceptanceResult === 'Đạt' || item.status === 'approved' 
+                              ? 'Đã nghiệm thu' 
+                              : (item.acceptanceResult === 'Chờ nghiệm thu' || item.status === 'under_review' ? 'Đang nghiệm thu' : 'Chưa nghiệm thu')}
+                          </span>
+                        ) : item.moduleType === 'initiatives' ? (
+                          <span className="text-[11px] text-amber-800 font-semibold">
+                            Sáng kiến đã công nhận
+                          </span>
+                        ) : item.moduleType === 'experts' ? (
+                          <span className="text-[11px] text-blue-700 font-medium">
+                            {item.academicTitle || 'Chuyên gia'}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] flex items-center gap-1 text-slate-500">
+                            {item.publicityLevel === 'public' ? 'Công khai' : 'Nội bộ'}
+                          </span>
+                        )}
                         <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
                           Chi tiết
                           <ArrowRight className="w-3 h-3" />
@@ -519,7 +536,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[11px] tracking-wider whitespace-nowrap">
                     {selectedModule === 'science_tasks' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[280px]">Tên đề tài</th>
                         <th className="py-3 px-4 w-32">Cấp quản lý</th>
                         <th className="py-3 px-4 w-44">Cơ quan chủ trì</th>
@@ -532,7 +549,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'initiatives' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 w-28 text-center">Năm công nhận</th>
                         <th className="py-3 px-4 min-w-[280px]">Tên sáng kiến</th>
                         <th className="py-3 px-4 w-36">Tác giả</th>
@@ -545,7 +562,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'experts' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[200px]">Tên Chuyên gia</th>
                         <th className="py-3 px-4 w-24 text-center">Năm sinh</th>
                         <th className="py-3 px-4 w-44">Email</th>
@@ -557,7 +574,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'startups' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[240px]">Tên doanh nghiệp</th>
                         <th className="py-3 px-4 min-w-[200px]">Địa chỉ hoạt động</th>
                         <th className="py-3 px-4 w-36">Website</th>
@@ -572,7 +589,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'support_organizations' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[320px]">Tên tổ chức</th>
                         <th className="py-3 px-4 min-w-[320px]">Địa chỉ</th>
                         <th className="py-3 px-3 w-20 text-center">Thao tác</th>
@@ -581,7 +598,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'startup_projects' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[260px]">Tên dự án khởi nghiệp</th>
                         <th className="py-3 px-4 min-w-[180px]">Địa chỉ hoạt động</th>
                         <th className="py-3 px-4 w-40">Lĩnh vực khởi nghiệp</th>
@@ -596,7 +613,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'startup_ideas' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[240px]">Tên ý tưởng khởi nghiệp</th>
                         <th className="py-3 px-4 min-w-[180px]">Địa chỉ hoạt động</th>
                         <th className="py-3 px-4 w-36">Lĩnh vực</th>
@@ -612,7 +629,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'wards' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[240px]">Tên xã/phường</th>
                         <th className="py-3 px-4 min-w-[320px]">Địa chỉ</th>
                         <th className="py-3 px-3 w-20 text-center">Thao tác</th>
@@ -621,7 +638,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'universities' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[280px]">Tên trường Đại học/Cao đẳng</th>
                         <th className="py-3 px-4 w-40">Xã/phường</th>
                         <th className="py-3 px-4 min-w-[300px]">Địa chỉ</th>
@@ -631,7 +648,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'featured_startups' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[320px]">Tên dự án</th>
                         <th className="py-3 px-4 min-w-[260px]">Link website</th>
                         <th className="py-3 px-3 w-20 text-center">Thao tác</th>
@@ -640,7 +657,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {!['science_tasks', 'initiatives', 'experts', 'startups', 'support_organizations', 'startup_projects', 'startup_ideas', 'wards', 'universities', 'featured_startups'].includes(selectedModule) && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 w-32">Mã bản ghi</th>
                         <th className="py-3 px-4 min-w-[260px]">Tiêu đề / Tên</th>
                         <th className="py-3 px-4 w-40">Lĩnh vực</th>
@@ -655,7 +672,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                       const stt = (currentPage - 1) * PAGE_SIZE + idx + 1;
                       return (
                         <tr key={item.id} className="hover:bg-teal-50/30 transition-colors">
-                          <td className="py-3 px-3 text-center text-slate-400 font-mono text-[11px]">
+                          <td className="hidden sm:table-cell py-3 px-3 text-center text-slate-400 font-mono text-[11px]">
                             {stt}
                           </td>
 
@@ -1010,10 +1027,26 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   </div>
 
                   <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                    <span className="flex items-center gap-1 text-[11px] text-emerald-700">
-                      <CheckCircle2 className="w-3 h-3" />
-                      Xác thực
-                    </span>
+                    {item.moduleType === 'science_tasks' ? (
+                      <span className="text-[11px] text-emerald-700 font-semibold">
+                        {item.acceptanceResult === 'Xuất sắc' || item.acceptanceResult === 'Đạt' || item.status === 'approved' 
+                          ? 'Đã nghiệm thu' 
+                          : (item.acceptanceResult === 'Chờ nghiệm thu' || item.status === 'under_review' ? 'Đang nghiệm thu' : 'Chưa nghiệm thu')}
+                      </span>
+                    ) : item.moduleType === 'initiatives' ? (
+                      <span className="text-[11px] text-amber-800 font-semibold">
+                        Sáng kiến đã công nhận
+                      </span>
+                    ) : item.moduleType === 'experts' ? (
+                      <span className="text-[11px] text-blue-700 font-medium">
+                        {item.academicTitle || 'Chuyên gia'}
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-[11px] text-emerald-700">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Xác thực
+                      </span>
+                    )}
                     <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
                       Xem chi tiết
                       <ArrowRight className="w-3 h-3" />

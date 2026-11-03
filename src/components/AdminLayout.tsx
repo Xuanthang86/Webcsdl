@@ -95,23 +95,24 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   };
 
   const coreModulesList: { mod: ModuleType; label: string; icon: any; color: string }[] = [
-    { mod: 'science_tasks', label: '1. Đề tài, nhiệm vụ KH&CN', icon: FileText, color: 'text-teal-400' },
-    { mod: 'initiatives', label: '2. Sáng kiến thành phố', icon: Lightbulb, color: 'text-amber-400' },
-    { mod: 'experts', label: '3. Chuyên gia', icon: GraduationCap, color: 'text-blue-400' },
-    { mod: 'startups', label: '4. Doanh nghiệp KNST', icon: Rocket, color: 'text-rose-400' },
-    { mod: 'support_organizations', label: '5. Tổ chức trung gian', icon: Building2, color: 'text-cyan-400' },
-    { mod: 'startup_projects', label: '6. Dự án khởi nghiệp', icon: Target, color: 'text-emerald-400' },
-    { mod: 'startup_ideas', label: '7. Ý tưởng khởi nghiệp', icon: Lightbulb, color: 'text-yellow-400' },
-    { mod: 'wards', label: '8. Danh sách xã/phường', icon: MapPin, color: 'text-indigo-400' },
-    { mod: 'universities', label: '9. Trường ĐH/Cao đẳng', icon: School, color: 'text-violet-400' },
-    { mod: 'featured_startups', label: '10. DN khởi nghiệp tiêu biểu', icon: Star, color: 'text-amber-300' }
+    { mod: 'science_tasks', label: 'Đề tài, nhiệm vụ KH&CN', icon: FileText, color: 'text-teal-400' },
+    { mod: 'initiatives', label: 'Sáng kiến có tác dụng, ảnh hưởng', icon: Lightbulb, color: 'text-amber-400' },
+    { mod: 'patents', label: 'Sáng chế & Sở hữu trí tuệ', icon: Award, color: 'text-purple-400' },
+    { mod: 'experts', label: 'Chuyên gia & Nhà khoa học', icon: GraduationCap, color: 'text-blue-400' },
+    { mod: 'startups', label: 'Doanh nghiệp khởi nghiệp sáng tạo', icon: Rocket, color: 'text-rose-400' },
+    { mod: 'support_organizations', label: 'Tổ chức trung gian', icon: Building2, color: 'text-cyan-400' },
+    { mod: 'startup_projects', label: 'Dự án khởi nghiệp', icon: Target, color: 'text-emerald-400' },
+    { mod: 'startup_ideas', label: 'Ý tưởng khởi nghiệp', icon: Lightbulb, color: 'text-yellow-400' },
+    { mod: 'wards', label: 'Danh sách xã/phường', icon: MapPin, color: 'text-indigo-400' },
+    { mod: 'universities', label: 'Trường Đại học/Cao đẳng', icon: School, color: 'text-violet-400' },
+    { mod: 'featured_startups', label: 'Doanh nghiệp tiêu biểu', icon: Star, color: 'text-amber-300' }
   ];
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-slate-100 flex flex-col lg:flex-row">
       
-      {/* Mobile Sidebar Toggle Button */}
-      <div className="md:hidden bg-slate-900 text-white p-3 flex items-center justify-between border-b border-slate-800">
+      {/* Mobile & Tablet Header with Toggle */}
+      <div className="lg:hidden bg-slate-900 text-white p-3.5 flex items-center justify-between border-b border-slate-800 sticky top-0 z-30">
         <div 
           onClick={onBackToPublic}
           className="flex items-center gap-2 cursor-pointer group"
@@ -120,20 +121,28 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           <div className="w-6 h-6 rounded bg-teal-600 group-hover:bg-teal-500 text-white flex items-center justify-center font-bold text-xs transition-colors">
             K
           </div>
-          <span className="font-bold text-xs group-hover:text-teal-300 transition-colors">Cổng Quản Trị KHCN & KNĐMST TP Đà Nẵng</span>
+          <span className="font-bold text-xs group-hover:text-teal-300 transition-colors">Quản trị KHCN & KNĐMST TP Đà Nẵng</span>
         </div>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-1.5 text-slate-300 hover:text-white cursor-pointer"
+          className="p-1.5 text-slate-300 hover:text-white cursor-pointer rounded-lg hover:bg-slate-800"
           title={sidebarOpen ? "Đóng thanh công cụ" : "Mở thanh công cụ"}
         >
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
+      {/* Backdrop for tablet & mobile */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Admin Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:inset-auto md:min-h-screen shrink-0 flex flex-col justify-between border-r border-slate-800
+        fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-auto lg:min-h-screen shrink-0 flex flex-col justify-between border-r border-slate-800
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="p-4 space-y-4 overflow-y-auto">
@@ -149,15 +158,15 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 K
               </div>
               <div>
-                <div className="font-bold text-white text-xs tracking-tight group-hover:text-teal-300 transition-colors">Cổng Quản Trị</div>
-                <div className="text-[10px] text-teal-300 font-semibold">KHCN & KNĐMST TP Đà Nẵng</div>
+                <div className="font-bold text-white text-xs tracking-tight group-hover:text-teal-300 transition-colors">Quản trị KHCN & KNĐMST</div>
+                <div className="text-[10px] text-teal-300 font-semibold">Thành phố Đà Nẵng</div>
               </div>
             </div>
 
             <button
               onClick={() => setSidebarOpen(false)}
               title="Đóng thanh điều hướng"
-              className="md:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>

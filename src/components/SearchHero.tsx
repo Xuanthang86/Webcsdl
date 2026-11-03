@@ -10,17 +10,17 @@ interface SearchHeroProps {
 
 export const MODULE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'all', label: 'Tất cả cơ sở dữ liệu' },
-  { value: 'science_tasks', label: '1. Đề tài, nhiệm vụ KH&CN' },
-  { value: 'initiatives', label: '2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố' },
-  { value: 'patents', label: '3. Sáng chế & Sở hữu trí tuệ' },
-  { value: 'experts', label: '4. Chuyên gia & Nhà khoa học' },
-  { value: 'startups', label: '5. Doanh nghiệp khởi nghiệp sáng tạo' },
-  { value: 'support_organizations', label: '6. Tổ chức trung gian' },
-  { value: 'startup_projects', label: '7. Dự án khởi nghiệp' },
-  { value: 'startup_ideas', label: '8. Ý tưởng khởi nghiệp' },
-  { value: 'wards', label: '9. Danh sách xã/phường' },
-  { value: 'universities', label: '10. Trường Đại học/Cao đẳng trên địa bàn' },
-  { value: 'featured_startups', label: '11. Doanh nghiệp khởi nghiệp tiêu biểu' }
+  { value: 'science_tasks', label: 'Đề tài, nhiệm vụ KH&CN' },
+  { value: 'initiatives', label: 'Sáng kiến có tác dụng, ảnh hưởng đối với thành phố' },
+  { value: 'patents', label: 'Sáng chế & Sở hữu trí tuệ' },
+  { value: 'experts', label: 'Chuyên gia & Nhà khoa học' },
+  { value: 'startups', label: 'Doanh nghiệp khởi nghiệp sáng tạo' },
+  { value: 'support_organizations', label: 'Tổ chức trung gian' },
+  { value: 'startup_projects', label: 'Dự án khởi nghiệp' },
+  { value: 'startup_ideas', label: 'Ý tưởng khởi nghiệp' },
+  { value: 'wards', label: 'Danh sách xã/phường' },
+  { value: 'universities', label: 'Trường Đại học/Cao đẳng trên địa bàn' },
+  { value: 'featured_startups', label: 'Doanh nghiệp khởi nghiệp tiêu biểu' }
 ];
 
 export interface SpecializedField {

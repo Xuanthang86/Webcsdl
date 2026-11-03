@@ -65,11 +65,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Top Banner with Year Filter */}
       <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <div className="text-xs font-semibold text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-teal-700" />
-            <span>Trung tâm Điều hành Dữ liệu Tập trung</span>
-          </div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight mt-0.5">
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
             Bảng điều khiển tổng hợp KHCN & KNĐMST
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -113,7 +109,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
         >
           <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">1. Nhiệm vụ KH&CN</span>
+            <span className="font-medium">Nhiệm vụ KH&CN</span>
             <FlaskConical className="w-4 h-4 text-blue-600" />
           </div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
@@ -131,7 +127,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
         >
           <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">2. Sáng kiến Thành phố</span>
+            <span className="font-medium">Sáng kiến có tác dụng, ảnh hưởng</span>
             <Lightbulb className="w-4 h-4 text-amber-600" />
           </div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
@@ -149,7 +145,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
         >
           <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">3. Doanh nghiệp ĐMST</span>
+            <span className="font-medium">Doanh nghiệp khởi nghiệp sáng tạo</span>
             <Rocket className="w-4 h-4 text-purple-600" />
           </div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
@@ -167,7 +163,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
         >
           <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">4. Sáng chế & SHTT</span>
+            <span className="font-medium">Sáng chế & Sở hữu trí tuệ</span>
             <Award className="w-4 h-4 text-rose-600" />
           </div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
@@ -185,7 +181,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
         >
           <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">5. Chuyên gia & Nhà KH</span>
+            <span className="font-medium">Chuyên gia & Nhà khoa học</span>
             <Users className="w-4 h-4 text-teal-600" />
           </div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
@@ -203,7 +199,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
         >
           <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">6. Quỹ & Nhà đầu tư</span>
+            <span className="font-medium">Quỹ & Nhà đầu tư</span>
             <Building2 className="w-4 h-4 text-indigo-600" />
           </div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
@@ -221,7 +217,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
         >
           <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">7. Bài báo & Công bố KH</span>
+            <span className="font-medium">Bài báo & Công bố khoa học</span>
             <BookOpen className="w-4 h-4 text-sky-600" />
           </div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
@@ -239,7 +235,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
         >
           <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">8. Nhu cầu kết nối & Đặt hàng</span>
+            <span className="font-medium">Nhu cầu kết nối & Đặt hàng</span>
             <Link2 className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
@@ -259,7 +255,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div>
             <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-teal-700" />
-              <span>Biểu đồ Phân tích & Thống kê Tăng trưởng</span>
+              <span>Biểu đồ Phân tích & Thống kê tăng trưởng</span>
             </h2>
             <p className="text-xs text-slate-500">
               Thống kê số lượng đề tài, sáng kiến và doanh nghiệp theo Lĩnh vực & theo Năm
@@ -347,7 +343,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 })}
               </div>
               <p className="text-[11px] text-slate-500 italic text-center">
-                Biểu đồ cột thể hiện số lượng nhiệm vụ KH&CN được phê duyệt triển khai theo từng năm tài khóa.
+                Biểu đồ cột thể hiện số lượng nhiệm vụ KH&CN theo từng năm.
               </p>
             </div>
           </div>
@@ -451,7 +447,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-slate-900">
-                Hàng Đợi Kiểm Duyệt & Trạng Thái Thẩm Định
+                Hàng đợi kiểm duyệt & trạng thái thẩm định
               </h2>
               <p className="text-xs text-slate-500">
                 Phân bổ hồ sơ theo các giai đoạn trong vòng đời nghiệp vụ
@@ -494,22 +490,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           {/* Quick Module Navigation Matrix */}
           <div className="pt-2 border-t border-slate-100">
-            <div className="text-xs font-semibold text-slate-700 mb-2">Truy cập nhanh 13 phân hệ quản trị:</div>
+            <div className="text-xs font-semibold text-slate-700 mb-2">Truy cập nhanh các phân hệ dữ liệu:</div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
               {[
-                { key: 'science_tasks', label: '1. Nhiệm vụ KH&CN' },
-                { key: 'initiatives', label: '2. Sáng kiến TP' },
-                { key: 'experts', label: '3. Chuyên gia' },
-                { key: 'organizations', label: '4. Tổ chức KH&CN' },
-                { key: 'startups', label: '5. Doanh nghiệp ĐMST' },
-                { key: 'startup_projects', label: '6. Dự án khởi nghiệp' },
-                { key: 'startup_ideas', label: '7. Ý tưởng khởi nghiệp' },
-                { key: 'investors', label: '8. Nhà đầu tư' },
-                { key: 'investment_funds', label: '9. Quỹ đầu tư' },
-                { key: 'support_organizations', label: '10. Vườn ươm / TT ĐMST' },
-                { key: 'technologies', label: '11. Công nghệ & KQNC' },
-                { key: 'programs', label: '12. Chương trình hỗ trợ' },
-                { key: 'collaboration_needs', label: '13. Nhu cầu kết nối' }
+                { key: 'science_tasks', label: 'Nhiệm vụ KH&CN' },
+                { key: 'initiatives', label: 'Sáng kiến thành phố' },
+                { key: 'patents', label: 'Sáng chế & SHTT' },
+                { key: 'experts', label: 'Chuyên gia & Nhà khoa học' },
+                { key: 'startups', label: 'Doanh nghiệp khởi nghiệp sáng tạo' },
+                { key: 'support_organizations', label: 'Tổ chức trung gian' },
+                { key: 'startup_projects', label: 'Dự án khởi nghiệp' },
+                { key: 'startup_ideas', label: 'Ý tưởng khởi nghiệp' },
+                { key: 'wards', label: 'Danh sách xã/phường' },
+                { key: 'universities', label: 'Trường Đại học/Cao đẳng' },
+                { key: 'featured_startups', label: 'Doanh nghiệp tiêu biểu' },
+                { key: 'collaboration_needs', label: 'Nhu cầu kết nối' }
               ].map(m => (
                 <button
                   key={m.key}
@@ -529,7 +524,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
           <div>
             <h2 className="text-sm font-bold text-slate-900">
-              Tổng Thể Năng Lực KHCN & ĐMST
+              Tổng thể năng lực KHCN & KNĐMST
             </h2>
             <p className="text-xs text-slate-500">
               Chỉ số tích hợp toàn hệ sinh thái thành phố

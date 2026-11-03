@@ -33,16 +33,16 @@ interface ModuleCrudViewProps {
 }
 
 export const MODULE_NAMES: Record<ModuleType, string> = {
-  science_tasks: '1. Đề tài, nhiệm vụ KH&CN',
-  initiatives: '2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố',
-  experts: '3. Chuyên gia',
-  startups: '4. Doanh nghiệp khởi nghiệp sáng tạo',
-  support_organizations: '5. Tổ chức trung gian',
-  startup_projects: '6. Dự án khởi nghiệp',
-  startup_ideas: '7. Ý tưởng khởi nghiệp',
-  wards: '8. Danh sách xã/phường',
-  universities: '9. Trường Đại học/Cao đẳng trên địa bàn',
-  featured_startups: '10. Doanh nghiệp khởi nghiệp tiêu biểu',
+  science_tasks: 'Đề tài, nhiệm vụ KH&CN',
+  initiatives: 'Sáng kiến có tác dụng, ảnh hưởng đối với thành phố',
+  experts: 'Chuyên gia & Nhà khoa học',
+  startups: 'Doanh nghiệp khởi nghiệp sáng tạo',
+  support_organizations: 'Tổ chức trung gian',
+  startup_projects: 'Dự án khởi nghiệp',
+  startup_ideas: 'Ý tưởng khởi nghiệp',
+  wards: 'Danh sách xã/phường',
+  universities: 'Trường Đại học/Cao đẳng trên địa bàn',
+  featured_startups: 'Doanh nghiệp khởi nghiệp tiêu biểu',
   organizations: 'Tổ chức KH&CN',
   investors: 'Nhà đầu tư',
   investment_funds: 'Quỹ đầu tư',
@@ -273,7 +273,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Quản lý {MODULE_NAMES[moduleType]}
+            {MODULE_NAMES[moduleType]}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
             Tổng cộng: <span className="font-semibold text-slate-800 font-mono">{records.length}</span> bản ghi tích hợp
