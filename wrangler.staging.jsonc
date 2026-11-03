@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "danang-sokhcn-portal-staging",
+  "name": "webcsdlkhcn-staging",
   "main": "worker/index.ts",
   "compatibility_date": "2024-09-23",
   "compatibility_flags": [
@@ -15,8 +15,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "danang-sokhcn-d1-staging",
-      "database_id": "danang-sokhcn-staging-id"
+      "database_name": "khcn-portal-staging",
+      "database_id": "a808e381-b2c8-4c9a-a943-334077198c3a"
     }
   ],
   "vars": {
