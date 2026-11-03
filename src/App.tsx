@@ -373,8 +373,6 @@ export default function App() {
           onClose={() => setActiveDetailEntity(null)}
           onOpenEntity={handleOpenRelatedEntity}
           onOpenConnectModal={handleOpenConnectModal}
-          currentUser={currentUser}
-          onOpenLogin={() => setShowAdminLoginModal(true)}
         />
       )}
 

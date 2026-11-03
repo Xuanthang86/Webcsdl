@@ -119,56 +119,40 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-6">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
       <div 
-        className="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 flex flex-col"
+        className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         
         {/* Modal Top Header */}
-        <div className="sticky top-0 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 z-10 space-y-2.5">
-          {/* Top row: tags, code, close button */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-slate-500">
+        <div className="sticky top-0 bg-white/95 backdrop-blur-md px-6 py-4 border-b border-slate-200 flex items-start justify-between gap-4 z-10">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
               <span className="font-mono font-medium text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
                 {entity.code}
               </span>
               <span aria-hidden="true">·</span>
               {entity.moduleType === 'initiatives' ? (
                 <>
-                  <span className="text-teal-900 font-semibold">Sáng kiến cấp thành phố</span>
+                  <span className="text-teal-900 font-semibold">Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
                   <span aria-hidden="true">·</span>
                   <span className="text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-semibold">
-                    Sáng kiến đã công nhận
+                    Sáng kiến đã công nhận {entity.recognizedScope ? `(${entity.recognizedScope})` : '(Cấp thành phố)'}
                   </span>
                 </>
-              ) : entity.moduleType === 'science_tasks' ? (
-                <span className="text-teal-900 font-semibold">Đề tài, nhiệm vụ KH&CN</span>
-              ) : entity.moduleType === 'experts' ? (
-                <span className="text-teal-900 font-semibold">Chuyên gia & Nhà khoa học</span>
               ) : (
                 <span className="capitalize">{entity.moduleType.replace('_', ' ')}</span>
               )}
-              <span aria-hidden="true" className="hidden sm:inline">·</span>
-              <span className="hidden sm:inline">Cập nhật: {new Date(entity.updatedAt || entity.createdAt).toLocaleDateString('vi-VN')}</span>
+              <span aria-hidden="true">·</span>
+              <span>Cập nhật: {new Date(entity.updatedAt || entity.createdAt).toLocaleDateString('vi-VN')}</span>
             </div>
-
-            <button
-              onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors shrink-0"
-              aria-label="Đóng"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
+              {entity.title}
+            </h2>
           </div>
 
-          {/* Title: full width, beautifully balanced across the container without being pushed to the left side */}
-          <h2 className="text-base sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug w-full break-words">
-            {entity.title}
-          </h2>
-
-          {/* Action buttons row */}
-          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
+          <div className="flex items-center gap-2 shrink-0">
             {downloadSuccessToast && (
               <span className="text-[11px] text-teal-700 font-semibold bg-teal-50 px-2 py-1 rounded-lg border border-teal-200 animate-in fade-in">
                 Đã tải tệp về máy!
@@ -177,97 +161,71 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
             <button
               type="button"
               onClick={() => handleDownloadFile()}
-              className="px-2.5 sm:px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
               title="Tải tệp tóm tắt hồ sơ chính thức"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Tải tệp hồ sơ</span>
+              <span className="hidden sm:inline">Tải tệp hồ sơ</span>
             </button>
             <button
               type="button"
               onClick={() => setShowAttachments(true)}
-              className="px-2.5 sm:px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
               title="Quản lý & xem tệp đính kèm / ImageKit CDN"
             >
               <Paperclip className="w-3.5 h-3.5 text-teal-700" />
-              <span>Tệp đính kèm</span>
+              <span className="hidden sm:inline">Tệp đính kèm</span>
             </button>
             <button
               onClick={handleCopyLink}
               title="Sao chép đường dẫn bản ghi"
-              className="px-2.5 sm:px-3 py-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors text-xs flex items-center gap-1"
+              className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors text-xs flex items-center gap-1"
             >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>{copied ? 'Đã chép' : 'Chia sẻ'}</span>
+              <Share2 className="w-4 h-4" />
+              {copied && <span className="text-[11px] text-teal-700 font-medium">Đã chép</span>}
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Modal Body */}
-        <div className="p-4 sm:p-6 space-y-6 text-sm text-slate-700">
+        <div className="p-6 space-y-6 text-sm text-slate-700">
           
           {/* Status & Scope Badges Row (Zero-pill discipline: unboxed metadata or clean indicators) */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-xs">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
             <div>
-              <span className="text-slate-400 block mb-0.5">Trạng thái</span>
+              <span className="text-slate-400 block mb-0.5">Trạng thái nghiệp vụ</span>
               <span className="font-semibold text-slate-800 flex items-center gap-1.5">
-                {entity.moduleType === 'science_tasks' ? (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    {(() => {
-                      const res = (entity.acceptanceResult || '').toLowerCase();
-                      const st = (entity.status || '').toLowerCase();
-                      if (res.includes('đã') || res.includes('nghiệm thu') || st === 'approved' || st === 'completed') {
-                        return 'Đã nghiệm thu';
-                      }
-                      if (st === 'under_review' || st === 'in_progress' || res.includes('đang')) {
-                        return 'Đang nghiệm thu';
-                      }
-                      return 'Chưa nghiệm thu';
-                    })()}
-                  </>
-                ) : entity.moduleType === 'initiatives' ? (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Sáng kiến đã công nhận</span>
-                  </>
-                ) : (
-                  <>
-                    {entity.status === 'approved' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
-                    {entity.status === 'under_review' && <Clock className="w-3.5 h-3.5 text-amber-600" />}
-                    {entity.status === 'needs_revision' && <AlertCircle className="w-3.5 h-3.5 text-orange-600" />}
-                    <span>{entity.status === 'approved' ? 'Đã phê duyệt' : entity.status === 'under_review' ? 'Đang thẩm định' : entity.status === 'needs_revision' ? 'Yêu cầu bổ sung' : entity.status}</span>
-                  </>
-                )}
+                {entity.status === 'approved' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                {entity.status === 'under_review' && <Clock className="w-3.5 h-3.5 text-amber-600" />}
+                {entity.status === 'needs_revision' && <AlertCircle className="w-3.5 h-3.5 text-orange-600" />}
+                {entity.status === 'approved' ? 'Đã phê duyệt' : entity.status === 'under_review' ? 'Đang thẩm định' : entity.status === 'needs_revision' ? 'Yêu cầu bổ sung' : entity.status}
               </span>
             </div>
 
             <div>
-              <span className="text-slate-400 block mb-0.5">
-                {entity.moduleType === 'experts' ? 'Học vị / Học hàm' : 'Mức độ công khai'}
-              </span>
-              <span className="font-semibold text-slate-800 truncate block">
-                {entity.moduleType === 'experts'
-                  ? (entity.academicRank || entity.degree || 'Chuyên gia KH&CN')
-                  : (entity.publicityLevel === 'public' ? 'Công khai toàn dân' : 'Hạn chế nội bộ')}
+              <span className="text-slate-400 block mb-0.5">Xác minh hồ sơ</span>
+              <span className="font-semibold text-slate-800">
+                {entity.verificationStatus === 'verified' ? 'Đã xác minh chính thức' : 'Đang đối soát dữ liệu'}
               </span>
             </div>
 
             <div>
-              <span className="text-slate-400 block mb-0.5">
-                {entity.moduleType === 'experts' ? 'Chuyên ngành' : 'Phạm vi'}
-              </span>
-              <span className="font-semibold text-slate-800 truncate block">
-                {entity.moduleType === 'experts'
-                  ? (entity.specialty || entity.field || 'Khoa học Công nghệ')
-                  : (entity.moduleType === 'initiatives' ? (entity.recognizedScope || 'Cấp Thành phố') : 'Toàn thành phố')}
+              <span className="text-slate-400 block mb-0.5">Mức độ công khai</span>
+              <span className="font-semibold text-slate-800">
+                {entity.publicityLevel === 'public' ? 'Công khai toàn dân' : 'Hạn chế nội bộ'}
               </span>
             </div>
 
             <div>
               <span className="text-slate-400 block mb-0.5">Chủ quản / Phụ trách</span>
               <span className="font-semibold text-slate-800 truncate block">
-                {entity.ownerName || entity.proposingOrg || entity.workplace || entity.leadOrganization || 'Chưa cập nhật'}
+                {entity.ownerName || entity.proposingOrg || entity.workplace || 'Chưa cập nhật'}
               </span>
             </div>
           </div>

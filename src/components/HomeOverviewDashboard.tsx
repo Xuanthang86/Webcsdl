@@ -32,24 +32,6 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
   const [showExpertDetails, setShowExpertDetails] = useState(false);
   const [showEcosystemDetails, setShowEcosystemDetails] = useState(false);
 
-  const handleToggleExpertDetails = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowExpertDetails(prev => {
-      const next = !prev;
-      if (next) setShowEcosystemDetails(false);
-      return next;
-    });
-  };
-
-  const handleToggleEcosystemDetails = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowEcosystemDetails(prev => {
-      const next = !prev;
-      if (next) setShowExpertDetails(false);
-      return next;
-    });
-  };
-
   // Format Vietnamese currency with dots: 6,5 tỷ đồng
   const formatVND = (num?: number) => {
     if (!num) return '0 đồng';
@@ -171,7 +153,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-xs text-slate-300 font-medium">Đề tài, nhiệm vụ KH&CN</div>
+                <div className="text-xs text-slate-300 font-medium">1. Đề tài, nhiệm vụ KH&CN</div>
                 <div className="text-2xl font-bold font-mono text-white mt-0.5">
                   {stats?.totalScienceTasks || 0}
                 </div>
@@ -212,8 +194,8 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-xs text-slate-300 font-medium line-clamp-2 leading-tight" title="Sáng kiến có tác dụng, ảnh hưởng đối với thành phố">
-                  Sáng kiến có tác dụng, ảnh hưởng đối với thành phố
+                <div className="text-xs text-slate-300 font-medium line-clamp-2 leading-tight" title="2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố">
+                  2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố
                 </div>
                 <div className="text-2xl font-bold font-mono text-white mt-0.5">
                   {stats?.totalInitiatives || 0}
@@ -221,11 +203,13 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div className="pt-2 border-t border-white/10 space-y-1.5 text-xs text-slate-300">
-                <div className="flex justify-between items-center">
-                  <span>Năm {new Date().getFullYear()}:</span>
-                  <span className="font-mono text-amber-300 font-semibold">
-                    {stats?.initiativesByYear?.[String(new Date().getFullYear())] || stats?.initiativesRecognized || 0} sáng kiến
-                  </span>
+                <div className="flex justify-between">
+                  <span>Công nhận cấp TP:</span>
+                  <span className="font-mono text-amber-300 font-semibold">{stats?.initiativesRecognized || 0}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Làm lợi hàng năm:</span>
+                  <span className="font-mono text-emerald-400 font-semibold">{formatVND(stats?.totalCostSavings)}</span>
                 </div>
               </div>
             </div>
@@ -247,7 +231,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-xs text-slate-300 font-medium">Sáng chế & Sở hữu trí tuệ</div>
+                <div className="text-xs text-slate-300 font-medium">3. Sáng chế & Sở hữu trí tuệ</div>
                 <div className="text-2xl font-bold font-mono text-white mt-0.5">
                   {stats?.totalPatents || 0}
                 </div>
@@ -266,7 +250,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
             </div>
           </div>
 
-          {/* Pillar 4: Chuyên gia & Nhà khoa học */}
+          {/* Pillar 4: Chuyên gia & Nhà khoa học - Thống kê theo lĩnh vực, theo đơn vị */}
           <div 
             className="bg-white/5 hover:bg-white/10 border border-teal-800/60 hover:border-teal-500 rounded-2xl p-4 transition-all group flex flex-col justify-between"
           >
@@ -278,8 +262,11 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
-                    onClick={handleToggleExpertDetails}
-                    className="text-[10px] text-blue-300 font-semibold border border-blue-400/50 bg-blue-900/40 hover:bg-blue-800/60 px-2 py-0.5 rounded-lg transition-colors flex items-center gap-0.5 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowExpertDetails(!showExpertDetails);
+                    }}
+                    className="text-[10px] text-blue-300 font-semibold border border-blue-400/50 bg-blue-900/40 hover:bg-blue-800/60 px-2 py-0.5 rounded-lg transition-colors flex items-center gap-0.5"
                     title="Xem cơ cấu theo lĩnh vực & đơn vị"
                   >
                     <span>Cơ cấu</span>
@@ -295,7 +282,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-xs text-slate-300 font-medium">Chuyên gia & Nhà khoa học</div>
+                <div className="text-xs text-slate-300 font-medium">4. Chuyên gia & Nhà khoa học</div>
                 <div className="text-2xl font-bold font-mono text-white mt-0.5">
                   {stats?.totalExperts || 0}
                 </div>
@@ -303,53 +290,22 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
 
               <div className="pt-2 border-t border-white/10 space-y-1.5 text-xs text-slate-300">
                 <div className="flex justify-between">
-                  <span>Tổng số chuyên gia:</span>
-                  <span className="font-mono text-emerald-400 font-semibold">{stats?.totalExperts || 0} chuyên gia</span>
+                  <span>Đã xác minh:</span>
+                  <span className="font-mono text-emerald-400 font-semibold">{stats?.verifiedExperts || 0} chuyên gia</span>
+                </div>
+                <div className="flex justify-between text-[11px] text-slate-400">
+                  <span>Theo lĩnh vực:</span>
+                  <span className="text-teal-300 font-medium">5 ngành chủ lực</span>
+                </div>
+                <div className="flex justify-between text-[11px] text-slate-400">
+                  <span>Theo đơn vị:</span>
+                  <span className="text-blue-300 font-medium">Viện trường & ĐMST</span>
                 </div>
               </div>
             </div>
-
-            {/* Mobile Inline Breakdown: Displays immediately below Chuyên gia card on mobile */}
-            {showExpertDetails && (
-              <div className="mt-4 pt-3 border-t border-blue-500/40 lg:hidden space-y-2.5 animate-in fade-in">
-                <div className="flex items-center justify-between pb-1.5 border-b border-blue-800/50">
-                  <span className="text-[11px] font-bold text-blue-300 uppercase tracking-wider flex items-center gap-1">
-                    <Users className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Cơ cấu Chuyên gia</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowExpertDetails(false)}
-                    className="text-[10px] text-slate-400 hover:text-white"
-                  >
-                    Đóng ✕
-                  </button>
-                </div>
-                <div className="space-y-2 text-xs">
-                  <div className="bg-slate-900/80 p-2.5 rounded-xl border border-white/5 space-y-1">
-                    <div className="text-[10px] font-semibold text-teal-300 uppercase">Theo lĩnh vực chuyên ngành:</div>
-                    {expertFields.map(f => (
-                      <div key={f.name} className="flex justify-between text-[11px] py-0.5">
-                        <span className="text-slate-300 truncate max-w-[200px]">{f.name}</span>
-                        <span className="font-mono font-bold text-teal-300">{f.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="bg-slate-900/80 p-2.5 rounded-xl border border-white/5 space-y-1">
-                    <div className="text-[10px] font-semibold text-blue-300 uppercase">Theo cơ quan công tác:</div>
-                    {expertUnits.map(u => (
-                      <div key={u.name} className="flex justify-between text-[11px] py-0.5">
-                        <span className="text-slate-300 truncate max-w-[200px]">{u.name}</span>
-                        <span className="font-mono font-bold text-blue-300">{u.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Pillar 5: Dữ liệu Hệ sinh thái */}
+          {/* Pillar 5: Dữ liệu Hệ sinh thái - Thống kê chi tiết theo từng loại dữ liệu con */}
           <div 
             className="bg-white/5 hover:bg-white/10 border border-teal-800/60 hover:border-teal-500 rounded-2xl p-4 transition-all group flex flex-col justify-between"
           >
@@ -361,16 +317,19 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
-                    onClick={handleToggleEcosystemDetails}
-                    className="text-[10px] text-rose-300 font-semibold border border-rose-400/50 bg-rose-900/40 hover:bg-rose-800/60 px-2 py-0.5 rounded-lg transition-colors flex items-center gap-0.5 cursor-pointer"
-                    title="Xem chi tiết các loại dữ liệu trong hệ sinh thái"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowEcosystemDetails(!showEcosystemDetails);
+                    }}
+                    className="text-[10px] text-rose-300 font-semibold border border-rose-400/50 bg-rose-900/40 hover:bg-rose-800/60 px-2 py-0.5 rounded-lg transition-colors flex items-center gap-0.5"
+                    title="Xem chi tiết 7 loại dữ liệu con"
                   >
-                    <span>Các loại dữ liệu</span>
+                    <span>7 Loại con</span>
                     <ChevronDown className={`w-2.5 h-2.5 transition-transform ${showEcosystemDetails ? 'rotate-180' : ''}`} />
                   </button>
                   <button
                     onClick={() => onNavigateBrowse('startups')}
-                    className="text-[10px] text-teal-300 font-semibold border border-teal-400/50 bg-teal-900/40 hover:bg-teal-800/60 px-2 py-0.5 rounded-lg transition-colors flex items-center gap-0.5 cursor-pointer"
+                    className="text-[10px] text-teal-300 font-semibold border border-teal-400/50 bg-teal-900/40 hover:bg-teal-800/60 px-2 py-0.5 rounded-lg transition-colors flex items-center gap-0.5"
                   >
                     Xem <ArrowRight className="w-2.5 h-2.5" />
                   </button>
@@ -378,59 +337,34 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-xs text-slate-300 font-medium">Dữ liệu Hệ sinh thái</div>
+                <div className="text-xs text-slate-300 font-medium">5. Dữ liệu Hệ sinh thái</div>
                 <div className="text-2xl font-bold font-mono text-white mt-0.5">
                   {totalEcosystemRecords}
                 </div>
               </div>
-            </div>
 
-            {/* Mobile Inline Breakdown: Displays immediately below Hệ sinh thái card on mobile */}
-            {showEcosystemDetails && (
-              <div className="mt-4 pt-3 border-t border-rose-500/40 lg:hidden space-y-2.5 animate-in fade-in">
-                <div className="flex items-center justify-between pb-1.5 border-b border-rose-800/50">
-                  <span className="text-[11px] font-bold text-rose-300 uppercase tracking-wider flex items-center gap-1">
-                    <Rocket className="w-3.5 h-3.5 text-rose-400" />
-                    <span>CÁC LOẠI DỮ LIỆU TRONG HỆ SINH THÁI</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowEcosystemDetails(false)}
-                    className="text-[10px] text-slate-400 hover:text-white"
-                  >
-                    Đóng ✕
-                  </button>
+              <div className="pt-2 border-t border-white/10 space-y-1 text-[11px] text-slate-300">
+                <div className="flex justify-between">
+                  <span>DN khởi nghiệp:</span>
+                  <span className="font-mono text-white font-semibold">{stats?.totalStartups || 0}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {ecosystemItems.map(item => {
-                    const IconComp = item.icon;
-                    return (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => onNavigateBrowse(item.key)}
-                        className="p-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-left flex flex-col justify-between"
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <IconComp className="w-3.5 h-3.5 text-rose-300" />
-                          <span className="font-mono font-bold text-xs text-white">{item.count}</span>
-                        </div>
-                        <div className="text-[10px] text-slate-300 line-clamp-2 leading-tight">
-                          {item.label}
-                        </div>
-                      </button>
-                    );
-                  })}
+                <div className="flex justify-between">
+                  <span>Tổ chức trung gian:</span>
+                  <span className="font-mono text-cyan-300 font-semibold">{stats?.totalSupportOrgs || 0}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Dự án & Ý tưởng:</span>
+                  <span className="font-mono text-amber-300 font-semibold">{(stats?.totalProjects || 0) + (stats?.totalIdeas || 0)}</span>
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
         </div>
 
-        {/* Desktop-only Expandable Breakdown for Pillar 4: Chuyên gia theo Lĩnh vực & Đơn vị */}
+        {/* Expandable Breakdown for Pillar 4: Chuyên gia theo Lĩnh vực & Đơn vị */}
         {showExpertDetails && (
-          <div className="hidden lg:block p-5 bg-slate-900/95 border border-blue-500/40 rounded-2xl animate-in fade-in duration-150 space-y-3 shadow-xl">
+          <div className="p-4 bg-slate-900/90 border border-blue-500/40 rounded-2xl animate-in fade-in duration-150 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-blue-800/50">
               <div className="text-xs font-bold text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
                 <Users className="w-4 h-4 text-blue-400" />
@@ -439,14 +373,14 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               <button
                 type="button"
                 onClick={() => setShowExpertDetails(false)}
-                className="text-xs text-slate-400 hover:text-white cursor-pointer px-2 py-0.5 rounded hover:bg-white/10"
+                className="text-xs text-slate-400 hover:text-white"
               >
                 Đóng ✕
               </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="space-y-1.5 bg-white/5 p-3.5 rounded-xl border border-white/5">
+              <div className="space-y-1.5 bg-white/5 p-3 rounded-xl border border-white/5">
                 <div className="font-semibold text-slate-200 mb-1 text-[11px] uppercase tracking-wider text-teal-300">
                   Phân bố theo Lĩnh vực chuyên ngành:
                 </div>
@@ -458,7 +392,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
                 ))}
               </div>
 
-              <div className="space-y-1.5 bg-white/5 p-3.5 rounded-xl border border-white/5">
+              <div className="space-y-1.5 bg-white/5 p-3 rounded-xl border border-white/5">
                 <div className="font-semibold text-slate-200 mb-1 text-[11px] uppercase tracking-wider text-blue-300">
                   Phân bố theo Đơn vị / Cơ quan chủ quản:
                 </div>
@@ -473,46 +407,43 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
           </div>
         )}
 
-        {/* Desktop Expandable Breakdown for Pillar 5: Dữ liệu Hệ sinh thái */}
+        {/* Expandable Breakdown for Pillar 5: Dữ liệu Hệ sinh thái theo từng loại dữ liệu con */}
         {showEcosystemDetails && (
-          <div className="hidden lg:block p-5 bg-slate-900/95 border border-rose-500/40 rounded-2xl animate-in fade-in duration-150 space-y-3 shadow-xl">
+          <div className="p-4 bg-slate-900/90 border border-rose-500/40 rounded-2xl animate-in fade-in duration-150 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-rose-800/50">
               <div className="text-xs font-bold text-rose-300 uppercase tracking-wider flex items-center gap-1.5">
                 <Rocket className="w-4 h-4 text-rose-400" />
-                <span>CÁC LOẠI DỮ LIỆU TRONG HỆ SINH THÁI</span>
+                <span>Thống kê chi tiết Dữ liệu Hệ sinh thái theo 7 loại dữ liệu con</span>
               </div>
               <button
                 type="button"
                 onClick={() => setShowEcosystemDetails(false)}
-                className="text-xs text-slate-400 hover:text-white cursor-pointer px-2 py-0.5 rounded hover:bg-white/10"
+                className="text-xs text-slate-400 hover:text-white"
               >
                 Đóng ✕
               </button>
             </div>
 
-            {/* Scrollable container ensuring no child module is obscured on laptop/PC */}
-            <div className="overflow-x-auto pb-2 scrollbar-thin">
-              <div className="flex items-stretch gap-3 min-w-full">
-                {ecosystemItems.map(item => {
-                  const IconComp = item.icon;
-                  return (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => onNavigateBrowse(item.key)}
-                      className="flex-1 min-w-[155px] p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-teal-400 text-left transition-colors flex flex-col justify-between cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <IconComp className="w-4 h-4 text-rose-300" />
-                        <span className="font-mono font-bold text-sm text-white">{item.count}</span>
-                      </div>
-                      <div className="text-[11px] font-medium text-slate-200 line-clamp-2 leading-tight">
-                        {item.label}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 text-xs">
+              {ecosystemItems.map(item => {
+                const IconComp = item.icon;
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => onNavigateBrowse(item.key)}
+                    className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-teal-400 text-left transition-colors flex flex-col justify-between"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <IconComp className="w-4 h-4 text-rose-300" />
+                      <span className="font-mono font-bold text-sm text-white">{item.count}</span>
+                    </div>
+                    <div className="text-[11px] font-medium text-slate-300 line-clamp-2 leading-tight">
+                      {item.label}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
