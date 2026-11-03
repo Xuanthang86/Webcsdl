@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "danang-sokhcn-portal-staging",
+  "main": "worker/index.ts",
+  "compatibility_date": "2024-09-23",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "danang-sokhcn-d1-staging",
+      "database_id": "danang-sokhcn-staging-id"
+    }
+  ],
+  "vars": {
+    "ENVIRONMENT": "staging",
+    "PORTAL_NAME": "Cổng dữ liệu KHCN & KNĐMST TP Đà Nẵng (Staging)",
+    "IMAGEKIT_URL_ENDPOINT": "https://ik.imagekit.io/danangsokhcn"
+  }
+}

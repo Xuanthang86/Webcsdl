@@ -209,14 +209,14 @@ export const Header: React.FC<HeaderProps> = ({
               className="cursor-pointer flex items-center gap-2 sm:gap-2.5 min-w-0 group"
               title="Trở về Trang chủ Cổng Dữ Liệu"
             >
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-teal-800 text-white flex items-center justify-center font-bold text-xs sm:text-base shadow-xs group-hover:bg-teal-700 transition-colors shrink-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-teal-800 text-white flex items-center justify-center font-bold text-xs sm:text-base shadow-xs group-hover:bg-teal-700 transition-colors shrink-0">
                 ĐN
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-[10px] sm:text-xs font-black tracking-tight text-slate-900 group-hover:text-teal-800 transition-colors uppercase leading-none">
+                <span className="text-xs sm:text-sm font-black tracking-tight text-slate-900 group-hover:text-teal-800 transition-colors uppercase leading-none">
                   CỔNG DỮ LIỆU
                 </span>
-                <span className="text-[9px] sm:text-[11px] md:text-xs font-bold text-teal-800 tracking-tight group-hover:text-teal-900 transition-colors truncate mt-0.5 leading-tight">
+                <span className="text-xs sm:text-sm font-bold text-teal-800 tracking-tight group-hover:text-teal-900 transition-colors truncate mt-0.5 leading-tight">
                   KHCN & KNĐMST TP ĐÀ NẴNG
                 </span>
               </div>
@@ -413,14 +413,14 @@ export const Header: React.FC<HeaderProps> = ({
                 className="flex items-center gap-1.5 bg-slate-100 hover:bg-teal-50 text-slate-800 hover:text-teal-900 border border-slate-200 hover:border-teal-300 px-2 sm:px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer shadow-2xs max-w-[155px] sm:max-w-[210px] pr-2 sm:pr-2.5 mr-0.5"
                 title="Xem thông tin tài khoản, đổi mật khẩu & quản trị"
               >
-                <div className="w-6 h-6 rounded-full bg-teal-800 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
-                  <UserIcon className="w-3.5 h-3.5" />
+                <div className="w-7 h-7 rounded-full bg-teal-800 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                  <UserIcon className="w-4 h-4" />
                 </div>
                 <div className="flex flex-col text-left leading-tight min-w-0">
-                  <span className="font-bold text-slate-900 text-[11px] sm:text-xs truncate block">
+                  <span className="font-bold text-slate-900 text-xs sm:text-sm truncate block">
                     {currentUser?.fullName}
                   </span>
-                  <span className="text-[9px] sm:text-[10px] text-teal-800 font-semibold truncate block">
+                  <span className="text-[11px] sm:text-xs text-teal-800 font-semibold truncate block">
                     {getRoleDisplayName(currentUser)}
                   </span>
                 </div>

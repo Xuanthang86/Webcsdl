@@ -76,8 +76,8 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
 
   // Form states
   const [formUsername, setFormUsername] = useState('');
-  const [formPassword, setFormPassword] = useState('admin123');
-  const [formConfirmPassword, setFormConfirmPassword] = useState('admin123');
+  const [formPassword, setFormPassword] = useState('');
+  const [formConfirmPassword, setFormConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formFullName, setFormFullName] = useState('');

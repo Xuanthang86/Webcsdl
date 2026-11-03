@@ -24,7 +24,20 @@ import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdvancedSearchModal } from './components/AdvancedSearchModal';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'browse' | 'admin'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'browse' | 'admin'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('portal_current_view');
+      if (saved === 'browse' || saved === 'admin') return saved;
+    }
+    return 'home';
+  });
+
+  const navigateToView = (view: 'home' | 'browse' | 'admin') => {
+    setCurrentView(view);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('portal_current_view', view);
+    }
+  };
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
   const [showAdvancedSearchModal, setShowAdvancedSearchModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | undefined>();
@@ -88,6 +101,12 @@ export default function App() {
       const userRes = await api.getCurrentUser();
       setCurrentUser(userRes.user);
       setAvailableRoles(userRes.availableRoles || []);
+
+      const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'];
+      const savedView = typeof window !== 'undefined' ? sessionStorage.getItem('portal_current_view') : null;
+      if (savedView === 'admin' && (!userRes.user || !administrativeRoles.includes(userRes.user.role))) {
+        navigateToView('home');
+      }
 
       // 2. Load Config & Stats
       const [configData, statsData] = await Promise.all([
@@ -163,7 +182,7 @@ export default function App() {
       console.error('Logout error:', err);
     } finally {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('portal_auth_token');
+        sessionStorage.removeItem('portal_current_view');
       }
       try {
         const guestData = await api.getCurrentUser();
@@ -179,7 +198,7 @@ export default function App() {
           createdAt: new Date().toISOString()
         });
       }
-      setCurrentView('home');
+      navigateToView('home');
       setSuccessToast('Đã đăng xuất an toàn khỏi hệ thống');
       setTimeout(() => setSuccessToast(null), 3000);
     }
@@ -221,13 +240,13 @@ export default function App() {
 
   const handleSearchFromHero = (params: { q: string; moduleType?: string; field?: string }) => {
     setBrowseParams(params);
-    setCurrentView('browse');
+    navigateToView('browse');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleNavigateBrowseWithCategory = (category = 'all') => {
     setBrowseParams({ q: '', moduleType: category });
-    setCurrentView('browse');
+    navigateToView('browse');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -249,10 +268,10 @@ export default function App() {
     // Khi đăng nhập sẽ kiểm tra quyền tài khoản để chuyển giao diện truy cập phù hợp
     const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'];
     if (administrativeRoles.includes(user.role)) {
-      setCurrentView('admin');
+      navigateToView('admin');
       setSuccessToast(`Đăng nhập thành công! Chuyển hướng đến Cổng Quản trị (${user.fullName})`);
     } else {
-      setCurrentView('home');
+      navigateToView('home');
       setSuccessToast(`Đăng nhập thành công với vai trò: ${user.fullName}`);
     }
     setTimeout(() => setSuccessToast(null), 3500);
@@ -265,7 +284,7 @@ export default function App() {
       moduleType: params.moduleType || 'all',
       field: params.field || ''
     });
-    setCurrentView('browse');
+    navigateToView('browse');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -291,7 +310,7 @@ export default function App() {
         <Header
           currentView={currentView}
           onNavigate={(view) => {
-            setCurrentView(view);
+            navigateToView(view);
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           currentUser={currentUser}
@@ -355,7 +374,7 @@ export default function App() {
           stats={stats}
           onConfigUpdated={(newCfg) => setSystemConfig(newCfg)}
           onViewDetail={handleOpenDetail}
-          onBackToPublic={() => setCurrentView('home')}
+          onBackToPublic={() => navigateToView('home')}
           onLogout={handleLogout}
         />
       )}
