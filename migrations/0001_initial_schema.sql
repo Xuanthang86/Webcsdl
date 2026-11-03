@@ -391,6 +391,8 @@ ALTER TABLE science_tasks ADD COLUMN source TEXT;
 ALTER TABLE science_tasks ADD COLUMN verification_status TEXT DEFAULT 'unverified';
 ALTER TABLE science_tasks ADD COLUMN publicity_level TEXT DEFAULT 'public';
 ALTER TABLE science_tasks ADD COLUMN history TEXT;
+ALTER TABLE science_tasks ADD COLUMN acceptance_result TEXT;
+ALTER TABLE science_tasks ADD COLUMN total_budget_approved REAL DEFAULT 0;
 ALTER TABLE science_tasks ADD COLUMN data_json TEXT DEFAULT '{}';
 ALTER TABLE science_tasks ADD COLUMN updated_by TEXT;
 ALTER TABLE initiatives ADD COLUMN description TEXT;
@@ -399,6 +401,7 @@ ALTER TABLE initiatives ADD COLUMN source TEXT;
 ALTER TABLE initiatives ADD COLUMN verification_status TEXT DEFAULT 'unverified';
 ALTER TABLE initiatives ADD COLUMN publicity_level TEXT DEFAULT 'public';
 ALTER TABLE initiatives ADD COLUMN history TEXT;
+ALTER TABLE initiatives ADD COLUMN cost_savings REAL DEFAULT 0;
 ALTER TABLE initiatives ADD COLUMN data_json TEXT DEFAULT '{}';
 ALTER TABLE initiatives ADD COLUMN updated_by TEXT;
 ALTER TABLE experts ADD COLUMN code TEXT;
@@ -489,3 +492,19 @@ ALTER TABLE patents ADD COLUMN publicity_level TEXT DEFAULT 'public';
 ALTER TABLE patents ADD COLUMN history TEXT;
 ALTER TABLE patents ADD COLUMN data_json TEXT DEFAULT '{}';
 ALTER TABLE patents ADD COLUMN updated_by TEXT;
+
+-- Default portal configuration (system setting, not sample business data).
+INSERT INTO system_config (
+  id, portal_name, governing_agency, contact_address, contact_email,
+  contact_phone, city_area, allow_public_submission, require_approval
+) VALUES (
+  'default',
+  'Cổng dữ liệu KHCN & KNĐMST TP Đà Nẵng',
+  'ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ',
+  'Trung tâm Đổi mới sáng tạo Đà Nẵng, 24 Trần Phú, Hải Châu, Đà Nẵng',
+  'sokhcn@danang.gov.vn',
+  '(0236) 3822 851',
+  'Thành phố Đà Nẵng',
+  1,
+  1
+);
