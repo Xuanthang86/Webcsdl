@@ -32,6 +32,7 @@ export interface Env {
   ASSETS: Fetcher;
   ENVIRONMENT?: string;
   SESSION_SECRET?: string;
+  ADMIN_BOOTSTRAP_SECRET?: string;
   IMAGEKIT_PUBLIC_KEY?: string;
   IMAGEKIT_PRIVATE_KEY?: string;
   IMAGEKIT_URL_ENDPOINT?: string;
@@ -60,6 +61,27 @@ const ALLOWED_MODULES = [
   'lab_equipments',
   'policies'
 ];
+
+
+// Convert API field names to the physical SQLite column convention.
+function toSqlColumn(key: string): string {
+  return key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+}
+
+// Restore configurable form fields stored in data_json while preserving
+// physical columns as the authoritative values.
+function hydrateModuleRow(row: any): any {
+  if (!row) return row;
+  let custom: Record<string, any> = {};
+  try {
+    custom = row.data_json ? JSON.parse(row.data_json) : {};
+  } catch {
+    custom = {};
+  }
+  const result = { ...custom, ...row };
+  delete result.data_json;
+  return result;
+}
 
 // Helper: Origin & CSRF validation
 function isAllowedOrigin(origin: string | null, requestUrl: string): boolean {
@@ -416,6 +438,44 @@ export default {
         }
       }
 
+      // One-time first Super Admin bootstrap. Requires a Worker Secret and an empty users table.
+      if (url.pathname === '/api/auth/bootstrap-admin' && request.method === 'POST') {
+        if (!env.DB || !env.ADMIN_BOOTSTRAP_SECRET) {
+          return jsonResponse({ success: false, message: 'Chức năng khởi tạo quản trị viên chưa được cấu hình.' }, 503, corsHeaders);
+        }
+        const body = await request.json().catch(() => ({})) as any;
+        const suppliedSecret = String(body.secret || '');
+        const username = sanitizeString(body.username || '').toLowerCase().trim();
+        const password = String(body.password || '');
+        const fullName = sanitizeString(body.fullName || '');
+        const email = sanitizeString(body.email || '').toLowerCase().trim();
+        const organization = sanitizeString(body.organization || '');
+        const phone = sanitizeString(body.phone || '');
+        if (!timingSafeEqualStr(suppliedSecret, env.ADMIN_BOOTSTRAP_SECRET)) {
+          return jsonResponse({ success: false, message: 'Thông tin xác thực khởi tạo không hợp lệ.' }, 403, corsHeaders);
+        }
+        if (!/^[a-z0-9._-]{3,64}$/.test(username) || password.length < 12 || !fullName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          return jsonResponse({ success: false, message: 'Vui lòng cung cấp username hợp lệ, họ tên, email và mật khẩu tối thiểu 12 ký tự.' }, 400, corsHeaders);
+        }
+        const existing = await env.DB.prepare('SELECT COUNT(*) AS total FROM users').first<any>();
+        if (Number(existing?.total || 0) !== 0) {
+          return jsonResponse({ success: false, message: 'Đã tồn tại tài khoản. Không thể thực hiện khởi tạo Super Admin lần nữa.' }, 409, corsHeaders);
+        }
+        const salt = generateRandomSalt();
+        const hash = await hashPasswordWebCrypto(password, salt);
+        const now = new Date().toISOString();
+        const id = `usr_${crypto.randomUUID()}`;
+        const inserted = await env.DB.prepare(`
+          INSERT INTO users (id, username, password_hash, password_salt, full_name, email, role, organization, phone, is_active, created_at, updated_at)
+          SELECT ?, ?, ?, ?, ?, ?, 'super_admin', ?, ?, 1, ?, ?
+          WHERE NOT EXISTS (SELECT 1 FROM users)
+        `).bind(id, username, hash, salt, fullName, email, organization, phone, now, now).run();
+        if (Number(inserted.meta?.changes || 0) !== 1) {
+          return jsonResponse({ success: false, message: 'Một tài khoản đã được khởi tạo đồng thời. Vui lòng đăng nhập.' }, 409, corsHeaders);
+        }
+        return jsonResponse({ success: true, message: 'Đã khởi tạo Super Admin đầu tiên. Hãy xóa ADMIN_BOOTSTRAP_SECRET khỏi Worker Secrets ngay sau bước này.', user: { id, username, fullName, email, role: 'super_admin' } }, 201, corsHeaders);
+      }
+
       // C. Roles Endpoint
       if (url.pathname === '/api/roles') {
         return jsonResponse({
@@ -762,12 +822,8 @@ export default {
         try {
           const counts: Record<string, number> = {};
           for (const mod of ALLOWED_MODULES) {
-            try {
-              const res = await env.DB.prepare(`SELECT COUNT(*) as c FROM ${mod}`).first<{ c: number }>();
-              counts[mod] = Number(res?.c) || 0;
-            } catch {
-              counts[mod] = 0;
-            }
+            const res = await env.DB.prepare(`SELECT COUNT(*) as c FROM ${mod}`).first<{ c: number }>();
+            counts[mod] = Number(res?.c) || 0;
           }
 
           let tasksAccepted = 0;
@@ -1157,7 +1213,8 @@ export default {
         if (recordId && request.method === 'GET') {
           if (env.DB) {
             try {
-              const item = await env.DB.prepare(`SELECT * FROM ${moduleName} WHERE id = ?`).bind(recordId).first();
+              const rawItem = await env.DB.prepare(`SELECT * FROM ${moduleName} WHERE id = ?`).bind(recordId).first<any>();
+              const item = hydrateModuleRow(rawItem);
               if (!item) {
                 return jsonResponse({ success: false, message: 'Không tìm thấy bản ghi.' }, 404, corsHeaders);
               }
@@ -1178,13 +1235,13 @@ export default {
             try {
               const limit = parseInt(url.searchParams.get('limit') || '200', 10);
               const offset = parseInt(url.searchParams.get('offset') || '0', 10);
-              const results = await env.DB.prepare(`SELECT * FROM ${moduleName} ORDER BY created_at DESC LIMIT ? OFFSET ?`).bind(limit, offset).all();
+              const results = await env.DB.prepare(`SELECT * FROM ${moduleName} ORDER BY created_at DESC LIMIT ? OFFSET ?`).bind(limit, offset).all<any>();
               const countResult = await env.DB.prepare(`SELECT COUNT(*) as total FROM ${moduleName}`).first<{ total: number }>();
               return jsonResponse({
                 success: true,
                 moduleType: moduleName,
                 total: countResult?.total || 0,
-                data: results.results || []
+                data: (results.results || []).map(hydrateModuleRow)
               }, 200, corsHeaders);
             } catch (e: any) {
               return jsonResponse({ success: false, message: 'Lỗi truy vấn D1: ' + e.message }, 500, corsHeaders);
@@ -1206,10 +1263,20 @@ export default {
 
           if (env.DB) {
             try {
-              const keys = Object.keys(clean);
-              const cols = keys.map(k => k.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)).join(', ');
-              const placeholders = keys.map(() => '?').join(', ');
-              const values = keys.map(k => typeof clean[k] === 'object' && clean[k] !== null ? JSON.stringify(clean[k]) : clean[k]);
+              const info = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
+              const physicalColumns = new Set((info.results || []).map((column: any) => column.name));
+              const customFields: Record<string, any> = {};
+              const entries: Array<[string, any]> = [];
+              for (const key of Object.keys(clean)) {
+                const column = toSqlColumn(key);
+                if (column === 'data_json') continue;
+                if (physicalColumns.has(column)) entries.push([column, clean[key]]);
+                else customFields[key] = clean[key];
+              }
+              entries.push(['data_json', JSON.stringify(customFields)]);
+              const cols = entries.map(([column]) => column).join(', ');
+              const placeholders = entries.map(() => '?').join(', ');
+              const values = entries.map(([, value]) => typeof value === 'object' && value !== null ? JSON.stringify(value) : value);
               await env.DB.prepare(`INSERT INTO ${moduleName} (${cols}) VALUES (${placeholders})`).bind(...values).run();
 
               // Audit log
@@ -1235,9 +1302,21 @@ export default {
 
           if (env.DB) {
             try {
-              const keys = Object.keys(clean).filter(k => k !== 'id');
-              const setClause = keys.map(k => `${k.replace(/[A-Z]/g, l => `_${l.toLowerCase()}`)} = ?`).join(', ');
-              const values = keys.map(k => typeof clean[k] === 'object' && clean[k] !== null ? JSON.stringify(clean[k]) : clean[k]);
+              const info = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
+              const physicalColumns = new Set((info.results || []).map((column: any) => column.name));
+              const current = await env.DB.prepare(`SELECT data_json FROM ${moduleName} WHERE id = ?`).bind(recordId).first<any>();
+              let customFields: Record<string, any> = {};
+              try { customFields = current?.data_json ? JSON.parse(current.data_json) : {}; } catch { customFields = {}; }
+              const entries: Array<[string, any]> = [];
+              for (const key of Object.keys(clean).filter(k => k !== 'id')) {
+                const column = toSqlColumn(key);
+                if (column === 'data_json') continue;
+                if (physicalColumns.has(column)) entries.push([column, clean[key]]);
+                else customFields[key] = clean[key];
+              }
+              entries.push(['data_json', JSON.stringify(customFields)]);
+              const setClause = entries.map(([column]) => `${column} = ?`).join(', ');
+              const values = entries.map(([, value]) => typeof value === 'object' && value !== null ? JSON.stringify(value) : value);
               values.push(recordId);
               await env.DB.prepare(`UPDATE ${moduleName} SET ${setClause} WHERE id = ?`).bind(...values).run();
 
