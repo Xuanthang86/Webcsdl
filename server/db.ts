@@ -655,7 +655,7 @@ class DatabaseManager {
     isPublicOnly = true
   ): any[] {
     const q = query.trim().toLowerCase();
-    const modules: ModuleType[] = filters.moduleType
+    const modules: ModuleType[] = (filters.moduleType && filters.moduleType !== 'all')
       ? [filters.moduleType as ModuleType]
       : [
           'science_tasks',

@@ -201,18 +201,8 @@ export const Header: React.FC<HeaderProps> = ({
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
           
-          {/* Zone 1: 3-bar menu + Logo & Brand Wordmark */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
-            {/* 3 horizontal lines button (3 gạch ngang) - Bỏ chữ "Phân hệ dữ liệu" kế bên */}
-            <button
-              onClick={() => setMenuDrawerOpen(true)}
-              className="p-1.5 sm:p-2 -ml-1 text-slate-700 hover:text-teal-800 hover:bg-slate-100 rounded-lg transition-colors flex items-center group shrink-0 cursor-pointer"
-              title="Danh mục cơ sở dữ liệu"
-              aria-label="Danh mục dữ liệu"
-            >
-              <Menu className="w-5 h-5 text-slate-800 group-hover:text-teal-800" />
-            </button>
-
+          {/* Zone 1: Logo & Brand Wordmark */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
             {/* Logo and Brand Name - Click navigates to Home */}
             <div 
               onClick={() => onNavigate('home')} 
@@ -234,7 +224,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Zone 2: Navigation Links: Trang chủ; Danh mục Cơ sở dữ liệu; Đăng nhập */}
-          <nav className="hidden lg:flex items-center gap-6 text-xs sm:text-sm font-medium text-slate-600 shrink-0">
+          <nav className="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm font-medium text-slate-600 shrink-0">
             <button
               onClick={() => onNavigate('home')}
               className={`transition-colors whitespace-nowrap hover:text-slate-900 py-1 cursor-pointer ${

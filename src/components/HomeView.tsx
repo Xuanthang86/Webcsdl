@@ -93,16 +93,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
   };
 
   return (
-    <div className="pb-16 space-y-10">
+    <div className="pb-16">
       
-      {/* 1. Dashboard (Nằm ngay phía dưới thanh header) */}
+      {/* 1. Dashboard (Nằm ngay phía dưới thanh header - không có khoảng trắng) */}
       <HomeOverviewDashboard
         stats={stats}
         systemConfig={systemConfig}
         onNavigateBrowse={onNavigateBrowse}
       />
 
-      {/* 2. Thanh tìm kiếm và các điều kiện phục vụ tìm kiếm (Có cả Tìm kiếm nâng cao) */}
+      {/* 2. Thanh tìm kiếm và các điều kiện phục vụ tìm kiếm (Gắn liền với Dashboard, loại bỏ hoàn toàn khoảng trắng) */}
       <SearchHero
         onSearch={onSearch}
         onSelectCategory={(mod) => onNavigateBrowse(mod)}
@@ -118,7 +118,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           4. Chuyên gia & nhà khoa học
           5. Dữ liệu Hệ sinh thái
       */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+      <div className="mt-8 sm:mt-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
 
         {/* ================= 1. ĐỀ TÀI, NHIỆM VỤ KH&CN (3 dữ liệu con mới nhất) ================= */}
         {/* Các trường: STT, Tên đề tài, Cấp quản lý, Cơ quan chủ trì, Chủ nhiệm đề tài, Thời gian thực hiện, Lĩnh vực */}
