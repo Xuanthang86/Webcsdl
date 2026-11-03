@@ -273,7 +273,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-teal-700" />
-                    <span>1. Đề tài, nhiệm vụ KH&CN</span>
+                    <span>Đề tài, nhiệm vụ KH&CN</span>
                   </div>
                   <ChevronRight className="w-3 h-3 text-slate-400" />
                 </button>
@@ -284,7 +284,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <Lightbulb className="w-4 h-4 text-amber-600" />
-                    <span>2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
+                    <span>Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
                   </div>
                   <ChevronRight className="w-3 h-3 text-slate-400" />
                 </button>
@@ -295,7 +295,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <Award className="w-4 h-4 text-purple-600" />
-                    <span>3. Sáng chế & Sở hữu trí tuệ</span>
+                    <span>Sáng chế & Sở hữu trí tuệ</span>
                   </div>
                   <ChevronRight className="w-3 h-3 text-slate-400" />
                 </button>
@@ -306,12 +306,12 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <GraduationCap className="w-4 h-4 text-blue-600" />
-                    <span>4. Chuyên gia & Nhà khoa học</span>
+                    <span>Chuyên gia & Nhà khoa học</span>
                   </div>
                   <ChevronRight className="w-3 h-3 text-slate-400" />
                 </button>
 
-                {/* 5. Dữ liệu Hệ sinh thái - Hover reveals child sub-categories */}
+                {/* Dữ liệu Hệ sinh thái - Hover reveals child sub-categories */}
                 <div className="relative group/eco">
                   <button
                     onClick={() => handleChooseCategory('startups')}
@@ -319,15 +319,15 @@ export const Header: React.FC<HeaderProps> = ({
                   >
                     <div className="flex items-center gap-2">
                       <Rocket className="w-4 h-4 text-rose-600" />
-                      <span>5. Dữ liệu Hệ sinh thái</span>
+                      <span>Dữ liệu Hệ sinh thái</span>
                     </div>
                     <ChevronRight className="w-3.5 h-3.5 text-teal-600" />
                   </button>
 
-                  {/* Submenu on hover */}
-                  <div className="absolute left-full top-0 hidden group-hover/eco:block w-72 bg-white rounded-xl shadow-xl border border-slate-200 py-2 -ml-1 text-xs animate-in fade-in duration-100">
+                  {/* Submenu on hover with scroll & boundary containment */}
+                  <div className="absolute left-full top-0 hidden group-hover/eco:block w-72 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 -ml-1 text-xs max-h-[75vh] overflow-y-auto z-50 animate-in fade-in duration-100">
                     <div className="px-3.5 py-1 text-[11px] font-bold text-teal-800 uppercase tracking-wider border-b border-slate-100 mb-1">
-                      Các loại dữ liệu Hệ sinh thái
+                      Các loại dữ liệu trong Hệ sinh thái
                     </div>
                     <button
                       onClick={() => handleChooseCategory('startups')}
@@ -395,19 +395,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               </div>
             </div>
-
-            {/* Quick access to Admin Portal on Desktop (Hidden on Tablet to prevent header overflow) */}
-            {isAdminRole && (
-              <button
-                onClick={handleAdminClick}
-                className={`hidden lg:flex items-center gap-1.5 transition-colors whitespace-nowrap hover:text-slate-900 cursor-pointer ${
-                  currentView === 'admin' ? 'text-teal-800 font-semibold border-b-2 border-teal-800 pb-1' : ''
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4 text-teal-700" />
-                <span>Cổng quản trị</span>
-              </button>
-            )}
           </nav>
 
           {/* Zone 3: Login Button / User Account with Role Check (Desktop; on Mobile accessible via menu drawer) */}
@@ -478,8 +465,7 @@ export const Header: React.FC<HeaderProps> = ({
                   ĐN
                 </div>
                 <div>
-                  <h3 className="font-bold text-xs">DANH MỤC CƠ SỞ DỮ LIỆU</h3>
-                  <p className="text-[10px] text-teal-300">5 Phân hệ dữ liệu chuẩn hoá</p>
+                  <h3 className="font-bold text-xs uppercase tracking-tight">DANH MỤC CƠ SỞ DỮ LIỆU</h3>
                 </div>
               </div>
               <button

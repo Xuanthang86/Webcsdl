@@ -133,13 +133,34 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
   }, [results, selectedModule]);
 
   const formatModuleTitle = (mod: string) => {
-    if (mod === 'all') return 'Tra cứu dữ liệu toàn hệ thống (phân loại từng phân hệ)';
-    if (mod === 'collaboration_needs') return 'Tra cứu nhu cầu kết nối & đặt hàng';
-    const name = MODULE_NAMES[mod as ModuleType];
-    if (name) {
-      return `Tra cứu ${name.charAt(0).toLowerCase() + name.slice(1)}`;
+    switch (mod) {
+      case 'science_tasks':
+        return 'DANH SÁCH CÁC ĐỀ TÀI, NHIỆM VỤ KH&CN';
+      case 'initiatives':
+        return 'DANH SÁCH SÁNG KIẾN CÓ TÁC DỤNG, ẢNH HƯỞNG ĐỐI VỚI THÀNH PHỐ';
+      case 'experts':
+        return 'DANH SÁCH CHUYÊN GIA';
+      case 'startups':
+        return 'DANH SÁCH CÁC DOANH NGHIỆP KHỞI NGHIỆP';
+      case 'support_organizations':
+        return 'DANH SÁCH CÁC TỔ CHỨC TRUNG GIAN';
+      case 'startup_projects':
+        return 'DANH SÁCH CÁC DỰ ÁN KHỞI NGHIỆP';
+      case 'startup_ideas':
+        return 'DANH SÁCH CÁC Ý TƯỞNG KHỞI NGHIỆP';
+      case 'wards':
+        return 'DANH SÁCH CÁC XÃ, PHƯỜNG, ĐẶC KHU TRÊN ĐỊA BÀN';
+      case 'universities':
+        return 'DANH SÁCH CÁC TRƯỜNG ĐẠI HỌC, CAO ĐẲNG TRÊN ĐỊA BÀN';
+      case 'featured_startups':
+        return 'DANH SÁCH CÁC DOANH NGHIỆP KHỞI NGHIỆP TIÊU BIỂU';
+      case 'patents':
+        return 'DANH SÁCH CÁC BẰNG SÁNG CHẾ & SỞ HỮU TRÍ TUỆ';
+      case 'all':
+        return 'TỔNG HỢP CƠ SỞ DỮ LIỆU TOÀN HỆ THỐNG';
+      default:
+        return `DANH SÁCH: ${mod.toUpperCase()}`;
     }
-    return `Tra cứu: ${mod}`;
   };
 
   return (
@@ -152,7 +173,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
             {formatModuleTitle(selectedModule)}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Tìm kiếm theo từ khóa, lọc chuyên sâu theo lĩnh vực và xem tối đa 5 dữ liệu mỗi phân hệ khi xem tổng thể
+            Tra cứu theo các tiêu chí chuẩn hóa, xuất dữ liệu và xem chi tiết hồ sơ
           </p>
         </div>
 
@@ -168,9 +189,9 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
           <button
             onClick={onOpenSubmitModal}
-            className="px-4 py-2 bg-teal-800 hover:bg-teal-700 text-white text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
+            className="px-4 py-2 bg-teal-800 hover:bg-teal-700 text-white text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap cursor-pointer"
           >
-            <span>Nộp sáng kiến trực tuyến</span>
+            <span>Nộp hồ sơ đề xuất & sáng kiến đổi mới sáng tạo</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>

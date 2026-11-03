@@ -171,7 +171,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-xs text-slate-300 font-medium">1. Đề tài, nhiệm vụ KH&CN</div>
+                <div className="text-xs text-slate-300 font-medium">Đề tài, nhiệm vụ KH&CN</div>
                 <div className="text-2xl font-bold font-mono text-white mt-0.5">
                   {stats?.totalScienceTasks || 0}
                 </div>
@@ -212,8 +212,8 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-xs text-slate-300 font-medium line-clamp-2 leading-tight" title="2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố">
-                  2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố
+                <div className="text-xs text-slate-300 font-medium line-clamp-2 leading-tight" title="Sáng kiến có tác dụng, ảnh hưởng đối với thành phố">
+                  Sáng kiến có tác dụng, ảnh hưởng đối với thành phố
                 </div>
                 <div className="text-2xl font-bold font-mono text-white mt-0.5">
                   {stats?.totalInitiatives || 0}
@@ -247,7 +247,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-xs text-slate-300 font-medium">3. Sáng chế & Sở hữu trí tuệ</div>
+                <div className="text-xs text-slate-300 font-medium">Sáng chế & Sở hữu trí tuệ</div>
                 <div className="text-2xl font-bold font-mono text-white mt-0.5">
                   {stats?.totalPatents || 0}
                 </div>
@@ -295,7 +295,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-xs text-slate-300 font-medium">4. Chuyên gia & Nhà khoa học</div>
+                <div className="text-xs text-slate-300 font-medium">Chuyên gia & Nhà khoa học</div>
                 <div className="text-2xl font-bold font-mono text-white mt-0.5">
                   {stats?.totalExperts || 0}
                 </div>
@@ -378,7 +378,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-xs text-slate-300 font-medium">5. Dữ liệu Hệ sinh thái</div>
+                <div className="text-xs text-slate-300 font-medium">Dữ liệu Hệ sinh thái</div>
                 <div className="text-2xl font-bold font-mono text-white mt-0.5">
                   {totalEcosystemRecords}
                 </div>
