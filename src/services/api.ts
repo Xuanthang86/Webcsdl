@@ -10,19 +10,13 @@ import {
 } from '../types';
 
 function getAuthHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
-  const headers: Record<string, string> = { ...extraHeaders };
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('portal_auth_token');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-  }
-  return headers;
+  // Authentication is carried only by the HttpOnly session cookie.
+  // Never expose session tokens to JavaScript or persist them in localStorage.
+  return { ...extraHeaders };
 }
 
 async function parseJsonResponse<T = any>(res: Response): Promise<T> {
   if (res.status === 401 && typeof window !== 'undefined') {
-    localStorage.removeItem('portal_auth_token');
     window.dispatchEvent(new CustomEvent('portal:auth-expired'));
   }
 
@@ -58,9 +52,6 @@ export const api = {
       body: JSON.stringify({ role })
     });
     const data = await parseJsonResponse(res);
-    if (data.token && typeof window !== 'undefined') {
-      localStorage.setItem('portal_auth_token', data.token);
-    }
     return data.user;
   },
 
@@ -85,9 +76,6 @@ export const api = {
       });
       await parseJsonResponse(res).catch(() => {});
     } finally {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('portal_auth_token');
-      }
     }
   },
 
