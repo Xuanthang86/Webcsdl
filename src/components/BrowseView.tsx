@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BaseEntity, ModuleType } from '../types';
 import { api } from '../services/api';
-import { MODULE_OPTIONS, POPULAR_FIELDS, SPECIALIZED_FIELDS } from './SearchHero';
+import { MODULE_OPTIONS, SPECIALIZED_FIELDS } from './SearchHero';
 import { MODULE_NAMES } from './admin/ModuleCrudView';
 import { AdvancedSearchModal } from './AdvancedSearchModal';
 import { 
@@ -9,23 +9,25 @@ import {
   Filter, 
   ExternalLink, 
   CheckCircle2, 
-  Clock, 
   Building, 
-  User, 
-  Tag, 
-  Download, 
-  RotateCcw,
-  Sparkles,
-  ArrowRight,
-  Layers,
-  Database,
-  Check,
-  X,
-  Table as TableIcon,
-  LayoutGrid,
-  FileSpreadsheet,
-  SlidersHorizontal,
-  ChevronDown
+  User as UserIcon, 
+  ArrowRight, 
+  Layers, 
+  Database, 
+  X, 
+  Table as TableIcon, 
+  LayoutGrid, 
+  FileSpreadsheet, 
+  SlidersHorizontal, 
+  ChevronDown,
+  Calendar,
+  GraduationCap,
+  Briefcase,
+  MapPin,
+  School,
+  Tag,
+  Star,
+  Sparkles
 } from 'lucide-react';
 
 interface BrowseViewProps {
@@ -35,6 +37,20 @@ interface BrowseViewProps {
   onViewDetail: (entity: BaseEntity) => void;
   onOpenSubmitModal: () => void;
 }
+
+// 10 Official Required Titles for Module Lists
+export const MODULE_LIST_TITLES: Record<string, string> = {
+  science_tasks: 'DANH SÁCH CÁC ĐỀ TÀI, NHIỆM VỤ KH&CN',
+  initiatives: 'DANH SÁCH SÁNG KIẾN CÓ TÁC DỤNG, ẢNH HƯỞNG ĐỐI VỚI THÀNH PHỐ',
+  experts: 'DANH SÁCH CHUYÊN GIA',
+  startups: 'DANH SÁCH CÁC DOANH NGHIỆP KHỞI NGHIỆP',
+  support_organizations: 'DANH SÁCH CÁC TỔ CHỨC TRUNG GIAN',
+  startup_projects: 'DANH SÁCH CÁC DỰ ÁN KHỞI NGHIỆP',
+  startup_ideas: 'DANH SÁCH CÁC Ý TƯỞNG KHỞI NGHIỆP',
+  wards: 'DANH SÁCH CÁC XÃ, PHƯỜNG, ĐẶC KHU TRÊN ĐỊA BÀN',
+  universities: 'DANH SÁCH CÁC TRƯỜNG ĐẠI HỌC, CAO ĐẲNG TRÊN ĐỊA BÀN',
+  featured_startups: 'DANH SÁCH CÁC DOANH NGHIỆP KHỞI NGHIỆP TIÊU BIỂU'
+};
 
 export const BrowseView: React.FC<BrowseViewProps> = ({
   initialSearchQuery = '',
@@ -54,6 +70,15 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
   const [showFieldsPanel, setShowFieldsPanel] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 15;
+
+  // Specific Sub-Filters
+  const [filterYear, setFilterYear] = useState('all');
+  const [filterUnit, setFilterUnit] = useState('all');
+  const [filterLevel, setFilterLevel] = useState('all');
+  const [filterSpecialty, setFilterSpecialty] = useState('all');
+  const [filterAcademicRank, setFilterAcademicRank] = useState('all');
+  const [filterDegree, setFilterDegree] = useState('all');
+  const [filterSchoolWard, setFilterSchoolWard] = useState('all'); // 'all' | 'school' | 'ward'
 
   const fetchResults = async (isCurrentCheck?: () => boolean) => {
     setLoading(true);
@@ -87,7 +112,19 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
     };
   }, [selectedModule, selectedField, statusFilter]);
 
-  // Synchronize when parent navigates or passes new initial props
+  // Reset sub-filters on module change
+  useEffect(() => {
+    setFilterYear('all');
+    setFilterUnit('all');
+    setFilterLevel('all');
+    setFilterSpecialty('all');
+    setFilterAcademicRank('all');
+    setFilterDegree('all');
+    setFilterSchoolWard('all');
+    setCurrentPage(1);
+  }, [selectedModule]);
+
+  // Synchronize with external prop triggers
   useEffect(() => {
     if (initialModule) setSelectedModule(initialModule);
   }, [initialModule]);
@@ -113,15 +150,145 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
     fetchResults();
   };
 
-  const formatVND = (num?: number) => {
-    if (!num) return '0 đ';
-    if (num >= 1000000000) return `${(num / 1000000000).toFixed(1).replace('.', ',')} tỷ đ`;
-    if (num >= 1000000) return `${(num / 1000000).toFixed(0)} triệu đ`;
-    return `${Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} đ`;
-  };
+  // Derive unique values for sub-filter dropdowns
+  const availableYears = useMemo(() => {
+    const set = new Set<string>();
+    results.forEach(r => {
+      if (r.recognitionYear) set.add(String(r.recognitionYear));
+      if (r.year) set.add(String(r.year));
+      if (r.foundedYear) set.add(String(r.foundedYear));
+      if (r.startYear) set.add(String(r.startYear));
+      if (r.birthYear) set.add(String(r.birthYear));
+    });
+    return Array.from(set).sort().reverse();
+  }, [results]);
 
-  // Group results by module when selectedModule === 'all'
-  const groupedResults = React.useMemo(() => {
+  const availableUnits = useMemo(() => {
+    const set = new Set<string>();
+    results.forEach(r => {
+      const u = r.leadOrganization || r.ownerName || r.proposingOrg || r.workplace || r.organization;
+      if (u && typeof u === 'string' && u.length > 2) set.add(u);
+    });
+    return Array.from(set).sort();
+  }, [results]);
+
+  const availableSpecialties = useMemo(() => {
+    const set = new Set<string>();
+    results.forEach(r => {
+      const s = r.specialty || r.primaryField;
+      if (s && typeof s === 'string') set.add(s);
+    });
+    return Array.from(set).sort();
+  }, [results]);
+
+  // Filtered & Sorted items
+  const processedResults = useMemo(() => {
+    let list = [...results];
+
+    // Sub-filters
+    if (filterYear !== 'all') {
+      list = list.filter(r => 
+        String(r.recognitionYear || r.year || r.foundedYear || r.startYear || r.birthYear) === filterYear ||
+        (r.executionTime && r.executionTime.includes(filterYear))
+      );
+    }
+
+    if (filterUnit !== 'all') {
+      list = list.filter(r => {
+        const u = (r.leadOrganization || r.ownerName || r.proposingOrg || r.workplace || r.organization || '').toLowerCase();
+        return u.includes(filterUnit.toLowerCase());
+      });
+    }
+
+    if (filterLevel !== 'all') {
+      list = list.filter(r => {
+        const lvl = (r.managementLevel || r.managingAgency || '').toLowerCase();
+        return lvl.includes(filterLevel.toLowerCase());
+      });
+    }
+
+    if (filterSpecialty !== 'all') {
+      list = list.filter(r => {
+        const sp = (r.specialty || r.primaryField || '').toLowerCase();
+        return sp.includes(filterSpecialty.toLowerCase());
+      });
+    }
+
+    if (filterAcademicRank !== 'all') {
+      list = list.filter(r => {
+        const rank = ((r.academicRank || '') + ' ' + (r.title || '')).toLowerCase();
+        return rank.includes(filterAcademicRank.toLowerCase());
+      });
+    }
+
+    if (filterDegree !== 'all') {
+      list = list.filter(r => {
+        const deg = ((r.degree || '') + ' ' + (r.title || '')).toLowerCase();
+        return deg.includes(filterDegree.toLowerCase());
+      });
+    }
+
+    if (filterSchoolWard !== 'all') {
+      list = list.filter(r => {
+        const text = ((r.wardSchool || '') + ' ' + (r.originType || '') + ' ' + (r.incubator || '') + ' ' + (r.currentAffiliation || '') + ' ' + (r.address || '')).toLowerCase();
+        if (filterSchoolWard === 'school') {
+          return text.includes('trường') || text.includes('đại học') || text.includes('cao đẳng') || text.includes('viện');
+        }
+        if (filterSchoolWard === 'ward') {
+          return text.includes('xã') || text.includes('phường') || text.includes('đặc khu') || text.includes('quận');
+        }
+        return true;
+      });
+    }
+
+    // MANDATORY REQUIREMENT: Wards sorting priority: Phường -> Xã -> Đặc khu
+    if (selectedModule === 'wards') {
+      list.sort((a, b) => {
+        const getRank = (item: BaseEntity) => {
+          const t = ((item.title || '') + ' ' + (item.areaType || '') + ' ' + (item.address || '')).toLowerCase();
+          if (t.includes('phường')) return 1;
+          if (t.includes('xã')) return 2;
+          if (t.includes('đặc khu')) return 3;
+          return 4;
+        };
+        const rankA = getRank(a);
+        const rankB = getRank(b);
+        if (rankA !== rankB) return rankA - rankB;
+        return (a.title || '').localeCompare(b.title || '', 'vi');
+      });
+    }
+
+    // MANDATORY REQUIREMENT: Universities sorting priority: Đại học -> Cao đẳng
+    if (selectedModule === 'universities') {
+      list.sort((a, b) => {
+        const getRank = (item: BaseEntity) => {
+          const t = ((item.title || '') + ' ' + (item.institutionType || '') + ' ' + (item.level || '')).toLowerCase();
+          if (t.includes('đại học')) return 1;
+          if (t.includes('cao đẳng')) return 2;
+          return 3;
+        };
+        const rankA = getRank(a);
+        const rankB = getRank(b);
+        if (rankA !== rankB) return rankA - rankB;
+        return (a.title || '').localeCompare(b.title || '', 'vi');
+      });
+    }
+
+    return list;
+  }, [
+    results,
+    selectedModule,
+    filterYear,
+    filterUnit,
+    filterLevel,
+    filterSpecialty,
+    filterAcademicRank,
+    filterDegree,
+    filterSchoolWard
+  ]);
+
+  // Grouped results when selectedModule === 'all'
+  const groupedResults = useMemo(() => {
     if (selectedModule !== 'all') return null;
     const groups: Record<string, BaseEntity[]> = {};
     for (const item of results) {
@@ -134,12 +301,9 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
   const formatModuleTitle = (mod: string) => {
     if (mod === 'all') return 'Tra cứu dữ liệu toàn hệ thống (phân loại từng phân hệ)';
-    if (mod === 'collaboration_needs') return 'Tra cứu nhu cầu kết nối & đặt hàng';
+    if (MODULE_LIST_TITLES[mod]) return MODULE_LIST_TITLES[mod];
     const name = MODULE_NAMES[mod as ModuleType];
-    if (name) {
-      return `Tra cứu ${name.charAt(0).toLowerCase() + name.slice(1)}`;
-    }
-    return `Tra cứu: ${mod}`;
+    return name ? `DANH SÁCH ${name.toUpperCase()}` : `DANH SÁCH ${mod.toUpperCase()}`;
   };
 
   return (
@@ -152,7 +316,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
             {formatModuleTitle(selectedModule)}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Tìm kiếm theo từ khóa, lọc chuyên sâu theo lĩnh vực và xem tối đa 5 dữ liệu mỗi phân hệ khi xem tổng thể
+            Tra cứu dữ liệu chính thống, lọc phân loại theo các tiêu chí chuẩn hóa và trích xuất hồ sơ chi tiết.
           </p>
         </div>
 
@@ -160,7 +324,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
           <button
             type="button"
             onClick={() => setShowAdvancedModal(true)}
-            className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs whitespace-nowrap"
+            className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs whitespace-nowrap cursor-pointer"
           >
             <SlidersHorizontal className="w-3.5 h-3.5 text-teal-700" />
             <span>Tìm kiếm nâng cao</span>
@@ -168,7 +332,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
           <button
             onClick={onOpenSubmitModal}
-            className="px-4 py-2 bg-teal-800 hover:bg-teal-700 text-white text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
+            className="px-4 py-2 bg-teal-800 hover:bg-teal-700 text-white text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap cursor-pointer"
           >
             <span>Nộp sáng kiến trực tuyến</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -184,7 +348,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
             <select
               value={selectedModule}
               onChange={(e) => setSelectedModule(e.target.value)}
-              className="w-full h-10 px-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-700"
+              className="w-full h-10 px-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-700 cursor-pointer"
             >
               {MODULE_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -196,7 +360,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
             <Search className="w-4 h-4 text-slate-400 absolute left-3" />
             <input
               type="text"
-              placeholder="Nhập từ khóa tìm kiếm (AI, y tế, tên chuyên gia, số quyết định, mã số đề tài...)"
+              placeholder="Nhập từ khóa tìm kiếm (tên đề tài, sáng kiến, chuyên gia, đơn vị, mã số, người đứng đầu...)"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="w-full h-10 pl-9 pr-3 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-700"
@@ -205,26 +369,26 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
           <button
             type="submit"
-            className="h-10 px-5 bg-teal-800 hover:bg-teal-700 text-white text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 shrink-0 shadow-sm"
+            className="h-10 px-5 bg-teal-800 hover:bg-teal-700 text-white text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 shrink-0 shadow-sm cursor-pointer"
           >
             <Search className="w-4 h-4" />
             <span>Tìm kiếm</span>
           </button>
         </form>
 
-        {/* Quick field selector and status toggle */}
-        <div className="pt-3 border-t border-slate-100 text-xs space-y-2.5">
+        {/* Specialized Field Dropdown Toggle & View Mode */}
+        <div className="pt-3 border-t border-slate-100 text-xs space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setShowFieldsPanel(!showFieldsPanel)}
-                className={`px-3 py-1.5 rounded-xl font-semibold border flex items-center gap-1.5 transition-colors shadow-2xs ${
+                className={`px-3 py-1.5 rounded-xl font-semibold border flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer ${
                   selectedField 
                     ? 'bg-teal-800 text-white border-teal-700' 
                     : 'bg-teal-50 text-teal-900 border-teal-200 hover:bg-teal-100'
                 }`}
-                title="Mở danh sách 8 Lĩnh vực chuyên ngành"
+                title="Mở danh sách Lĩnh vực chuyên ngành"
               >
                 <Layers className="w-3.5 h-3.5 text-teal-600" />
                 <span>
@@ -239,7 +403,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setSelectedField('')}
-                  className="text-xs text-rose-700 hover:text-rose-900 font-semibold flex items-center gap-0.5 hover:underline"
+                  className="text-xs text-rose-700 hover:text-rose-900 font-semibold flex items-center gap-0.5 hover:underline cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                   <span>Bỏ chọn</span>
@@ -247,28 +411,28 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 text-slate-500 font-mono text-xs shrink-0">
+            <div className="flex flex-wrap items-center gap-2 text-slate-500 text-xs shrink-0">
               {selectedModule !== 'all' && (
                 <>
                   <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
                     <button
                       type="button"
                       onClick={() => setViewMode('table')}
-                      className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors ${
+                      className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
                         viewMode === 'table' ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
-                      title="Xem dạng bảng chuẩn hoá theo trường dữ liệu quy định"
+                      title="Xem dạng bảng chuẩn hoá"
                     >
                       <TableIcon className="w-3.5 h-3.5" />
-                      <span>Bảng chuẩn hoá</span>
+                      <span>Dạng bảng</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setViewMode('grid')}
-                      className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors ${
+                      className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
                         viewMode === 'grid' ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
-                      title="Xem dạng thẻ trực quan"
+                      title="Xem dạng thẻ"
                     >
                       <LayoutGrid className="w-3.5 h-3.5" />
                       <span>Dạng thẻ</span>
@@ -278,7 +442,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   <a
                     href={`/api/export/${selectedModule}`}
                     download
-                    className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold flex items-center gap-1 transition-colors"
+                    className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                     title="Xuất tệp CSV dữ liệu theo biểu mẫu chuẩn"
                   >
                     <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
@@ -287,15 +451,219 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                   <button
                     onClick={() => setSelectedModule('all')}
-                    className="text-teal-800 font-sans font-semibold hover:underline"
+                    className="text-teal-800 font-semibold hover:underline cursor-pointer"
                   >
                     ← Tất cả phân hệ
                   </button>
                 </>
               )}
-              <span>Tổng cộng: <strong className="text-slate-900 text-sm font-sans">{results.length}</strong> kết quả</span>
+              <span>Tổng cộng: <strong className="text-slate-900 font-bold">{processedResults.length}</strong> kết quả</span>
             </div>
           </div>
+
+          {/* =========================================================================
+              CUSTOM SUB-FILTERS SPECIFICALLY REQUESTED FOR EACH MODULE
+             ========================================================================= */}
+          {selectedModule !== 'all' && (
+            <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2.5 text-xs bg-slate-50/70 p-3 rounded-xl border border-slate-200">
+              <span className="font-bold text-slate-700 flex items-center gap-1">
+                <Filter className="w-3.5 h-3.5 text-teal-700" />
+                <span>Bộ lọc phân loại:</span>
+              </span>
+
+              {/* 1. Science Tasks Filters: theo năm, theo lĩnh vực, theo đơn vị, theo cấp */}
+              {selectedModule === 'science_tasks' && (
+                <>
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-500">Năm:</span>
+                    <select
+                      value={filterYear}
+                      onChange={(e) => setFilterYear(e.target.value)}
+                      className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 font-medium cursor-pointer"
+                    >
+                      <option value="all">Tất cả năm</option>
+                      {['2026', '2025', '2024', '2023', '2022', '2021'].map(yr => (
+                        <option key={yr} value={yr}>Năm {yr}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-500">Cấp quản lý:</span>
+                    <select
+                      value={filterLevel}
+                      onChange={(e) => setFilterLevel(e.target.value)}
+                      className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 font-medium cursor-pointer"
+                    >
+                      <option value="all">Tất cả cấp</option>
+                      <option value="Cấp Quốc gia">Cấp Quốc gia</option>
+                      <option value="Cấp Thành phố">Cấp Thành phố</option>
+                      <option value="Cấp Cơ sở">Cấp Cơ sở</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-500">Đơn vị chủ trì:</span>
+                    <select
+                      value={filterUnit}
+                      onChange={(e) => setFilterUnit(e.target.value)}
+                      className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 font-medium max-w-[200px] truncate cursor-pointer"
+                    >
+                      <option value="all">Tất cả đơn vị</option>
+                      {availableUnits.map(u => (
+                        <option key={u} value={u}>{u}</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {/* 2. Initiatives Filters: theo đơn vị, theo lĩnh vực, theo năm */}
+              {selectedModule === 'initiatives' && (
+                <>
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-500">Năm công nhận:</span>
+                    <select
+                      value={filterYear}
+                      onChange={(e) => setFilterYear(e.target.value)}
+                      className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 font-medium cursor-pointer"
+                    >
+                      <option value="all">Tất cả năm</option>
+                      {['2026', '2025', '2024', '2023', '2022', '2021'].map(yr => (
+                        <option key={yr} value={yr}>Năm {yr}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-500">Đơn vị / Chủ sở hữu:</span>
+                    <select
+                      value={filterUnit}
+                      onChange={(e) => setFilterUnit(e.target.value)}
+                      className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 font-medium max-w-[200px] truncate cursor-pointer"
+                    >
+                      <option value="all">Tất cả đơn vị</option>
+                      {availableUnits.map(u => (
+                        <option key={u} value={u}>{u}</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {/* 3. Experts Filters: theo đơn vị, theo lĩnh vực, theo chuyên ngành, theo học hàm, theo học vị, theo năm */}
+              {selectedModule === 'experts' && (
+                <>
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-500">Học hàm:</span>
+                    <select
+                      value={filterAcademicRank}
+                      onChange={(e) => setFilterAcademicRank(e.target.value)}
+                      className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 font-medium cursor-pointer"
+                    >
+                      <option value="all">Tất cả học hàm</option>
+                      <option value="Giáo sư">Giáo sư (GS)</option>
+                      <option value="Phó Giáo sư">Phó Giáo sư (PGS)</option>
+                      <option value="Chuyên gia">Chuyên gia cao cấp</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-500">Học vị:</span>
+                    <select
+                      value={filterDegree}
+                      onChange={(e) => setFilterDegree(e.target.value)}
+                      className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 font-medium cursor-pointer"
+                    >
+                      <option value="all">Tất cả học vị</option>
+                      <option value="Tiến sĩ">Tiến sĩ (TS/TSKH)</option>
+                      <option value="Thạc sĩ">Thạc sĩ (ThS)</option>
+                      <option value="Bác sĩ CKII">Bác sĩ CKII</option>
+                      <option value="Kỹ sư">Kỹ sư / Cử nhân</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-500">Chuyên ngành:</span>
+                    <select
+                      value={filterSpecialty}
+                      onChange={(e) => setFilterSpecialty(e.target.value)}
+                      className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 font-medium max-w-[180px] truncate cursor-pointer"
+                    >
+                      <option value="all">Tất cả chuyên ngành</option>
+                      {availableSpecialties.map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-500">Đơn vị công tác:</span>
+                    <select
+                      value={filterUnit}
+                      onChange={(e) => setFilterUnit(e.target.value)}
+                      className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 font-medium max-w-[180px] truncate cursor-pointer"
+                    >
+                      <option value="all">Tất cả đơn vị</option>
+                      {availableUnits.map(u => (
+                        <option key={u} value={u}>{u}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-500">Năm sinh / Bắt đầu:</span>
+                    <select
+                      value={filterYear}
+                      onChange={(e) => setFilterYear(e.target.value)}
+                      className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 font-medium cursor-pointer"
+                    >
+                      <option value="all">Tất cả năm</option>
+                      {['1990', '1985', '1980', '1975', '1970', '1965'].map(yr => (
+                        <option key={yr} value={yr}>Thập niên {yr}</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {/* 4. Startups, Startup Projects, Startup Ideas: Phân loại theo trường học và xã/phường */}
+              {['startups', 'startup_projects', 'startup_ideas'].includes(selectedModule) && (
+                <div className="flex items-center gap-1">
+                  <span className="text-slate-500">Nguồn gốc phân loại:</span>
+                  <select
+                    value={filterSchoolWard}
+                    onChange={(e) => setFilterSchoolWard(e.target.value)}
+                    className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 font-semibold cursor-pointer"
+                  >
+                    <option value="all">Tất cả (Trường học & Xã/phường)</option>
+                    <option value="school">Từ Trường học / Viện trường</option>
+                    <option value="ward">Từ Xã / Phường địa bàn</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Clear filters button */}
+              {(filterYear !== 'all' || filterUnit !== 'all' || filterLevel !== 'all' || filterSpecialty !== 'all' || filterAcademicRank !== 'all' || filterDegree !== 'all' || filterSchoolWard !== 'all') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterYear('all');
+                    setFilterUnit('all');
+                    setFilterLevel('all');
+                    setFilterSpecialty('all');
+                    setFilterAcademicRank('all');
+                    setFilterDegree('all');
+                    setFilterSchoolWard('all');
+                  }}
+                  className="text-rose-700 hover:text-rose-900 font-semibold ml-auto flex items-center gap-0.5 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Xóa bộ lọc</span>
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Active Field Filter Indicator */}
           {selectedField && (
@@ -304,7 +672,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
               <span className="font-bold underline">{selectedField}</span>
               <button
                 onClick={() => setSelectedField('')}
-                className="ml-auto text-xs text-rose-700 hover:text-rose-900 font-semibold flex items-center gap-0.5 hover:underline"
+                className="ml-auto text-xs text-rose-700 hover:text-rose-900 font-semibold flex items-center gap-0.5 hover:underline cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
                 <span>Bỏ lọc</span>
@@ -312,9 +680,9 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
             </div>
           )}
 
-          {/* Expandable Panel of 8 Standardized Disciplines when clicking 'Lĩnh vực chuyên ngành' */}
+          {/* Expandable Panel of 8 Standardized Disciplines */}
           {showFieldsPanel && (
-            <div className="p-4 bg-slate-50 border border-teal-200 rounded-2xl shadow-xs animate-in fade-in duration-150 space-y-3">
+            <div className="p-4 bg-slate-50 border border-teal-200 rounded-2xl shadow-xs space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-slate-200">
                 <div className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
                   <Database className="w-4 h-4 text-teal-700" />
@@ -323,7 +691,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowFieldsPanel(false)}
-                  className="text-xs text-slate-400 hover:text-slate-700"
+                  className="text-xs text-slate-400 hover:text-slate-700 cursor-pointer"
                 >
                   Đóng ✕
                 </button>
@@ -340,7 +708,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                         setSelectedField(isSelected ? '' : sf.name);
                         setShowFieldsPanel(false);
                       }}
-                      className={`p-2.5 rounded-xl text-left transition-all border flex flex-col justify-between ${
+                      className={`p-2.5 rounded-xl text-left transition-all border flex flex-col justify-between cursor-pointer ${
                         isSelected
                           ? 'bg-teal-800 text-white border-teal-700 font-semibold shadow-xs'
                           : 'bg-white hover:bg-teal-50/50 text-slate-800 border-slate-200 hover:border-teal-300'
@@ -348,15 +716,9 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     >
                       <div>
                         <div className="text-[10px] font-semibold uppercase tracking-wider text-teal-600 mb-0.5">
-                          {sf.category}
+                          Lĩnh vực {sf.id}
                         </div>
-                        <div className={`text-xs leading-snug font-medium ${isSelected ? 'text-white' : 'text-slate-900'}`}>
-                          {sf.name}
-                        </div>
-                      </div>
-                      <div className="mt-2 text-[10px] flex items-center justify-between opacity-80 pt-1 border-t border-slate-100">
-                        <span>{sf.shortName}</span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                        <div className="text-xs font-medium leading-snug">{sf.name}</div>
                       </div>
                     </button>
                   );
@@ -367,36 +729,20 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
         </div>
       </div>
 
-      {/* Loading state */}
-      {loading ? (
-        <div className="py-20 text-center text-slate-400 text-xs">
-          Đang tải dữ liệu từ máy chủ thành phố...
-        </div>
-      ) : results.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3 shadow-xs">
-          <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
-            <Search className="w-6 h-6" />
-          </div>
-          <div className="text-base font-bold text-slate-800">Không tìm thấy bản ghi phù hợp</div>
-          <p className="text-xs text-slate-500 max-w-md mx-auto">
-            Vui lòng thử tìm kiếm với từ khóa khác, hoặc mở rộng bộ lọc phân hệ dữ liệu.
-          </p>
-        </div>
-      ) : selectedModule === 'all' && groupedResults ? (
-        /* ================= GROUPED VIEW WHEN SEARCHING "ALL DATA" ================= */
-        /* Yêu cầu: Có 1 dòng là tên loại dữ liệu để phân loại giữa các dữ liệu, mỗi loại dữ liệu chỉ hiển thị 5 dữ liệu và có nút click để xem thêm */
+      {/* =========================================================================
+          GROUPED OVERVIEW (WHEN selectedModule === 'all')
+         ========================================================================= */}
+      {selectedModule === 'all' && groupedResults ? (
         <div className="space-y-10">
           {Object.entries(groupedResults).map(([modKey, modItems]) => {
-            const modTitle = MODULE_NAMES[modKey as ModuleType] || modKey;
+            const modTitle = MODULE_LIST_TITLES[modKey] || `DANH SÁCH ${modKey.toUpperCase()}`;
             const displayItems = modItems.slice(0, 5);
             const remainingCount = modItems.length - 5;
 
             return (
               <section key={modKey} className="space-y-4">
-                {/* 1 DÒNG TÊN LOẠI DỮ LIỆU ĐỂ PHÂN LOẠI */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 bg-gradient-to-r from-teal-900 via-teal-800 to-slate-900 text-white rounded-xl shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-teal-900 to-slate-900 text-white p-4 rounded-2xl shadow-sm">
                   <div className="flex items-center gap-2.5">
-                    <Database className="w-4 h-4 text-teal-300" />
                     <h2 className="font-bold text-sm tracking-tight">
                       {modTitle}
                     </h2>
@@ -405,20 +751,18 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     </span>
                   </div>
 
-                  {/* Nút xem thêm loại dữ liệu */}
                   <button
                     onClick={() => {
                       setSelectedModule(modKey);
                       window.scrollTo({ top: 120, behavior: 'smooth' });
                     }}
-                    className="text-xs font-semibold text-teal-200 hover:text-white flex items-center gap-1 group self-end sm:self-auto bg-teal-800/80 hover:bg-teal-700 px-3 py-1.5 rounded-lg border border-teal-600/40 transition-colors"
+                    className="text-xs font-semibold text-teal-200 hover:text-white flex items-center gap-1 group self-end sm:self-auto bg-teal-800/80 hover:bg-teal-700 px-3 py-1.5 rounded-lg border border-teal-600/40 transition-colors cursor-pointer"
                   >
-                    <span>Xem thêm {modTitle} ({modItems.length} bản ghi)</span>
+                    <span>Xem toàn bộ danh sách ({modItems.length})</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>
 
-                {/* Danh sách tối đa 5 dữ liệu của loại này */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {displayItems.map((item) => (
                     <div
@@ -430,25 +774,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                         <div className="flex items-center gap-2 text-[11px] text-slate-500 flex-wrap">
                           <span className="font-mono text-teal-800 font-semibold">{item.code}</span>
                           <span aria-hidden="true">·</span>
-                          {item.moduleType === 'initiatives' ? (
-                            <>
-                              <span className="text-teal-900 font-semibold truncate">Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
-                              <span aria-hidden="true">·</span>
-                              <span className="text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 font-semibold">
-                                Sáng kiến đã công nhận {item.recognizedScope ? `(${item.recognizedScope})` : '(Cấp thành phố)'}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <span className="truncate">{item.field || 'Đa ngành'}</span>
-                              {item.recognizedScope && (
-                                <>
-                                  <span aria-hidden="true">·</span>
-                                  <span className="text-amber-800 font-semibold">{item.recognizedScope}</span>
-                                </>
-                              )}
-                            </>
-                          )}
+                          <span className="truncate">{item.field || 'Đa ngành'}</span>
                         </div>
 
                         <h3 className="text-sm font-bold text-slate-900 group-hover:text-teal-800 transition-colors line-clamp-2 leading-snug">
@@ -461,18 +787,8 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                         <div className="pt-2 border-t border-slate-100 space-y-0.5 text-xs text-slate-500">
                           <div className="truncate">
-                            <span className="text-slate-400">Đơn vị / Tác giả:</span> {item.ownerName || item.leadOrganization || '—'}
+                            <span className="text-slate-400">Đơn vị / Tác giả:</span> {item.ownerName || item.leadOrganization || item.workplace || '—'}
                           </div>
-                          {item.totalBudgetApproved && (
-                            <div className="text-teal-800 font-mono text-[11px]">
-                              <span>Kinh phí duyệt: <strong>{formatVND(item.totalBudgetApproved)}</strong></span>
-                            </div>
-                          )}
-                          {item.costSavings && (
-                            <div className="text-emerald-700 font-mono text-[11px]">
-                              <span>Làm lợi: <strong>{formatVND(item.costSavings)}/năm</strong></span>
-                            </div>
-                          )}
                         </div>
                       </div>
 
@@ -490,7 +806,6 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   ))}
                 </div>
 
-                {/* Footer xem thêm của từng phân hệ */}
                 {remainingCount > 0 && (
                   <div className="text-center pt-1 pb-3">
                     <button
@@ -498,7 +813,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                         setSelectedModule(modKey);
                         window.scrollTo({ top: 120, behavior: 'smooth' });
                       }}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-teal-50 hover:text-teal-900 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-teal-50 hover:text-teal-900 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 transition-colors cursor-pointer"
                     >
                       <span>Xem toàn bộ {modItems.length} bản ghi của {modTitle}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -510,31 +825,37 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
           })}
         </div>
       ) : (
-        /* ================= SINGLE MODULE VIEW: TABLE OR GRID ================= */
+        /* =========================================================================
+            SINGLE MODULE VIEW: TABLE OR GRID
+           ========================================================================= */
         <div className="space-y-6">
           {viewMode === 'table' ? (
             <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs text-slate-700">
                   <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[11px] tracking-wider whitespace-nowrap">
+                    
+                    {/* 1. Science Tasks: STT, Tên đề tài, Cấp quản lý, Cơ quan chủ trì, Chủ nhiệm đề tài, Thời gian thực hiện, Lĩnh vực, Tóm tắt đề tài */}
                     {selectedModule === 'science_tasks' && (
                       <tr>
                         <th className="py-3 px-3 w-12 text-center">STT</th>
-                        <th className="py-3 px-4 min-w-[280px]">Tên đề tài</th>
+                        <th className="py-3 px-4 min-w-[260px]">Tên đề tài</th>
                         <th className="py-3 px-4 w-32">Cấp quản lý</th>
                         <th className="py-3 px-4 w-44">Cơ quan chủ trì</th>
                         <th className="py-3 px-4 w-40">Chủ nhiệm đề tài</th>
                         <th className="py-3 px-4 w-36">Thời gian thực hiện</th>
-                        <th className="py-3 px-4 w-40">Lĩnh vực</th>
+                        <th className="py-3 px-4 w-36">Lĩnh vực</th>
+                        <th className="py-3 px-4 min-w-[280px]">Tóm tắt đề tài</th>
                         <th className="py-3 px-3 w-20 text-center">Thao tác</th>
                       </tr>
                     )}
 
+                    {/* 2. Initiatives: STT, Năm công nhận, Tên sáng kiến, Tác giả, Chủ sở hữu, Địa chỉ chủ sở hữu, Lĩnh vực */}
                     {selectedModule === 'initiatives' && (
                       <tr>
                         <th className="py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 w-28 text-center">Năm công nhận</th>
-                        <th className="py-3 px-4 min-w-[280px]">Tên sáng kiến</th>
+                        <th className="py-3 px-4 min-w-[260px]">Tên sáng kiến</th>
                         <th className="py-3 px-4 w-36">Tác giả</th>
                         <th className="py-3 px-4 w-40">Chủ sở hữu</th>
                         <th className="py-3 px-4 w-44">Địa chỉ chủ sở hữu</th>
@@ -543,101 +864,116 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                       </tr>
                     )}
 
+                    {/* 3. Experts: STT, Tên Chuyên gia, Năm sinh, Chuyên ngành */}
                     {selectedModule === 'experts' && (
                       <tr>
                         <th className="py-3 px-3 w-12 text-center">STT</th>
-                        <th className="py-3 px-4 min-w-[200px]">Tên Chuyên gia</th>
-                        <th className="py-3 px-4 w-24 text-center">Năm sinh</th>
-                        <th className="py-3 px-4 w-44">Email</th>
-                        <th className="py-3 px-4 w-32">Điện thoại</th>
-                        <th className="py-3 px-4 min-w-[200px]">Chuyên ngành</th>
+                        <th className="py-3 px-4 min-w-[240px]">Tên Chuyên gia</th>
+                        <th className="py-3 px-4 w-28 text-center">Năm sinh</th>
+                        <th className="py-3 px-4 min-w-[260px]">Chuyên ngành</th>
                         <th className="py-3 px-3 w-20 text-center">Thao tác</th>
                       </tr>
                     )}
 
+                    {/* 4. Startups: STT, Tên doanh nghiệp, Địa chỉ hoạt động, Website, File logo, Lĩnh vực, Tóm tắt, Sản phẩm giải quyết vấn đề, Số sáng lập viên, Nhân sự, Người đứng đầu, SĐT, Email, Năm bắt đầu */}
                     {selectedModule === 'startups' && (
                       <tr>
                         <th className="py-3 px-3 w-12 text-center">STT</th>
-                        <th className="py-3 px-4 min-w-[240px]">Tên doanh nghiệp</th>
-                        <th className="py-3 px-4 min-w-[200px]">Địa chỉ hoạt động</th>
-                        <th className="py-3 px-4 w-36">Website</th>
-                        <th className="py-3 px-4 w-40">Lĩnh vực kinh doanh</th>
-                        <th className="py-3 px-4 w-36">Người đứng đầu</th>
-                        <th className="py-3 px-4 w-32">Điện thoại</th>
-                        <th className="py-3 px-4 w-40">Email</th>
-                        <th className="py-3 px-4 w-28 text-center">Năm khởi nghiệp</th>
-                        <th className="py-3 px-3 w-20 text-center">Thao tác</th>
-                      </tr>
-                    )}
-
-                    {selectedModule === 'support_organizations' && (
-                      <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
-                        <th className="py-3 px-4 min-w-[320px]">Tên tổ chức</th>
-                        <th className="py-3 px-4 min-w-[320px]">Địa chỉ</th>
-                        <th className="py-3 px-3 w-20 text-center">Thao tác</th>
-                      </tr>
-                    )}
-
-                    {selectedModule === 'startup_projects' && (
-                      <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
-                        <th className="py-3 px-4 min-w-[260px]">Tên dự án khởi nghiệp</th>
+                        <th className="py-3 px-4 min-w-[220px]">Tên doanh nghiệp</th>
                         <th className="py-3 px-4 min-w-[180px]">Địa chỉ hoạt động</th>
-                        <th className="py-3 px-4 w-40">Lĩnh vực khởi nghiệp</th>
+                        <th className="py-3 px-4 w-32">Website</th>
+                        <th className="py-3 px-3 w-16 text-center">Logo</th>
+                        <th className="py-3 px-4 w-36">Lĩnh vực kinh doanh</th>
+                        <th className="py-3 px-4 min-w-[240px]">Tóm tắt về DN & Sản phẩm</th>
+                        <th className="py-3 px-4 min-w-[240px]">Sản phẩm giải quyết vấn đề gì</th>
+                        <th className="py-3 px-3 w-24 text-center">Sáng lập viên</th>
+                        <th className="py-3 px-3 w-24 text-center">Nhân sự</th>
                         <th className="py-3 px-4 w-36">Người đứng đầu</th>
                         <th className="py-3 px-4 w-32">Số điện thoại</th>
                         <th className="py-3 px-4 w-40">Email</th>
-                        <th className="py-3 px-4 min-w-[200px]">Dự án được ươm tạo từ tổ chức</th>
                         <th className="py-3 px-4 w-28 text-center">Năm bắt đầu</th>
                         <th className="py-3 px-3 w-20 text-center">Thao tác</th>
                       </tr>
                     )}
 
+                    {/* 5. Support Organizations: STT, Tên tổ chức, Địa chỉ, Thông tin về tổ chức */}
+                    {selectedModule === 'support_organizations' && (
+                      <tr>
+                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-4 min-w-[280px]">Tên tổ chức</th>
+                        <th className="py-3 px-4 min-w-[260px]">Địa chỉ</th>
+                        <th className="py-3 px-4 min-w-[320px]">Thông tin về tổ chức</th>
+                        <th className="py-3 px-3 w-20 text-center">Thao tác</th>
+                      </tr>
+                    )}
+
+                    {/* 6. Startup Projects: STT, Tên dự án, Lĩnh vực khởi nghiệp, Sản phẩm giải quyết vấn đề, Người đứng đầu, Dự án được ươm tạo từ tổ chức, Năm bắt đầu khởi nghiệp */}
+                    {selectedModule === 'startup_projects' && (
+                      <tr>
+                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-4 min-w-[240px]">Tên dự án</th>
+                        <th className="py-3 px-4 w-36">Lĩnh vực khởi nghiệp</th>
+                        <th className="py-3 px-4 min-w-[260px]">Sản phẩm giải quyết vấn đề</th>
+                        <th className="py-3 px-4 w-36">Người đứng đầu</th>
+                        <th className="py-3 px-4 min-w-[220px]">Dự án được ươm tạo từ tổ chức</th>
+                        <th className="py-3 px-4 w-28 text-center">Năm bắt đầu</th>
+                        <th className="py-3 px-3 w-20 text-center">Thao tác</th>
+                      </tr>
+                    )}
+
+                    {/* 7. Startup Ideas: STT, Tên ý tưởng, Lĩnh vực khởi nghiệp, Người đứng đầu, Giáo viên hướng dẫn */}
                     {selectedModule === 'startup_ideas' && (
                       <tr>
                         <th className="py-3 px-3 w-12 text-center">STT</th>
-                        <th className="py-3 px-4 min-w-[240px]">Tên ý tưởng khởi nghiệp</th>
-                        <th className="py-3 px-4 min-w-[180px]">Địa chỉ hoạt động</th>
-                        <th className="py-3 px-4 w-36">Lĩnh vực</th>
-                        <th className="py-3 px-4 min-w-[200px]">Ý tưởng thuộc Xã/phường - Trường học</th>
-                        <th className="py-3 px-4 w-36">Người đứng đầu</th>
-                        <th className="py-3 px-4 w-32">Số điện thoại</th>
-                        <th className="py-3 px-4 w-40">Email</th>
-                        <th className="py-3 px-4 w-36">GV hướng dẫn</th>
-                        <th className="py-3 px-4 min-w-[220px]">Đơn vị học tập / công tác</th>
+                        <th className="py-3 px-4 min-w-[260px]">Tên ý tưởng</th>
+                        <th className="py-3 px-4 w-36">Lĩnh vực khởi nghiệp</th>
+                        <th className="py-3 px-4 w-40">Người đứng đầu</th>
+                        <th className="py-3 px-4 w-40">Giáo viên hướng dẫn</th>
                         <th className="py-3 px-3 w-20 text-center">Thao tác</th>
                       </tr>
                     )}
 
+                    {/* 8. Wards: STT, Tên xã/phường/đặc khu, Địa chỉ, Thông tin liên hệ, Website */}
                     {selectedModule === 'wards' && (
                       <tr>
                         <th className="py-3 px-3 w-12 text-center">STT</th>
-                        <th className="py-3 px-4 min-w-[240px]">Tên xã/phường</th>
-                        <th className="py-3 px-4 min-w-[320px]">Địa chỉ</th>
+                        <th className="py-3 px-4 min-w-[220px]">Tên xã / phường / đặc khu</th>
+                        <th className="py-3 px-4 min-w-[280px]">Địa chỉ</th>
+                        <th className="py-3 px-4 w-36">Thông tin liên hệ</th>
+                        <th className="py-3 px-4 w-40">Website</th>
                         <th className="py-3 px-3 w-20 text-center">Thao tác</th>
                       </tr>
                     )}
 
+                    {/* 9. Universities: STT, Tên trường, Thuộc xã/ phường, Địa chỉ, Thông tin liên hệ, Website */}
                     {selectedModule === 'universities' && (
                       <tr>
                         <th className="py-3 px-3 w-12 text-center">STT</th>
-                        <th className="py-3 px-4 min-w-[280px]">Tên trường Đại học/Cao đẳng</th>
-                        <th className="py-3 px-4 w-40">Xã/phường</th>
-                        <th className="py-3 px-4 min-w-[300px]">Địa chỉ</th>
+                        <th className="py-3 px-4 min-w-[260px]">Tên trường</th>
+                        <th className="py-3 px-4 w-36">Thuộc xã / phường</th>
+                        <th className="py-3 px-4 min-w-[280px]">Địa chỉ</th>
+                        <th className="py-3 px-4 w-36">Thông tin liên hệ</th>
+                        <th className="py-3 px-4 w-40">Website</th>
                         <th className="py-3 px-3 w-20 text-center">Thao tác</th>
                       </tr>
                     )}
 
+                    {/* 10. Featured Startups: STT, Tên doanh nghiệp, Tên dự án, Người đại diện dự án, Địa chỉ, Thông tin liên hệ, Website, Thuộc xã/ phường */}
                     {selectedModule === 'featured_startups' && (
                       <tr>
                         <th className="py-3 px-3 w-12 text-center">STT</th>
-                        <th className="py-3 px-4 min-w-[320px]">Tên dự án</th>
-                        <th className="py-3 px-4 min-w-[260px]">Link website</th>
+                        <th className="py-3 px-4 min-w-[220px]">Tên doanh nghiệp</th>
+                        <th className="py-3 px-4 min-w-[220px]">Tên dự án</th>
+                        <th className="py-3 px-4 w-36">Người đại diện dự án</th>
+                        <th className="py-3 px-4 min-w-[200px]">Địa chỉ</th>
+                        <th className="py-3 px-4 w-36">Thông tin liên hệ</th>
+                        <th className="py-3 px-4 w-36">Website</th>
+                        <th className="py-3 px-4 w-36">Thuộc xã / phường</th>
                         <th className="py-3 px-3 w-20 text-center">Thao tác</th>
                       </tr>
                     )}
 
+                    {/* Other modules fallback */}
                     {!['science_tasks', 'initiatives', 'experts', 'startups', 'support_organizations', 'startup_projects', 'startup_ideas', 'wards', 'universities', 'featured_startups'].includes(selectedModule) && (
                       <tr>
                         <th className="py-3 px-3 w-12 text-center">STT</th>
@@ -645,13 +981,13 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                         <th className="py-3 px-4 min-w-[260px]">Tiêu đề / Tên</th>
                         <th className="py-3 px-4 w-40">Lĩnh vực</th>
                         <th className="py-3 px-4 w-44">Đơn vị / Cá nhân</th>
-                        <th className="py-3 px-4 w-28 text-center">Trạng thái</th>
                         <th className="py-3 px-3 w-20 text-center">Thao tác</th>
                       </tr>
                     )}
                   </thead>
+
                   <tbody className="divide-y divide-slate-100">
-                    {results.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item, idx) => {
+                    {processedResults.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item, idx) => {
                       const stt = (currentPage - 1) * PAGE_SIZE + idx + 1;
                       return (
                         <tr key={item.id} className="hover:bg-teal-50/30 transition-colors">
@@ -670,7 +1006,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                                   {item.title}
                                 </span>
                               </td>
-                              <td className="py-3 px-4 text-teal-800 font-medium">
+                              <td className="py-3 px-4 text-teal-800 font-semibold">
                                 {item.managementLevel || item.managingAgency || 'Cấp Thành phố'}
                               </td>
                               <td className="py-3 px-4 text-slate-700">
@@ -682,8 +1018,13 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                               <td className="py-3 px-4 font-mono text-[11px] text-slate-600">
                                 {item.executionTime || item.actualDuration || '18 tháng'}
                               </td>
-                              <td className="py-3 px-4 text-slate-600">
+                              <td className="py-3 px-4 text-slate-700">
                                 {item.field || '—'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-600 max-w-xs">
+                                <p className="line-clamp-2 leading-relaxed text-[11px]">
+                                  {item.description || item.summary || '—'}
+                                </p>
                               </td>
                             </>
                           )}
@@ -711,7 +1052,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                               <td className="py-3 px-4 text-slate-600">
                                 {item.ownerAddress || item.applicationArea || 'TP. Đà Nẵng'}
                               </td>
-                              <td className="py-3 px-4 text-slate-600">
+                              <td className="py-3 px-4 text-slate-700">
                                 {item.field || '—'}
                               </td>
                             </>
@@ -723,19 +1064,13 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                               <td className="py-3 px-4">
                                 <span 
                                   onClick={() => onViewDetail(item)}
-                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer"
+                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer block"
                                 >
                                   {item.title || item.fullName}
                                 </span>
                               </td>
-                              <td className="py-3 px-4 text-center font-mono font-semibold text-slate-700">
+                              <td className="py-3 px-4 text-center font-mono font-semibold text-slate-800">
                                 {item.birthYear || '1978'}
-                              </td>
-                              <td className="py-3 px-4 text-teal-800 font-medium font-mono text-[11px]">
-                                {item.email || item.publicEmail || '—'}
-                              </td>
-                              <td className="py-3 px-4 font-mono text-[11px] text-slate-700">
-                                {item.phone || item.publicPhone || '—'}
                               </td>
                               <td className="py-3 px-4 text-slate-800 font-medium">
                                 {item.specialty || item.primaryField || item.field}
@@ -759,14 +1094,35 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                               </td>
                               <td className="py-3 px-4">
                                 {item.website ? (
-                                  <a href={item.website} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline flex items-center gap-1 font-mono text-[11px]">
+                                  <a href={item.website} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline inline-flex items-center gap-1 font-mono text-[11px]">
                                     {item.website.replace('https://', '')}
                                     <ExternalLink className="w-2.5 h-2.5" />
                                   </a>
                                 ) : '—'}
                               </td>
+                              <td className="py-3 px-3 text-center">
+                                {item.logoUrl ? (
+                                  <img src={item.logoUrl} alt="Logo" className="w-6 h-6 object-contain rounded mx-auto border border-slate-200" />
+                                ) : (
+                                  <span className="w-6 h-6 rounded bg-slate-100 text-slate-500 font-bold text-[10px] flex items-center justify-center mx-auto">
+                                    {item.title?.charAt(0) || 'D'}
+                                  </span>
+                                )}
+                              </td>
                               <td className="py-3 px-4 text-slate-700">
                                 {item.field || '—'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-600 max-w-xs">
+                                <p className="line-clamp-2 text-[11px] leading-relaxed">{item.description || item.summary || '—'}</p>
+                              </td>
+                              <td className="py-3 px-4 text-slate-600 max-w-xs">
+                                <p className="line-clamp-2 text-[11px] leading-relaxed">{item.problemSolved || '—'}</p>
+                              </td>
+                              <td className="py-3 px-3 text-center font-mono font-semibold text-slate-800">
+                                {item.founderCount || 2}
+                              </td>
+                              <td className="py-3 px-3 text-center font-mono font-semibold text-slate-800">
+                                {item.currentStaffCount || item.teamSize || '25'}
                               </td>
                               <td className="py-3 px-4 font-medium text-slate-900">
                                 {item.leaderName || item.representative || item.ownerName || '—'}
@@ -777,8 +1133,8 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                               <td className="py-3 px-4 font-mono text-[11px] text-teal-800">
                                 {item.leaderEmail || item.publicEmail || '—'}
                               </td>
-                              <td className="py-3 px-4 text-center font-mono font-semibold text-slate-700">
-                                {item.foundedYear || item.foundedDate || '2023'}
+                              <td className="py-3 px-4 text-center font-mono font-semibold text-slate-800">
+                                {item.foundedYear || item.startYear || '2023'}
                               </td>
                             </>
                           )}
@@ -789,13 +1145,18 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                               <td className="py-3 px-4">
                                 <span 
                                   onClick={() => onViewDetail(item)}
-                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer"
+                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer block"
                                 >
                                   {item.title}
                                 </span>
                               </td>
                               <td className="py-3 px-4 text-slate-700">
                                 {item.address || item.headquarters || 'Số 48 Phan Đình Phùng, Hải Châu, Đà Nẵng'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-600 max-w-md">
+                                <p className="line-clamp-2 text-[11px] leading-relaxed">
+                                  {item.description || item.information || item.servicesOffered || 'Hỗ trợ ươm tạo, kết nối đầu tư và tư vấn pháp lý.'}
+                                </p>
                               </td>
                             </>
                           )}
@@ -811,23 +1172,17 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                                   {item.title}
                                 </span>
                               </td>
-                              <td className="py-3 px-4 text-slate-600">
-                                {item.address || 'Quận Liên Chiểu, TP. Đà Nẵng'}
-                              </td>
                               <td className="py-3 px-4 text-slate-700">
                                 {item.field || '—'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-600 max-w-xs">
+                                <p className="line-clamp-2 text-[11px] leading-relaxed">{item.problemSolved || item.description || '—'}</p>
                               </td>
                               <td className="py-3 px-4 font-semibold text-slate-900">
                                 {item.leaderName || (Array.isArray(item.foundingTeam) ? item.foundingTeam[0] : item.ownerName) || '—'}
                               </td>
-                              <td className="py-3 px-4 font-mono text-[11px] text-slate-700">
-                                {item.leaderPhone || '0905.123.456'}
-                              </td>
-                              <td className="py-3 px-4 font-mono text-[11px] text-teal-800">
-                                {item.leaderEmail || 'contact@duan.vn'}
-                              </td>
                               <td className="py-3 px-4 text-teal-800 font-medium">
-                                {item.incubator || 'Trung tâm ĐMST Đà Nẵng'}
+                                {item.incubator || 'Tự hình thành dự án'}
                               </td>
                               <td className="py-3 px-4 text-center font-mono font-bold text-slate-700">
                                 {item.startYear || '2024'}
@@ -846,29 +1201,14 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                                   {item.title}
                                 </span>
                               </td>
-                              <td className="py-3 px-4 text-slate-600">
-                                {item.address || 'TP. Đà Nẵng'}
-                              </td>
                               <td className="py-3 px-4 text-slate-700">
                                 {item.field || '—'}
                               </td>
-                              <td className="py-3 px-4 text-teal-800 font-medium">
-                                {item.wardSchool || 'Phường Hòa Khánh Bắc - ĐH Bách Khoa ĐHĐN'}
-                              </td>
                               <td className="py-3 px-4 font-semibold text-slate-900">
-                                {item.leaderName || item.proposer || 'Nguyễn Văn An'}
+                                {item.leaderName || item.proposer || '—'}
                               </td>
-                              <td className="py-3 px-4 font-mono text-[11px] text-slate-700">
-                                {item.leaderPhone || '0905.123.789'}
-                              </td>
-                              <td className="py-3 px-4 font-mono text-[11px] text-teal-800">
-                                {item.leaderEmail || 'an.nv@greencharge.vn'}
-                              </td>
-                              <td className="py-3 px-4 text-indigo-800 font-medium">
-                                {item.mentorTeacher || 'TS. Huỳnh Tấn Đạt'}
-                              </td>
-                              <td className="py-3 px-4 text-slate-700">
-                                {item.currentAffiliation || 'Trường ĐH Bách Khoa - ĐH Đà Nẵng'}
+                              <td className="py-3 px-4 text-indigo-900 font-medium">
+                                {item.mentorTeacher || '—'}
                               </td>
                             </>
                           )}
@@ -879,13 +1219,24 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                               <td className="py-3 px-4">
                                 <span 
                                   onClick={() => onViewDetail(item)}
-                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer text-sm"
+                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer text-sm block"
                                 >
                                   {item.title}
                                 </span>
                               </td>
-                              <td className="py-3 px-4 text-slate-700 font-medium">
+                              <td className="py-3 px-4 text-slate-700">
                                 {item.address}
+                              </td>
+                              <td className="py-3 px-4 font-mono text-[11px] text-slate-700">
+                                {item.contactInfo || item.phone || '0236.3822.xxx'}
+                              </td>
+                              <td className="py-3 px-4">
+                                {item.website ? (
+                                  <a href={item.website} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline inline-flex items-center gap-1 font-mono text-[11px]">
+                                    {item.website.replace('https://', '')}
+                                    <ExternalLink className="w-2.5 h-2.5" />
+                                  </a>
+                                ) : '—'}
                               </td>
                             </>
                           )}
@@ -902,10 +1253,21 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                                 </span>
                               </td>
                               <td className="py-3 px-4 text-teal-800 font-semibold">
-                                {item.ward}
+                                {item.ward || 'Thành phố Đà Nẵng'}
                               </td>
                               <td className="py-3 px-4 text-slate-700">
                                 {item.address}
+                              </td>
+                              <td className="py-3 px-4 font-mono text-[11px] text-slate-700">
+                                {item.contactInfo || item.phone || '0236.3842.xxx'}
+                              </td>
+                              <td className="py-3 px-4">
+                                {item.website ? (
+                                  <a href={item.website} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline inline-flex items-center gap-1 font-mono text-[11px]">
+                                    {item.website.replace('https://', '')}
+                                    <ExternalLink className="w-2.5 h-2.5" />
+                                  </a>
+                                ) : '—'}
                               </td>
                             </>
                           )}
@@ -913,25 +1275,41 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                           {/* 10. Featured Startups */}
                           {selectedModule === 'featured_startups' && (
                             <>
-                              <td className="py-3 px-4">
+                              <td className="py-3 px-4 font-bold text-slate-900">
                                 <span 
                                   onClick={() => onViewDetail(item)}
-                                  className="font-bold text-slate-900 hover:text-teal-800 cursor-pointer block text-sm"
+                                  className="hover:text-teal-800 cursor-pointer block"
                                 >
-                                  {item.title}
+                                  {item.companyName || item.ownerName || item.title}
                                 </span>
+                              </td>
+                              <td className="py-3 px-4 font-semibold text-teal-800">
+                                {item.title || item.projectName}
+                              </td>
+                              <td className="py-3 px-4 text-slate-900 font-medium">
+                                {item.leaderName || item.representative || '—'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-700">
+                                {item.address || 'TP. Đà Nẵng'}
+                              </td>
+                              <td className="py-3 px-4 font-mono text-[11px] text-slate-700">
+                                {item.contactInfo || item.phone || item.email || '—'}
                               </td>
                               <td className="py-3 px-4">
                                 {item.website ? (
-                                  <a href={item.website} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline flex items-center gap-1 font-semibold">
-                                    {item.website} <ExternalLink className="w-3.5 h-3.5" />
+                                  <a href={item.website} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline inline-flex items-center gap-1 font-mono text-[11px]">
+                                    {item.website.replace('https://', '')}
+                                    <ExternalLink className="w-2.5 h-2.5" />
                                   </a>
                                 ) : '—'}
+                              </td>
+                              <td className="py-3 px-4 text-slate-700">
+                                {item.ward || item.wardSchool || '—'}
                               </td>
                             </>
                           )}
 
-                          {/* Fallback for other modules */}
+                          {/* Fallback */}
                           {!['science_tasks', 'initiatives', 'experts', 'startups', 'support_organizations', 'startup_projects', 'startup_ideas', 'wards', 'universities', 'featured_startups'].includes(selectedModule) && (
                             <>
                               <td className="py-3 px-4 font-mono font-medium text-teal-800">
@@ -948,23 +1326,20 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                               <td className="py-3 px-4 text-slate-600">
                                 {item.field || '—'}
                               </td>
-                              <td className="py-3 px-4 text-slate-600">
-                                {item.ownerName || '—'}
-                              </td>
-                              <td className="py-3 px-4 text-center">
-                                <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                  {item.status === 'approved' ? 'Đã duyệt' : item.status}
-                                </span>
+                              <td className="py-3 px-4 text-slate-700">
+                                {item.ownerName || item.leadOrganization || '—'}
                               </td>
                             </>
                           )}
 
+                          {/* Action column */}
                           <td className="py-3 px-3 text-center">
                             <button
+                              type="button"
                               onClick={() => onViewDetail(item)}
-                              className="px-2.5 py-1 text-teal-800 bg-teal-50 hover:bg-teal-100 rounded-lg font-semibold text-[11px] transition-colors cursor-pointer"
+                              className="px-2.5 py-1 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer"
                             >
-                              Xem
+                              Chi tiết
                             </button>
                           </td>
                         </tr>
@@ -975,47 +1350,43 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
               </div>
             </div>
           ) : (
+            /* Grid View */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {results.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item) => (
+              {processedResults.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item, idx) => (
                 <div
                   key={item.id}
                   onClick={() => onViewDetail(item)}
-                  className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:border-teal-400 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group"
+                  className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs hover:border-teal-400 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group"
                 >
-                  <div className="space-y-2.5">
-                    <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-[11px] text-slate-500">
                       <span className="font-mono text-teal-800 font-semibold">{item.code}</span>
                       <span aria-hidden="true">·</span>
-                      <span className="capitalize truncate">{MODULE_NAMES[item.moduleType] || item.moduleType}</span>
+                      <span className="truncate">{item.field || 'Đa ngành'}</span>
                     </div>
 
-                    <h3 className="text-base font-bold text-slate-900 group-hover:text-teal-800 transition-colors line-clamp-2 leading-snug">
+                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-teal-800 transition-colors line-clamp-2 leading-snug">
                       {item.title}
                     </h3>
 
                     <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
-                      {item.description || item.problemSolved || 'Chưa cập nhật nội dung tóm tắt.'}
+                      {item.description || item.problemSolved || 'Chưa cập nhật thông tin mô tả chi tiết.'}
                     </p>
 
-                    <div className="pt-2 border-t border-slate-100 space-y-1 text-xs">
-                      <div className="text-slate-500 truncate">
-                        <span className="text-slate-400">Đơn vị / Tác giả:</span> {item.ownerName || item.leadOrganization || '—'}
+                    <div className="pt-2 border-t border-slate-100 space-y-0.5 text-xs text-slate-500">
+                      <div className="truncate">
+                        <span className="text-slate-400">Đơn vị / Tác giả:</span> {item.ownerName || item.leadOrganization || item.workplace || '—'}
                       </div>
-                      {item.address && (
-                        <div className="text-slate-600 truncate">
-                          <span className="text-slate-400">Địa chỉ:</span> {item.address}
-                        </div>
-                      )}
                     </div>
                   </div>
 
                   <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                    <span className="flex items-center gap-1 text-[11px] text-emerald-700">
+                    <span className="text-[11px] flex items-center gap-1 text-emerald-700">
                       <CheckCircle2 className="w-3 h-3" />
-                      Xác thực
+                      Đã xác minh
                     </span>
                     <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
-                      Xem chi tiết
+                      Xem hồ sơ
                       <ArrowRight className="w-3 h-3" />
                     </span>
                   </div>
@@ -1025,12 +1396,12 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
           )}
 
           {/* Pagination Controls */}
-          {results.length > PAGE_SIZE && (
+          {processedResults.length > PAGE_SIZE && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200 text-xs">
               <div className="text-slate-500">
                 Hiển thị từ <strong className="text-slate-900 font-mono">{(currentPage - 1) * PAGE_SIZE + 1}</strong> đến{' '}
-                <strong className="text-slate-900 font-mono">{Math.min(currentPage * PAGE_SIZE, results.length)}</strong> trên{' '}
-                <strong className="text-slate-900 font-mono">{results.length}</strong> kết quả
+                <strong className="text-slate-900 font-mono">{Math.min(currentPage * PAGE_SIZE, processedResults.length)}</strong> trên{' '}
+                <strong className="text-slate-900 font-mono">{processedResults.length}</strong> kết quả
               </div>
 
               <div className="flex items-center gap-1.5">
@@ -1046,7 +1417,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   Trang trước
                 </button>
 
-                {Array.from({ length: Math.ceil(results.length / PAGE_SIZE) }).map((_, idx) => {
+                {Array.from({ length: Math.ceil(processedResults.length / PAGE_SIZE) }).map((_, idx) => {
                   const pageNum = idx + 1;
                   return (
                     <button
@@ -1069,9 +1440,9 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                 <button
                   type="button"
-                  disabled={currentPage === Math.ceil(results.length / PAGE_SIZE)}
+                  disabled={currentPage === Math.ceil(processedResults.length / PAGE_SIZE)}
                   onClick={() => {
-                    setCurrentPage(prev => Math.min(Math.ceil(results.length / PAGE_SIZE), prev + 1));
+                    setCurrentPage(prev => Math.min(Math.ceil(processedResults.length / PAGE_SIZE), prev + 1));
                     window.scrollTo({ top: 180, behavior: 'smooth' });
                   }}
                   className="px-3 py-1.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed font-medium text-slate-700 cursor-pointer"

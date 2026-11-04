@@ -588,35 +588,35 @@ apiRouter.get('/export/:moduleType', (req: AuthenticatedRequest, res: Response):
   let headers: string[] = ['Mã bản ghi', 'Tiêu đề / Tên', 'Lĩnh vực', 'Đơn vị / Cá nhân', 'Trạng thái', 'Xác minh', 'Ngày tạo'];
 
   if (moduleType === 'science_tasks') {
-    keys = ['stt', 'title', 'managementLevel', 'leadOrganization', 'principalInvestigator', 'executionTime', 'field'];
-    headers = ['STT', 'Tên đề tài', 'Cấp quản lý', 'Cơ quan chủ trì', 'Chủ nhiệm đề tài', 'Thời gian thực hiện', 'Lĩnh vực'];
+    keys = ['stt', 'title', 'managementLevel', 'leadOrganization', 'principalInvestigator', 'executionTime', 'field', 'description'];
+    headers = ['STT', 'Tên đề tài', 'Cấp quản lý', 'Cơ quan chủ trì', 'Chủ nhiệm đề tài', 'Thời gian thực hiện', 'Lĩnh vực', 'Tóm tắt đề tài'];
   } else if (moduleType === 'initiatives') {
     keys = ['stt', 'recognitionYear', 'title', 'authors', 'ownerName', 'ownerAddress', 'field'];
     headers = ['STT', 'Năm công nhận', 'Tên sáng kiến', 'Tác giả', 'Chủ sở hữu', 'Địa chỉ chủ sở hữu', 'Lĩnh vực'];
   } else if (moduleType === 'experts') {
-    keys = ['stt', 'title', 'birthYear', 'email', 'phone', 'specialty'];
-    headers = ['STT', 'Tên Chuyên gia', 'Năm sinh', 'Email', 'Điện thoại', 'Chuyên ngành'];
+    keys = ['stt', 'title', 'birthYear', 'specialty'];
+    headers = ['STT', 'Tên Chuyên gia', 'Năm sinh', 'Chuyên ngành'];
   } else if (moduleType === 'startups') {
     keys = ['stt', 'title', 'address', 'website', 'logoUrl', 'field', 'description', 'problemSolved', 'founderCount', 'currentStaffCount', 'leaderName', 'leaderPhone', 'leaderEmail', 'foundedYear'];
-    headers = ['STT', 'Tên doanh nghiệp', 'Địa chỉ hoạt động', 'Website doanh nghiệp (nếu có)', 'File logo doanh nghiệp', 'Lĩnh vực kinh doanh', 'Tóm tắt về doanh nghiệp và sản phẩm', 'Sản phẩm giải quyết vấn đề gì', 'Số lượng sáng lập viên', 'Tổng số nhân sự ở thời điểm hiện tại', 'Họ và tên người đứng đầu doanh nghiệp', 'Số điện thoại người đứng đầu doanh nghiệp', 'Email người đứng đầu doanh nghiệp', 'Năm bắt đầu khởi nghiệp'];
+    headers = ['STT', 'Tên doanh nghiệp', 'Địa chỉ hoạt động', 'Website doanh nghiệp (nếu có)', 'File logo doanh nghiệp', 'Lĩnh vực kinh doanh', 'Tóm tắt về doanh nghiệp và sản phẩm', 'Sản phẩm giải quyết vấn đề gì', 'Số lượng sáng lập viên', 'Tổng số nhân sự ở thời điểm hiện tại', 'Họ và tên người đứng đầu doanh nghiệp', 'Số điện thoại người đứng đầu doanh nghiệp', 'Email người đứng đầu doanh nghiệp', 'Năm bắt đầu khởi nghiệp'];
   } else if (moduleType === 'support_organizations') {
-    keys = ['stt', 'title', 'address'];
-    headers = ['STT', 'Tên tổ chức', 'Địa chỉ'];
+    keys = ['stt', 'title', 'address', 'description'];
+    headers = ['STT', 'Tên tổ chức', 'Địa chỉ', 'Thông tin về tổ chức'];
   } else if (moduleType === 'startup_projects') {
-    keys = ['stt', 'title', 'address', 'field', 'description', 'problemSolved', 'memberCount', 'leaderName', 'leaderPhone', 'leaderEmail', 'incubator', 'startYear'];
-    headers = ['STT', 'Tên dự án khởi nghiệp', 'Địa chỉ hoạt động', 'Lĩnh vực khởi nghiệp', 'Tóm tắt về dự án', 'Sản phẩm giải quyết vấn đề gì', 'Số lượng thành viên tham gia dự án', 'Họ và tên người đứng đầu dự án', 'Số điện thoại người đứng đầu dự án', 'Email người đứng đầu dự án', 'Dự án được ươm tạo từ tổ chức nào (Nếu có/Tự hình thành dự án)', 'Năm bắt đầu khởi nghiệp'];
+    keys = ['stt', 'title', 'field', 'problemSolved', 'leaderName', 'incubator', 'startYear'];
+    headers = ['STT', 'Tên dự án', 'Lĩnh vực khởi nghiệp', 'Sản phẩm giải quyết vấn đề', 'Người đứng đầu', 'Dự án được ươm tạo từ tổ chức (Nếu có/Tự hình thành dự án)', 'Năm bắt đầu khởi nghiệp'];
   } else if (moduleType === 'startup_ideas') {
-    keys = ['stt', 'title', 'address', 'field', 'wardSchool', 'description', 'problemSolved', 'memberCount', 'leaderName', 'leaderPhone', 'leaderEmail', 'mentorTeacher', 'currentAffiliation'];
-    headers = ['STT', 'Tên ý tưởng khởi nghiệp', 'Địa chỉ hoạt động (Nếu có)', 'Lĩnh vực khởi nghiệp', 'Ý tưởng thuộc Xã/phường - Trường học', 'Tóm tắt về ý tưởng (Khoảng 150-200 từ)', 'Sản phẩm giải quyết vấn đề gì', 'Số lượng thành viên tham gia ý tưởng khởi nghiệp', 'Người đứng đầu nhóm ý tưởng', 'Số điện thoại người đứng đầu', 'Email người đứng đầu', 'Tên thầy/cô giáo hướng dẫn thực hiện', 'Nhóm ý tưởng đang học tập/công tác tại đơn vị nào? (Tên đơn vị và Địa chỉ)'];
+    keys = ['stt', 'title', 'field', 'leaderName', 'mentorTeacher'];
+    headers = ['STT', 'Tên ý tưởng', 'Lĩnh vực khởi nghiệp', 'Người đứng đầu', 'Giáo viên hướng dẫn'];
   } else if (moduleType === 'wards') {
-    keys = ['stt', 'title', 'address'];
-    headers = ['STT', 'Tên xã/phường', 'Địa chỉ'];
+    keys = ['stt', 'title', 'address', 'contactInfo', 'website'];
+    headers = ['STT', 'Tên xã/phường/đặc khu', 'Địa chỉ', 'Thông tin liên hệ', 'Website'];
   } else if (moduleType === 'universities') {
-    keys = ['stt', 'title', 'ward', 'address'];
-    headers = ['STT', 'Tên trường Đại học/Cao đẳng', 'Xã/phường', 'Địa chỉ'];
+    keys = ['stt', 'title', 'ward', 'address', 'contactInfo', 'website'];
+    headers = ['STT', 'Tên trường', 'Thuộc xã/ phường', 'Địa chỉ', 'Thông tin liên hệ', 'Website'];
   } else if (moduleType === 'featured_startups') {
-    keys = ['stt', 'title', 'website'];
-    headers = ['STT', 'Tên dự án', 'Link website'];
+    keys = ['stt', 'businessName', 'projectName', 'representative', 'address', 'contactInfo', 'website', 'ward'];
+    headers = ['STT', 'Tên doanh nghiệp', 'Tên dự án', 'Người đại diện dự án', 'Địa chỉ', 'Thông tin liên hệ', 'Website', 'Thuộc xã/ phường'];
   }
 
   const rows = records.map((r, idx) => {
@@ -653,6 +653,53 @@ apiRouter.get('/export/:moduleType', (req: AuthenticatedRequest, res: Response):
 
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="${moduleType}_export_${Date.now()}.csv"`);
+  res.send(csvContent);
+});
+
+apiRouter.get('/templates/:moduleType', (req: AuthenticatedRequest, res: Response): void => {
+  const moduleType = req.params.moduleType as ModuleType;
+  let headers: string[] = ['STT', 'Tiêu đề / Tên', 'Lĩnh vực', 'Đơn vị / Cá nhân'];
+  let sampleRow: string[] = ['1', 'Dữ liệu mẫu chuẩn hoá', 'Công nghệ thông tin', 'Sở Khoa học và Công nghệ'];
+
+  if (moduleType === 'science_tasks') {
+    headers = ['STT', 'Tên đề tài', 'Cấp quản lý', 'Cơ quan chủ trì', 'Chủ nhiệm đề tài', 'Thời gian thực hiện', 'Lĩnh vực', 'Tóm tắt đề tài'];
+    sampleRow = ['1', 'Nghiên cứu ứng dụng công nghệ AI trong giám sát đô thị thông minh', 'Cấp Thành phố', 'Đại học Đà Nẵng', 'PGS.TS. Nguyễn Văn A', '24 tháng', 'Công nghệ thông tin', 'Xây dựng mô hình thị giác máy tính nhận diện hành vi'];
+  } else if (moduleType === 'initiatives') {
+    headers = ['STT', 'Năm công nhận', 'Tên sáng kiến', 'Tác giả', 'Chủ sở hữu', 'Địa chỉ chủ sở hữu', 'Lĩnh vực'];
+    sampleRow = ['1', '2026', 'Mô hình tiết kiệm năng lượng tòa nhà thông minh', 'Nguyễn Thị B, Trần C', 'Trung tâm Đổi mới sáng tạo', 'Quận Hải Châu, TP. Đà Nẵng', 'Năng lượng & Môi trường'];
+  } else if (moduleType === 'experts') {
+    headers = ['STT', 'Tên Chuyên gia', 'Năm sinh', 'Chuyên ngành'];
+    sampleRow = ['1', 'GS.TS. Trần Quốc Hùng', '1975', 'Trí tuệ nhân tạo & Robot'];
+  } else if (moduleType === 'startups') {
+    headers = ['STT', 'Tên doanh nghiệp', 'Địa chỉ hoạt động', 'Website doanh nghiệp (nếu có)', 'File logo doanh nghiệp', 'Lĩnh vực kinh doanh', 'Tóm tắt về doanh nghiệp và sản phẩm', 'Sản phẩm giải quyết vấn đề gì', 'Số lượng sáng lập viên', 'Tổng số nhân sự ở thời điểm hiện tại', 'Họ và tên người đứng đầu doanh nghiệp', 'Số điện thoại người đứng đầu doanh nghiệp', 'Email người đứng đầu doanh nghiệp', 'Năm bắt đầu khởi nghiệp'];
+    sampleRow = ['1', 'Công ty CP Giải pháp Công nghệ Xanh', 'Số 123 Nguyễn Văn Linh, Hải Châu, Đà Nẵng', 'https://greentech.vn', '/logos/greentech.png', 'Công nghệ Môi trường', 'Cung cấp hệ thống quan trắc nước thải tự động', 'Tự động hóa phân tích nồng độ chất thải theo thời gian thực', '3', '25', 'Lê Hoàng Nam', '0905123456', 'contact@greentech.vn', '2023'];
+  } else if (moduleType === 'support_organizations') {
+    headers = ['STT', 'Tên tổ chức', 'Địa chỉ', 'Thông tin về tổ chức'];
+    sampleRow = ['1', 'Trung tâm Hỗ trợ Khởi nghiệp Đổi mới sáng tạo Đà Nẵng', 'Số 48 Phan Đình Phùng, Hải Châu, Đà Nẵng', 'Đơn vị sự nghiệp công lập hỗ trợ ươm tạo, kết nối vốn và đào tạo khởi nghiệp'];
+  } else if (moduleType === 'startup_projects') {
+    headers = ['STT', 'Tên dự án', 'Lĩnh vực khởi nghiệp', 'Sản phẩm giải quyết vấn đề', 'Người đứng đầu', 'Dự án được ươm tạo từ tổ chức (Nếu có/Tự hình thành dự án)', 'Năm bắt đầu khởi nghiệp'];
+    sampleRow = ['1', 'Hệ thống trạm sạc xe điện thông minh SmartCharge', 'Năng lượng xanh & Giao thông', 'Mạng lưới sạc nhanh tích hợp thanh toán tự động qua App', 'Phạm Minh Tuấn', 'Vườn ươm Doanh nghiệp Đà Nẵng (DNES)', '2024'];
+  } else if (moduleType === 'startup_ideas') {
+    headers = ['STT', 'Tên ý tưởng', 'Lĩnh vực khởi nghiệp', 'Người đứng đầu', 'Giáo viên hướng dẫn'];
+    sampleRow = ['1', 'Ứng dụng vi tảo hấp thụ CO2 và xử lý khí thải công nghiệp', 'Công nghệ sinh học & Môi trường', 'Trần Thị Thu Hà', 'TS. Nguyễn Đắc Lực'];
+  } else if (moduleType === 'wards') {
+    headers = ['STT', 'Tên xã/phường/đặc khu', 'Địa chỉ', 'Thông tin liên hệ', 'Website'];
+    sampleRow = ['1', 'Phường Thạch Thang', 'Số 12 Quang Trung, Quận Hải Châu, TP. Đà Nẵng', '0236.3822123', 'https://thachthang.danang.gov.vn'];
+  } else if (moduleType === 'universities') {
+    headers = ['STT', 'Tên trường', 'Thuộc xã/ phường', 'Địa chỉ', 'Thông tin liên hệ', 'Website'];
+    sampleRow = ['1', 'Trường Đại học Bách Khoa - Đại học Đà Nẵng', 'Phường Hòa Khánh Bắc', 'Số 54 Nguyễn Lương Bằng, Quận Liên Chiểu, TP. Đà Nẵng', '0236.3842308', 'https://dut.udn.vn'];
+  } else if (moduleType === 'featured_startups') {
+    headers = ['STT', 'Tên doanh nghiệp', 'Tên dự án', 'Người đại diện dự án', 'Địa chỉ', 'Thông tin liên hệ', 'Website', 'Thuộc xã/ phường'];
+    sampleRow = ['1', 'Công ty CP EM&AI', 'Nền tảng Voicebot AI trợ lý ảo thông minh', 'Lê Ngọc Trí', 'Tầng 5, Tòa nhà DNC, Hải Châu, Đà Nẵng', '0912345678', 'https://emandai.net', 'Phường Thạch Thang'];
+  }
+
+  const csvContent = '\uFEFF' + [
+    headers.map(h => `"${h.replace(/"/g, '""')}"`).join(','),
+    sampleRow.map(v => `"${v.replace(/"/g, '""')}"`).join(',')
+  ].join('\n');
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="Mau_nhap_lieu_${moduleType}.csv"`);
   res.send(csvContent);
 });
 

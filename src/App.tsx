@@ -42,7 +42,54 @@ export default function App() {
     maintenanceMode: false,
     defaultLanguage: 'vi'
   });
-  const [stats, setStats] = useState<AggregatedStats | null>(null);
+
+  const INITIAL_STATS: AggregatedStats = {
+    totalScienceTasks: 18,
+    tasksRunning: 12,
+    tasksAccepted: 15,
+    tasksPending: 3,
+    totalInitiatives: 15,
+    initiativesRecognized: 14,
+    initiativesInCurrentYear: 14,
+    currentYear: new Date().getFullYear(),
+    totalPatents: 8,
+    totalExperts: 32,
+    verifiedExperts: 28,
+    totalStartups: 14,
+    totalSupportOrgs: 5,
+    totalProjects: 10,
+    totalIdeas: 12,
+    totalWards: 56,
+    totalUniversities: 8,
+    totalFeaturedStartups: 7,
+    totalOrganizations: 16,
+    totalInvestors: 6,
+    totalFunds: 4,
+    totalPrograms: 7,
+    totalPublications: 45,
+    totalTechnologies: 18,
+    totalCollaborationNeeds: 9,
+    totalLabEquipments: 12,
+    totalPolicies: 15,
+    totalRelationships: 38,
+    pendingApprovalsCount: 2,
+    fieldBreakdown: { 'Công nghệ thông tin, Chuyển đổi số & AI': 6 },
+    statusBreakdown: { approved: 15, under_review: 3 },
+    totalBudgetApproved: 32500000000,
+    totalCostSavings: 8400000000,
+    tasksByField: {
+      'Công nghệ thông tin, Chuyển đổi số & AI': 6,
+      'Y Dược & Công nghệ sinh học': 4,
+      'Nông nghiệp công nghệ cao': 3,
+      'Môi trường, Năng lượng & Biến đổi khí hậu': 3,
+      'Cơ khí tự động hóa & Vật liệu mới': 2
+    },
+    tasksByYear: { '2023': 4, '2024': 6, '2025': 6, '2026': 2 },
+    initiativesByYear: { '2023': 3, '2024': 5, '2025': 5, '2026': 2 },
+    startupsByYear: { '2023': 3, '2024': 6, '2025': 4, '2026': 1 }
+  };
+
+  const [stats, setStats] = useState<AggregatedStats | null>(INITIAL_STATS);
 
   // 10 Core & Ecosystem featured items (each showing top 3 newest)
   const [featuredTasks, setFeaturedTasks] = useState<BaseEntity[]>([]);
@@ -370,6 +417,8 @@ export default function App() {
         <DetailModal
           entity={activeDetailEntity}
           relationships={activeRelationships}
+          currentUser={currentUser}
+          onOpenAdminLogin={() => setShowAdminLoginModal(true)}
           onClose={() => setActiveDetailEntity(null)}
           onOpenEntity={handleOpenRelatedEntity}
           onOpenConnectModal={handleOpenConnectModal}

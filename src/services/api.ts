@@ -299,6 +299,10 @@ export const api = {
     return `/api/export/${moduleType}`;
   },
 
+  getTemplateUrl(moduleType: ModuleType): string {
+    return `/api/templates/${moduleType}`;
+  },
+
   // Audit Logs
   async getAuditLogs(limit = 100): Promise<AuditLog[]> {
     const res = await fetch(`/api/audit-logs?limit=${limit}`, {

@@ -853,16 +853,120 @@ class DatabaseManager {
 
     const acceptedTasksCount = tasks.filter(t => t.acceptanceResult === 'Xuất sắc' || t.acceptanceResult === 'Đạt' || t.status === 'approved').length;
 
+    // Current Year calculation for Initiatives
+    const currentYear = new Date().getFullYear();
+    const initiativesInCurrentYear = initiatives.filter(i => {
+      const yr = i.recognitionYear || this.getItemYear(i);
+      return String(yr) === String(currentYear);
+    }).length;
+
+    // Tasks breakdown
+    const tasksByUnit: Record<string, number> = {};
+    const tasksByLevel: Record<string, number> = {};
+    tasks.forEach(t => {
+      const unit = t.leadOrganization || t.ownerName || 'Cơ quan chủ trì khác';
+      tasksByUnit[unit] = (tasksByUnit[unit] || 0) + 1;
+      const lvl = t.managementLevel || t.managingAgency || 'Cấp Thành phố';
+      tasksByLevel[lvl] = (tasksByLevel[lvl] || 0) + 1;
+    });
+
+    // Initiatives breakdown
+    const initiativesBySpecialty: Record<string, number> = {};
+    const initiativesByUnit: Record<string, number> = {};
+    initiatives.forEach(i => {
+      const spec = i.specialty || i.field || 'Chuyên ngành KHCN';
+      initiativesBySpecialty[spec] = (initiativesBySpecialty[spec] || 0) + 1;
+      const unit = i.ownerName || i.proposingOrg || 'Đơn vị khác';
+      initiativesByUnit[unit] = (initiativesByUnit[unit] || 0) + 1;
+    });
+
+    // Experts breakdown
     const expertsByField: Record<string, number> = {};
-    const expertsByWorkplace: Record<string, number> = {};
+    const expertsBySpecialty: Record<string, number> = {};
+    const expertsByTitle: Record<string, number> = {};
     const expertsByDegree: Record<string, number> = {};
+    const expertsByWorkplace: Record<string, number> = {};
+    const expertsByYear: Record<string, number> = {};
     experts.forEach(e => {
-      const f = e.specialty || e.primaryField || e.field || 'Công nghệ thông tin & AI';
+      const f = e.field || e.primaryField || 'Công nghệ thông tin & Trí tuệ nhân tạo';
       expertsByField[f] = (expertsByField[f] || 0) + 1;
+      const spec = e.specialty || 'Chuyên ngành kỹ thuật';
+      expertsBySpecialty[spec] = (expertsBySpecialty[spec] || 0) + 1;
       const wp = e.workplace || e.organization || 'Đại học Đà Nẵng';
       expertsByWorkplace[wp] = (expertsByWorkplace[wp] || 0) + 1;
-      const deg = e.academicTitle || e.degree || 'Tiến sĩ';
+      const title = e.academicTitle || (e.title?.startsWith('GS') ? 'GS' : e.title?.startsWith('PGS') ? 'PGS' : 'Chuyên gia');
+      expertsByTitle[title] = (expertsByTitle[title] || 0) + 1;
+      const deg = e.degree || (e.title?.includes('TS') ? 'Tiến sĩ' : 'Thạc sĩ');
       expertsByDegree[deg] = (expertsByDegree[deg] || 0) + 1;
+      const yr = e.birthYear || e.startWorkingYear || '1980';
+      expertsByYear[yr] = (expertsByYear[yr] || 0) + 1;
+    });
+
+    // Startups breakdown by Field, Ward, School
+    const startupsByField: Record<string, number> = {};
+    const startupsByWard: Record<string, number> = {};
+    const startupsBySchool: Record<string, number> = {};
+    startups.forEach(s => {
+      const f = s.field || 'Đổi mới sáng tạo';
+      startupsByField[f] = (startupsByField[f] || 0) + 1;
+      const w = s.ward || s.address?.split(',')?.[0] || 'Chưa phân vùng';
+      startupsByWard[w] = (startupsByWard[w] || 0) + 1;
+      const sc = s.school || 'Khu vực DN ngoài viện trường';
+      startupsBySchool[sc] = (startupsBySchool[sc] || 0) + 1;
+    });
+
+    // Projects breakdown by Field, Year, School, Ward
+    const projectsByField: Record<string, number> = {};
+    const projectsByYear: Record<string, number> = {};
+    const projectsBySchool: Record<string, number> = {};
+    const projectsByWard: Record<string, number> = {};
+    projects.forEach(p => {
+      const f = p.field || 'Khởi nghiệp ĐMST';
+      projectsByField[f] = (projectsByField[f] || 0) + 1;
+      const y = String(p.startYear || p.createdAt?.slice(0, 4) || '2024');
+      projectsByYear[y] = (projectsByYear[y] || 0) + 1;
+      const isSchool = p.school || (p.incubator && p.incubator.toLowerCase().includes('đại học')) || (p.wardSchool && p.wardSchool.toLowerCase().includes('đại học'));
+      const sc = p.school || (isSchool ? (p.incubator || 'Đại học Đà Nẵng') : 'Khối trường học');
+      projectsBySchool[sc] = (projectsBySchool[sc] || 0) + 1;
+      const wd = p.ward || p.address || 'Quận Hải Châu';
+      projectsByWard[wd] = (projectsByWard[wd] || 0) + 1;
+    });
+
+    // Ideas breakdown by Field, School, Ward
+    const ideasByField: Record<string, number> = {};
+    const ideasBySchool: Record<string, number> = {};
+    const ideasByWard: Record<string, number> = {};
+    ideas.forEach(id => {
+      const f = id.field || 'Ý tưởng đổi mới';
+      ideasByField[f] = (ideasByField[f] || 0) + 1;
+      const sc = id.school || (id.wardSchool && id.wardSchool.includes('ĐH') ? id.wardSchool : id.currentAffiliation) || 'Trường Đại học';
+      ideasBySchool[sc] = (ideasBySchool[sc] || 0) + 1;
+      const wd = id.ward || (id.address || 'Địa bàn xã/phường');
+      ideasByWard[wd] = (ideasByWard[wd] || 0) + 1;
+    });
+
+    // Wards breakdown by Area Type
+    const wardsByAreaType: Record<string, number> = { 'Phường': 0, 'Xã': 0, 'Đặc khu': 0 };
+    (this.data.wards || []).forEach((w: any) => {
+      const title = w.title || '';
+      if (title.startsWith('Xã')) wardsByAreaType['Xã']++;
+      else if (title.startsWith('Đặc khu')) wardsByAreaType['Đặc khu']++;
+      else wardsByAreaType['Phường']++;
+    });
+
+    // Universities breakdown by Type
+    const universitiesByType: Record<string, number> = { 'Đại học': 0, 'Cao đẳng': 0 };
+    (this.data.universities || []).forEach((u: any) => {
+      const title = u.title || '';
+      if (title.includes('Cao đẳng')) universitiesByType['Cao đẳng']++;
+      else universitiesByType['Đại học']++;
+    });
+
+    // Featured Startups breakdown by Field
+    const featuredStartupsByField: Record<string, number> = {};
+    (this.data.featured_startups || []).forEach((fs: any) => {
+      const f = fs.field || 'Lĩnh vực công nghệ';
+      featuredStartupsByField[f] = (featuredStartupsByField[f] || 0) + 1;
     });
 
     return {
@@ -872,6 +976,8 @@ class DatabaseManager {
       tasksPending: tasks.filter(t => t.status === 'submitted' || t.status === 'under_review').length,
       totalInitiatives: initiatives.length,
       initiativesRecognized: recognizedInitiativesCount,
+      initiativesInCurrentYear,
+      currentYear,
       totalCostSavings,
       totalBudgetApproved,
       totalExperts: experts.length,
@@ -904,13 +1010,33 @@ class DatabaseManager {
       },
       tasksByField,
       tasksByYear,
+      tasksByUnit,
+      tasksByLevel,
       initiativesByField,
       initiativesByYear,
+      initiativesBySpecialty,
+      initiativesByUnit,
       startupsByYear,
+      startupsByField,
+      startupsByWard,
+      startupsBySchool,
+      projectsByField,
+      projectsByYear,
+      projectsBySchool,
+      projectsByWard,
+      ideasByField,
+      ideasBySchool,
+      ideasByWard,
       yearlyStats,
       expertsByField,
+      expertsBySpecialty,
+      expertsByTitle,
+      expertsByDegree,
       expertsByWorkplace,
-      expertsByDegree
+      expertsByYear,
+      wardsByAreaType,
+      universitiesByType,
+      featuredStartupsByField
     };
   }
 
@@ -1072,6 +1198,211 @@ class DatabaseManager {
     return true;
   }
 
+  private normalizeImportedRow(moduleType: ModuleType, raw: Record<string, any>): Record<string, any> {
+    const row: Record<string, any> = { ...raw };
+    const findVal = (keys: string[]) => {
+      for (const k of keys) {
+        if (raw[k] !== undefined && raw[k] !== '') return raw[k];
+        const lowerK = k.toLowerCase().replace(/[\s\-_/\\()]/g, '');
+        for (const [rk, rv] of Object.entries(raw)) {
+          const lowerRk = rk.toLowerCase().replace(/[\s\-_/\\()]/g, '');
+          if (lowerRk === lowerK && rv !== undefined && rv !== '') {
+            return rv;
+          }
+        }
+      }
+      return undefined;
+    };
+
+    const titleVal = findVal([
+      'title', 'tên', 'tên đề tài', 'tên sáng kiến', 'tên chuyên gia', 'tên doanh nghiệp',
+      'tên tổ chức', 'tên dự án', 'tên ý tưởng', 'tên xã/phường/đặc khu', 'tên xã/phường',
+      'tên trường', 'tên trường đại học, cao đẳng', 'tên trường đại học/cao đẳng', 'họ và tên', 'fullName'
+    ]);
+    if (titleVal && !row.title) row.title = String(titleVal).trim();
+
+    const fieldVal = findVal(['field', 'lĩnh vực', 'lĩnh vực kinh doanh', 'lĩnh vực khởi nghiệp']);
+    if (fieldVal && !row.field) row.field = String(fieldVal).trim();
+
+    if (moduleType === 'science_tasks') {
+      const mgmt = findVal(['managementLevel', 'cấp quản lý', 'cấp đề tài']);
+      if (mgmt) row.managementLevel = String(mgmt).trim();
+      const lead = findVal(['leadOrganization', 'cơ quan chủ trì', 'đơn vị chủ trì']);
+      if (lead) row.leadOrganization = String(lead).trim();
+      const pi = findVal(['principalInvestigator', 'chủ nhiệm đề tài', 'chủ nhiệm']);
+      if (pi) row.principalInvestigator = String(pi).trim();
+      const exec = findVal(['executionTime', 'thời gian thực hiện']);
+      if (exec) row.executionTime = String(exec).trim();
+      const desc = findVal(['description', 'tóm tắt đề tài', 'tóm tắt']);
+      if (desc) row.description = String(desc).trim();
+      const mem = findVal(['members', 'thành viên tham gia', 'thành viên']);
+      if (mem) row.members = Array.isArray(mem) ? mem : String(mem).split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
+      const docs = findVal(['attachments', 'tài liệu minh chứng']);
+      if (docs) row.attachments = Array.isArray(docs) ? docs : [{ name: String(docs), url: '#' }];
+      const arch = findVal(['storageCode', 'ký hiệu kho', 'mã lưu kho', 'archiveCode']);
+      if (arch) row.storageCode = String(arch).trim();
+    } else if (moduleType === 'initiatives') {
+      const yr = findVal(['recognitionYear', 'năm công nhận', 'năm']);
+      if (yr) row.recognitionYear = String(yr).trim();
+      const auth = findVal(['authors', 'tác giả']);
+      if (auth) row.authors = Array.isArray(auth) ? auth : String(auth).split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
+      const own = findVal(['ownerName', 'chủ sở hữu']);
+      if (own) row.ownerName = String(own).trim();
+      const addr = findVal(['ownerAddress', 'địa chỉ chủ sở hữu', 'địa chỉ']);
+      if (addr) row.ownerAddress = String(addr).trim();
+    } else if (moduleType === 'experts') {
+      const by = findVal(['birthYear', 'năm sinh']);
+      if (by) row.birthYear = String(by).trim();
+      const bd = findVal(['birthDate', 'ngày tháng năm sinh', 'ngày sinh']);
+      if (bd) row.birthDate = String(bd).trim();
+      const gen = findVal(['gender', 'giới tính']);
+      if (gen) row.gender = String(gen).trim();
+      const tit = findVal(['academicTitle', 'học hàm']);
+      if (tit) row.academicTitle = String(tit).trim();
+      const deg = findVal(['degree', 'học vị']);
+      if (deg) row.degree = String(deg).trim();
+      const sy = findVal(['startWorkingYear', 'năm bắt đầu công tác']);
+      if (sy) row.startWorkingYear = String(sy).trim();
+      const rt = findVal(['researchTitle', 'chức danh nghiên cứu']);
+      if (rt) row.researchTitle = String(rt).trim();
+      const pos = findVal(['position', 'chức vụ']);
+      if (pos) row.position = String(pos).trim();
+      const em = findVal(['email', 'thư điện tử']);
+      if (em) row.email = String(em).trim();
+      const ph = findVal(['phone', 'điện thoại', 'số điện thoại']);
+      if (ph) row.phone = String(ph).trim();
+      const spec = findVal(['specialty', 'chuyên ngành']);
+      if (spec) row.specialty = String(spec).trim();
+      const wp = findVal(['workplace', 'tên đơn vị công tác', 'cơ quan công tác', 'đơn vị']);
+      if (wp) row.workplace = String(wp).trim();
+      const edu = findVal(['educationHistory', 'quá trình đào tạo và học tập', 'đào tạo']);
+      if (edu) row.educationHistory = String(edu).trim();
+      const wh = findVal(['workHistory', 'quá trình công tác']);
+      if (wh) row.workHistory = String(wh).trim();
+      const fl = findVal(['foreignLanguages', 'ngoại ngữ']);
+      if (fl) row.foreignLanguages = Array.isArray(fl) ? fl : String(fl).split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
+      const pub = findVal(['publicationsInfo', 'tên bài báo/tạp chí/quốc gia', 'bài báo']);
+      if (pub) row.publicationsInfo = String(pub).trim();
+      const cert = findVal(['degreesOrCertificates', 'tên văn bằng', 'văn bằng']);
+      if (cert) row.degreesOrCertificates = String(cert).trim();
+      const res = findVal(['researchProjects', 'tên công trình/kết quả nghiên cứu', 'công trình nghiên cứu']);
+      if (res) row.researchProjects = String(res).trim();
+      const top = findVal(['topicsOrProjects', 'tên đề tài/dự án']);
+      if (top) row.topicsOrProjects = String(top).trim();
+      const aw = findVal(['awards', 'giải thưởng']);
+      if (aw) row.awards = String(aw).trim();
+      const exp = findVal(['experience', 'kinh nghiệm']);
+      if (exp) row.experience = String(exp).trim();
+    } else if (moduleType === 'startups') {
+      const ad = findVal(['address', 'địa chỉ hoạt động', 'địa chỉ hoạt động', 'địa chỉ']);
+      if (ad) row.address = String(ad).trim();
+      const ws = findVal(['website', 'website doanh nghiệp', 'website doanh nghiệp (nếu có)']);
+      if (ws) row.website = String(ws).trim();
+      const lg = findVal(['logoUrl', 'file logo doanh nghiệp', 'logo']);
+      if (lg) row.logoUrl = String(lg).trim();
+      const desc = findVal(['description', 'tóm tắt về doanh nghiệp và sản phẩm', 'tóm tắt']);
+      if (desc) row.description = String(desc).trim();
+      const prob = findVal(['problemSolved', 'sản phẩm giải quyết vấn đề gì', 'giải quyết vấn đề']);
+      if (prob) row.problemSolved = String(prob).trim();
+      const fc = findVal(['founderCount', 'số lượng sáng lập viên']);
+      if (fc) row.founderCount = Number(fc) || 2;
+      const st = findVal(['currentStaffCount', 'tổng số nhân sự ở thời điểm hiện tại', 'nhân sự']);
+      if (st) row.currentStaffCount = Number(st) || 10;
+      const ln = findVal(['leaderName', 'họ và tên người đứng đầu doanh nghiệp', 'người đứng đầu']);
+      if (ln) row.leaderName = String(ln).trim();
+      const lp = findVal(['leaderPhone', 'số điện thoại người đứng đầu doanh nghiệp', 'số điện thoại']);
+      if (lp) row.leaderPhone = String(lp).trim();
+      const le = findVal(['leaderEmail', 'email người đứng đầu doanh nghiệp', 'email']);
+      if (le) row.leaderEmail = String(le).trim();
+      const fy = findVal(['foundedYear', 'năm bắt đầu khởi nghiệp', 'năm khởi nghiệp']);
+      if (fy) row.foundedYear = String(fy).trim();
+      const wd = findVal(['ward', 'xã/phường', 'xã phường']);
+      if (wd) row.ward = String(wd).trim();
+      const sc = findVal(['school', 'trường học', 'trường']);
+      if (sc) row.school = String(sc).trim();
+    } else if (moduleType === 'support_organizations') {
+      const ad = findVal(['address', 'địa chỉ']);
+      if (ad) row.address = String(ad).trim();
+      const desc = findVal(['description', 'thông tin về tổ chức', 'thông tin']);
+      if (desc) row.description = String(desc).trim();
+    } else if (moduleType === 'startup_projects') {
+      const ad = findVal(['address', 'địa chỉ hoạt động', 'địa chỉ hoạt động', 'địa chỉ']);
+      if (ad) row.address = String(ad).trim();
+      const desc = findVal(['description', 'tóm tắt về dự án', 'tóm tắt']);
+      if (desc) row.description = String(desc).trim();
+      const prob = findVal(['problemSolved', 'sản phẩm giải quyết vấn đề']);
+      if (prob) row.problemSolved = String(prob).trim();
+      const mc = findVal(['memberCount', 'số lượng thành viên tham gia dự án', 'số thành viên']);
+      if (mc) row.memberCount = Number(mc) || 3;
+      const ln = findVal(['leaderName', 'họ và tên người đứng đầu dự án', 'người đứng đầu']);
+      if (ln) row.leaderName = String(ln).trim();
+      const lp = findVal(['leaderPhone', 'số điện thoại người đứng đầu dự án', 'điện thoại']);
+      if (lp) row.leaderPhone = String(lp).trim();
+      const le = findVal(['leaderEmail', 'email người đứng đầu dự án', 'email']);
+      if (le) row.leaderEmail = String(le).trim();
+      const inc = findVal(['incubator', 'dự án được ươm tạo từ tổ chức', 'ươm tạo']);
+      if (inc) row.incubator = String(inc).trim();
+      const sy = findVal(['startYear', 'năm bắt đầu khởi nghiệp', 'năm bắt đầu']);
+      if (sy) row.startYear = String(sy).trim();
+      const wd = findVal(['ward', 'xã/phường']);
+      if (wd) row.ward = String(wd).trim();
+      const sc = findVal(['school', 'trường học']);
+      if (sc) row.school = String(sc).trim();
+    } else if (moduleType === 'startup_ideas') {
+      const ad = findVal(['address', 'địa chỉ hoạt động (nếu có)', 'địa chỉ hoạt động', 'địa chỉ']);
+      if (ad) row.address = String(ad).trim();
+      const ws = findVal(['wardSchool', 'ý tưởng thuộc xã/phường - trường học', 'thuộc xã/phường - trường học']);
+      if (ws) row.wardSchool = String(ws).trim();
+      const desc = findVal(['description', 'tóm tắt về ý tưởng', 'tóm tắt về ý tưởng (khoảng 150-200 từ)', 'tóm tắt']);
+      if (desc) row.description = String(desc).trim();
+      const prob = findVal(['problemSolved', 'sản phẩm giải quyết vấn đề gì', 'giải quyết vấn đề']);
+      if (prob) row.problemSolved = String(prob).trim();
+      const mc = findVal(['memberCount', 'số lượng thành viên tham gia ý tưởng khởi nghiệp', 'số thành viên']);
+      if (mc) row.memberCount = Number(mc) || 3;
+      const ln = findVal(['leaderName', 'người đứng đầu nhóm ý tưởng', 'người đứng đầu']);
+      if (ln) row.leaderName = String(ln).trim();
+      const lp = findVal(['leaderPhone', 'số điện thoại người đứng đầu', 'điện thoại']);
+      if (lp) row.leaderPhone = String(lp).trim();
+      const le = findVal(['leaderEmail', 'email người đứng đầu', 'email']);
+      if (le) row.leaderEmail = String(le).trim();
+      const mt = findVal(['mentorTeacher', 'tên thầy/cô giáo hướng dẫn thực hiện', 'giáo viên hướng dẫn']);
+      if (mt) row.mentorTeacher = String(mt).trim();
+      const aff = findVal(['currentAffiliation', 'nhóm ý tưởng đang học tập/công tác tại đơn vị nào', 'đơn vị']);
+      if (aff) row.currentAffiliation = String(aff).trim();
+    } else if (moduleType === 'wards') {
+      const ad = findVal(['address', 'địa chỉ']);
+      if (ad) row.address = String(ad).trim();
+      const ci = findVal(['contactInfo', 'thông tin liên hệ', 'liên hệ', 'điện thoại']);
+      if (ci) row.contactInfo = String(ci).trim();
+      const ws = findVal(['website', 'trang web']);
+      if (ws) row.website = String(ws).trim();
+    } else if (moduleType === 'universities') {
+      const wd = findVal(['ward', 'thuộc xã/ phường', 'thuộc xã/phường', 'xã/phường']);
+      if (wd) row.ward = String(wd).trim();
+      const ad = findVal(['address', 'địa chỉ']);
+      if (ad) row.address = String(ad).trim();
+      const ci = findVal(['contactInfo', 'thông tin liên hệ', 'liên hệ', 'điện thoại']);
+      if (ci) row.contactInfo = String(ci).trim();
+      const ws = findVal(['website', 'trang web']);
+      if (ws) row.website = String(ws).trim();
+    } else if (moduleType === 'featured_startups') {
+      const pn = findVal(['projectName', 'tên dự án']);
+      if (pn) row.projectName = String(pn).trim();
+      const rep = findVal(['representative', 'người đại diện dự án', 'người đại diện']);
+      if (rep) row.representative = String(rep).trim();
+      const ad = findVal(['address', 'địa chỉ']);
+      if (ad) row.address = String(ad).trim();
+      const ci = findVal(['contactInfo', 'thông tin liên hệ', 'liên hệ']);
+      if (ci) row.contactInfo = String(ci).trim();
+      const ws = findVal(['website', 'trang web']);
+      if (ws) row.website = String(ws).trim();
+      const wd = findVal(['ward', 'thuộc xã/ phường', 'thuộc xã/phường', 'xã/phường']);
+      if (wd) row.ward = String(wd).trim();
+    }
+
+    return row;
+  }
+
   // Batch CSV / Excel Import with validation & duplicate detection
   public batchImport(
     moduleType: ModuleType,
@@ -1085,8 +1416,9 @@ class DatabaseManager {
     const existingList = (this.data[moduleType] as any[]) || [];
 
     for (let idx = 0; idx < items.length; idx++) {
-      const row = items[idx];
+      const rawRow = items[idx];
       const rowNum = idx + 1;
+      const row = this.normalizeImportedRow(moduleType, rawRow);
 
       // Validate required core fields
       if (!row.title || String(row.title).trim() === '') {
