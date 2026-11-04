@@ -9,7 +9,14 @@ interface AdminLoginModalProps {
 }
 
 export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuccess }) => {
-  const [username, setUsername] = useState('');
+  const [rememberAccount, setRememberAccount] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('portal_remember_account') === 'true';
+  });
+  const [username, setUsername] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return window.localStorage.getItem('portal_remembered_username') || '';
+  });
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -21,7 +28,17 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
     setLoading(true);
 
     try {
-      const user = await api.login(username.trim(), password);
+      const normalizedUsername = username.trim();
+      const user = await api.login(normalizedUsername, password);
+      if (typeof window !== 'undefined') {
+        if (rememberAccount) {
+          window.localStorage.setItem('portal_remember_account', 'true');
+          window.localStorage.setItem('portal_remembered_username', normalizedUsername);
+        } else {
+          window.localStorage.removeItem('portal_remember_account');
+          window.localStorage.removeItem('portal_remembered_username');
+        }
+      }
       onSuccess(user);
     } catch (err: any) {
       setError(err.message || 'Tên đăng nhập hoặc mật khẩu không chính xác.');
@@ -69,6 +86,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
               <UserIcon className="w-4 h-4 absolute left-3 top-3.5 text-slate-400" />
               <input
                 type="text"
+                name="username"
+                autoComplete="username"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 placeholder="Nhập tên đăng nhập được cấp..."
@@ -85,6 +104,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
               <Lock className="w-4 h-4 absolute left-3 top-3.5 text-slate-400" />
               <input
                 type={showPassword ? 'text' : 'password'}
+                name="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Nhập mật khẩu..."
@@ -102,6 +123,16 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
               </button>
             </div>
           </div>
+
+          <label className="flex items-center gap-2 text-sm text-slate-600 select-none">
+            <input
+              type="checkbox"
+              checked={rememberAccount}
+              onChange={e => setRememberAccount(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+            />
+            Ghi nhớ tài khoản (chỉ lưu tên đăng nhập)
+          </label>
 
           <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-100">
             <button
