@@ -176,6 +176,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
           </button>
           <a
             href={api.getExportUrl(selectedModule)}
+            download={selectedModule + '.csv'}
             className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm border border-slate-300 text-xs"
           >
             <Download className="w-3.5 h-3.5" />
