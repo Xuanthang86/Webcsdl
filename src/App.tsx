@@ -24,20 +24,7 @@ import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdvancedSearchModal } from './components/AdvancedSearchModal';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'browse' | 'admin'>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('portal_current_view');
-      if (saved === 'browse' || saved === 'admin') return saved;
-    }
-    return 'home';
-  });
-
-  const navigateToView = (view: 'home' | 'browse' | 'admin') => {
-    setCurrentView(view);
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('portal_current_view', view);
-    }
-  };
+  const [currentView, setCurrentView] = useState<'home' | 'browse' | 'admin'>('home');
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
   const [showAdvancedSearchModal, setShowAdvancedSearchModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | undefined>();
@@ -101,12 +88,6 @@ export default function App() {
       const userRes = await api.getCurrentUser();
       setCurrentUser(userRes.user);
       setAvailableRoles(userRes.availableRoles || []);
-
-      const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert', 'partner_officer'];
-      const savedView = typeof window !== 'undefined' ? sessionStorage.getItem('portal_current_view') : null;
-      if (savedView === 'admin' && (!userRes.user || !administrativeRoles.includes(userRes.user.role))) {
-        navigateToView('home');
-      }
 
       // 2. Load Config & Stats
       const [configData, statsData] = await Promise.all([
@@ -182,7 +163,7 @@ export default function App() {
       console.error('Logout error:', err);
     } finally {
       if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('portal_current_view');
+        localStorage.removeItem('portal_auth_token');
       }
       try {
         const guestData = await api.getCurrentUser();
@@ -198,7 +179,9 @@ export default function App() {
           createdAt: new Date().toISOString()
         });
       }
-      navigateToView('home');
+      setCurrentView('home');
+      setSuccessToast('Đã đăng xuất an toàn khỏi hệ thống');
+      setTimeout(() => setSuccessToast(null), 3000);
     }
   };
 
@@ -238,13 +221,13 @@ export default function App() {
 
   const handleSearchFromHero = (params: { q: string; moduleType?: string; field?: string }) => {
     setBrowseParams(params);
-    navigateToView('browse');
+    setCurrentView('browse');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleNavigateBrowseWithCategory = (category = 'all') => {
     setBrowseParams({ q: '', moduleType: category });
-    navigateToView('browse');
+    setCurrentView('browse');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -264,12 +247,15 @@ export default function App() {
     setCurrentUser(user);
     setShowAdminLoginModal(false);
     // Khi đăng nhập sẽ kiểm tra quyền tài khoản để chuyển giao diện truy cập phù hợp
-    const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert', 'partner_officer', 'viewer', 'read_only'];
+    const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'];
     if (administrativeRoles.includes(user.role)) {
-      navigateToView('admin');
+      setCurrentView('admin');
+      setSuccessToast(`Đăng nhập thành công! Chuyển hướng đến Cổng Quản trị (${user.fullName})`);
     } else {
-      navigateToView('home');
+      setCurrentView('home');
+      setSuccessToast(`Đăng nhập thành công với vai trò: ${user.fullName}`);
     }
+    setTimeout(() => setSuccessToast(null), 3500);
   };
 
   const handleApplyAdvancedSearch = (params: any) => {
@@ -279,7 +265,7 @@ export default function App() {
       moduleType: params.moduleType || 'all',
       field: params.field || ''
     });
-    navigateToView('browse');
+    setCurrentView('browse');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -305,7 +291,7 @@ export default function App() {
         <Header
           currentView={currentView}
           onNavigate={(view) => {
-            navigateToView(view);
+            setCurrentView(view);
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           currentUser={currentUser}
@@ -369,7 +355,7 @@ export default function App() {
           stats={stats}
           onConfigUpdated={(newCfg) => setSystemConfig(newCfg)}
           onViewDetail={handleOpenDetail}
-          onBackToPublic={() => navigateToView('home')}
+          onBackToPublic={() => setCurrentView('home')}
           onLogout={handleLogout}
         />
       )}
@@ -384,7 +370,6 @@ export default function App() {
         <DetailModal
           entity={activeDetailEntity}
           relationships={activeRelationships}
-          currentUser={currentUser}
           onClose={() => setActiveDetailEntity(null)}
           onOpenEntity={handleOpenRelatedEntity}
           onOpenConnectModal={handleOpenConnectModal}

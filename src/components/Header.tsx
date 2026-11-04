@@ -199,47 +199,32 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <>
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
           
-          {/* Zone 1: Mobile Menu Button (bên trái logo) + Logo & Brand Wordmark */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink min-w-0">
-            {/* Mobile Hamburger Toggle Button - Bên trái logo */}
-            <button
-              type="button"
-              onClick={() => setMenuDrawerOpen(true)}
-              className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl text-slate-700 hover:text-teal-900 bg-slate-100 hover:bg-teal-50 border border-slate-200 transition-colors cursor-pointer shrink-0"
-              aria-label="Mở danh mục Cơ sở dữ liệu"
-              title="Danh mục Cơ sở dữ liệu"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-
-            {/* Logo and Brand Name - Click navigates to Home top */}
+          {/* Zone 1: Logo & Brand Wordmark */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
+            {/* Logo and Brand Name - Click navigates to Home */}
             <div 
-              onClick={() => {
-                setMenuDrawerOpen(false);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                onNavigate('home');
-              }} 
+              onClick={() => onNavigate('home')} 
               className="cursor-pointer flex items-center gap-2 sm:gap-2.5 min-w-0 group"
-              title="Về đầu trang chủ Cổng Dữ Liệu"
+              title="Trở về Trang chủ Cổng Dữ Liệu"
             >
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-teal-800 text-white flex items-center justify-center font-bold text-xs sm:text-base shadow-xs group-hover:bg-teal-700 transition-colors shrink-0">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-teal-800 text-white flex items-center justify-center font-bold text-xs sm:text-base shadow-xs group-hover:bg-teal-700 transition-colors shrink-0">
                 ĐN
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-[11px] sm:text-sm font-black tracking-tight text-slate-900 group-hover:text-teal-800 transition-colors uppercase leading-none truncate">
+                <span className="text-[10px] sm:text-xs font-black tracking-tight text-slate-900 group-hover:text-teal-800 transition-colors uppercase leading-none">
                   CỔNG DỮ LIỆU
                 </span>
-                <span className="text-[10px] sm:text-xs font-bold text-teal-800 tracking-tight group-hover:text-teal-900 transition-colors truncate mt-0.5 leading-tight">
+                <span className="text-[9px] sm:text-[11px] md:text-xs font-bold text-teal-800 tracking-tight group-hover:text-teal-900 transition-colors truncate mt-0.5 leading-tight">
                   KHCN & KNĐMST TP ĐÀ NẴNG
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Zone 2: Desktop Navigation Links (hidden on mobile, visible from md up) */}
-          <nav className="hidden md:flex items-center gap-3 lg:gap-6 text-xs sm:text-sm font-medium text-slate-600 shrink-0">
+          {/* Zone 2: Navigation Links: Trang chủ; Danh mục Cơ sở dữ liệu; Đăng nhập */}
+          <nav className="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm font-medium text-slate-600 shrink-0">
             <button
               onClick={() => onNavigate('home')}
               className={`transition-colors whitespace-nowrap hover:text-slate-900 py-1 cursor-pointer ${
@@ -270,7 +255,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-teal-700" />
-                    <span>Đề tài, nhiệm vụ KH&CN</span>
+                    <span>1. Đề tài, nhiệm vụ KH&CN</span>
                   </div>
                   <ChevronRight className="w-3 h-3 text-slate-400" />
                 </button>
@@ -281,7 +266,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <Lightbulb className="w-4 h-4 text-amber-600" />
-                    <span>Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
+                    <span>2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
                   </div>
                   <ChevronRight className="w-3 h-3 text-slate-400" />
                 </button>
@@ -292,7 +277,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <Award className="w-4 h-4 text-purple-600" />
-                    <span>Sáng chế & Sở hữu trí tuệ</span>
+                    <span>3. Sáng chế & Sở hữu trí tuệ</span>
                   </div>
                   <ChevronRight className="w-3 h-3 text-slate-400" />
                 </button>
@@ -303,12 +288,12 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <GraduationCap className="w-4 h-4 text-blue-600" />
-                    <span>Chuyên gia & Nhà khoa học</span>
+                    <span>4. Chuyên gia & Nhà khoa học</span>
                   </div>
                   <ChevronRight className="w-3 h-3 text-slate-400" />
                 </button>
 
-                {/* Dữ liệu Hệ sinh thái - Hover reveals child sub-categories */}
+                {/* 5. Dữ liệu Hệ sinh thái - Hover reveals child sub-categories */}
                 <div className="relative group/eco">
                   <button
                     onClick={() => handleChooseCategory('startups')}
@@ -316,7 +301,7 @@ export const Header: React.FC<HeaderProps> = ({
                   >
                     <div className="flex items-center gap-2">
                       <Rocket className="w-4 h-4 text-rose-600" />
-                      <span>Dữ liệu Hệ sinh thái Khởi nghiệp đổi mới sáng tạo</span>
+                      <span>5. Dữ liệu Hệ sinh thái</span>
                     </div>
                     <ChevronRight className="w-3.5 h-3.5 text-teal-600" />
                   </button>
@@ -324,7 +309,7 @@ export const Header: React.FC<HeaderProps> = ({
                   {/* Submenu on hover */}
                   <div className="absolute left-full top-0 hidden group-hover/eco:block w-72 bg-white rounded-xl shadow-xl border border-slate-200 py-2 -ml-1 text-xs animate-in fade-in duration-100">
                     <div className="px-3.5 py-1 text-[11px] font-bold text-teal-800 uppercase tracking-wider border-b border-slate-100 mb-1">
-                      Các loại dữ liệu trong Hệ sinh thái
+                      Các loại dữ liệu Hệ sinh thái
                     </div>
                     <button
                       onClick={() => handleChooseCategory('startups')}
@@ -392,37 +377,50 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               </div>
             </div>
+
+            {/* Quick access to Admin Portal if authenticated with admin privileges */}
+            {isAdminRole && (
+              <button
+                onClick={handleAdminClick}
+                className={`transition-colors whitespace-nowrap hover:text-slate-900 flex items-center gap-1.5 cursor-pointer ${
+                  currentView === 'admin' ? 'text-teal-800 font-semibold border-b-2 border-teal-800 pb-1' : ''
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4 text-teal-700" />
+                <span>Cổng quản trị</span>
+              </button>
+            )}
           </nav>
 
-          {/* Zone 3: Login Button / User Account + Mobile Hamburger Button */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {/* Zone 3: Login Button / User Account with Role Check */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             
-            {/* If NOT authenticated (Guest / public user): Show Đăng nhập button */}
+            {/* If NOT authenticated (Guest / public user): Show prominent Đăng nhập (Login) button */}
             {!isAuthenticated ? (
               <button
                 onClick={onOpenAdminLogin}
-                className="px-2.5 sm:px-3.5 py-2 sm:py-1.5 text-xs font-semibold text-white bg-teal-800 hover:bg-teal-900 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 shadow-xs cursor-pointer min-h-[40px] sm:min-h-0"
+                className="px-3.5 py-1.5 text-xs font-semibold text-white bg-teal-800 hover:bg-teal-900 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 shadow-xs cursor-pointer"
                 title="Đăng nhập tài khoản hệ thống"
               >
                 <LogIn className="w-3.5 h-3.5" />
-                <span className="hidden xs:inline">Đăng nhập</span>
+                <span>Đăng nhập</span>
               </button>
             ) : (
               /* Authenticated: Account Icon + Role Button -> Click opens account info modal with password change and role transition */
               <button
                 type="button"
                 onClick={() => setShowAccountModal(true)}
-                className="flex items-center gap-1.5 bg-slate-100 hover:bg-teal-50 text-slate-800 hover:text-teal-900 border border-slate-200 hover:border-teal-300 px-2 sm:px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer shadow-2xs max-w-[140px] sm:max-w-[210px] min-h-[40px]"
+                className="flex items-center gap-1.5 bg-slate-100 hover:bg-teal-50 text-slate-800 hover:text-teal-900 border border-slate-200 hover:border-teal-300 px-2 sm:px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer shadow-2xs max-w-[155px] sm:max-w-[210px] pr-2 sm:pr-2.5 mr-0.5"
                 title="Xem thông tin tài khoản, đổi mật khẩu & quản trị"
               >
-                <div className="w-7 h-7 rounded-full bg-teal-800 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                  <UserIcon className="w-4 h-4" />
+                <div className="w-6 h-6 rounded-full bg-teal-800 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
+                  <UserIcon className="w-3.5 h-3.5" />
                 </div>
                 <div className="flex flex-col text-left leading-tight min-w-0">
-                  <span className="font-bold text-slate-900 text-xs truncate block">
+                  <span className="font-bold text-slate-900 text-[11px] sm:text-xs truncate block">
                     {currentUser?.fullName}
                   </span>
-                  <span className="text-[10px] sm:text-xs text-teal-800 font-semibold truncate block">
+                  <span className="text-[9px] sm:text-[10px] text-teal-800 font-semibold truncate block">
                     {getRoleDisplayName(currentUser)}
                   </span>
                 </div>
@@ -433,10 +431,10 @@ export const Header: React.FC<HeaderProps> = ({
             {currentView === 'admin' && (
               <button
                 onClick={() => onNavigate('home')}
-                className="hidden sm:flex px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors whitespace-nowrap shrink-0 items-center gap-1.5 cursor-pointer min-h-[40px]"
+                className="px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
               >
                 <Globe className="w-3.5 h-3.5" />
-                <span>Về Cổng công khai</span>
+                <span className="hidden sm:inline">Về Cổng công khai</span>
               </button>
             )}
           </div>
@@ -444,294 +442,186 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </header>
 
-      {/* Slide-over Drawer for Mobile Navigation & Standardized Data Categories */}
+      {/* Slide-over Drawer for Standardized Data Categories (3 horizontal lines) */}
       {menuDrawerOpen && (
         <div className="fixed inset-0 z-50 flex animate-in fade-in duration-200">
-          {/* Backdrop overlay */}
+          {/* Backdrop */}
           <div 
             onClick={() => setMenuDrawerOpen(false)}
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" 
-            aria-hidden="true"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" 
           />
 
           {/* Drawer Content */}
-          <div className="relative w-full max-w-xs sm:max-w-sm bg-white shadow-2xl h-full flex flex-col z-10 animate-in slide-in-from-left duration-200">
+          <div className="relative w-full max-w-sm bg-white shadow-2xl h-full flex flex-col z-10 animate-in slide-in-from-left duration-200">
             {/* Drawer Header */}
-            <div className="p-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+            <div className="p-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded bg-teal-600 text-white flex items-center justify-center font-bold text-xs">
                   ĐN
                 </div>
                 <div>
-                  <h3 className="font-bold text-xs uppercase tracking-tight">CỔNG DỮ LIỆU KHCN & KNĐMST</h3>
-                  <p className="text-[10px] text-teal-300">Thành phố Đà Nẵng</p>
+                  <h3 className="font-bold text-xs">DANH MỤC CƠ SỞ DỮ LIỆU</h3>
+                  <p className="text-[10px] text-teal-300">5 Phân hệ dữ liệu chuẩn hoá</p>
                 </div>
               </div>
               <button
                 onClick={() => setMenuDrawerOpen(false)}
-                className="w-11 h-11 flex items-center justify-center text-slate-400 hover:text-white rounded-xl transition-colors cursor-pointer"
+                className="p-1 text-slate-400 hover:text-white rounded-lg transition-colors"
                 aria-label="Đóng menu"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Navigation & Categories List */}
-            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 text-xs">
+            {/* Category List - Standardized to the 5 user groups */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 text-xs">
               
-              {/* Primary Views Section */}
-              <div className="space-y-1 pb-2 border-b border-slate-200">
-                <button
-                  onClick={() => {
-                    setMenuDrawerOpen(false);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    onNavigate('home');
-                  }}
-                  className={`w-full min-h-[46px] text-left px-4 py-3 rounded-xl font-bold flex items-center justify-between transition-all cursor-pointer shadow-sm ${
-                    currentView === 'home'
-                      ? 'bg-gradient-to-r from-teal-800 to-teal-900 text-white ring-2 ring-teal-600/50'
-                      : 'bg-teal-700 text-white hover:bg-teal-800'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Globe className="w-5 h-5 text-teal-300" />
-                    <span className="text-sm">Trang chủ Cổng dữ liệu</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 opacity-90" />
-                </button>
-
-                {isAdminRole && (
-                  <button
-                    onClick={() => {
-                      setMenuDrawerOpen(false);
-                      onNavigate('admin');
-                    }}
-                    className={`w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl font-semibold flex items-center justify-between transition-colors cursor-pointer ${
-                      currentView === 'admin'
-                        ? 'bg-teal-800 text-white shadow-xs'
-                        : 'text-slate-800 hover:bg-slate-100'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <LayoutDashboard className="w-4 h-4 text-teal-600" />
-                      <span>Quản trị hệ thống</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 opacity-70" />
-                  </button>
-                )}
-              </div>
-
-              {/* Data Categories Header */}
-              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-2 px-1">
-                Danh mục Cơ sở dữ liệu
-              </div>
-
               {/* Tất cả dữ liệu */}
               <button
                 onClick={() => handleChooseCategory('all')}
-                className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl font-semibold bg-teal-50 text-teal-900 hover:bg-teal-100 flex items-center justify-between transition-colors border border-teal-200 cursor-pointer"
+                className="w-full text-left p-2.5 rounded-lg font-semibold bg-teal-50 text-teal-900 hover:bg-teal-100 flex items-center justify-between transition-colors border border-teal-200"
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                   <Database className="w-4 h-4 text-teal-700" />
                   <span>Tất cả cơ sở dữ liệu</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-teal-600" />
               </button>
 
-              {/* Đề tài, nhiệm vụ KH&CN */}
+              <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pt-2 px-1">
+                5 Phân Hệ Chuẩn Hoá
+              </div>
+
+              {/* 1. Nhiệm vụ, Đề tài KH&CN */}
               <button
                 onClick={() => handleChooseCategory('science_tasks')}
-                className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
+                className="w-full text-left p-2.5 rounded-lg text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200"
               >
-                <div className="flex items-center gap-2.5 font-medium">
+                <div className="flex items-center gap-2 font-medium">
                   <FileText className="w-4 h-4 text-teal-700" />
-                  <span>Đề tài, nhiệm vụ KH&CN</span>
+                  <span>1. Nhiệm vụ, Đề tài KH&CN</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
-              {/* Sáng kiến có tác dụng, ảnh hưởng đối với thành phố */}
+              {/* 2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố */}
               <button
                 onClick={() => handleChooseCategory('initiatives')}
-                className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
+                className="w-full text-left p-2.5 rounded-lg text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200"
               >
-                <div className="flex items-center gap-2.5 font-medium">
+                <div className="flex items-center gap-2 font-medium">
                   <Lightbulb className="w-4 h-4 text-amber-600" />
-                  <span>Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
+                  <span>2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
-              {/* Sáng chế & Sở hữu trí tuệ */}
+              {/* 3. Sáng chế & Sở hữu trí tuệ */}
               <button
                 onClick={() => handleChooseCategory('patents')}
-                className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
+                className="w-full text-left p-2.5 rounded-lg text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200"
               >
-                <div className="flex items-center gap-2.5 font-medium">
+                <div className="flex items-center gap-2 font-medium">
                   <Award className="w-4 h-4 text-purple-600" />
-                  <span>Sáng chế & Sở hữu trí tuệ</span>
+                  <span>3. Sáng chế & Sở hữu trí tuệ</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
-              {/* Chuyên gia & Nhà khoa học */}
+              {/* 4. Chuyên gia & Nhà khoa học */}
               <button
                 onClick={() => handleChooseCategory('experts')}
-                className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
+                className="w-full text-left p-2.5 rounded-lg text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200"
               >
-                <div className="flex items-center gap-2.5 font-medium">
+                <div className="flex items-center gap-2 font-medium">
                   <GraduationCap className="w-4 h-4 text-blue-600" />
-                  <span>Chuyên gia & Nhà khoa học</span>
+                  <span>4. Chuyên gia & Nhà khoa học</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
-              {/* Dữ liệu Hệ sinh thái with Accordion */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50/70 overflow-hidden">
+              {/* 5. Dữ liệu Hệ sinh thái (with 7 sub-items, KHÔNG làm viền bao quanh) */}
+              <div className="mt-0.5">
                 <button
                   onClick={() => setEcosystemSubmenuOpen(!ecosystemSubmenuOpen)}
-                  className="w-full min-h-[44px] text-left px-3.5 py-2.5 text-slate-900 hover:bg-slate-100 flex items-center justify-between transition-colors cursor-pointer"
+                  className="w-full text-left p-2.5 rounded-lg text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200"
                 >
-                  <div className="flex items-center gap-2.5 font-semibold">
+                  <div className="flex items-center gap-2 font-medium">
                     <Rocket className="w-4 h-4 text-rose-600" />
-                    <span>Dữ liệu Hệ sinh thái Khởi nghiệp đổi mới sáng tạo</span>
+                    <span>5. Dữ liệu Hệ sinh thái</span>
                   </div>
-                  <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${ecosystemSubmenuOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${ecosystemSubmenuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
+                {/* Submenu containing ecosystem child modules requested */}
                 {ecosystemSubmenuOpen && (
-                  <div className="px-2 pb-2 space-y-1 border-t border-slate-200/80 bg-white pt-1.5 animate-in fade-in duration-100">
+                  <div className="ml-4 pl-2 space-y-0.5 mt-0.5">
                     <button
                       onClick={() => handleChooseCategory('startups')}
-                      className="w-full min-h-[44px] text-left px-3 py-2 rounded-lg text-xs text-slate-700 hover:text-teal-900 hover:bg-teal-50 flex items-center justify-between transition-colors cursor-pointer"
+                      className="w-full text-left px-2.5 py-1.5 rounded-md text-xs text-slate-700 hover:text-teal-800 hover:bg-slate-100 flex items-center justify-between transition-colors"
                     >
                       <span>• Doanh nghiệp khởi nghiệp sáng tạo</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                      <ChevronRight className="w-3 h-3 text-slate-300" />
                     </button>
                     <button
                       onClick={() => handleChooseCategory('support_organizations')}
-                      className="w-full min-h-[44px] text-left px-3 py-2 rounded-lg text-xs text-slate-700 hover:text-teal-900 hover:bg-teal-50 flex items-center justify-between transition-colors cursor-pointer"
+                      className="w-full text-left px-2.5 py-1.5 rounded-md text-xs text-slate-700 hover:text-teal-800 hover:bg-slate-100 flex items-center justify-between transition-colors"
                     >
                       <span>• Tổ chức trung gian</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                      <ChevronRight className="w-3 h-3 text-slate-300" />
                     </button>
                     <button
                       onClick={() => handleChooseCategory('startup_projects')}
-                      className="w-full min-h-[44px] text-left px-3 py-2 rounded-lg text-xs text-slate-700 hover:text-teal-900 hover:bg-teal-50 flex items-center justify-between transition-colors cursor-pointer"
+                      className="w-full text-left px-2.5 py-1.5 rounded-md text-xs text-slate-700 hover:text-teal-800 hover:bg-slate-100 flex items-center justify-between transition-colors"
                     >
                       <span>• Dự án khởi nghiệp</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                      <ChevronRight className="w-3 h-3 text-slate-300" />
                     </button>
                     <button
                       onClick={() => handleChooseCategory('startup_ideas')}
-                      className="w-full min-h-[44px] text-left px-3 py-2 rounded-lg text-xs text-slate-700 hover:text-teal-900 hover:bg-teal-50 flex items-center justify-between transition-colors cursor-pointer"
+                      className="w-full text-left px-2.5 py-1.5 rounded-md text-xs text-slate-700 hover:text-teal-800 hover:bg-slate-100 flex items-center justify-between transition-colors"
                     >
                       <span>• Ý tưởng khởi nghiệp</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                      <ChevronRight className="w-3 h-3 text-slate-300" />
                     </button>
                     <button
                       onClick={() => handleChooseCategory('wards')}
-                      className="w-full min-h-[44px] text-left px-3 py-2 rounded-lg text-xs text-slate-700 hover:text-teal-900 hover:bg-teal-50 flex items-center justify-between transition-colors cursor-pointer"
+                      className="w-full text-left px-2.5 py-1.5 rounded-md text-xs text-slate-700 hover:text-teal-800 hover:bg-slate-100 flex items-center justify-between transition-colors"
                     >
                       <span>• Danh sách xã/phường</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                      <ChevronRight className="w-3 h-3 text-slate-300" />
                     </button>
                     <button
                       onClick={() => handleChooseCategory('universities')}
-                      className="w-full min-h-[44px] text-left px-3 py-2 rounded-lg text-xs text-slate-700 hover:text-teal-900 hover:bg-teal-50 flex items-center justify-between transition-colors cursor-pointer"
+                      className="w-full text-left px-2.5 py-1.5 rounded-md text-xs text-slate-700 hover:text-teal-800 hover:bg-slate-100 flex items-center justify-between transition-colors"
                     >
                       <span>• Trường Đại học/Cao đẳng trên địa bàn</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                      <ChevronRight className="w-3 h-3 text-slate-300" />
                     </button>
                     <button
                       onClick={() => handleChooseCategory('featured_startups')}
-                      className="w-full min-h-[44px] text-left px-3 py-2 rounded-lg text-xs text-slate-700 hover:text-teal-900 hover:bg-teal-50 flex items-center justify-between transition-colors cursor-pointer"
+                      className="w-full text-left px-2.5 py-1.5 rounded-md text-xs text-slate-700 hover:text-teal-800 hover:bg-slate-100 flex items-center justify-between transition-colors"
                     >
                       <span>• Doanh nghiệp khởi nghiệp tiêu biểu</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                      <ChevronRight className="w-3 h-3 text-slate-300" />
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* Các phân hệ khác */}
-              <div className="pt-2">
-                <button
-                  onClick={() => handleChooseCategory('collaboration_needs')}
-                  className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 flex items-center justify-between transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5 font-medium">
-                    <Database className="w-4 h-4 text-emerald-600" />
-                    <span>Nhu cầu kết nối & Hợp tác</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </button>
-                <button
-                  onClick={() => handleChooseCategory('policies')}
-                  className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 flex items-center justify-between transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5 font-medium">
-                    <Database className="w-4 h-4 text-indigo-600" />
-                    <span>Chính sách & Văn bản quy định</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </button>
-              </div>
-
             </div>
 
-            {/* Drawer User & Authentication Footer */}
-            <div className="p-3 sm:p-4 bg-slate-50 border-t border-slate-200 shrink-0 space-y-2">
-              {!isAuthenticated ? (
-                <button
-                  onClick={() => {
-                    setMenuDrawerOpen(false);
-                    onOpenAdminLogin();
-                  }}
-                  className="w-full min-h-[44px] px-4 py-2.5 text-xs font-bold text-white bg-teal-800 hover:bg-teal-900 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
-                >
-                  <LogIn className="w-4 h-4" />
-                  <span>Đăng nhập hệ thống</span>
-                </button>
-              ) : (
-                <div className="space-y-2">
-                  <div className="p-2.5 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
-                    <div className="min-w-0 flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-teal-800 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                        <UserIcon className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-bold text-slate-900 text-xs truncate">
-                          {currentUser?.fullName}
-                        </div>
-                        <div className="text-[10px] text-teal-800 font-semibold truncate">
-                          {getRoleDisplayName(currentUser)}
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setMenuDrawerOpen(false);
-                        setShowAccountModal(true);
-                      }}
-                      className="px-2 py-1 text-[11px] font-semibold text-teal-800 hover:bg-teal-50 rounded-lg transition-colors border border-teal-200"
-                    >
-                      Hồ sơ
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      setMenuDrawerOpen(false);
-                      handleLogout();
-                    }}
-                    className="w-full min-h-[44px] px-3 py-2 text-xs font-semibold text-rose-700 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Đăng xuất tài khoản</span>
-                  </button>
-                </div>
-              )}
+            {/* Drawer Footer */}
+            <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end text-[11px] text-slate-500">
+              <button
+                onClick={() => {
+                  setMenuDrawerOpen(false);
+                  onNavigate('browse');
+                }}
+                className="text-teal-800 font-bold hover:underline"
+              >
+                Tra cứu chi tiết CSDL →
+              </button>
             </div>
           </div>
         </div>

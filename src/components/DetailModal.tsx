@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BaseEntity, EntityRelationship, User as AuthUser } from '../types';
+import { BaseEntity, EntityRelationship } from '../types';
 import { 
   X, 
   ExternalLink, 
@@ -18,16 +18,13 @@ import {
   MessageSquarePlus, 
   FileCheck,
   Download,
-  Paperclip,
-  Lock,
-  Globe
+  Paperclip
 } from 'lucide-react';
 import { AttachmentManagerModal } from './AttachmentManagerModal';
 
 interface DetailModalProps {
   entity: BaseEntity | null;
   relationships: EntityRelationship[];
-  currentUser?: AuthUser;
   onClose: () => void;
   onOpenEntity: (moduleType: string, id: string) => void;
   onOpenConnectModal: (entity: BaseEntity) => void;
@@ -36,7 +33,6 @@ interface DetailModalProps {
 export const DetailModal: React.FC<DetailModalProps> = ({
   entity,
   relationships,
-  currentUser,
   onClose,
   onOpenEntity,
   onOpenConnectModal
@@ -142,7 +138,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   <span className="text-teal-900 font-semibold">Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
                   <span aria-hidden="true">·</span>
                   <span className="text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-semibold">
-                    Năm công nhận: {entity.recognitionYear || entity.year || '2025'}
+                    Sáng kiến đã công nhận {entity.recognizedScope ? `(${entity.recognizedScope})` : '(Cấp thành phố)'}
                   </span>
                 </>
               ) : (
@@ -205,42 +201,17 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
             <div>
               <span className="text-slate-400 block mb-0.5">Trạng thái nghiệp vụ</span>
               <span className="font-semibold text-slate-800 flex items-center gap-1.5">
-                {entity.moduleType === 'initiatives' ? (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Đã công nhận</span>
-                  </>
-                ) : entity.moduleType === 'science_tasks' ? (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
-                    <span>
-                      {(() => {
-                        const s = (entity.status || '').toLowerCase();
-                        if (s.includes('chưa') || s.includes('hủy')) return 'Chưa nghiệm thu';
-                        if (s.includes('đang') || s.includes('chờ') || s.includes('tiến hành')) return 'Đang nghiệm thu';
-                        return 'Đã nghiệm thu';
-                      })()}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    {entity.status === 'approved' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
-                    {entity.status === 'under_review' && <Clock className="w-3.5 h-3.5 text-amber-600" />}
-                    {entity.status === 'needs_revision' && <AlertCircle className="w-3.5 h-3.5 text-orange-600" />}
-                    <span>{entity.status === 'approved' ? 'Đã phê duyệt' : entity.status === 'under_review' ? 'Đang thẩm định' : entity.status === 'needs_revision' ? 'Yêu cầu bổ sung' : entity.status}</span>
-                  </>
-                )}
+                {entity.status === 'approved' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                {entity.status === 'under_review' && <Clock className="w-3.5 h-3.5 text-amber-600" />}
+                {entity.status === 'needs_revision' && <AlertCircle className="w-3.5 h-3.5 text-orange-600" />}
+                {entity.status === 'approved' ? 'Đã phê duyệt' : entity.status === 'under_review' ? 'Đang thẩm định' : entity.status === 'needs_revision' ? 'Yêu cầu bổ sung' : entity.status}
               </span>
             </div>
 
             <div>
-              <span className="text-slate-400 block mb-0.5">
-                {entity.moduleType === 'experts' ? 'Học vị / Chức danh' : 'Xác minh hồ sơ'}
-              </span>
+              <span className="text-slate-400 block mb-0.5">Xác minh hồ sơ</span>
               <span className="font-semibold text-slate-800">
-                {entity.moduleType === 'experts'
-                  ? (entity.academicDegree || entity.degree || 'Chuyên gia KH&CN')
-                  : (entity.verificationStatus === 'verified' ? 'Đã xác minh chính thức' : 'Đang đối soát dữ liệu')}
+                {entity.verificationStatus === 'verified' ? 'Đã xác minh chính thức' : 'Đang đối soát dữ liệu'}
               </span>
             </div>
 
@@ -427,93 +398,28 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                 Thông tin chuẩn hoá Chuyên gia & Nhà khoa học
               </h3>
 
-              {(() => {
-                const canViewSensitive = Boolean(currentUser && currentUser.role && currentUser.role !== 'public_user');
-                const expertLanguages = (() => {
-                  if (Array.isArray(entity.foreignLanguages) && entity.foreignLanguages.length > 0) return entity.foreignLanguages;
-                  if (typeof entity.foreignLanguages === 'string' && entity.foreignLanguages.trim()) {
-                    return entity.foreignLanguages.split(',').map((s: string) => s.trim()).filter(Boolean);
-                  }
-                  if (Array.isArray(entity.languages) && entity.languages.length > 0) return entity.languages;
-                  if (typeof entity.languages === 'string' && entity.languages.trim()) {
-                    return entity.languages.split(',').map((s: string) => s.trim()).filter(Boolean);
-                  }
-                  return ['Tiếng Anh', 'Tiếng Nhật', 'Tiếng Hàn'];
-                })();
-
-                return (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <div>
-                      <span className="text-slate-400 block mb-0.5">Tên Chuyên gia</span>
-                      <span className="font-bold text-slate-900 text-sm">{entity.title || entity.fullName}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block mb-0.5">Năm sinh</span>
-                      <span className="font-mono font-semibold text-slate-800">{entity.birthYear || '1978'}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block mb-0.5">Email</span>
-                      {canViewSensitive ? (
-                        <span className="font-medium text-teal-800 font-mono">{entity.email || entity.publicEmail || 'oanh.hk@vnu.edu.vn'}</span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-medium">
-                          <Lock className="w-3 h-3 text-amber-700 shrink-0" />
-                          Yêu cầu có tài khoản được cấp quyền xem
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block mb-0.5">Điện thoại</span>
-                      {canViewSensitive ? (
-                        <span className="font-mono text-slate-800">{entity.phone || entity.publicPhone || '0904.123.456'}</span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-medium">
-                          <Lock className="w-3 h-3 text-amber-700 shrink-0" />
-                          Yêu cầu có tài khoản được cấp quyền xem
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block mb-0.5">CCCD / CMND</span>
-                      {canViewSensitive ? (
-                        <span className="font-mono text-slate-800">{entity.idCard || entity.cccd || '04809200xxxx'}</span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-medium">
-                          <Lock className="w-3 h-3 text-amber-700 shrink-0" />
-                          Yêu cầu có tài khoản được cấp quyền xem
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block mb-0.5">Đơn vị công tác</span>
-                      <span className="font-semibold text-slate-800">{entity.workplace || entity.organization || 'Đang cập nhật'}</span>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <span className="text-slate-400 block mb-0.5">Chuyên ngành</span>
-                      <span className="font-semibold text-slate-900">{entity.specialty || entity.primaryField || entity.field}</span>
-                    </div>
-
-                    {/* Ngoại ngữ: tiếng Anh, Nhật, Hàn và chọn thêm ngoại ngữ khác */}
-                    <div className="sm:col-span-2 pt-2 border-t border-slate-200">
-                      <span className="text-slate-500 font-semibold block mb-1.5 flex items-center gap-1">
-                        <Globe className="w-3.5 h-3.5 text-teal-700" />
-                        Ngoại ngữ (tiếng Anh, Nhật, Hàn và ngoại ngữ khác)
-                      </span>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {expertLanguages.map((lang: string, i: number) => (
-                          <span
-                            key={i}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-teal-50 text-teal-900 border border-teal-200"
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-teal-600" />
-                            {lang}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Tên Chuyên gia</span>
+                  <span className="font-bold text-slate-900 text-sm">{entity.title || entity.fullName}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Năm sinh</span>
+                  <span className="font-mono font-semibold text-slate-800">{entity.birthYear || '1978'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Email</span>
+                  <span className="font-medium text-teal-800">{entity.email || entity.publicEmail || 'oanh.hk@vnu.edu.vn'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Điện thoại</span>
+                  <span className="font-mono text-slate-800">{entity.phone || entity.publicPhone || '0904.123.456'}</span>
+                </div>
+                <div className="sm:col-span-2">
+                  <span className="text-slate-400 block mb-0.5">Chuyên ngành</span>
+                  <span className="font-semibold text-slate-900">{entity.specialty || entity.primaryField || entity.field}</span>
+                </div>
+              </div>
             </div>
           )}
 

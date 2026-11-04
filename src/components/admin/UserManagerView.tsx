@@ -35,8 +35,6 @@ const ROLE_DEFINITIONS: Record<UserRole, { label: string; desc: string; color: s
   org_representative: { label: 'Đại diện Doanh nghiệp', desc: 'Khai báo thông tin doanh nghiệp ĐMST, dự án và nhu cầu công nghệ', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
   expert_user: { label: 'Chuyên gia / Nhà khoa học', desc: 'Cập nhật hồ sơ cá nhân, công trình và hướng nghiên cứu', color: 'bg-cyan-100 text-cyan-800 border-cyan-300' },
   investor_user: { label: 'Nhà đầu tư / Quỹ', desc: 'Xem thông tin dự án, kết nối đầu tư và đặt hàng', color: 'bg-violet-100 text-violet-800 border-violet-300' },
-  viewer: { label: 'Người dùng chỉ xem dữ liệu (Read-only)', desc: 'Chỉ được truy cập và xem dữ liệu các phân hệ được cấp quyền, không được thêm, sửa, xóa hoặc nhập dữ liệu', color: 'bg-sky-100 text-sky-800 border-sky-300' },
-  read_only: { label: 'Chỉ xem dữ liệu', desc: 'Chỉ được phép xem dữ liệu, vô hiệu hóa mọi thao tác chỉnh sửa', color: 'bg-sky-100 text-sky-800 border-sky-300' },
   public_user: { label: 'Công dân / Người dùng công khai', desc: 'Tra cứu thông tin công khai, gửi đề xuất sáng kiến trực tuyến', color: 'bg-slate-100 text-slate-700 border-slate-300' }
 };
 
@@ -78,8 +76,8 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
 
   // Form states
   const [formUsername, setFormUsername] = useState('');
-  const [formPassword, setFormPassword] = useState('');
-  const [formConfirmPassword, setFormConfirmPassword] = useState('');
+  const [formPassword, setFormPassword] = useState('admin123');
+  const [formConfirmPassword, setFormConfirmPassword] = useState('admin123');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formFullName, setFormFullName] = useState('');
@@ -220,7 +218,7 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
         }
         await api.createUser({
           username: formUsername.trim(),
-          password: formPassword.trim(),
+          password: formPassword.trim() || 'admin123',
           fullName: formFullName.trim(),
           email: formEmail.trim(),
           phone: formPhone.trim(),

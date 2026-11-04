@@ -8,8 +8,6 @@ export type UserRole =
   | 'org_representative'
   | 'expert_user'
   | 'investor_user'
-  | 'viewer'
-  | 'read_only'
   | 'public_user';
 
 export type ApprovalStatus =
@@ -213,8 +211,5 @@ export interface AggregatedStats {
   expertsByField?: Record<string, number>;
   expertsByWorkplace?: Record<string, number>;
   expertsByDegree?: Record<string, number>;
-  expertsProfessors?: number;
-  expertsDoctors?: number;
-  expertsMasters?: number;
 }
 

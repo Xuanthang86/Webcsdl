@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../services/api';
 import { User } from '../types';
-import { ShieldCheck, Lock, User as UserIcon, AlertCircle, X, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, Lock, User as UserIcon, AlertCircle, X, KeyRound, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
 interface AdminLoginModalProps {
   onClose: () => void;
@@ -9,15 +9,8 @@ interface AdminLoginModalProps {
 }
 
 export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuccess }) => {
-  const [rememberAccount, setRememberAccount] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.localStorage.getItem('portal_remember_account') === 'true';
-  });
-  const [username, setUsername] = useState(() => {
-    if (typeof window === 'undefined') return '';
-    return window.localStorage.getItem('portal_remembered_username') || '';
-  });
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('superadmin');
+  const [password, setPassword] = useState('admin123');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,23 +21,18 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
     setLoading(true);
 
     try {
-      const normalizedUsername = username.trim();
-      const user = await api.login(normalizedUsername, password);
-      if (typeof window !== 'undefined') {
-        if (rememberAccount) {
-          window.localStorage.setItem('portal_remember_account', 'true');
-          window.localStorage.setItem('portal_remembered_username', normalizedUsername);
-        } else {
-          window.localStorage.removeItem('portal_remember_account');
-          window.localStorage.removeItem('portal_remembered_username');
-        }
-      }
+      const user = await api.login(username, password);
       onSuccess(user);
     } catch (err: any) {
       setError(err.message || 'Tên đăng nhập hoặc mật khẩu không chính xác.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleQuickLogin = (uname: string, pwd = 'admin123') => {
+    setUsername(uname);
+    setPassword(pwd);
   };
 
   return (
@@ -60,12 +48,13 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
               <ShieldCheck className="w-5 h-5 text-teal-300" />
             </div>
             <div>
-              <h3 className="font-bold text-lg leading-tight">Đăng nhập Quản trị</h3>
+              <h3 className="font-bold text-base leading-tight">Đăng Nhập</h3>
+              <p className="text-xs text-teal-200/80 mt-0.5">Xác thực quyền quản trị viên & cán bộ chuyên trách</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-300 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+            className="text-slate-300 hover:text-white p-1 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -74,48 +63,43 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
         {/* Modal Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-800 flex items-center gap-2">
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
               <span>{error}</span>
             </div>
           )}
 
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-slate-700">Tên đăng nhập / Mã định danh</label>
+            <label className="text-xs font-semibold text-slate-700">Tên đăng nhập / Mã định danh</label>
             <div className="relative">
-              <UserIcon className="w-4 h-4 absolute left-3 top-3.5 text-slate-400" />
+              <UserIcon className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
               <input
                 type="text"
-                name="username"
-                autoComplete="username"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                placeholder="Nhập tên đăng nhập được cấp..."
+                placeholder="Nhập tên đăng nhập (vd: superadmin)"
                 required
-                autoFocus
-                className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-700 focus:outline-none"
+                className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-700 focus:outline-none"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-slate-700">Mật khẩu</label>
+            <label className="text-xs font-semibold text-slate-700">Mật khẩu xác thực</label>
             <div className="relative">
-              <Lock className="w-4 h-4 absolute left-3 top-3.5 text-slate-400" />
+              <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
               <input
                 type={showPassword ? 'text' : 'password'}
-                name="password"
-                autoComplete="current-password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="Nhập mật khẩu..."
+                placeholder="Nhập mật khẩu"
                 required
-                className="w-full pl-9 pr-10 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-700 focus:outline-none"
+                className="w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-700 focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 p-0.5 rounded focus:outline-none cursor-pointer"
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded focus:outline-none"
                 title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
               >
@@ -124,35 +108,63 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-slate-600 select-none cursor-pointer">
-            <input
-              type="checkbox"
-              checked={rememberAccount}
-              onChange={e => setRememberAccount(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600 cursor-pointer"
-            />
-            Ghi nhớ tài khoản
-          </label>
+          {/* Quick Credential Hints for Testing / Evaluation */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+            <div className="text-[11px] font-semibold text-slate-600 flex items-center gap-1">
+              <KeyRound className="w-3.5 h-3.5 text-teal-700" />
+              <span>Tài khoản mẫu để kiểm tra nhanh phân quyền:</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('superadmin', 'admin123')}
+                className="px-2 py-1 text-[11px] bg-white border border-slate-200 hover:border-teal-400 hover:text-teal-800 rounded font-mono transition-colors"
+              >
+                superadmin
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('sysadmin', 'admin123')}
+                className="px-2 py-1 text-[11px] bg-white border border-slate-200 hover:border-teal-400 hover:text-teal-800 rounded font-mono transition-colors"
+              >
+                sysadmin
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('leader', 'admin123')}
+                className="px-2 py-1 text-[11px] bg-white border border-slate-200 hover:border-teal-400 hover:text-teal-800 rounded font-mono transition-colors"
+              >
+                leader (Lãnh đạo)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('officer1', 'admin123')}
+                className="px-2 py-1 text-[11px] bg-white border border-slate-200 hover:border-teal-400 hover:text-teal-800 rounded font-mono transition-colors"
+              >
+                officer1 (Cán bộ)
+              </button>
+            </div>
+          </div>
 
-          <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-100">
+          <div className="pt-2 flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+              className="px-4 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2.5 bg-teal-800 hover:bg-teal-700 text-white rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
+              className="px-5 py-2 bg-teal-800 hover:bg-teal-700 text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50"
             >
               {loading ? (
                 <span>Đang xác thực...</span>
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Đăng nhập</span>
+                  <span>Đăng nhập Quản Trị</span>
                 </>
               )}
             </button>

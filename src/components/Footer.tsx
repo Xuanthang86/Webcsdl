@@ -67,12 +67,12 @@ export const Footer: React.FC<FooterProps> = ({ config }) => {
           <div className="text-slate-300 font-medium leading-relaxed">
             © 2026. Tất cả quyền được bảo lưu.
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm text-slate-400">
-            <span className="hover:text-slate-200 transition-colors cursor-pointer">Chính sách dữ liệu mở</span>
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-[11px] text-slate-500">
+            <span className="hover:text-slate-300 transition-colors cursor-pointer">Chính sách dữ liệu mở</span>
             <span aria-hidden="true">·</span>
-            <span className="hover:text-slate-200 transition-colors cursor-pointer">Điều khoản khai thác</span>
+            <span className="hover:text-slate-300 transition-colors cursor-pointer">Điều khoản khai thác</span>
             <span aria-hidden="true">·</span>
-            <span className="hover:text-slate-200 transition-colors cursor-pointer">Bản quyền thông tin</span>
+            <span className="hover:text-slate-300 transition-colors cursor-pointer">Bản quyền thông tin</span>
           </div>
         </div>
       </div>
