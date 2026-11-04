@@ -1207,6 +1207,9 @@ export default {
 
       // N. Relationships
       if (url.pathname === '/api/relationships' || url.pathname.startsWith('/api/relationships/')) {
+        if (currentUser.role === 'partner_officer') {
+          return jsonResponse({ success: false, message: 'Tài khoản đơn vị không có quyền quản lý quan hệ liên kết toàn hệ thống.' }, 403, corsHeaders);
+        }
         const relId = url.pathname.replace('/api/relationships', '').replace(/^\//, '');
 
         if (request.method === 'GET') {
@@ -1346,6 +1349,10 @@ export default {
 
         if (!ALLOWED_MODULES.includes(moduleName)) {
           return jsonResponse({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' }, 400, corsHeaders);
+        }
+        // Partner/ward accounts are restricted to their assigned startup modules.
+        if (currentUser.role === 'partner_officer' && !['startup_projects', 'startup_ideas'].includes(moduleName)) {
+          return jsonResponse({ success: false, message: 'Tài khoản đơn vị chỉ được truy cập phân hệ Dự án khởi nghiệp và Ý tưởng khởi nghiệp.' }, 403, corsHeaders);
         }
 
         // 1. Workflow Transition: POST /api/modules/:moduleName/:id/workflow
