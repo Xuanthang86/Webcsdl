@@ -1434,7 +1434,9 @@ export default {
                 if (physicalColumns.has(column)) entries.push([column, clean[key]]);
                 else customFields[key] = clean[key];
               }
-              entries.push(['data_json', JSON.stringify(customFields)]);
+              if (physicalColumns.has('data_json')) {
+                entries.push(['data_json', JSON.stringify(customFields)]);
+              }
               const cols = entries.map(([column]) => column).join(', ');
               const placeholders = entries.map(() => '?').join(', ');
               const values = entries.map(([, value]) => typeof value === 'object' && value !== null ? JSON.stringify(value) : value);
@@ -1475,7 +1477,9 @@ export default {
                 if (physicalColumns.has(column)) entries.push([column, clean[key]]);
                 else customFields[key] = clean[key];
               }
-              entries.push(['data_json', JSON.stringify(customFields)]);
+              if (physicalColumns.has('data_json')) {
+                entries.push(['data_json', JSON.stringify(customFields)]);
+              }
               const setClause = entries.map(([column]) => `${column} = ?`).join(', ');
               const values = entries.map(([, value]) => typeof value === 'object' && value !== null ? JSON.stringify(value) : value);
               values.push(recordId);
