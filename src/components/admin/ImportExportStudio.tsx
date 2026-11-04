@@ -101,9 +101,15 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
   };
 
   const handlePreview = () => {
-    const rows = parseCsvText(rawText);
-    setParsedRows(rows);
-    setImportResult(null);
+    try {
+      const rows = parseCsvText(rawText);
+      setParsedRows(rows);
+      setImportError(rows.length ? null : 'Không tìm thấy dữ liệu hợp lệ trong nội dung CSV.');
+      setImportResult(null);
+    } catch (err: any) {
+      setParsedRows([]);
+      setImportError(err.message || 'Không thể đọc nội dung CSV.');
+    }
   };
 
   const handleExecuteImport = async () => {
