@@ -76,7 +76,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [auxiliaryDropdownOpen, setAuxiliaryDropdownOpen] = useState(false);
   const [selectedEntityForRel, setSelectedEntityForRel] = useState<BaseEntity | null>(null);
 
+  const isWardOfficer = currentUser?.role === 'partner_officer';
   const canManageUsers = currentUser?.role === 'super_admin' || currentUser?.role === 'system_admin';
+  const visibleCoreModulesList = isWardOfficer
+    ? coreModulesList.filter(item => ['startup_projects', 'startup_ideas'].includes(item.mod))
+    : coreModulesList;
 
   const handleSelectModule = (mod: ModuleType) => {
     setActiveModule(mod);
@@ -184,7 +188,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 <span className="text-[9px] bg-teal-900/80 text-teal-300 px-1.5 py-0.2 rounded font-mono">10</span>
               </div>
 
-              {coreModulesList.map((item) => {
+              {visibleCoreModulesList.map((item) => {
                 const IconComponent = item.icon;
                 const isActive = activeTab === 'module_crud' && activeModule === item.mod;
                 return (
@@ -204,7 +208,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               })}
 
               {/* Phân hệ Bổ trợ & Tri thức */}
-              <div className="pt-2">
+              {!isWardOfficer && <div className="pt-2">
                 <button
                   onClick={() => setAuxiliaryDropdownOpen(!auxiliaryDropdownOpen)}
                   className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
@@ -243,10 +247,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     ))}
                   </div>
                 )}
-              </div>
+              </div>}
             </div>
 
-            <div className="pt-2 space-y-1">
+            {!isWardOfficer && <div className="pt-2 space-y-1">
               <button
                 onClick={() => { setActiveTab('relationships'); setSidebarOpen(false); }}
                 className={`w-full flex items-start text-left justify-start gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors ${
@@ -318,7 +322,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 <FileCheck className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
                 <span className="whitespace-normal text-left leading-snug">Bộ kiểm thử nghiệm thu & an toàn bảo mật (Section XVI acceptance & security test suite)</span>
               </button>
-            </div>
+            </div>}
 
           </nav>
         </div>
