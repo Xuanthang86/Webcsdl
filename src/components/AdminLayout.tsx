@@ -78,9 +78,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   const isWardOfficer = currentUser?.role === 'partner_officer';
   const canManageUsers = currentUser?.role === 'super_admin' || currentUser?.role === 'system_admin';
-  const visibleCoreModulesList = isWardOfficer
-    ? coreModulesList.filter(item => ['startup_projects', 'startup_ideas'].includes(item.mod))
-    : coreModulesList;
 
   const handleSelectModule = (mod: ModuleType) => {
     setActiveModule(mod);
@@ -111,6 +108,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { mod: 'universities', label: '• Trường ĐH/Cao đẳng', icon: School, color: 'text-violet-400' },
     { mod: 'featured_startups', label: '• DN khởi nghiệp tiêu biểu', icon: Star, color: 'text-amber-300' }
   ];
+
+  const visibleCoreModulesList = isWardOfficer
+    ? coreModulesList.filter(item => ['startup_projects', 'startup_ideas'].includes(item.mod))
+    : coreModulesList;
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row">
