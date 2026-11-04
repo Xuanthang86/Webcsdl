@@ -663,11 +663,14 @@ export default {
           return jsonResponse({ success: false, message: 'Không tìm thấy tài khoản trong CSDL.' }, 404, corsHeaders);
         }
 
-        if (userRow.password_hash && userRow.password_salt) {
-          const checkHash = await hashPasswordWebCrypto(currentPassword, userRow.password_salt);
-          if (!timingSafeEqualStr(checkHash, userRow.password_hash)) {
-            return jsonResponse({ success: false, message: 'Mật khẩu hiện tại không chính xác.' }, 400, corsHeaders);
-          }
+        // Fail closed: never allow a password change unless the current password
+        // can be verified against a complete D1 hash + salt pair.
+        if (!currentPassword || !userRow.password_hash || !userRow.password_salt) {
+          return jsonResponse({ success: false, message: 'Không thể xác minh mật khẩu hiện tại. Vui lòng liên hệ quản trị viên để được hỗ trợ.' }, 400, corsHeaders);
+        }
+        const checkHash = await hashPasswordWebCrypto(currentPassword, userRow.password_salt);
+        if (!timingSafeEqualStr(checkHash, userRow.password_hash)) {
+          return jsonResponse({ success: false, message: 'Mật khẩu hiện tại không chính xác.' }, 400, corsHeaders);
         }
 
         const newSalt = generateRandomSalt();
