@@ -25,8 +25,23 @@ import {
   LayoutGrid,
   FileSpreadsheet,
   SlidersHorizontal,
-  ChevronDown
+  ChevronDown,
+  Upload
 } from 'lucide-react';
+
+export const EXACT_MODULE_TITLES: Record<string, string> = {
+  science_tasks: 'DANH SÁCH CÁC ĐỀ TÀI, NHIỆM VỤ KH&CN',
+  initiatives: 'DANH SÁCH SÁNG KIẾN CÓ TÁC DỤNG, ẢNH HƯỞNG ĐỔI VỚI THÀNH PHỐ',
+  experts: 'DANH SÁCH CHUYÊN GIA',
+  startups: 'DANH SÁCH CÁC DOANH NGHIỆP KHỞI NGHIỆP',
+  support_organizations: 'DANH SÁCH CÁC TỔ CHỨC TRUNG GIAN',
+  startup_projects: 'DANH SÁCH CÁC DỰ ÁN KHỞI NGHIỆP',
+  startup_ideas: 'DANH SÁCH CÁC Ý TƯỞNG KHỞI NGHIỆP',
+  wards: 'DANH SÁCH CÁC XÃ, PHƯỜNG, ĐẶC KHU TRÊN ĐỊA BÀN',
+  universities: 'DANH SÁCH CÁC TRƯỜNG ĐẠI HỌC, CAO ĐẲNG TRÊN ĐỊA BÀN',
+  featured_startups: 'DANH SÁCH CÁC DOANH NGHIỆP KHỞI NGHIỆP TIÊU BIỂU',
+  all: 'DỮ LIỆU TOÀN HỆ THỐNG KHCN & KNĐMST'
+};
 
 interface BrowseViewProps {
   initialSearchQuery?: string;
@@ -54,6 +69,19 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
   const [showFieldsPanel, setShowFieldsPanel] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 15;
+
+  // Module-specific classification filters
+  const [filterYear, setFilterYear] = useState('all');
+  const [filterLevel, setFilterLevel] = useState('all');
+  const [filterDegree, setFilterDegree] = useState('all');
+  const [filterType, setFilterType] = useState('all');
+
+  // Bulk Upload State
+  const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
+  const [bulkFileText, setBulkFileText] = useState('');
+  const [bulkImportSuccess, setBulkImportSuccess] = useState<string | null>(null);
+  const [bulkImportError, setBulkImportError] = useState<string | null>(null);
+  const [isBulkImporting, setIsBulkImporting] = useState(false);
 
   const fetchResults = async (isCurrentCheck?: () => boolean) => {
     setLoading(true);
@@ -89,7 +117,13 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
   // Synchronize when parent navigates or passes new initial props
   useEffect(() => {
-    if (initialModule) setSelectedModule(initialModule);
+    if (initialModule) {
+      setSelectedModule(initialModule);
+      setFilterYear('all');
+      setFilterLevel('all');
+      setFilterDegree('all');
+      setFilterType('all');
+    }
   }, [initialModule]);
 
   useEffect(() => {
@@ -113,6 +147,27 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
     fetchResults();
   };
 
+  const handleExportCsv = async () => {
+    if (selectedModule === 'all') return;
+    try {
+      const res = await fetch(api.getExportUrl(selectedModule as ModuleType), {
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('Không thể tải tệp CSV');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `danh-sach-${selectedModule}-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Lỗi xuất tệp CSV:', err);
+    }
+  };
+
   const formatVND = (num?: number) => {
     if (!num) return '0 đ';
     if (num >= 1000000000) return `${(num / 1000000000).toFixed(1).replace('.', ',')} tỷ đ`;
@@ -120,22 +175,50 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
     return `${Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} đ`;
   };
 
+  // Filter results by module-specific classification
+  const filteredDisplayResults = React.useMemo(() => {
+    let list = results;
+    if (filterYear !== 'all') {
+      list = list.filter(item => {
+        const y = String(item.recognitionYear || item.startYear || item.foundedYear || item.grantDate || item.birthYear || '');
+        return y.includes(filterYear);
+      });
+    }
+    if (filterLevel !== 'all') {
+      list = list.filter(item => {
+        const lvl = (item.managementLevel || item.managingAgency || item.recognizedScope || '').toLowerCase();
+        return lvl.includes(filterLevel.toLowerCase());
+      });
+    }
+    if (filterDegree !== 'all') {
+      list = list.filter(item => {
+        const deg = (item.academicTitle || item.position || '').toLowerCase();
+        return deg.includes(filterDegree.toLowerCase());
+      });
+    }
+    if (filterType !== 'all') {
+      list = list.filter(item => {
+        const t = (item.title || item.ward || item.wardSchool || '').toLowerCase();
+        return t.includes(filterType.toLowerCase());
+      });
+    }
+    return list;
+  }, [results, filterYear, filterLevel, filterDegree, filterType]);
+
   // Group results by module when selectedModule === 'all'
   const groupedResults = React.useMemo(() => {
     if (selectedModule !== 'all') return null;
     const groups: Record<string, BaseEntity[]> = {};
-    for (const item of results) {
+    for (const item of filteredDisplayResults) {
       const mod = item.moduleType;
       if (!groups[mod]) groups[mod] = [];
       groups[mod].push(item);
     }
     return groups;
-  }, [results, selectedModule]);
+  }, [filteredDisplayResults, selectedModule]);
 
   const formatModuleTitle = (mod: string) => {
-    if (mod === 'all') return 'Dữ liệu toàn hệ thống';
-    const rawName = MODULE_NAMES[mod as ModuleType] || mod;
-    return rawName.replace(/^\d+\.\s*/, '');
+    return EXACT_MODULE_TITLES[mod] || (MODULE_NAMES[mod as ModuleType] || mod).toUpperCase();
   };
 
   return (
@@ -271,15 +354,32 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     </button>
                   </div>
 
-                  <a
-                    href={`/api/export/${selectedModule}`}
-                    download
-                    className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold flex items-center gap-1 transition-colors"
+                  {/* Nút Xuất CSV - Programmatic download không bị tràn và không redirect */}
+                  <button
+                    type="button"
+                    onClick={handleExportCsv}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
                     title="Xuất tệp CSV dữ liệu theo biểu mẫu chuẩn"
                   >
                     <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Xuất CSV</span>
-                  </a>
+                  </button>
+
+                  {/* Nút Tải lên danh sách hàng loạt */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBulkFileText('');
+                      setBulkImportSuccess(null);
+                      setBulkImportError(null);
+                      setShowBulkUploadModal(true);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200 font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+                    title="Tải lên danh sách hàng loạt từ file CSV"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-teal-700" />
+                    <span>Tải lên danh sách hàng loạt</span>
+                  </button>
 
                   <button
                     onClick={() => setSelectedModule('all')}
@@ -289,9 +389,144 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   </button>
                 </>
               )}
-              <span>Tổng cộng: <strong className="text-slate-900 text-sm font-sans">{results.length}</strong> kết quả</span>
+              <span>Tổng cộng: <strong className="text-slate-900 text-sm font-sans">{filteredDisplayResults.length}</strong> kết quả</span>
             </div>
           </div>
+
+          {/* Module-specific classification filter row */}
+          {selectedModule !== 'all' && (
+            <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-slate-500 font-medium shrink-0">Phân loại & Lọc nhanh:</span>
+
+              {/* Science Tasks filters */}
+              {selectedModule === 'science_tasks' && (
+                <>
+                  <select
+                    value={filterLevel}
+                    onChange={(e) => setFilterLevel(e.target.value)}
+                    className="h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium text-xs"
+                  >
+                    <option value="all">Tất cả cấp quản lý</option>
+                    <option value="Thành phố">Cấp Thành phố</option>
+                    <option value="Quốc gia">Cấp Quốc gia</option>
+                    <option value="Cơ sở">Cấp Cơ sở</option>
+                  </select>
+
+                  <select
+                    value={filterYear}
+                    onChange={(e) => setFilterYear(e.target.value)}
+                    className="h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium text-xs"
+                  >
+                    <option value="all">Tất cả các năm</option>
+                    <option value="2026">Năm 2026</option>
+                    <option value="2025">Năm 2025</option>
+                    <option value="2024">Năm 2024</option>
+                  </select>
+                </>
+              )}
+
+              {/* Initiatives filters */}
+              {selectedModule === 'initiatives' && (
+                <>
+                  <select
+                    value={filterYear}
+                    onChange={(e) => setFilterYear(e.target.value)}
+                    className="h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium text-xs"
+                  >
+                    <option value="all">Tất cả năm công nhận</option>
+                    <option value="2025">Năm 2025</option>
+                    <option value="2024">Năm 2024</option>
+                    <option value="2023">Năm 2023</option>
+                  </select>
+
+                  <select
+                    value={filterLevel}
+                    onChange={(e) => setFilterLevel(e.target.value)}
+                    className="h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium text-xs"
+                  >
+                    <option value="all">Tất cả phạm vi công nhận</option>
+                    <option value="thành phố">Cấp thành phố</option>
+                    <option value="cơ sở">Cấp cơ sở</option>
+                  </select>
+                </>
+              )}
+
+              {/* Experts filters */}
+              {selectedModule === 'experts' && (
+                <select
+                  value={filterDegree}
+                  onChange={(e) => setFilterDegree(e.target.value)}
+                  className="h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium text-xs"
+                >
+                  <option value="all">Tất cả học hàm / học vị</option>
+                  <option value="GS">Giáo sư (GS)</option>
+                  <option value="PGS">Phó Giáo sư (PGS)</option>
+                  <option value="TS">Tiến sĩ (TS)</option>
+                  <option value="ThS">Thạc sĩ (ThS)</option>
+                </select>
+              )}
+
+              {/* Wards filters: Phường -> Xã -> Đặc khu */}
+              {selectedModule === 'wards' && (
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium text-xs"
+                >
+                  <option value="all">Tất cả đơn vị (Phường / Xã / Đặc khu)</option>
+                  <option value="Phường">Phường</option>
+                  <option value="Xã">Xã</option>
+                  <option value="Đặc khu">Đặc khu</option>
+                </select>
+              )}
+
+              {/* Universities filters: Đại học -> Cao đẳng */}
+              {selectedModule === 'universities' && (
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium text-xs"
+                >
+                  <option value="all">Tất cả Viện / Trường</option>
+                  <option value="Đại học">Trường Đại học</option>
+                  <option value="Cao đẳng">Trường Cao đẳng</option>
+                  <option value="Viện">Viện nghiên cứu</option>
+                </select>
+              )}
+
+              {/* Startups, Projects, Ideas filter */}
+              {['startups', 'startup_projects', 'startup_ideas'].includes(selectedModule) && (
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium text-xs"
+                >
+                  <option value="all">Tất cả trường học / địa bàn</option>
+                  <option value="Bách Khoa">ĐH Bách Khoa</option>
+                  <option value="Kinh Tế">ĐH Kinh Tế</option>
+                  <option value="Sư Phạm">ĐH Sư Phạm</option>
+                  <option value="Hải Châu">Quận Hải Châu</option>
+                  <option value="Liên Chiểu">Quận Liên Chiểu</option>
+                  <option value="Ngũ Hành Sơn">Quận Ngũ Hành Sơn</option>
+                </select>
+              )}
+
+              {(filterYear !== 'all' || filterLevel !== 'all' || filterDegree !== 'all' || filterType !== 'all') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterYear('all');
+                    setFilterLevel('all');
+                    setFilterDegree('all');
+                    setFilterType('all');
+                  }}
+                  className="text-xs text-rose-700 hover:text-rose-900 font-semibold underline ml-auto"
+                >
+                  Đặt lại lọc
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Active Field Filter Indicator */}
           {selectedField && (
@@ -474,10 +709,12 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                       </div>
 
                       <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                        <span className="text-[11px] flex items-center gap-1 text-emerald-700">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Đã xác minh
-                        </span>
+                        {item.moduleType !== 'experts' ? (
+                          <span className="text-[11px] flex items-center gap-1 text-emerald-700">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Đã xác minh
+                          </span>
+                        ) : <span />}
                         <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
                           Chi tiết
                           <ArrowRight className="w-3 h-3" />
@@ -516,7 +753,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[11px] tracking-wider whitespace-nowrap">
                     {selectedModule === 'science_tasks' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-3 w-12 text-center hidden sm:table-cell">STT</th>
                         <th className="py-3 px-4 min-w-[280px]">Tên đề tài</th>
                         <th className="py-3 px-4 w-32">Cấp quản lý</th>
                         <th className="py-3 px-4 w-44">Cơ quan chủ trì</th>
@@ -529,7 +766,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'initiatives' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-3 w-12 text-center hidden sm:table-cell">STT</th>
                         <th className="py-3 px-4 w-28 text-center">Năm công nhận</th>
                         <th className="py-3 px-4 min-w-[280px]">Tên sáng kiến</th>
                         <th className="py-3 px-4 w-36">Tác giả</th>
@@ -542,7 +779,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'experts' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-3 w-12 text-center hidden sm:table-cell">STT</th>
                         <th className="py-3 px-4 min-w-[200px]">Tên Chuyên gia</th>
                         <th className="py-3 px-4 w-24 text-center">Năm sinh</th>
                         <th className="py-3 px-4 w-44">Email</th>
@@ -554,7 +791,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'startups' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-3 w-12 text-center hidden sm:table-cell">STT</th>
                         <th className="py-3 px-4 min-w-[240px]">Tên doanh nghiệp</th>
                         <th className="py-3 px-4 min-w-[200px]">Địa chỉ hoạt động</th>
                         <th className="py-3 px-4 w-36">Website</th>
@@ -569,7 +806,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'support_organizations' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-3 w-12 text-center hidden sm:table-cell">STT</th>
                         <th className="py-3 px-4 min-w-[320px]">Tên tổ chức</th>
                         <th className="py-3 px-4 min-w-[320px]">Địa chỉ</th>
                         <th className="py-3 px-3 w-20 text-center">Thao tác</th>
@@ -578,7 +815,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'startup_projects' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-3 w-12 text-center hidden sm:table-cell">STT</th>
                         <th className="py-3 px-4 min-w-[260px]">Tên dự án khởi nghiệp</th>
                         <th className="py-3 px-4 min-w-[180px]">Địa chỉ hoạt động</th>
                         <th className="py-3 px-4 w-40">Lĩnh vực khởi nghiệp</th>
@@ -593,7 +830,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'startup_ideas' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-3 w-12 text-center hidden sm:table-cell">STT</th>
                         <th className="py-3 px-4 min-w-[240px]">Tên ý tưởng khởi nghiệp</th>
                         <th className="py-3 px-4 min-w-[180px]">Địa chỉ hoạt động</th>
                         <th className="py-3 px-4 w-36">Lĩnh vực</th>
@@ -609,7 +846,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'wards' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-3 w-12 text-center hidden sm:table-cell">STT</th>
                         <th className="py-3 px-4 min-w-[240px]">Tên xã/phường</th>
                         <th className="py-3 px-4 min-w-[320px]">Địa chỉ</th>
                         <th className="py-3 px-3 w-20 text-center">Thao tác</th>
@@ -618,7 +855,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'universities' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-3 w-12 text-center hidden sm:table-cell">STT</th>
                         <th className="py-3 px-4 min-w-[280px]">Tên trường Đại học/Cao đẳng</th>
                         <th className="py-3 px-4 w-40">Xã/phường</th>
                         <th className="py-3 px-4 min-w-[300px]">Địa chỉ</th>
@@ -628,7 +865,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {selectedModule === 'featured_startups' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-3 w-12 text-center hidden sm:table-cell">STT</th>
                         <th className="py-3 px-4 min-w-[320px]">Tên dự án</th>
                         <th className="py-3 px-4 min-w-[260px]">Link website</th>
                         <th className="py-3 px-3 w-20 text-center">Thao tác</th>
@@ -637,7 +874,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                     {!['science_tasks', 'initiatives', 'experts', 'startups', 'support_organizations', 'startup_projects', 'startup_ideas', 'wards', 'universities', 'featured_startups'].includes(selectedModule) && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="py-3 px-3 w-12 text-center hidden sm:table-cell">STT</th>
                         <th className="py-3 px-4 w-32">Mã bản ghi</th>
                         <th className="py-3 px-4 min-w-[260px]">Tiêu đề / Tên</th>
                         <th className="py-3 px-4 w-40">Lĩnh vực</th>
@@ -648,11 +885,11 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     )}
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {results.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item, idx) => {
+                    {filteredDisplayResults.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item, idx) => {
                       const stt = (currentPage - 1) * PAGE_SIZE + idx + 1;
                       return (
                         <tr key={item.id} className="hover:bg-teal-50/30 transition-colors">
-                          <td className="py-3 px-3 text-center text-slate-400 font-mono text-[11px]">
+                          <td className="py-3 px-3 text-center text-slate-400 font-mono text-[11px] hidden sm:table-cell">
                             {stt}
                           </td>
 
@@ -1043,7 +1280,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   Trang trước
                 </button>
 
-                {Array.from({ length: Math.ceil(results.length / PAGE_SIZE) }).map((_, idx) => {
+                {Array.from({ length: Math.ceil(filteredDisplayResults.length / PAGE_SIZE) }).map((_, idx) => {
                   const pageNum = idx + 1;
                   return (
                     <button
@@ -1066,9 +1303,9 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                 <button
                   type="button"
-                  disabled={currentPage === Math.ceil(results.length / PAGE_SIZE)}
+                  disabled={currentPage === Math.ceil(filteredDisplayResults.length / PAGE_SIZE)}
                   onClick={() => {
-                    setCurrentPage(prev => Math.min(Math.ceil(results.length / PAGE_SIZE), prev + 1));
+                    setCurrentPage(prev => Math.min(Math.ceil(filteredDisplayResults.length / PAGE_SIZE), prev + 1));
                     window.scrollTo({ top: 180, behavior: 'smooth' });
                   }}
                   className="px-3 py-1.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed font-medium text-slate-700 cursor-pointer"
@@ -1078,6 +1315,126 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Bulk Upload Modal */}
+      {showBulkUploadModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 text-xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-800 flex items-center justify-center border border-teal-200">
+                  <Upload className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Tải lên danh sách hàng loạt
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Phân hệ: {formatModuleTitle(selectedModule)}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBulkUploadModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {bulkImportSuccess && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold">
+                {bulkImportSuccess}
+              </div>
+            )}
+            {bulkImportError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-semibold">
+                {bulkImportError}
+              </div>
+            )}
+
+            <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center space-y-2 bg-slate-50">
+              <Upload className="w-6 h-6 text-slate-400 mx-auto" />
+              <div className="text-slate-700 font-medium text-xs">
+                Chọn tệp CSV từ thiết bị của bạn
+              </div>
+              <input
+                type="file"
+                accept=".csv,.txt"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    setBulkFileText(ev.target?.result as string);
+                  };
+                  reader.readAsText(file);
+                }}
+                className="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-800 file:text-white hover:file:bg-teal-700 cursor-pointer"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-semibold text-slate-700 text-xs">
+                Hoặc dán nội dung CSV:
+              </label>
+              <textarea
+                rows={4}
+                value={bulkFileText}
+                onChange={(e) => setBulkFileText(e.target.value)}
+                placeholder="code,title,field,ownerName&#10;NV-01,Tên đề tài mẫu 1,Công nghệ thông tin,ĐH Bách Khoa"
+                className="w-full p-2.5 font-mono text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-700"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => setShowBulkUploadModal(false)}
+                className="px-4 py-2 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={isBulkImporting || !bulkFileText.trim()}
+                onClick={async () => {
+                  setIsBulkImporting(true);
+                  setBulkImportError(null);
+                  try {
+                    const lines = bulkFileText.trim().split(/\r?\n/).filter(l => l.trim().length > 0);
+                    if (lines.length < 2) throw new Error('Dữ liệu cần tối thiểu 1 dòng tiêu đề và 1 dòng dữ liệu.');
+                    const headers = lines[0].split(',').map(h => h.trim());
+                    const rows = lines.slice(1).map(l => {
+                      const vals = l.split(',').map(v => v.trim());
+                      const obj: Record<string, any> = {};
+                      headers.forEach((h, i) => { obj[h] = vals[i] || ''; });
+                      return obj;
+                    });
+                    const res = await api.batchImport(selectedModule as ModuleType, rows, 'overwrite');
+                    setBulkImportSuccess(`Đã tải lên thành công ${res.importedCount} bản ghi!`);
+                    setTimeout(() => {
+                      setShowBulkUploadModal(false);
+                      setBulkFileText('');
+                      setBulkImportSuccess(null);
+                      fetchResults();
+                    }, 1500);
+                  } catch (err: any) {
+                    setBulkImportError(err.message || 'Lỗi tải lên danh sách');
+                  } finally {
+                    setIsBulkImporting(false);
+                  }
+                }}
+                className="px-5 py-2 bg-teal-800 hover:bg-teal-700 disabled:opacity-50 text-white rounded-xl font-semibold cursor-pointer flex items-center gap-1.5"
+              >
+                <Upload className="w-4 h-4" />
+                <span>{isBulkImporting ? 'Đang xử lý...' : 'Bắt đầu tải lên'}</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

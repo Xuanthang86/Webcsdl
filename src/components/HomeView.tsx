@@ -67,13 +67,25 @@ export const HomeView: React.FC<HomeViewProps> = ({
 }) => {
   const [activeEcosystemTab, setActiveEcosystemTab] = useState<'all' | 'startups' | 'support_organizations' | 'startup_projects' | 'startup_ideas' | 'wards' | 'universities' | 'featured_startups'>('all');
 
-  // Format currency with standard Vietnamese format
   const formatVND = (num?: number) => {
     if (!num) return '0 đồng';
     if (num >= 1000000000000) return `${(num / 1000000000000).toFixed(2).replace('.', ',')} nghìn tỷ đồng`;
     if (num >= 1000000000) return `${(num / 1000000000).toFixed(1).replace('.', ',')} tỷ đồng`;
     if (num >= 1000000) return `${(num / 1000000).toFixed(0)} triệu đồng`;
     return `${Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} đồng`;
+  };
+
+  const getStandardAcceptance = (res?: string) => {
+    if (!res) return 'Đang thực hiện';
+    const l = res.toLowerCase();
+    if (l.includes('xuất sắc') || l.includes('đạt') || l.includes('đã')) return 'Đã nghiệm thu';
+    if (l.includes('đang')) return 'Đang nghiệm thu';
+    return 'Chưa nghiệm thu';
+  };
+
+  const cleanTaskCode = (code?: string) => {
+    if (!code) return 'KHCN';
+    return code.split(';')[0].trim();
   };
 
   const renderRecognitionBadge = (scope?: string) => {
@@ -147,23 +159,23 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <div
                   key={item.id}
                   onClick={() => onViewDetail(item)}
-                  className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-teal-400 transition-all cursor-pointer flex flex-col justify-between group"
+                  className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-teal-400 transition-all cursor-pointer flex flex-col justify-between group"
                 >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-mono text-teal-800 font-bold bg-teal-50 px-2.5 py-0.5 rounded border border-teal-200">
-                        STT {idx + 1} · {item.code || 'KHCN'}
+                  <div className="space-y-3 w-full">
+                    <div className="flex items-center justify-between text-xs gap-2">
+                      <span className="font-mono text-teal-800 font-bold bg-teal-50 px-2.5 py-0.5 rounded border border-teal-200 truncate">
+                        <span className="hidden sm:inline">STT {idx + 1} · </span>{cleanTaskCode(item.code)}
                       </span>
-                      <span className="font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded text-xs">
+                      <span className="font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded text-xs shrink-0">
                         {item.managementLevel || item.managingAgency || 'Cấp Thành phố'}
                       </span>
                     </div>
 
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-teal-800 transition-colors line-clamp-2 leading-snug">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-teal-800 transition-colors w-full break-words hyphens-auto leading-snug">
                       {item.title}
                     </h3>
 
-                    <div className="space-y-1.5 text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <div className="space-y-1.5 text-xs sm:text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
                       <div>
                         <span className="text-slate-400 font-medium">Cơ quan chủ trì:</span>{' '}
                         <span className="font-semibold text-slate-800">{item.leadOrganization || item.ownerName || '—'}</span>
@@ -187,7 +199,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
                   <div className="pt-3 mt-4 border-t border-slate-100 flex items-center justify-between text-xs sm:text-sm">
                     <span className="text-emerald-700 font-semibold">
-                      {item.acceptanceResult ? `Nghiệm thu: ${item.acceptanceResult}` : 'Đang thực hiện'}
+                      {getStandardAcceptance(item.acceptanceResult)}
                     </span>
                     <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1">
                       Xem chi tiết
@@ -227,23 +239,24 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <div
                   key={item.id}
                   onClick={() => onViewDetail(item)}
-                  className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-amber-400 transition-all cursor-pointer flex flex-col justify-between group"
+                  className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-amber-400 transition-all cursor-pointer flex flex-col justify-between group"
                 >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs">
+                  <div className="space-y-3 w-full">
+                    <div className="flex items-center justify-between text-xs gap-2">
                       <span className="font-mono text-amber-900 font-bold bg-amber-50 px-2.5 py-0.5 rounded border border-amber-200">
-                        STT {idx + 1}
+                        <span className="hidden sm:inline">STT {idx + 1}</span>
+                        <span className="sm:hidden font-mono text-[11px]">{item.code || 'SK'}</span>
                       </span>
-                      <span className="text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded text-xs font-bold border border-amber-300">
+                      <span className="text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded text-xs font-bold border border-amber-300 shrink-0">
                         Năm công nhận: {item.recognitionYear || '2025'}
                       </span>
                     </div>
 
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-amber-800 transition-colors line-clamp-2 leading-snug">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-amber-800 transition-colors w-full break-words leading-snug">
                       {item.title}
                     </h3>
 
-                    <div className="space-y-1.5 text-sm text-slate-600 bg-amber-50/40 p-3 rounded-lg border border-amber-100">
+                    <div className="space-y-1.5 text-xs sm:text-sm text-slate-600 bg-amber-50/40 p-3 rounded-lg border border-amber-100">
                       <div>
                         <span className="text-slate-400 font-medium">Tác giả:</span>{' '}
                         <span className="font-semibold text-slate-900">
@@ -307,23 +320,23 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <div
                   key={item.id}
                   onClick={() => onViewDetail(item)}
-                  className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-purple-400 transition-all cursor-pointer flex flex-col justify-between group"
+                  className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-purple-400 transition-all cursor-pointer flex flex-col justify-between group"
                 >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-mono text-purple-900 font-bold bg-purple-50 px-2.5 py-0.5 rounded border border-purple-200">
-                        STT {idx + 1} · {item.patentNumber || item.code || 'SC'}
+                  <div className="space-y-3 w-full">
+                    <div className="flex items-center justify-between text-xs gap-2">
+                      <span className="font-mono text-purple-900 font-bold bg-purple-50 px-2.5 py-0.5 rounded border border-purple-200 truncate">
+                        <span className="hidden sm:inline">STT {idx + 1} · </span>{item.patentNumber || item.code || 'SC'}
                       </span>
-                      <span className="font-semibold text-purple-800 bg-purple-50 px-2.5 py-0.5 rounded border border-purple-200 text-xs">
+                      <span className="font-semibold text-purple-800 bg-purple-50 px-2.5 py-0.5 rounded border border-purple-200 text-xs shrink-0">
                         {item.patentType || 'Bằng sáng chế'}
                       </span>
                     </div>
 
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-purple-800 transition-colors line-clamp-2 leading-snug">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-purple-800 transition-colors w-full break-words leading-snug">
                       {item.title}
                     </h3>
 
-                    <div className="space-y-1.5 text-sm text-slate-600 bg-purple-50/30 p-3 rounded-lg border border-purple-100">
+                    <div className="space-y-1.5 text-xs sm:text-sm text-slate-600 bg-purple-50/30 p-3 rounded-lg border border-purple-100">
                       <div>
                         <span className="text-slate-400 font-medium">Chủ sở hữu / Đơn vị:</span>{' '}
                         <span className="font-semibold text-slate-800">{item.ownerName || item.organization || '—'}</span>
@@ -383,21 +396,18 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <div
                   key={item.id}
                   onClick={() => onViewDetail(item)}
-                  className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col justify-between group"
+                  className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-blue-400 transition-all cursor-pointer flex flex-col justify-between group"
                 >
-                  <div className="space-y-3">
+                  <div className="space-y-3 w-full">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-200 text-blue-800 flex items-center justify-center font-bold text-sm shrink-0">
                         {item.academicTitle || 'TS'}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="font-mono text-blue-900 font-bold text-xs">STT {idx + 1}</span>
-                          <span className="text-xs text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                            Đã xác minh
-                          </span>
+                          <span className="font-mono text-blue-900 font-bold text-xs hidden sm:inline">STT {idx + 1}</span>
                         </div>
-                        <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-blue-800 transition-colors truncate">
+                        <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-blue-800 transition-colors w-full break-words leading-snug">
                           {item.title || item.fullName}
                         </h3>
                       </div>
@@ -804,10 +814,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       >
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="font-mono text-indigo-900 font-bold bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-200">
+                            <span className="font-mono text-indigo-900 font-bold bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-200 hidden sm:inline">
                               STT {idx + 1}
                             </span>
-                            <span className="text-indigo-700 font-medium">Địa bàn cơ sở</span>
                           </div>
                           <h4 className="font-bold text-slate-900 group-hover:text-indigo-800 transition-colors text-base">
                             {item.title}
@@ -857,10 +866,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       >
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="font-mono text-violet-900 font-bold bg-violet-50 px-2.5 py-0.5 rounded border border-violet-200">
+                            <span className="font-mono text-violet-900 font-bold bg-violet-50 px-2.5 py-0.5 rounded border border-violet-200 hidden sm:inline">
                               STT {idx + 1}
                             </span>
-                            <span className="text-violet-700 font-medium">Viện trường ĐMST</span>
                           </div>
                           <h4 className="font-bold text-slate-900 group-hover:text-violet-800 transition-colors text-base line-clamp-2">
                             {item.title}

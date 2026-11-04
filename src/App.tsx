@@ -389,6 +389,7 @@ export default function App() {
         <DetailModal
           entity={activeDetailEntity}
           relationships={activeRelationships}
+          currentUser={currentUser}
           onClose={() => setActiveDetailEntity(null)}
           onOpenEntity={handleOpenRelatedEntity}
           onOpenConnectModal={handleOpenConnectModal}

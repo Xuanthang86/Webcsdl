@@ -33,16 +33,16 @@ interface ModuleCrudViewProps {
 }
 
 export const MODULE_NAMES: Record<ModuleType, string> = {
-  science_tasks: '1. Đề tài, nhiệm vụ KH&CN',
-  initiatives: '2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố',
-  experts: '3. Chuyên gia',
-  startups: '4. Doanh nghiệp khởi nghiệp sáng tạo',
-  support_organizations: '5. Tổ chức trung gian',
-  startup_projects: '6. Dự án khởi nghiệp',
-  startup_ideas: '7. Ý tưởng khởi nghiệp',
-  wards: '8. Danh sách xã/phường',
-  universities: '9. Trường Đại học/Cao đẳng trên địa bàn',
-  featured_startups: '10. Doanh nghiệp khởi nghiệp tiêu biểu',
+  science_tasks: 'Đề tài, nhiệm vụ KH&CN',
+  initiatives: 'Sáng kiến có tác dụng, ảnh hưởng đối với thành phố',
+  experts: 'Chuyên gia & Nhà khoa học',
+  startups: 'Doanh nghiệp khởi nghiệp sáng tạo',
+  support_organizations: 'Tổ chức trung gian',
+  startup_projects: 'Dự án khởi nghiệp',
+  startup_ideas: 'Ý tưởng khởi nghiệp',
+  wards: 'Danh sách xã/phường',
+  universities: 'Trường Đại học/Cao đẳng trên địa bàn',
+  featured_startups: 'Doanh nghiệp khởi nghiệp tiêu biểu',
   organizations: 'Tổ chức KH&CN',
   investors: 'Nhà đầu tư',
   investment_funds: 'Quỹ đầu tư',
@@ -79,6 +79,105 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   const [deleteConfirmRecord, setDeleteConfirmRecord] = useState<BaseEntity | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [attachmentEntity, setAttachmentEntity] = useState<BaseEntity | null>(null);
+
+  // Inline Import State
+  const [showInlineImportModal, setShowInlineImportModal] = useState(false);
+  const [importRawText, setImportRawText] = useState('');
+  const [importConflictAction, setImportConflictAction] = useState<'skip' | 'overwrite'>('overwrite');
+  const [isImporting, setIsImporting] = useState(false);
+  const [importParsedRows, setImportParsedRows] = useState<any[]>([]);
+  const [importPreviewError, setImportPreviewError] = useState<string | null>(null);
+
+  const parseInlineCsv = (text: string) => {
+    const input = text.replace(/^\uFEFF/, '').trim();
+    if (!input) return [];
+    const lines = input.split(/\r?\n/).filter(l => l.trim().length > 0);
+    if (lines.length < 2) return [];
+    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+    return lines.slice(1).map(line => {
+      const values: string[] = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') {
+          inQuotes = !inQuotes;
+        } else if (c === ',' && !inQuotes) {
+          values.push(cur.trim());
+          cur = '';
+        } else {
+          cur += c;
+        }
+      }
+      values.push(cur.trim());
+      const row: Record<string, any> = {};
+      headers.forEach((h, idx) => {
+        row[h] = values[idx] || '';
+      });
+      return row;
+    });
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const content = ev.target?.result as string;
+      setImportRawText(content);
+      try {
+        const rows = parseInlineCsv(content);
+        setImportParsedRows(rows);
+        setImportPreviewError(rows.length === 0 ? 'Tệp CSV không chứa dòng dữ liệu nào.' : null);
+      } catch (err: any) {
+        setImportPreviewError('Lỗi đọc cú pháp tệp CSV: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleExecuteImport = async () => {
+    if (importParsedRows.length === 0) {
+      setImportPreviewError('Vui lòng tải tệp hoặc dán dữ liệu CSV hợp lệ trước khi nhập.');
+      return;
+    }
+    setIsImporting(true);
+    setImportPreviewError(null);
+    try {
+      const result = await api.batchImport(moduleType, importParsedRows, importConflictAction);
+      showToast(`Đã nhập thành công ${result.importedCount} bản ghi vào ${MODULE_NAMES[moduleType]}`);
+      setShowInlineImportModal(false);
+      setImportRawText('');
+      setImportParsedRows([]);
+      await loadData();
+    } catch (err: any) {
+      setImportPreviewError(err.message || 'Lỗi trong quá trình nhập dữ liệu');
+      showErrorToast(err.message || 'Lỗi nhập dữ liệu');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleExportCsv = async () => {
+    try {
+      const res = await fetch(api.getExportUrl(moduleType), {
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('Không thể tải tệp CSV từ máy chủ');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `du-lieu-${moduleType}-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      showToast('Đã xuất dữ liệu CSV thành công');
+    } catch (err: any) {
+      showErrorToast(err.message || 'Lỗi xuất file CSV');
+    }
+  };
 
   // Form State for Create/Edit
   const [formTitle, setFormTitle] = useState('');
@@ -273,7 +372,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Quản lý {MODULE_NAMES[moduleType]}
+            {MODULE_NAMES[moduleType]}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
             Tổng cộng: <span className="font-semibold text-slate-800 font-mono">{records.length}</span> bản ghi tích hợp
@@ -281,23 +380,33 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <a
-            href={api.getExportUrl(moduleType)}
-            className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+            title="Xuất danh sách ra tệp CSV chuẩn UTF-8"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Xuất CSV</span>
-          </a>
+          </button>
 
           <button
-            onClick={() => onOpenImport(moduleType)}
+            type="button"
+            onClick={() => {
+              setImportRawText('');
+              setImportParsedRows([]);
+              setImportPreviewError(null);
+              setShowInlineImportModal(true);
+            }}
             className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+            title="Nhập dữ liệu hàng loạt trực tiếp vào phân hệ này"
           >
             <Upload className="w-3.5 h-3.5" />
             <span>Nhập Excel/CSV</span>
           </button>
 
           <button
+            type="button"
             onClick={handleOpenCreate}
             className="px-3.5 py-1.5 bg-teal-800 hover:bg-teal-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
@@ -830,7 +939,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                 {/* Module 3: CHUYÊN GIA */}
                 {moduleType === 'experts' && (
                   <div className="space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                       <div>
                         <label className="block font-semibold text-slate-700 mb-1">Năm sinh</label>
                         <input
@@ -861,6 +970,19 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                           className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
                         />
                       </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Số CCCD / CMND</label>
+                        <input
+                          type="text"
+                          value={extraFields.idCard || extraFields.cccd || ''}
+                          onChange={(e) => {
+                            setExtra('idCard', e.target.value);
+                            setExtra('cccd', e.target.value);
+                          }}
+                          placeholder="VD: 04809200xxxx"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
+                        />
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -882,6 +1004,48 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                           onChange={(e) => setExtra('workplace', e.target.value)}
                           placeholder="ĐH Bách Khoa, Viện Công nghệ..."
                           className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Ngoại ngữ: Tiếng Anh, Nhật, Hàn và chọn thêm ngoại ngữ khác */}
+                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
+                      <label className="block font-semibold text-slate-700 text-xs">
+                        Ngoại ngữ (tiếng Anh, Nhật, Hàn và ngoại ngữ khác)
+                      </label>
+                      <div className="flex flex-wrap items-center gap-4 text-xs">
+                        {['Tiếng Anh', 'Tiếng Nhật', 'Tiếng Hàn'].map((lang) => {
+                          const currentLangs: string[] = Array.isArray(extraFields.foreignLanguages)
+                            ? extraFields.foreignLanguages
+                            : (typeof extraFields.foreignLanguages === 'string' && extraFields.foreignLanguages.trim()
+                              ? extraFields.foreignLanguages.split(',').map((s: string) => s.trim())
+                              : ['Tiếng Anh']);
+                          const isChecked = currentLangs.includes(lang);
+                          return (
+                            <label key={lang} className="inline-flex items-center gap-1.5 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  const updated = e.target.checked
+                                    ? [...currentLangs, lang]
+                                    : currentLangs.filter(l => l !== lang);
+                                  setExtra('foreignLanguages', updated);
+                                }}
+                                className="rounded text-teal-600 focus:ring-teal-500"
+                              />
+                              <span className="text-slate-800">{lang}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      <div className="pt-1">
+                        <input
+                          type="text"
+                          value={extraFields.otherLanguage || ''}
+                          onChange={(e) => setExtra('otherLanguage', e.target.value)}
+                          placeholder="Ngoại ngữ khác (VD: Tiếng Pháp, Tiếng Đức, Tiếng Trung...)"
+                          className="w-full h-8 px-2.5 text-xs bg-white border border-slate-300 rounded-md text-slate-800"
                         />
                       </div>
                     </div>
@@ -1499,6 +1663,158 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Inline Import Modal (Không redirect sang Dashboard) */}
+      {showInlineImportModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 shadow-2xl border border-slate-200 text-xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-800 flex items-center justify-center border border-teal-200">
+                  <Upload className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Nhập dữ liệu hàng loạt: {MODULE_NAMES[moduleType]}
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Tải tệp CSV hoặc dán trực tiếp dữ liệu theo hàng/cột
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowInlineImportModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {importPreviewError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{importPreviewError}</span>
+              </div>
+            )}
+
+            {/* File Upload Box */}
+            <div className="border-2 border-dashed border-slate-300 hover:border-teal-500 rounded-xl p-4 sm:p-6 text-center space-y-2 bg-slate-50 transition-colors">
+              <Upload className="w-6 h-6 text-slate-400 mx-auto" />
+              <div className="text-slate-700 font-semibold text-xs">
+                Chọn tệp CSV hoặc bảng tính đã xuất CSV
+              </div>
+              <input
+                type="file"
+                accept=".csv,.txt"
+                onChange={handleFileUpload}
+                className="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-800 file:text-white hover:file:bg-teal-700 cursor-pointer"
+              />
+            </div>
+
+            {/* Paste Box */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="font-semibold text-slate-700 text-xs">
+                  Hoặc dán nội dung CSV trực tiếp:
+                </label>
+                {importParsedRows.length > 0 && (
+                  <span className="text-teal-800 font-semibold font-mono text-[11px]">
+                    Đã nhận diện: {importParsedRows.length} bản ghi
+                  </span>
+                )}
+              </div>
+              <textarea
+                rows={5}
+                value={importRawText}
+                onChange={(e) => {
+                  setImportRawText(e.target.value);
+                  try {
+                    const rows = parseInlineCsv(e.target.value);
+                    setImportParsedRows(rows);
+                    setImportPreviewError(null);
+                  } catch (err: any) {
+                    setImportPreviewError('Lỗi định dạng: ' + err.message);
+                  }
+                }}
+                placeholder="code,title,field,ownerName&#10;MA-01,Tên bản ghi mẫu 1,Công nghệ thông tin,Đơn vị A&#10;MA-02,Tên bản ghi mẫu 2,Y tế & Dược phẩm,Đơn vị B"
+                className="w-full p-2.5 font-mono text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-700"
+              />
+            </div>
+
+            {/* Duplicate conflict handling */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <span className="font-semibold text-slate-700 text-xs">Xử lý khi trùng mã định danh (Code):</span>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                  <input
+                    type="radio"
+                    name="conflict"
+                    checked={importConflictAction === 'overwrite'}
+                    onChange={() => setImportConflictAction('overwrite')}
+                  />
+                  <span>Ghi đè cập nhật</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                  <input
+                    type="radio"
+                    name="conflict"
+                    checked={importConflictAction === 'skip'}
+                    onChange={() => setImportConflictAction('skip')}
+                  />
+                  <span>Bỏ qua bản ghi trùng</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Preview sample */}
+            {importParsedRows.length > 0 && (
+              <div className="space-y-1">
+                <div className="font-semibold text-slate-700 text-xs">Xem trước (tối đa 3 dòng):</div>
+                <div className="overflow-x-auto border border-slate-200 rounded-lg">
+                  <table className="w-full text-left text-[11px]">
+                    <thead className="bg-slate-100 font-bold text-slate-600">
+                      <tr>
+                        {Object.keys(importParsedRows[0] || {}).slice(0, 5).map(col => (
+                          <th key={col} className="p-2 border-b border-slate-200">{col}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {importParsedRows.slice(0, 3).map((r, idx) => (
+                        <tr key={idx} className="border-b border-slate-100">
+                          {Object.values(r).slice(0, 5).map((val: any, vi) => (
+                            <td key={vi} className="p-2 truncate max-w-[120px]">{String(val)}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => setShowInlineImportModal(false)}
+                className="px-4 py-2 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                disabled={isImporting || importParsedRows.length === 0}
+                onClick={handleExecuteImport}
+                className="px-5 py-2 bg-teal-800 hover:bg-teal-700 disabled:opacity-50 text-white rounded-xl font-semibold cursor-pointer flex items-center gap-1.5"
+              >
+                <Upload className="w-4 h-4" />
+                <span>{isImporting ? 'Đang nhập...' : `Xác nhận nhập ${importParsedRows.length} bản ghi`}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

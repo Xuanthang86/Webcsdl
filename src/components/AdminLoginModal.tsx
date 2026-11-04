@@ -99,7 +99,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-slate-700">Mật khẩu xác thực</label>
+            <label className="text-sm font-semibold text-slate-700">Mật khẩu</label>
             <div className="relative">
               <Lock className="w-4 h-4 absolute left-3 top-3.5 text-slate-400" />
               <input

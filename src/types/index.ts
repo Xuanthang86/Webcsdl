@@ -211,5 +211,8 @@ export interface AggregatedStats {
   expertsByField?: Record<string, number>;
   expertsByWorkplace?: Record<string, number>;
   expertsByDegree?: Record<string, number>;
+  expertsProfessors?: number;
+  expertsDoctors?: number;
+  expertsMasters?: number;
 }
 

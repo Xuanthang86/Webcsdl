@@ -194,13 +194,15 @@ apiRouter.post('/auth/change-password', (req: AuthenticatedRequest, res: Respons
     return;
   }
 
-  // Verify current password if provided
-  if (currentPassword) {
-    const authCheck = db.authenticateUser(req.user.username, currentPassword);
-    if (!authCheck) {
-      res.status(400).json({ success: false, message: 'Mật khẩu hiện tại không chính xác.' });
-      return;
-    }
+  // Strictly require and verify current password
+  if (!currentPassword) {
+    res.status(400).json({ success: false, message: 'Vui lòng nhập mật khẩu hiện tại.' });
+    return;
+  }
+  const authCheck = db.authenticateUser(req.user.username, currentPassword);
+  if (!authCheck) {
+    res.status(400).json({ success: false, message: 'Mật khẩu hiện tại không chính xác.' });
+    return;
   }
 
   try {

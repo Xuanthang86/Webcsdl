@@ -345,6 +345,23 @@ class DatabaseManager {
     }
 
     const current = this.data.users[idx];
+
+    // Enforce role hierarchy: administrators cannot alter or demote higher-ranked accounts
+    if (actorUser && actorUser.role !== 'super_admin') {
+      if (current.role === 'super_admin') {
+        throw new Error('Chỉ Quản trị viên cấp cao (Super Admin) mới có quyền chỉnh sửa tài khoản Super Admin.');
+      }
+      if (updates.role === 'super_admin') {
+        throw new Error('Chỉ Super Admin mới có quyền cấp vai trò Super Admin.');
+      }
+      if (actorUser.id === current.id && updates.role && updates.role !== current.role) {
+        throw new Error('Không được tự ý thay đổi vai trò của chính mình.');
+      }
+      if (actorUser.id === current.id && updates.isActive !== undefined && !updates.isActive) {
+        throw new Error('Không được tự vô hiệu hóa tài khoản của chính mình.');
+      }
+    }
+
     let passwordHash = current.passwordHash;
     let passwordSalt = current.passwordSalt;
 
@@ -384,6 +401,16 @@ class DatabaseManager {
     const idx = this.data.users.findIndex(u => u.id === userId);
     if (idx === -1) return false;
     const removed = this.data.users[idx];
+
+    if (actorUser) {
+      if (actorUser.id === removed.id) {
+        throw new Error('Không thể tự xóa tài khoản của chính mình.');
+      }
+      if (actorUser.role !== 'super_admin' && removed.role === 'super_admin') {
+        throw new Error('Chỉ Super Admin mới có quyền xóa tài khoản Super Admin.');
+      }
+    }
+
     if (removed.role === 'super_admin' && this.data.users.filter(u => u.role === 'super_admin').length <= 1) {
       throw new Error('Không thể xóa tài khoản Quản trị cấp cao (Super Admin) duy nhất của hệ thống.');
     }

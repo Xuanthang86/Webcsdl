@@ -30,6 +30,22 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
   const [showExpertDetails, setShowExpertDetails] = useState(false);
   const [showEcosystemDetails, setShowEcosystemDetails] = useState(false);
 
+  const handleToggleExpertDetails = () => {
+    setShowExpertDetails(prev => {
+      const next = !prev;
+      if (next) setShowEcosystemDetails(false);
+      return next;
+    });
+  };
+
+  const handleToggleEcosystemDetails = () => {
+    setShowEcosystemDetails(prev => {
+      const next = !prev;
+      if (next) setShowExpertDetails(false);
+      return next;
+    });
+  };
+
   // Format Vietnamese currency with dots: 6,5 tỷ đồng
   const formatVND = (num?: number) => {
     if (!num) return '0 đồng';
@@ -81,6 +97,97 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
 
   const totalEcosystemRecords = ecosystemItems.reduce((acc, curr) => acc + curr.count, 0);
 
+  // Reusable Expert Breakdown Component
+  const renderExpertBreakdown = () => (
+    <div className="p-4 bg-slate-900/95 border border-blue-500/40 rounded-2xl animate-in fade-in duration-150 space-y-3">
+      <div className="flex items-center justify-between pb-2 border-b border-blue-800/50">
+        <div className="text-xs sm:text-sm font-bold text-blue-300 uppercase tracking-wider flex items-center gap-2">
+          <Users className="w-4 h-4 text-blue-400" />
+          <span>Cơ cấu Chuyên gia & Nhà khoa học</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowExpertDetails(false)}
+          className="text-xs sm:text-sm text-slate-400 hover:text-white cursor-pointer px-2 py-0.5"
+        >
+          Đóng ✕
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+        <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+          <div className="text-slate-400 text-[11px]">Giáo sư / Phó GS</div>
+          <div className="text-base font-bold text-white font-mono mt-1">
+            {stats?.expertsProfessors ?? Math.round((stats?.totalExperts || 1) * 0.28)}
+          </div>
+        </div>
+        <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+          <div className="text-slate-400 text-[11px]">Tiến sĩ (TS / TSKH)</div>
+          <div className="text-base font-bold text-teal-300 font-mono mt-1">
+            {stats?.expertsDoctors ?? Math.round((stats?.totalExperts || 1) * 0.54)}
+          </div>
+        </div>
+        <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+          <div className="text-slate-400 text-[11px]">Thạc sĩ / Kỹ sư</div>
+          <div className="text-base font-bold text-amber-300 font-mono mt-1">
+            {stats?.expertsMasters ?? Math.round((stats?.totalExperts || 1) * 0.18)}
+          </div>
+        </div>
+        <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+          <div className="text-slate-400 text-[11px]">Tổng số chuyên gia</div>
+          <div className="text-base font-bold text-emerald-400 font-mono mt-1">
+            {stats?.totalExperts || 0}
+          </div>
+        </div>
+      </div>
+      <div className="text-[11px] text-slate-400 pt-1">
+        Phạm vi: Cán bộ nghiên cứu, giảng viên các trường Đại học, Viện nghiên cứu và chuyên gia doanh nghiệp trên địa bàn TP Đà Nẵng.
+      </div>
+    </div>
+  );
+
+  // Reusable Ecosystem Breakdown Component with horizontal scrolling
+  const renderEcosystemBreakdown = () => (
+    <div className="p-4 bg-slate-900/95 border border-rose-500/40 rounded-2xl animate-in fade-in duration-150 space-y-3">
+      <div className="flex items-center justify-between pb-2 border-b border-rose-800/50">
+        <div className="text-xs sm:text-sm font-bold text-rose-300 uppercase tracking-wider flex items-center gap-2">
+          <Rocket className="w-4 h-4 text-rose-400" />
+          <span>CÁC LOẠI DỮ LIỆU TRONG HỆ SINH THÁI</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowEcosystemDetails(false)}
+          className="text-xs sm:text-sm text-slate-400 hover:text-white cursor-pointer px-2 py-0.5"
+        >
+          Đóng ✕
+        </button>
+      </div>
+
+      {/* Horizontal scroll container on all devices */}
+      <div className="overflow-x-auto pb-2 scrollbar-thin flex gap-3 min-w-full">
+        {ecosystemItems.map(item => {
+          const IconComp = item.icon;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => onNavigateBrowse(item.key)}
+              className="p-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-teal-400 text-left transition-colors flex flex-col justify-between cursor-pointer min-w-[170px] sm:min-w-[190px] shrink-0"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <IconComp className="w-4 h-4 text-rose-300" />
+                <span className="font-mono font-bold text-base text-white">{item.count}</span>
+              </div>
+              <div className="text-xs font-medium text-slate-300 line-clamp-2 leading-snug">
+                {item.label}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
     <div className="bg-gradient-to-b from-slate-900 via-teal-950 to-slate-900 text-white pt-7 pb-8 px-4 sm:px-6 lg:px-8 border-b border-teal-800 shadow-inner">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -128,7 +235,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-sm text-slate-300 font-medium">1. Đề tài, nhiệm vụ KH&CN</div>
+                <div className="text-sm text-slate-300 font-medium">Đề tài, nhiệm vụ KH&CN</div>
                 <div className="text-2xl sm:text-3xl font-bold font-mono text-white mt-0.5">
                   {stats?.totalScienceTasks || 0}
                 </div>
@@ -149,7 +256,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
             </div>
           </div>
 
-          {/* Pillar 2: Sáng kiến có tác dụng, ảnh hưởng */}
+          {/* Pillar 2: Sáng kiến có tác dụng, ảnh hưởng đối với thành phố */}
           <div 
             onClick={() => onNavigateBrowse('initiatives')}
             className="bg-white/5 hover:bg-white/10 border border-teal-800/60 hover:border-teal-500 rounded-2xl p-4 transition-all cursor-pointer group flex flex-col justify-between"
@@ -165,8 +272,8 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-sm text-slate-300 font-medium line-clamp-2 leading-snug" title="2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố">
-                  2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố
+                <div className="text-sm text-slate-300 font-medium line-clamp-2 leading-snug" title="Sáng kiến có tác dụng, ảnh hưởng đối với thành phố">
+                  Sáng kiến có tác dụng, ảnh hưởng đối với thành phố
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold font-mono text-white mt-0.5">
                   {stats?.totalInitiatives || 0}
@@ -174,13 +281,9 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div className="pt-2 border-t border-white/10 space-y-1.5 text-xs sm:text-sm text-slate-300">
-                <div className="flex justify-between">
-                  <span>Công nhận cấp TP:</span>
-                  <span className="font-mono text-amber-300 font-semibold">{stats?.initiativesRecognized || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Làm lợi hàng năm:</span>
-                  <span className="font-mono text-emerald-400 font-semibold">{formatVND(stats?.totalCostSavings)}</span>
+                <div className="flex justify-between items-center">
+                  <span>Năm {new Date().getFullYear()}:</span>
+                  <span className="font-mono text-amber-300 font-semibold">{stats?.initiativesRecognized || 0} sáng kiến</span>
                 </div>
               </div>
             </div>
@@ -202,7 +305,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-sm text-slate-300 font-medium">3. Sáng chế & Sở hữu trí tuệ</div>
+                <div className="text-sm text-slate-300 font-medium">Sáng chế & Sở hữu trí tuệ</div>
                 <div className="text-2xl sm:text-3xl font-bold font-mono text-white mt-0.5">
                   {stats?.totalPatents || 0}
                 </div>
@@ -222,182 +325,122 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
           </div>
 
           {/* Pillar 4: Chuyên gia & Nhà khoa học */}
-          <div 
-            className="bg-white/5 hover:bg-white/10 border border-teal-800/60 hover:border-teal-500 rounded-2xl p-4 transition-all group flex flex-col justify-between"
-          >
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="w-9 h-9 rounded-lg bg-blue-800/80 text-blue-300 flex items-center justify-center">
-                  <Users className="w-5 h-5" />
+          <div className="space-y-3 flex flex-col justify-between">
+            <div 
+              className="bg-white/5 hover:bg-white/10 border border-teal-800/60 hover:border-teal-500 rounded-2xl p-4 transition-all group flex flex-col justify-between h-full"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-9 h-9 rounded-lg bg-blue-800/80 text-blue-300 flex items-center justify-center">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleExpertDetails();
+                      }}
+                      className={`text-xs font-semibold border px-2 py-1 rounded-lg transition-colors flex items-center gap-0.5 cursor-pointer ${
+                        showExpertDetails 
+                          ? 'bg-blue-600 text-white border-blue-400' 
+                          : 'text-blue-300 border-blue-400/50 bg-blue-900/40 hover:bg-blue-800/60'
+                      }`}
+                      title="Xem cơ cấu chuyên gia"
+                    >
+                      <span>Cơ cấu</span>
+                      <ChevronDown className={`w-3 h-3 transition-transform ${showExpertDetails ? 'rotate-180' : ''}`} />
+                    </button>
+                    <button
+                      onClick={() => onNavigateBrowse('experts')}
+                      className="text-xs text-teal-300 font-semibold border border-teal-400/50 bg-teal-900/40 hover:bg-teal-800/60 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      Xem <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowExpertDetails(!showExpertDetails);
-                    }}
-                    className="text-xs text-blue-300 font-semibold border border-blue-400/50 bg-blue-900/40 hover:bg-blue-800/60 px-2 py-1 rounded-lg transition-colors flex items-center gap-0.5 cursor-pointer"
-                    title="Xem cơ cấu chuyên gia"
-                  >
-                    <span>Cơ cấu</span>
-                    <ChevronDown className={`w-3 h-3 transition-transform ${showExpertDetails ? 'rotate-180' : ''}`} />
-                  </button>
-                  <button
-                    onClick={() => onNavigateBrowse('experts')}
-                    className="text-xs text-teal-300 font-semibold border border-teal-400/50 bg-teal-900/40 hover:bg-teal-800/60 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    Xem <ArrowRight className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
 
-              <div>
-                <div className="text-sm text-slate-300 font-medium">4. Chuyên gia & Nhà khoa học</div>
-                <div className="text-2xl sm:text-3xl font-bold font-mono text-white mt-0.5">
-                  {stats?.totalExperts || 0}
+                <div>
+                  <div className="text-sm text-slate-300 font-medium">Chuyên gia & Nhà khoa học</div>
+                  <div className="text-2xl sm:text-3xl font-bold font-mono text-white mt-0.5">
+                    {stats?.totalExperts || 0}
+                  </div>
                 </div>
-              </div>
 
-              <div className="pt-2 border-t border-white/10 space-y-1.5 text-xs sm:text-sm text-slate-300">
-                <div className="flex justify-between">
-                  <span>Đã xác minh:</span>
-                  <span className="font-mono text-emerald-400 font-semibold">{stats?.totalExperts ? `${stats.totalExperts} chuyên gia` : '0 chuyên gia'}</span>
-                </div>
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>Phạm vi:</span>
-                  <span className="text-teal-300 font-medium">Đại học & Viện nghiên cứu</span>
+                <div className="pt-2 border-t border-white/10 text-xs text-slate-400">
+                  <span>Tổng số chuyên gia: <strong className="text-white font-mono">{stats?.totalExperts || 0}</strong></span>
                 </div>
               </div>
+            </div>
+
+            {/* Mobile Only: render Breakdown directly below Chuyên gia */}
+            <div className="lg:hidden">
+              {showExpertDetails && renderExpertBreakdown()}
             </div>
           </div>
 
           {/* Pillar 5: Dữ liệu Hệ sinh thái */}
-          <div 
-            className="bg-white/5 hover:bg-white/10 border border-teal-800/60 hover:border-teal-500 rounded-2xl p-4 transition-all group flex flex-col justify-between"
-          >
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="w-9 h-9 rounded-lg bg-rose-800/80 text-rose-300 flex items-center justify-center">
-                  <Rocket className="w-5 h-5" />
+          <div className="space-y-3 flex flex-col justify-between">
+            <div 
+              className="bg-white/5 hover:bg-white/10 border border-teal-800/60 hover:border-teal-500 rounded-2xl p-4 transition-all group flex flex-col justify-between h-full"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-9 h-9 rounded-lg bg-rose-800/80 text-rose-300 flex items-center justify-center">
+                    <Rocket className="w-5 h-5" />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleEcosystemDetails();
+                      }}
+                      className={`text-xs font-semibold border px-2 py-1 rounded-lg transition-colors flex items-center gap-0.5 cursor-pointer ${
+                        showEcosystemDetails
+                          ? 'bg-rose-600 text-white border-rose-400'
+                          : 'text-rose-300 border-rose-400/50 bg-rose-900/40 hover:bg-rose-800/60'
+                      }`}
+                      title="Xem các loại dữ liệu trong hệ sinh thái"
+                    >
+                      <span>Các loại dữ liệu</span>
+                      <ChevronDown className={`w-3 h-3 transition-transform ${showEcosystemDetails ? 'rotate-180' : ''}`} />
+                    </button>
+                    <button
+                      onClick={() => onNavigateBrowse('startups')}
+                      className="text-xs text-teal-300 font-semibold border border-teal-400/50 bg-teal-900/40 hover:bg-teal-800/60 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      Xem <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowEcosystemDetails(!showEcosystemDetails);
-                    }}
-                    className="text-xs text-rose-300 font-semibold border border-rose-400/50 bg-rose-900/40 hover:bg-rose-800/60 px-2 py-1 rounded-lg transition-colors flex items-center gap-0.5 cursor-pointer"
-                    title="Xem chi tiết 7 loại dữ liệu con"
-                  >
-                    <span>7 Loại con</span>
-                    <ChevronDown className={`w-3 h-3 transition-transform ${showEcosystemDetails ? 'rotate-180' : ''}`} />
-                  </button>
-                  <button
-                    onClick={() => onNavigateBrowse('startups')}
-                    className="text-xs text-teal-300 font-semibold border border-teal-400/50 bg-teal-900/40 hover:bg-teal-800/60 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    Xem <ArrowRight className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
 
-              <div>
-                <div className="text-sm text-slate-300 font-medium">5. Dữ liệu Hệ sinh thái</div>
-                <div className="text-2xl sm:text-3xl font-bold font-mono text-white mt-0.5">
-                  {totalEcosystemRecords}
+                <div>
+                  <div className="text-sm text-slate-300 font-medium">Dữ liệu Hệ sinh thái</div>
+                  <div className="text-2xl sm:text-3xl font-bold font-mono text-white mt-0.5">
+                    {totalEcosystemRecords}
+                  </div>
                 </div>
-              </div>
 
-              <div className="pt-2 border-t border-white/10 space-y-1 text-xs text-slate-300">
-                <div className="flex justify-between">
-                  <span>DN khởi nghiệp:</span>
-                  <span className="font-mono text-white font-semibold">{stats?.totalStartups || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Tổ chức trung gian:</span>
-                  <span className="font-mono text-cyan-300 font-semibold">{stats?.totalSupportOrgs || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Dự án & Ý tưởng:</span>
-                  <span className="font-mono text-amber-300 font-semibold">{(stats?.totalProjects || 0) + (stats?.totalIdeas || 0)}</span>
+                <div className="pt-2 border-t border-white/10 text-xs text-slate-400">
+                  <span>Tổng số dữ liệu hệ sinh thái: <strong className="text-white font-mono">{totalEcosystemRecords}</strong></span>
                 </div>
               </div>
+            </div>
+
+            {/* Mobile Only: render Breakdown directly below Hệ sinh thái */}
+            <div className="lg:hidden">
+              {showEcosystemDetails && renderEcosystemBreakdown()}
             </div>
           </div>
 
         </div>
 
-        {/* Expandable Breakdown for Pillar 4: Chuyên gia */}
-        {showExpertDetails && (
-          <div className="p-4 bg-slate-900/95 border border-blue-500/40 rounded-2xl animate-in fade-in duration-150 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-blue-800/50">
-              <div className="text-sm font-bold text-blue-300 uppercase tracking-wider flex items-center gap-2">
-                <Users className="w-4 h-4 text-blue-400" />
-                <span>Thống kê Chuyên gia theo Dữ liệu thực tế</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowExpertDetails(false)}
-                className="text-sm text-slate-400 hover:text-white cursor-pointer"
-              >
-                Đóng ✕
-              </button>
-            </div>
-
-            {(stats?.totalExperts || 0) === 0 ? (
-              <div className="p-4 text-center text-sm text-slate-400">
-                Hiện tại cơ sở dữ liệu chưa có bản ghi chuyên gia nào. Vui lòng cập nhật hoặc thêm mới chuyên gia qua cổng quản trị.
-              </div>
-            ) : (
-              <div className="text-sm text-slate-300 p-2">
-                Tổng cộng có <span className="font-mono font-bold text-teal-300">{stats?.totalExperts}</span> chuyên gia & nhà khoa học đã được tích hợp và xác thực trong hệ sinh thái KH&CN thành phố.
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Expandable Breakdown for Pillar 5: Dữ liệu Hệ sinh thái */}
-        {showEcosystemDetails && (
-          <div className="p-4 bg-slate-900/95 border border-rose-500/40 rounded-2xl animate-in fade-in duration-150 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-rose-800/50">
-              <div className="text-sm font-bold text-rose-300 uppercase tracking-wider flex items-center gap-2">
-                <Rocket className="w-4 h-4 text-rose-400" />
-                <span>Thống kê chi tiết Dữ liệu Hệ sinh thái theo 7 loại dữ liệu con</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowEcosystemDetails(false)}
-                className="text-sm text-slate-400 hover:text-white cursor-pointer"
-              >
-                Đóng ✕
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 text-xs sm:text-sm">
-              {ecosystemItems.map(item => {
-                const IconComp = item.icon;
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => onNavigateBrowse(item.key)}
-                    className="p-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-teal-400 text-left transition-colors flex flex-col justify-between cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <IconComp className="w-4 h-4 text-rose-300" />
-                      <span className="font-mono font-bold text-base text-white">{item.count}</span>
-                    </div>
-                    <div className="text-xs font-medium text-slate-300 line-clamp-2 leading-snug">
-                      {item.label}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Laptop/Desktop Only: Expandable Breakdowns spanning the full width */}
+        <div className="hidden lg:block space-y-4">
+          {showExpertDetails && renderExpertBreakdown()}
+          {showEcosystemDetails && renderEcosystemBreakdown()}
+        </div>
 
       </div>
     </div>

@@ -126,6 +126,7 @@ function jsonResponse(data: any, status = 200, extraHeaders: Record<string, stri
   return new Response(JSON.stringify(data), {
     status,
     headers: {
+      'Content-Type': 'application/json; charset=utf-8',
       ...extraHeaders
     }
   });
@@ -830,6 +831,10 @@ export default {
           }
           if (!env.DB) {
             return jsonResponse({ success: false, message: 'CSDL chưa kết nối.' }, 500, corsHeaders);
+          }
+          const target = await env.DB.prepare('SELECT role FROM users WHERE id = ?').bind(userId).first<any>();
+          if (target && target.role === 'super_admin' && currentUser.role !== 'super_admin') {
+            return jsonResponse({ success: false, message: 'Chỉ Super Admin mới có quyền xóa tài khoản Super Admin.' }, 403, corsHeaders);
           }
           await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
           return jsonResponse({ success: true, message: 'Đã xóa tài khoản người dùng thành công.' }, 200, corsHeaders);

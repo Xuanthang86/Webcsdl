@@ -201,16 +201,28 @@ export const Header: React.FC<HeaderProps> = ({
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
           
-          {/* Zone 1: Logo & Brand Wordmark */}
+          {/* Zone 1: Mobile Menu Button (bên trái logo) + Logo & Brand Wordmark */}
           <div className="flex items-center gap-2 sm:gap-3 shrink min-w-0">
-            {/* Logo and Brand Name - Click navigates to Home */}
+            {/* Mobile Hamburger Toggle Button - Bên trái logo */}
+            <button
+              type="button"
+              onClick={() => setMenuDrawerOpen(true)}
+              className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl text-slate-700 hover:text-teal-900 bg-slate-100 hover:bg-teal-50 border border-slate-200 transition-colors cursor-pointer shrink-0"
+              aria-label="Mở danh mục Cơ sở dữ liệu"
+              title="Danh mục Cơ sở dữ liệu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            {/* Logo and Brand Name - Click navigates to Home top */}
             <div 
               onClick={() => {
                 setMenuDrawerOpen(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
                 onNavigate('home');
               }} 
               className="cursor-pointer flex items-center gap-2 sm:gap-2.5 min-w-0 group"
-              title="Trở về Trang chủ Cổng Dữ Liệu"
+              title="Về đầu trang chủ Cổng Dữ Liệu"
             >
               <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-teal-800 text-white flex items-center justify-center font-bold text-xs sm:text-base shadow-xs group-hover:bg-teal-700 transition-colors shrink-0">
                 ĐN
@@ -258,7 +270,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-teal-700" />
-                    <span>1. Đề tài, nhiệm vụ KH&CN</span>
+                    <span>Đề tài, nhiệm vụ KH&CN</span>
                   </div>
                   <ChevronRight className="w-3 h-3 text-slate-400" />
                 </button>
@@ -269,7 +281,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <Lightbulb className="w-4 h-4 text-amber-600" />
-                    <span>2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
+                    <span>Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
                   </div>
                   <ChevronRight className="w-3 h-3 text-slate-400" />
                 </button>
@@ -280,7 +292,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <Award className="w-4 h-4 text-purple-600" />
-                    <span>3. Sáng chế & Sở hữu trí tuệ</span>
+                    <span>Sáng chế & Sở hữu trí tuệ</span>
                   </div>
                   <ChevronRight className="w-3 h-3 text-slate-400" />
                 </button>
@@ -291,12 +303,12 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <GraduationCap className="w-4 h-4 text-blue-600" />
-                    <span>4. Chuyên gia & Nhà khoa học</span>
+                    <span>Chuyên gia & Nhà khoa học</span>
                   </div>
                   <ChevronRight className="w-3 h-3 text-slate-400" />
                 </button>
 
-                {/* 5. Dữ liệu Hệ sinh thái - Hover reveals child sub-categories */}
+                {/* Dữ liệu Hệ sinh thái - Hover reveals child sub-categories */}
                 <div className="relative group/eco">
                   <button
                     onClick={() => handleChooseCategory('startups')}
@@ -304,7 +316,7 @@ export const Header: React.FC<HeaderProps> = ({
                   >
                     <div className="flex items-center gap-2">
                       <Rocket className="w-4 h-4 text-rose-600" />
-                      <span>5. Dữ liệu Hệ sinh thái</span>
+                      <span>Dữ liệu Hệ sinh thái Khởi nghiệp đổi mới sáng tạo</span>
                     </div>
                     <ChevronRight className="w-3.5 h-3.5 text-teal-600" />
                   </button>
@@ -312,7 +324,7 @@ export const Header: React.FC<HeaderProps> = ({
                   {/* Submenu on hover */}
                   <div className="absolute left-full top-0 hidden group-hover/eco:block w-72 bg-white rounded-xl shadow-xl border border-slate-200 py-2 -ml-1 text-xs animate-in fade-in duration-100">
                     <div className="px-3.5 py-1 text-[11px] font-bold text-teal-800 uppercase tracking-wider border-b border-slate-100 mb-1">
-                      Các loại dữ liệu Hệ sinh thái
+                      Các loại dữ liệu trong Hệ sinh thái
                     </div>
                     <button
                       onClick={() => handleChooseCategory('startups')}
@@ -380,19 +392,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               </div>
             </div>
-
-            {/* Quick access to Admin Portal if authenticated with admin privileges */}
-            {isAdminRole && (
-              <button
-                onClick={handleAdminClick}
-                className={`transition-colors whitespace-nowrap hover:text-slate-900 flex items-center gap-1.5 cursor-pointer ${
-                  currentView === 'admin' ? 'text-teal-800 font-semibold border-b-2 border-teal-800 pb-1' : ''
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4 text-teal-700" />
-                <span>Cổng quản trị</span>
-              </button>
-            )}
           </nav>
 
           {/* Zone 3: Login Button / User Account + Mobile Hamburger Button */}
@@ -440,17 +439,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <span>Về Cổng công khai</span>
               </button>
             )}
-
-            {/* Mobile Hamburger Toggle Button - 44px min touch target */}
-            <button
-              type="button"
-              onClick={() => setMenuDrawerOpen(true)}
-              className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-xl text-slate-700 hover:text-teal-900 bg-slate-100 hover:bg-teal-50 border border-slate-200 transition-colors cursor-pointer shrink-0"
-              aria-label="Mở danh mục menu dữ liệu"
-              title="Danh mục dữ liệu & Điều hướng"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
           </div>
 
         </div>
@@ -496,19 +484,20 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   onClick={() => {
                     setMenuDrawerOpen(false);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                     onNavigate('home');
                   }}
-                  className={`w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl font-semibold flex items-center justify-between transition-colors cursor-pointer ${
+                  className={`w-full min-h-[46px] text-left px-4 py-3 rounded-xl font-bold flex items-center justify-between transition-all cursor-pointer shadow-sm ${
                     currentView === 'home'
-                      ? 'bg-teal-800 text-white shadow-xs'
-                      : 'text-slate-800 hover:bg-slate-100'
+                      ? 'bg-gradient-to-r from-teal-800 to-teal-900 text-white ring-2 ring-teal-600/50'
+                      : 'bg-teal-700 text-white hover:bg-teal-800'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Globe className="w-4 h-4 text-teal-500" />
-                    <span>Trang chủ Cổng dữ liệu</span>
+                    <Globe className="w-5 h-5 text-teal-300" />
+                    <span className="text-sm">Trang chủ Cổng dữ liệu</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 opacity-70" />
+                  <ChevronRight className="w-4 h-4 opacity-90" />
                 </button>
 
                 {isAdminRole && (
@@ -525,7 +514,7 @@ export const Header: React.FC<HeaderProps> = ({
                   >
                     <div className="flex items-center gap-2.5">
                       <LayoutDashboard className="w-4 h-4 text-teal-600" />
-                      <span>Cổng quản trị hệ thống</span>
+                      <span>Quản trị hệ thống</span>
                     </div>
                     <ChevronRight className="w-4 h-4 opacity-70" />
                   </button>
@@ -549,55 +538,55 @@ export const Header: React.FC<HeaderProps> = ({
                 <ChevronRight className="w-4 h-4 text-teal-600" />
               </button>
 
-              {/* 1. Đề tài, nhiệm vụ KH&CN */}
+              {/* Đề tài, nhiệm vụ KH&CN */}
               <button
                 onClick={() => handleChooseCategory('science_tasks')}
                 className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 font-medium">
                   <FileText className="w-4 h-4 text-teal-700" />
-                  <span>1. Đề tài, nhiệm vụ KH&CN</span>
+                  <span>Đề tài, nhiệm vụ KH&CN</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
-              {/* 2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố */}
+              {/* Sáng kiến có tác dụng, ảnh hưởng đối với thành phố */}
               <button
                 onClick={() => handleChooseCategory('initiatives')}
                 className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 font-medium">
                   <Lightbulb className="w-4 h-4 text-amber-600" />
-                  <span>2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
+                  <span>Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
-              {/* 3. Sáng chế & Sở hữu trí tuệ */}
+              {/* Sáng chế & Sở hữu trí tuệ */}
               <button
                 onClick={() => handleChooseCategory('patents')}
                 className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 font-medium">
                   <Award className="w-4 h-4 text-purple-600" />
-                  <span>3. Sáng chế & Sở hữu trí tuệ</span>
+                  <span>Sáng chế & Sở hữu trí tuệ</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
-              {/* 4. Chuyên gia & Nhà khoa học */}
+              {/* Chuyên gia & Nhà khoa học */}
               <button
                 onClick={() => handleChooseCategory('experts')}
                 className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 font-medium">
                   <GraduationCap className="w-4 h-4 text-blue-600" />
-                  <span>4. Chuyên gia & Nhà khoa học</span>
+                  <span>Chuyên gia & Nhà khoa học</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
-              {/* 5. Dữ liệu Hệ sinh thái with Accordion */}
+              {/* Dữ liệu Hệ sinh thái with Accordion */}
               <div className="rounded-xl border border-slate-200 bg-slate-50/70 overflow-hidden">
                 <button
                   onClick={() => setEcosystemSubmenuOpen(!ecosystemSubmenuOpen)}
@@ -605,7 +594,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="flex items-center gap-2.5 font-semibold">
                     <Rocket className="w-4 h-4 text-rose-600" />
-                    <span>5. Dữ liệu Hệ sinh thái</span>
+                    <span>Dữ liệu Hệ sinh thái Khởi nghiệp đổi mới sáng tạo</span>
                   </div>
                   <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${ecosystemSubmenuOpen ? 'rotate-180' : ''}`} />
                 </button>

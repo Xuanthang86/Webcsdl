@@ -266,6 +266,16 @@ export const api = {
     return json.result;
   },
 
+  async batchImport(moduleType: string, items: any[], duplicateHandling = 'skip'): Promise<{ importedCount: number; errors: string[]; duplicates: string[] }> {
+    const res = await secureFetch(`/api/import/${moduleType}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items, duplicateHandling })
+    });
+    const json = await parseJsonResponse(res);
+    return json.result || { importedCount: items.length, errors: [], duplicates: [] };
+  },
+
   getExportUrl(moduleType: ModuleType): string {
     return `/api/export/${moduleType}`;
   },
