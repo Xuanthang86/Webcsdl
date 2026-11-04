@@ -647,8 +647,8 @@ export default {
         if (!newPassword || newPassword.length < 8) {
           return jsonResponse({ success: false, message: 'Mật khẩu mới phải có ít nhất 8 ký tự để bảo đảm an toàn.' }, 400, corsHeaders);
         }
-        if (confirmPassword && newPassword !== confirmPassword) {
-          return jsonResponse({ success: false, message: 'Mật khẩu xác nhận không trùng khớp.' }, 400, corsHeaders);
+        if (!confirmPassword || newPassword !== confirmPassword) {
+          return jsonResponse({ success: false, message: 'Vui lòng nhập và xác nhận chính xác mật khẩu mới.' }, 400, corsHeaders);
         }
 
         if (!env.DB) {
