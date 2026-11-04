@@ -955,6 +955,135 @@ export default {
         }, 200, corsHeaders);
       }
 
+      // L. Module CSV Export / Import (D1-backed)
+      const exportMatch = url.pathname.match(/^\/api\/export\/([a-z_]+)$/);
+      const importMatch = url.pathname.match(/^\/api\/import\/([a-z_]+)$/);
+      if (exportMatch || importMatch) {
+        const moduleName = (exportMatch || importMatch)![1];
+        if (!ALLOWED_MODULES.includes(moduleName)) {
+          return jsonResponse({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' }, 400, corsHeaders);
+        }
+        if (!['super_admin', 'system_admin', 'data_officer'].includes(currentUser.role)) {
+          return jsonResponse({ success: false, message: 'Bạn không có quyền nhập hoặc xuất dữ liệu.' }, 403, corsHeaders);
+        }
+        if (!env.DB) {
+          return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
+        }
+
+        if (exportMatch && request.method === 'GET') {
+          try {
+            const info = await env.DB.prepare('PRAGMA table_info(' + moduleName + ')').all<any>();
+            const columns = (info.results || [])
+              .map((column: any) => String(column.name))
+              .filter((column: string) => !['password_hash', 'password_salt'].includes(column));
+            const rows = await env.DB.prepare('SELECT * FROM ' + moduleName + ' ORDER BY created_at DESC LIMIT 10000').all<any>();
+            const escapeCsv = (value: any) => {
+              const raw = value === null || value === undefined
+                ? ''
+                : typeof value === 'object' ? JSON.stringify(value) : String(value);
+              return /[",\r\n]/.test(raw) ? '"' + raw.replace(/"/g, '""') + '"' : raw;
+            };
+            const csv = [
+              columns.map(escapeCsv).join(','),
+              ...(rows.results || []).map((row: any) => columns.map(column => escapeCsv(row[column])).join(','))
+            ].join('\r\n');
+            return new Response('\uFEFF' + csv, {
+              status: 200,
+              headers: {
+                'Content-Type': 'text/csv; charset=utf-8',
+                'Content-Disposition': 'attachment; filename="' + moduleName + '.csv"',
+                'Cache-Control': 'no-store'
+              }
+            });
+          } catch (e: any) {
+            return jsonResponse({ success: false, message: 'Lỗi xuất dữ liệu D1: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
+          }
+        }
+
+        if (importMatch && request.method === 'POST') {
+          const body = await request.json().catch(() => ({})) as any;
+          const items = Array.isArray(body.items) ? body.items : [];
+          if (!items.length) {
+            return jsonResponse({ success: false, message: 'Không có bản ghi hợp lệ để nhập.' }, 400, corsHeaders);
+          }
+          if (items.length > 1000) {
+            return jsonResponse({ success: false, message: 'Mỗi lần chỉ được nhập tối đa 1.000 bản ghi.' }, 400, corsHeaders);
+          }
+
+          try {
+            const info = await env.DB.prepare('PRAGMA table_info(' + moduleName + ')').all<any>();
+            const physicalColumns = new Set((info.results || []).map((column: any) => String(column.name)));
+            if (!physicalColumns.has('id')) {
+              return jsonResponse({ success: false, message: 'Cấu trúc phân hệ không hợp lệ: thiếu cột ID.' }, 500, corsHeaders);
+            }
+            let importedCount = 0;
+            const errors: string[] = [];
+            const duplicates: string[] = [];
+            const seenCodes = new Set<string>();
+
+            for (let index = 0; index < items.length; index++) {
+              try {
+                const clean = sanitizeObject(items[index]);
+                if (!clean || typeof clean !== 'object' || Array.isArray(clean)) {
+                  errors.push('Dòng ' + (index + 2) + ': dữ liệu không phải đối tượng hợp lệ.');
+                  continue;
+                }
+                const code = sanitizeString(clean.code || '').trim();
+                if (code) {
+                  if (seenCodes.has(code)) {
+                    duplicates.push(code);
+                    continue;
+                  }
+                  seenCodes.add(code);
+                  const existing = await env.DB.prepare('SELECT id FROM ' + moduleName + ' WHERE code = ? LIMIT 1').bind(code).first<any>();
+                  if (existing) {
+                    duplicates.push(code);
+                    continue;
+                  }
+                }
+
+                const now = new Date().toISOString();
+                clean.id = clean.id || moduleName.slice(0, 4) + '_' + crypto.randomUUID();
+                clean.created_at = clean.created_at || now;
+                clean.updated_at = now;
+                clean.status = clean.status || 'draft';
+                clean.created_by = clean.created_by || currentUser.fullName;
+
+                const customFields: Record<string, any> = {};
+                const entries: Array<[string, any]> = [];
+                for (const key of Object.keys(clean)) {
+                  const column = toSqlColumn(key);
+                  if (column === 'data_json') continue;
+                  if (physicalColumns.has(column)) entries.push([column, clean[key]]);
+                  else customFields[key] = clean[key];
+                }
+                if (physicalColumns.has('data_json')) {
+                  entries.push(['data_json', JSON.stringify(customFields)]);
+                }
+                const cols = entries.map(([column]) => column).join(', ');
+                const placeholders = entries.map(() => '?').join(', ');
+                const values = entries.map(([, value]) =>
+                  typeof value === 'object' && value !== null ? JSON.stringify(value) : value
+                );
+                await env.DB.prepare('INSERT INTO ' + moduleName + ' (' + cols + ') VALUES (' + placeholders + ')').bind(...values).run();
+                importedCount++;
+              } catch (e: any) {
+                errors.push('Dòng ' + (index + 2) + ': ' + (e?.message || 'Không thể ghi dữ liệu.'));
+              }
+            }
+
+            return jsonResponse({
+              success: true,
+              result: { importedCount, errors, duplicates }
+            }, 200, corsHeaders);
+          } catch (e: any) {
+            return jsonResponse({ success: false, message: 'Lỗi nhập dữ liệu vào D1: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
+          }
+        }
+
+        return jsonResponse({ success: false, message: 'Phương thức yêu cầu không được hỗ trợ.' }, 405, corsHeaders);
+      }
+
       // L. ImageKit CDN Auth & Upload
       if (url.pathname === '/api/imagekit/auth') {
         if (currentUser.role === 'public_user') {
