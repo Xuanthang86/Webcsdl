@@ -744,6 +744,10 @@ export default {
           const organization = sanitizeString(body.organization || '');
           const phone = sanitizeString(body.phone || '');
 
+          if (role === 'super_admin' && currentUser.role !== 'super_admin') {
+            return jsonResponse({ success: false, message: 'Chỉ Super Admin mới có quyền tạo tài khoản Super Admin.' }, 403, corsHeaders);
+          }
+
           if (!username || !rawPassword || rawPassword.length < 8) {
             return jsonResponse({ success: false, message: 'Tên đăng nhập và mật khẩu (tối thiểu 8 ký tự) là bắt buộc.' }, 400, corsHeaders);
           }
@@ -783,10 +787,22 @@ export default {
           if (!existing) {
             return jsonResponse({ success: false, message: 'Không tìm thấy tài khoản.' }, 404, corsHeaders);
           }
+          if (existing.role === 'super_admin' && currentUser.role !== 'super_admin') {
+            return jsonResponse({ success: false, message: 'Chỉ Super Admin mới có quyền quản lý tài khoản Super Admin.' }, 403, corsHeaders);
+          }
+          if (userId === currentUser.id && (
+            (body.role !== undefined && body.role !== existing.role) ||
+            (body.isActive !== undefined && Boolean(body.isActive) !== Boolean(existing.is_active))
+          )) {
+            return jsonResponse({ success: false, message: 'Không được tự thay đổi vai trò hoặc trạng thái hoạt động của chính tài khoản đang đăng nhập.' }, 403, corsHeaders);
+          }
 
           const fullName = body.fullName !== undefined ? sanitizeString(body.fullName) : existing.full_name;
           const email = body.email !== undefined ? sanitizeString(body.email) : existing.email;
           const role = body.role !== undefined ? sanitizeString(body.role) : existing.role;
+          if (role === 'super_admin' && currentUser.role !== 'super_admin') {
+            return jsonResponse({ success: false, message: 'Chỉ Super Admin mới có quyền cấp vai trò Super Admin.' }, 403, corsHeaders);
+          }
           const phone = body.phone !== undefined ? sanitizeString(body.phone) : existing.phone;
           const org = body.organization !== undefined ? sanitizeString(body.organization) : existing.organization;
           const isActive = body.isActive !== undefined ? (body.isActive ? 1 : 0) : existing.is_active;
