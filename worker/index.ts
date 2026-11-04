@@ -1029,7 +1029,7 @@ export default {
                   continue;
                 }
                 const code = sanitizeString(clean.code || '').trim();
-                if (code) {
+                if (code && physicalColumns.has('code')) {
                   if (seenCodes.has(code)) {
                     duplicates.push(code);
                     continue;
