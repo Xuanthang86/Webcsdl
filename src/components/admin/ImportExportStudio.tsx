@@ -45,7 +45,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
   // RFC 4180-compatible CSV parser: supports quoted commas, escaped quotes,
   // CRLF and line breaks inside quoted cells.
   const parseCsvText = (text: string) => {
-    const input = text.replace(/^\\uFEFF/, '');
+    const input = text.replace(/^\uFEFF/, '');
     const matrix: string[][] = [];
     let row: string[] = [];
     let cell = '';
@@ -67,8 +67,8 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
       } else if (char === ',') {
         row.push(cell);
         cell = '';
-      } else if (char === '\\n' || char === '\\r') {
-        if (char === '\\r' && input[i + 1] === '\\n') i++;
+      } else if (char === '\n' || char === '\r') {
+        if (char === '\r' && input[i + 1] === '\n') i++;
         row.push(cell);
         if (row.some(value => value.length > 0)) matrix.push(row);
         row = [];
