@@ -42,24 +42,62 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
     setImportResult(null);
   };
 
+  // RFC 4180-compatible CSV parser: supports quoted commas, escaped quotes,
+  // CRLF and line breaks inside quoted cells.
   const parseCsvText = (text: string) => {
-    const lines = text.trim().split('\n');
-    if (lines.length < 2) return [];
+    const input = text.replace(/^\\uFEFF/, '');
+    const matrix: string[][] = [];
+    let row: string[] = [];
+    let cell = '';
+    let quoted = false;
 
-    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-    const rows = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-      const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-      const obj: any = {};
-      headers.forEach((h, idx) => {
-        obj[h] = values[idx] || '';
-      });
-      rows.push(obj);
+    for (let i = 0; i < input.length; i++) {
+      const char = input[i];
+      if (quoted) {
+        if (char === '"' && input[i + 1] === '"') {
+          cell += '"';
+          i++;
+        } else if (char === '"') {
+          quoted = false;
+        } else {
+          cell += char;
+        }
+      } else if (char === '"' && cell.length === 0) {
+        quoted = true;
+      } else if (char === ',') {
+        row.push(cell);
+        cell = '';
+      } else if (char === '\\n' || char === '\\r') {
+        if (char === '\\r' && input[i + 1] === '\\n') i++;
+        row.push(cell);
+        if (row.some(value => value.length > 0)) matrix.push(row);
+        row = [];
+        cell = '';
+      } else {
+        cell += char;
+      }
     }
-    return rows;
+
+    if (quoted) throw new Error('Tệp CSV không hợp lệ: có trường văn bản chưa đóng dấu ngoặc kép.');
+    row.push(cell);
+    if (row.some(value => value.length > 0)) matrix.push(row);
+    if (matrix.length < 2) return [];
+
+    const headers = matrix[0].map(header => header.trim());
+    if (headers.some(header => !header)) {
+      throw new Error('Tệp CSV không hợp lệ: tên cột không được để trống.');
+    }
+
+    return matrix.slice(1).map((values, rowIndex) => {
+      if (values.length > headers.length) {
+        throw new Error('Dòng ' + (rowIndex + 2) + ' có nhiều cột hơn tiêu đề CSV.');
+      }
+      const record: Record<string, string> = {};
+      headers.forEach((header, index) => {
+        record[header] = (values[index] ?? '').trim();
+      });
+      return record;
+    });
   };
 
   const handlePreview = () => {
