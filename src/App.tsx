@@ -102,7 +102,7 @@ export default function App() {
       setCurrentUser(userRes.user);
       setAvailableRoles(userRes.availableRoles || []);
 
-      const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'];
+      const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert', 'partner_officer'];
       const savedView = typeof window !== 'undefined' ? sessionStorage.getItem('portal_current_view') : null;
       if (savedView === 'admin' && (!userRes.user || !administrativeRoles.includes(userRes.user.role))) {
         navigateToView('home');
@@ -266,7 +266,7 @@ export default function App() {
     setCurrentUser(user);
     setShowAdminLoginModal(false);
     // Khi đăng nhập sẽ kiểm tra quyền tài khoản để chuyển giao diện truy cập phù hợp
-    const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'];
+    const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert', 'partner_officer'];
     if (administrativeRoles.includes(user.role)) {
       navigateToView('admin');
       setSuccessToast(`Đăng nhập thành công! Chuyển hướng đến Cổng Quản trị (${user.fullName})`);
