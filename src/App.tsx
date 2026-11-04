@@ -199,8 +199,6 @@ export default function App() {
         });
       }
       navigateToView('home');
-      setSuccessToast('Đã đăng xuất an toàn khỏi hệ thống');
-      setTimeout(() => setSuccessToast(null), 3000);
     }
   };
 
@@ -266,15 +264,12 @@ export default function App() {
     setCurrentUser(user);
     setShowAdminLoginModal(false);
     // Khi đăng nhập sẽ kiểm tra quyền tài khoản để chuyển giao diện truy cập phù hợp
-    const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert', 'partner_officer'];
+    const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert', 'partner_officer', 'viewer', 'read_only'];
     if (administrativeRoles.includes(user.role)) {
       navigateToView('admin');
-      setSuccessToast(`Đăng nhập thành công! Chuyển hướng đến Cổng Quản trị (${user.fullName})`);
     } else {
       navigateToView('home');
-      setSuccessToast(`Đăng nhập thành công với vai trò: ${user.fullName}`);
     }
-    setTimeout(() => setSuccessToast(null), 3500);
   };
 
   const handleApplyAdvancedSearch = (params: any) => {

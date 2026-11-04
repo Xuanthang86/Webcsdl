@@ -109,24 +109,31 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { mod: 'featured_startups', label: 'Doanh nghiệp khởi nghiệp tiêu biểu', icon: Star, color: 'text-amber-300' }
   ];
 
-  const visibleCoreModulesList = isWardOfficer
-    ? coreModulesList.filter(item => ['startup_projects', 'startup_ideas'].includes(item.mod))
+  const isRestrictedOfficer = isWardOfficer || (
+    Boolean(currentUser?.managedModules && currentUser.managedModules.length > 0 && !['super_admin', 'system_admin'].includes(currentUser?.role || ''))
+  );
+
+  const visibleCoreModulesList = isRestrictedOfficer
+    ? coreModulesList.filter(item => (currentUser?.managedModules || ['startup_projects', 'startup_ideas']).includes(item.mod))
     : coreModulesList;
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-slate-100 flex flex-col lg:flex-row font-sans">
       
       {/* Mobile & Tablet Header with Toggle */}
-      <div className="lg:hidden bg-slate-900 text-white p-3.5 flex items-center justify-between border-b border-slate-800 sticky top-0 z-30">
+      <div className="lg:hidden bg-[#0b1b2b] text-white p-3.5 flex items-center justify-between border-b border-slate-700/60 sticky top-0 z-30">
         <div 
           onClick={onBackToPublic}
           className="flex items-center gap-2 cursor-pointer group"
-          title="Trở về Trang chủ Cổng Dữ Liệu"
+          title="Trở về Cổng tra cứu công khai"
         >
-          <div className="w-6 h-6 rounded bg-teal-600 group-hover:bg-teal-500 text-white flex items-center justify-center font-bold text-xs transition-colors">
+          <div className="w-7 h-7 rounded-lg bg-teal-600 group-hover:bg-teal-500 text-white flex items-center justify-center font-bold text-xs transition-colors shrink-0">
             K
           </div>
-          <span className="font-bold text-xs group-hover:text-teal-300 transition-colors">Quản trị KHCN & KNĐMST TP Đà Nẵng</span>
+          <div>
+            <div className="font-bold text-xs tracking-tight text-white uppercase">TRANG QUẢN TRỊ</div>
+            <div className="text-[10px] text-teal-300 font-medium truncate max-w-[220px]">CƠ SỞ DỮ LIỆU KHCN & KNĐMST ĐÀ NẴNG</div>
+          </div>
         </div>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -147,24 +154,28 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
       {/* Admin Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-auto lg:min-h-screen shrink-0 flex flex-col justify-between border-r border-slate-800
+        fixed inset-y-0 left-0 z-50 w-72 sm:w-80 bg-slate-900 text-slate-300 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-auto lg:min-h-screen shrink-0 flex flex-col justify-between border-r border-slate-800
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="p-4 space-y-4 overflow-y-auto">
           
-          {/* Brand & Close Button */}
+          {/* Brand & Title */}
           <div className="pb-3 border-b border-slate-800 flex items-center justify-between">
             <div 
               onClick={onBackToPublic}
-              className="flex items-center gap-2 cursor-pointer group"
+              className="flex items-center gap-2.5 cursor-pointer group"
               title="Trở về Trang chủ Cổng Dữ Liệu"
             >
-              <div className="w-7 h-7 rounded-lg bg-teal-600 group-hover:bg-teal-500 text-white flex items-center justify-center font-bold text-sm transition-colors">
+              <div className="w-8 h-8 rounded-lg bg-teal-600 group-hover:bg-teal-500 text-white flex items-center justify-center font-bold text-sm transition-colors shrink-0">
                 K
               </div>
               <div>
-                <div className="font-bold text-white text-xs tracking-tight group-hover:text-teal-300 transition-colors">Quản trị KHCN & KNĐMST</div>
-                <div className="text-[10px] text-teal-300 font-semibold">Thành phố Đà Nẵng</div>
+                <div className="font-bold text-white text-xs tracking-tight group-hover:text-teal-300 transition-colors">
+                  Quản trị dữ liệu KHCN & KNĐMST
+                </div>
+                <div className="text-[11px] text-teal-300 font-semibold">
+                  Thành phố Đà Nẵng
+                </div>
               </div>
             </div>
 
@@ -176,6 +187,16 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <X className="w-4 h-4" />
             </button>
           </div>
+
+          {/* Standalone highlighted Cổng công khai button */}
+          <button
+            onClick={onBackToPublic}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold bg-teal-950/70 hover:bg-teal-900 text-teal-200 hover:text-white border border-teal-600/60 shadow-xs transition-all cursor-pointer"
+            title="Trở về Cổng tra cứu công khai"
+          >
+            <ArrowLeft className="w-4 h-4 text-teal-300" />
+            <span>Cổng tra cứu công khai</span>
+          </button>
 
           {/* Navigation Links */}
           <nav className="space-y-1 text-xs">
@@ -190,13 +211,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <span>Tổng quan & Chỉ số</span>
             </button>
 
-            {/* Section: 10 NHÓM CƠ SỞ DỮ LIỆU CỐT LÕI */}
-            <div className="pt-3 space-y-1">
-              <div className="px-3 py-1.5 text-[10px] font-bold text-teal-400 uppercase tracking-wider flex items-center justify-between">
-                <span>10 CSDL Chuẩn Hóa Cốt Lõi</span>
-                <span className="text-[9px] bg-teal-900/80 text-teal-300 px-1.5 py-0.2 rounded font-mono">10</span>
-              </div>
-
+            {/* Section: DANH MỤC CƠ SỞ DỮ LIỆU */}
+            <div className="pt-2 space-y-1">
               {visibleCoreModulesList.map((item) => {
                 const IconComponent = item.icon;
                 const isActive = activeTab === 'module_crud' && activeModule === item.mod;
@@ -217,7 +233,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               })}
 
               {/* Phân hệ Bổ trợ & Tri thức */}
-              {!isWardOfficer && <div className="pt-2">
+              {!isRestrictedOfficer && <div className="pt-2">
                 <button
                   onClick={() => setAuxiliaryDropdownOpen(!auxiliaryDropdownOpen)}
                   className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
@@ -259,7 +275,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               </div>}
             </div>
 
-            {!isWardOfficer && <div className="pt-2 space-y-1">
+            {!isRestrictedOfficer && <div className="pt-2 space-y-1">
               <button
                 onClick={() => { setActiveTab('relationships'); setSidebarOpen(false); }}
                 className={`w-full flex items-start text-left justify-start gap-2.5 px-3 py-2 rounded-lg font-medium transition-colors ${
@@ -267,7 +283,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 }`}
               >
                 <LinkIcon className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-                <span className="whitespace-normal text-left leading-snug">Quản lý tất tả quan hệ liên kết toàn hệ thống</span>
+                <span className="whitespace-normal text-left leading-snug">Quản lý quan hệ liên kết toàn hệ thống</span>
               </button>
 
               <button
@@ -298,7 +314,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   }`}
                 >
                   <Users className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
-                  <span className="whitespace-normal text-left leading-snug">Quản lý người dùng & Phân quyền</span>
+                  <span className="whitespace-normal text-left leading-snug">Quản lý tài khoản & phân quyền người dùng</span>
                 </button>
               )}
 
@@ -329,7 +345,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 }`}
               >
                 <FileCheck className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
-                <span className="whitespace-normal text-left leading-snug">Bộ kiểm thử nghiệm thu & an toàn bảo mật (Section XVI acceptance & security test suite)</span>
+                <span className="whitespace-normal text-left leading-snug">Bộ kiểm thử nghiệm thu & an toàn bảo mật (Section XVI)</span>
               </button>
             </div>}
 
@@ -337,24 +353,46 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-3.5 border-t border-slate-800 text-[11px] text-slate-500 space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-slate-400 font-medium">Hệ thống Quản trị CSDL TP Đà Nẵng</span>
-            <button
-              onClick={onBackToPublic}
-              className="text-teal-400 hover:text-teal-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
-              title="Trở về Cổng tra cứu công khai"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Cổng công khai</span>
-            </button>
-          </div>
-          <div className="text-[10px] text-slate-600">Phiên bản Hệ thống 1.0 (Modular Monolith)</div>
+        <div className="p-3.5 border-t border-slate-800 text-[11px] text-slate-500 space-y-1">
+          <div className="text-[10px] text-slate-500 font-mono">Phiên bản Hệ thống 1.0 (Modular Monolith)</div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen bg-slate-100">
+        
+        {/* Desktop Admin Top Header */}
+        <header className="hidden lg:flex items-center justify-between px-8 py-4 bg-[#0b1b2b] text-white border-b border-slate-700/60 shadow-sm shrink-0">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white uppercase">
+              TRANG QUẢN TRỊ
+            </h1>
+            <p className="text-xs sm:text-sm font-semibold text-teal-300 tracking-wide mt-0.5">
+              CƠ SỞ DỮ LIỆU VỀ KHOA HỌC, CÔNG NGHỆ VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {currentUser && (
+              <div className="text-right">
+                <div className="text-xs font-bold text-white">{currentUser.fullName}</div>
+                <div className="text-[11px] text-teal-300 font-medium capitalize">{currentUser.role.replace('_', ' ')}</div>
+              </div>
+            )}
+            {onLogout && (
+              <button
+                type="button"
+                onClick={onLogout}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+                title="Đăng xuất khỏi tài khoản"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Đăng xuất</span>
+              </button>
+            )}
+          </div>
+        </header>
+
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           <div className="max-w-7xl mx-auto space-y-6">
             {activeTab === 'dashboard' && (

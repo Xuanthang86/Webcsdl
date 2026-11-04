@@ -20,8 +20,10 @@ import {
   ShieldAlert,
   AlertTriangle,
   X,
-  Paperclip
+  Paperclip,
+  FileSpreadsheet
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { AttachmentManagerModal } from '../AttachmentManagerModal';
 
 interface ModuleCrudViewProps {
@@ -121,24 +123,45 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const content = ev.target?.result as string;
-      setImportRawText(content);
-      try {
-        const rows = parseInlineCsv(content);
-        setImportParsedRows(rows);
-        setImportPreviewError(rows.length === 0 ? 'Tệp CSV không chứa dòng dữ liệu nào.' : null);
-      } catch (err: any) {
-        setImportPreviewError('Lỗi đọc cú pháp tệp CSV: ' + err.message);
-      }
-    };
-    reader.readAsText(file);
+    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+    if (isExcel) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = new Uint8Array(ev.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheet];
+          const rows = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { defval: '' });
+          setImportParsedRows(rows);
+          const csvText = XLSX.utils.sheet_to_csv(worksheet);
+          setImportRawText(csvText);
+          setImportPreviewError(rows.length === 0 ? 'Tệp Excel không chứa dòng dữ liệu nào.' : null);
+        } catch (err: any) {
+          setImportPreviewError('Lỗi đọc tệp Excel (.xlsx): ' + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const content = ev.target?.result as string;
+        setImportRawText(content);
+        try {
+          const rows = parseInlineCsv(content);
+          setImportParsedRows(rows);
+          setImportPreviewError(rows.length === 0 ? 'Tệp CSV không chứa dòng dữ liệu nào.' : null);
+        } catch (err: any) {
+          setImportPreviewError('Lỗi đọc cú pháp tệp CSV: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
   };
 
   const handleExecuteImport = async () => {
     if (importParsedRows.length === 0) {
-      setImportPreviewError('Vui lòng tải tệp hoặc dán dữ liệu CSV hợp lệ trước khi nhập.');
+      setImportPreviewError('Vui lòng tải tệp Excel/CSV hoặc dán dữ liệu hợp lệ trước khi nhập.');
       return;
     }
     setIsImporting(true);
@@ -179,6 +202,72 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     }
   };
 
+  const handleExportExcel = () => {
+    try {
+      const exportData = filteredRecords.map((r, i) => {
+        const base: Record<string, any> = {
+          'STT': i + 1,
+          'Mã định danh': r.code,
+          'Tên bản ghi': r.title,
+          'Lĩnh vực': r.field,
+          'Đơn vị / Chủ thể': r.ownerName,
+          'Trạng thái': r.status,
+          'Phạm vi': r.publicityLevel === 'public' ? 'Công khai' : 'Nội bộ'
+        };
+        // append extra attributes if present
+        Object.entries(r).forEach(([k, v]) => {
+          if (!['id', 'code', 'title', 'field', 'ownerName', 'status', 'publicityLevel', 'history'].includes(k) && typeof v !== 'object') {
+            base[k] = v;
+          }
+        });
+        return base;
+      });
+
+      const ws = XLSX.utils.json_to_sheet(exportData.length > 0 ? exportData : [{ 'Mã': 'MDD-01', 'Tên': 'Mẫu' }]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, moduleType.slice(0, 31));
+      XLSX.writeFile(wb, `du-lieu-${moduleType}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+      showToast('Đã xuất dữ liệu Excel (.xlsx) thành công');
+    } catch (err: any) {
+      showErrorToast(err.message || 'Lỗi xuất file Excel');
+    }
+  };
+
+  const handleDownloadTemplate = () => {
+    try {
+      let sampleRows: Record<string, any>[] = [];
+      if (moduleType === 'science_tasks') {
+        sampleRows = [
+          { 'code': 'NV-KHCN-01', 'title': 'Nghiên cứu ứng dụng AI trong quản lý giao thông', 'field': 'Công nghệ thông tin', 'ownerName': 'Đại học Bách Khoa', 'principalInvestigator': 'PGS.TS Nguyễn Văn A', 'managementLevel': 'Cấp thành phố', 'executionTime': '2024-2026', 'totalBudgetApproved': 1500000000 }
+        ];
+      } else if (moduleType === 'initiatives') {
+        sampleRows = [
+          { 'code': 'SK-TP-01', 'title': 'Giải pháp tiết kiệm năng lượng tòa nhà hành chính', 'field': 'Tiết kiệm năng lượng', 'ownerName': 'Trung tâm Tiết kiệm Năng lượng', 'recognitionYear': 2026, 'authors': 'Nguyễn Văn B', 'costSavings': 250000000 }
+        ];
+      } else if (moduleType === 'experts') {
+        sampleRows = [
+          { 'code': 'CG-01', 'title': 'GS.TS. Trần Quốc Hùng', 'field': 'Tự động hóa', 'ownerName': 'Đại học Bách Khoa', 'birthYear': '1975', 'email': 'hung.tq@dut.udn.vn', 'phone': '0905123456', 'specialty': 'Robot y tế & Tự động hóa', 'academicDegree': 'Tiến sĩ' }
+        ];
+      } else if (moduleType === 'startups') {
+        sampleRows = [
+          { 'code': 'DN-KN-01', 'title': 'Công ty CP Công nghệ Xanh Đà Nẵng', 'field': 'Công nghệ môi trường', 'ownerName': 'Lê Văn C', 'address': 'Hòa Khánh Bắc, Liên Chiểu', 'foundedYear': '2023', 'leaderPhone': '0912345678', 'leaderEmail': 'info@greendanang.vn' }
+        ];
+      } else {
+        sampleRows = [
+          { 'code': 'MA-01', 'title': 'Bản ghi mẫu', 'field': 'Công nghệ thông tin', 'ownerName': 'Đơn vị chủ quản', 'description': 'Mô tả tóm tắt nội dung' }
+        ];
+      }
+
+      const ws = XLSX.utils.json_to_sheet(sampleRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Mau_Nhap');
+      XLSX.writeFile(wb, `bieu-mau-nhap-${moduleType}.xlsx`);
+      showToast('Đã tải tệp mẫu Excel (.xlsx) chuẩn');
+    } catch (err: any) {
+      showErrorToast(err.message || 'Lỗi tải tệp mẫu');
+    }
+  };
+
   // Form State for Create/Edit
   const [formTitle, setFormTitle] = useState('');
   const [formField, setFormField] = useState('Công nghệ thông tin và Truyền thông');
@@ -194,14 +283,21 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   };
 
   const isSuperUser = ['super_admin', 'system_admin'].includes(currentUser?.role || '');
-  const canApprove = ['super_admin', 'system_admin', 'agency_leader'].includes(currentUser?.role || '');
-  const canDelete = isSuperUser || currentUser?.role === 'data_officer';
+  const isReadOnly = ['viewer', 'read_only'].includes(currentUser?.role || '') || 
+    Boolean(currentUser?.customPermissions?.includes('read_only'));
 
   // Check if current user is restricted to specific managedModules
   const isModuleRestricted = !isSuperUser && 
-    currentUser?.managedModules && 
+    Boolean(currentUser?.managedModules && 
     currentUser.managedModules.length > 0 && 
-    !currentUser.managedModules.includes(moduleType);
+    !currentUser.managedModules.includes(moduleType));
+
+  const canCreate = !isReadOnly && !isModuleRestricted && (isSuperUser || ['data_officer', 'partner_officer', 'agency_leader'].includes(currentUser?.role || ''));
+  const canEdit = !isReadOnly && !isModuleRestricted && (isSuperUser || ['data_officer', 'partner_officer', 'agency_leader'].includes(currentUser?.role || ''));
+  const canDelete = !isReadOnly && !isModuleRestricted && (isSuperUser || currentUser?.role === 'data_officer');
+  const canImport = !isReadOnly && !isModuleRestricted && (isSuperUser || ['data_officer', 'partner_officer'].includes(currentUser?.role || ''));
+  const canApprove = !isReadOnly && ['super_admin', 'system_admin', 'agency_leader'].includes(currentUser?.role || '');
+  const canManageRel = !isReadOnly && !isModuleRestricted && (isSuperUser || ['data_officer', 'agency_leader'].includes(currentUser?.role || ''));
 
   const showToast = (msg: string) => {
     setActionSuccessToast(msg);
@@ -380,6 +476,22 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {isReadOnly && (
+            <span className="px-2.5 py-1 bg-sky-50 text-sky-800 border border-sky-200 rounded-lg text-xs font-semibold">
+              Chế độ chỉ xem (Read-only)
+            </span>
+          )}
+
+          <button
+            type="button"
+            onClick={handleExportExcel}
+            className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-emerald-50 text-emerald-800 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+            title="Xuất danh sách ra tệp bảng tính Excel (.xlsx)"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Xuất Excel (.xlsx)</span>
+          </button>
+
           <button
             type="button"
             onClick={handleExportCsv}
@@ -390,29 +502,33 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
             <span>Xuất CSV</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setImportRawText('');
-              setImportParsedRows([]);
-              setImportPreviewError(null);
-              setShowInlineImportModal(true);
-            }}
-            className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
-            title="Nhập dữ liệu hàng loạt trực tiếp vào phân hệ này"
-          >
-            <Upload className="w-3.5 h-3.5" />
-            <span>Nhập Excel/CSV</span>
-          </button>
+          {canImport && (
+            <button
+              type="button"
+              onClick={() => {
+                setImportRawText('');
+                setImportParsedRows([]);
+                setImportPreviewError(null);
+                setShowInlineImportModal(true);
+              }}
+              className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+              title="Nhập dữ liệu hàng loạt trực tiếp từ tệp Excel (.xlsx) hoặc CSV"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>Nhập Excel/CSV</span>
+            </button>
+          )}
 
-          <button
-            type="button"
-            onClick={handleOpenCreate}
-            className="px-3.5 py-1.5 bg-teal-800 hover:bg-teal-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Tạo bản ghi mới</span>
-          </button>
+          {canCreate && (
+            <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="px-3.5 py-1.5 bg-teal-800 hover:bg-teal-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Tạo bản ghi mới</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -615,13 +731,15 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                           <Eye className="w-3.5 h-3.5" />
                         </button>
 
-                        <button
-                          onClick={() => onManageRelations(item)}
-                          title="Quản lý liên kết đa chiều"
-                          className="p-1.5 text-slate-400 hover:text-indigo-800 hover:bg-slate-100 rounded cursor-pointer"
-                        >
-                          <LinkIcon className="w-3.5 h-3.5" />
-                        </button>
+                        {canManageRel && (
+                          <button
+                            onClick={() => onManageRelations(item)}
+                            title="Quản lý liên kết đa chiều"
+                            className="p-1.5 text-slate-400 hover:text-indigo-800 hover:bg-slate-100 rounded cursor-pointer"
+                          >
+                            <LinkIcon className="w-3.5 h-3.5" />
+                          </button>
+                        )}
 
                         <button
                           onClick={() => setAttachmentEntity(item)}
@@ -645,13 +763,15 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                           </button>
                         )}
 
-                        <button
-                          onClick={() => handleOpenEdit(item)}
-                          title="Chỉnh sửa bản ghi"
-                          className="p-1.5 text-slate-400 hover:text-blue-800 hover:bg-slate-100 rounded cursor-pointer"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </button>
+                        {canEdit && (
+                          <button
+                            onClick={() => handleOpenEdit(item)}
+                            title="Chỉnh sửa bản ghi"
+                            className="p-1.5 text-slate-400 hover:text-blue-800 hover:bg-slate-100 rounded cursor-pointer"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                        )}
 
                         {canDelete && (
                           <button
@@ -1681,7 +1801,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                     Nhập dữ liệu hàng loạt: {MODULE_NAMES[moduleType]}
                   </h3>
                   <p className="text-[11px] text-slate-500">
-                    Tải tệp CSV hoặc dán trực tiếp dữ liệu theo hàng/cột
+                    Tải tệp bảng tính Excel (.xlsx, .xls) hoặc CSV để nhập hàng loạt dữ liệu
                   </p>
                 </div>
               </div>
@@ -1701,15 +1821,28 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
               </div>
             )}
 
-            {/* File Upload Box */}
+            {/* Template Download & File Upload Box */}
+            <div className="flex items-center justify-between pb-1">
+              <span className="font-semibold text-slate-700 text-xs">Tải lên tệp dữ liệu:</span>
+              <button
+                type="button"
+                onClick={handleDownloadTemplate}
+                className="px-2.5 py-1 text-teal-800 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                title="Tải tệp mẫu Excel có cấu trúc cột chuẩn của phân hệ này"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-teal-700" />
+                <span>Tải tệp mẫu Excel (.xlsx)</span>
+              </button>
+            </div>
+
             <div className="border-2 border-dashed border-slate-300 hover:border-teal-500 rounded-xl p-4 sm:p-6 text-center space-y-2 bg-slate-50 transition-colors">
               <Upload className="w-6 h-6 text-slate-400 mx-auto" />
               <div className="text-slate-700 font-semibold text-xs">
-                Chọn tệp CSV hoặc bảng tính đã xuất CSV
+                Chọn tệp Excel (.xlsx, .xls) hoặc CSV
               </div>
               <input
                 type="file"
-                accept=".csv,.txt"
+                accept=".xlsx,.xls,.csv,.txt"
                 onChange={handleFileUpload}
                 className="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-800 file:text-white hover:file:bg-teal-700 cursor-pointer"
               />

@@ -124,14 +124,14 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-slate-600 select-none">
+          <label className="flex items-center gap-2 text-sm text-slate-600 select-none cursor-pointer">
             <input
               type="checkbox"
               checked={rememberAccount}
               onChange={e => setRememberAccount(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+              className="h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600 cursor-pointer"
             />
-            Ghi nhớ tài khoản (chỉ lưu tên đăng nhập)
+            Ghi nhớ tài khoản
           </label>
 
           <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-100">

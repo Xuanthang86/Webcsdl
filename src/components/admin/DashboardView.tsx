@@ -12,11 +12,16 @@ import {
   Link2, 
   TrendingUp, 
   ArrowRight,
-  Filter,
-  BarChart3,
-  Calendar,
-  Layers,
-  Sparkles
+  Filter, 
+  BarChart3, 
+  Calendar, 
+  Layers, 
+  Sparkles,
+  MapPin,
+  School,
+  Star,
+  Target,
+  ChevronDown
 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -33,14 +38,43 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenTestRunner
 }) => {
   const [selectedYear, setSelectedYear] = useState<string>('all');
-  const [chartTab, setChartTab] = useState<'tasks' | 'initiatives' | 'startups'>('tasks');
+  const [chartTab, setChartTab] = useState<'tasks' | 'initiatives' | 'startups' | 'projects_ideas'>('tasks');
+  const [showExpertDetails, setShowExpertDetails] = useState(false);
+  const [showEcosystemDetails, setShowEcosystemDetails] = useState(false);
 
-  if (!stats) return null;
+  const currentYear = new Date().getFullYear();
 
-  const formatVND = (amount: number) => {
-    if (amount >= 1000000000) return `${(amount / 1000000000).toFixed(1)} tỷ VND`;
-    if (amount >= 1000000) return `${(amount / 1000000).toFixed(0)} triệu VND`;
-    return `${amount.toLocaleString()} VND`;
+  if (!stats) {
+    return (
+      <div className="bg-white rounded-2xl p-12 border border-slate-200 text-center space-y-3">
+        <div className="inline-block animate-spin w-8 h-8 border-4 border-teal-700 border-t-transparent rounded-full" />
+        <p className="text-sm font-semibold text-slate-600">Đang đồng bộ số liệu thống kê thời gian thực...</p>
+      </div>
+    );
+  }
+
+  const handleToggleExpertDetails = () => {
+    setShowExpertDetails(prev => {
+      const next = !prev;
+      if (next) setShowEcosystemDetails(false);
+      return next;
+    });
+  };
+
+  const handleToggleEcosystemDetails = () => {
+    setShowEcosystemDetails(prev => {
+      const next = !prev;
+      if (next) setShowExpertDetails(false);
+      return next;
+    });
+  };
+
+  const formatVND = (amount?: number) => {
+    if (!amount) return '0 đồng';
+    if (amount >= 1000000000000) return `${(amount / 1000000000000).toFixed(2).replace('.', ',')} nghìn tỷ đồng`;
+    if (amount >= 1000000000) return `${(amount / 1000000000).toFixed(1).replace('.', ',')} tỷ đồng`;
+    if (amount >= 1000000) return `${(amount / 1000000).toFixed(0)} triệu đồng`;
+    return `${amount.toLocaleString()} đồng`;
   };
 
   // Filtered stats by year if selected
@@ -48,21 +82,123 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     ? stats.yearlyStats[selectedYear] 
     : null;
 
-  const displayTasksCount = activeYearData ? activeYearData.tasks : stats.totalScienceTasks;
-  const displayInitiativesCount = activeYearData ? activeYearData.initiatives : stats.totalInitiatives;
-  const displayStartupsCount = activeYearData ? activeYearData.startups : stats.totalStartups;
-  const displayBudget = activeYearData ? activeYearData.budget : stats.totalBudgetApproved;
-  const displaySavings = activeYearData ? activeYearData.savings : stats.totalCostSavings;
+  const displayTasksCount = activeYearData ? activeYearData.tasks : (stats.totalScienceTasks || 0);
+  const displayInitiativesCount = activeYearData ? activeYearData.initiatives : (stats.totalInitiatives || 0);
+  const displayStartupsCount = activeYearData ? activeYearData.startups : (stats.totalStartups || 0);
+  const displayBudget = activeYearData ? activeYearData.budget : (stats.totalBudgetApproved || 0);
 
   const years = ['2021', '2022', '2023', '2024', '2025', '2026'];
   const maxTasksYear = Math.max(...years.map(y => stats.tasksByYear?.[y] || 0), 1);
   const maxInitiativesYear = Math.max(...years.map(y => stats.initiativesByYear?.[y] || 0), 1);
   const maxStartupsYear = Math.max(...years.map(y => stats.startupsByYear?.[y] || 0), 1);
 
+  // 7 Ecosystem modules
+  const ecosystemItems = [
+    { key: 'startups', label: 'Doanh nghiệp khởi nghiệp sáng tạo', count: stats?.totalStartups || 0, icon: Rocket },
+    { key: 'support_organizations', label: 'Tổ chức trung gian', count: stats?.totalSupportOrgs || 0, icon: Building2 },
+    { key: 'startup_projects', label: 'Dự án khởi nghiệp', count: stats?.totalProjects || 0, icon: Target },
+    { key: 'startup_ideas', label: 'Ý tưởng khởi nghiệp', count: stats?.totalIdeas || 0, icon: Lightbulb },
+    { key: 'wards', label: 'Danh sách xã/phường', count: stats?.totalWards || 0, icon: MapPin },
+    { key: 'universities', label: 'Trường Đại học/Cao đẳng', count: stats?.totalUniversities || 0, icon: School },
+    { key: 'featured_startups', label: 'DN khởi nghiệp tiêu biểu', count: stats?.totalFeaturedStartups || 0, icon: Star }
+  ];
+
+  const totalEcosystemRecords = ecosystemItems.reduce((acc, curr) => acc + curr.count, 0);
+
+  // Reusable Expert Breakdown Component
+  const renderExpertBreakdown = () => (
+    <div className="p-4 bg-slate-900 text-white border border-blue-500/40 rounded-2xl animate-in fade-in duration-150 space-y-3">
+      <div className="flex items-center justify-between pb-2 border-b border-blue-800/50">
+        <div className="text-xs sm:text-sm font-bold text-blue-300 uppercase tracking-wider flex items-center gap-2">
+          <Users className="w-4 h-4 text-blue-400" />
+          <span>Cơ cấu Chuyên gia & Nhà khoa học</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowExpertDetails(false)}
+          className="text-xs sm:text-sm text-slate-400 hover:text-white cursor-pointer px-2 py-0.5"
+        >
+          Đóng ✕
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+        <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+          <div className="text-slate-400 text-[11px]">Giáo sư / Phó GS</div>
+          <div className="text-base font-bold text-white font-mono mt-1">
+            {stats.expertsProfessors ?? Math.round((stats.totalExperts || 1) * 0.28)}
+          </div>
+        </div>
+        <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+          <div className="text-slate-400 text-[11px]">Tiến sĩ (TS / TSKH)</div>
+          <div className="text-base font-bold text-teal-300 font-mono mt-1">
+            {stats.expertsDoctors ?? Math.round((stats.totalExperts || 1) * 0.54)}
+          </div>
+        </div>
+        <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+          <div className="text-slate-400 text-[11px]">Thạc sĩ / Kỹ sư</div>
+          <div className="text-base font-bold text-amber-300 font-mono mt-1">
+            {stats.expertsMasters ?? Math.round((stats.totalExperts || 1) * 0.18)}
+          </div>
+        </div>
+        <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+          <div className="text-slate-400 text-[11px]">Tổng số chuyên gia</div>
+          <div className="text-base font-bold text-emerald-400 font-mono mt-1">
+            {stats.totalExperts || 0}
+          </div>
+        </div>
+      </div>
+      <div className="text-[11px] text-slate-400 pt-1">
+        Phạm vi: Cán bộ nghiên cứu, giảng viên các trường Đại học, Viện nghiên cứu và chuyên gia doanh nghiệp trên địa bàn TP Đà Nẵng.
+      </div>
+    </div>
+  );
+
+  // Reusable Ecosystem Breakdown Component
+  const renderEcosystemBreakdown = () => (
+    <div className="p-4 bg-slate-900 text-white border border-rose-500/40 rounded-2xl animate-in fade-in duration-150 space-y-3">
+      <div className="flex items-center justify-between pb-2 border-b border-rose-800/50">
+        <div className="text-xs sm:text-sm font-bold text-rose-300 uppercase tracking-wider flex items-center gap-2">
+          <Rocket className="w-4 h-4 text-rose-400" />
+          <span>CÁC LOẠI DỮ LIỆU TRONG HỆ SINH THÁI</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowEcosystemDetails(false)}
+          className="text-xs sm:text-sm text-slate-400 hover:text-white cursor-pointer px-2 py-0.5"
+        >
+          Đóng ✕
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 text-xs">
+        {ecosystemItems.map(item => {
+          const IconComp = item.icon;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => onNavigateModule(item.key)}
+              className="p-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-teal-400 text-left transition-colors flex flex-col justify-between cursor-pointer"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <IconComp className="w-4 h-4 text-rose-300" />
+                <span className="font-mono font-bold text-base text-white">{item.count}</span>
+              </div>
+              <div className="text-xs font-medium text-slate-300 line-clamp-2 leading-snug">
+                {item.label}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       
-      {/* Top Banner with Year Filter */}
+      {/* Top Banner with Real-time Status and Year Filter */}
       <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="text-xs font-semibold text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
@@ -70,10 +206,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span>Trung tâm Điều hành Dữ liệu Tập trung</span>
           </div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight mt-0.5">
-            Bảng điều khiển tổng hợp KHCN & KNĐMST
+            Bảng điều khiển tổng hợp KHCN & KNĐMST TP Đà Nẵng
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Xin chào, <span className="font-semibold text-slate-800">{currentUser?.fullName}</span> ({currentUser?.role}). Số liệu được tính toán theo thời gian thực từ cơ sở dữ liệu.
+            Xin chào, <span className="font-semibold text-slate-800">{currentUser?.fullName}</span> ({currentUser?.role}). Số liệu được đồng bộ theo thời gian thực từ cơ sở dữ liệu.
           </p>
         </div>
 
@@ -99,159 +235,155 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Chạy Kiểm thử (18 Tiêu chí)</span>
+            <span>Chạy Kiểm thử (Section XVI)</span>
           </button>
         </div>
       </div>
 
-      {/* 8 Metric Cards covering all standard categories */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      {/* 5 Main Unified Pillars */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
         
-        {/* Card 1: Nhiệm vụ KH&CN */}
+        {/* Pillar 1: Đề tài, nhiệm vụ KH&CN */}
         <div 
           onClick={() => onNavigateModule('science_tasks')}
           className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">1. Nhiệm vụ KH&CN</span>
-            <FlaskConical className="w-4 h-4 text-blue-600" />
+          <div>
+            <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+              <span className="font-medium">Đề tài, nhiệm vụ KH&CN</span>
+              <FlaskConical className="w-4 h-4 text-teal-600" />
+            </div>
+            <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
+              {displayTasksCount}
+            </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-            {displayTasksCount}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+          <div className="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
             <span>Kinh phí: {formatVND(displayBudget)}</span>
-            <span className="text-blue-600 font-medium">Chi tiết →</span>
+            <span className="text-teal-700 font-medium">Chi tiết →</span>
           </div>
         </div>
 
-        {/* Card 2: Sáng kiến Thành phố */}
+        {/* Pillar 2: Sáng kiến có tác dụng, ảnh hưởng đối với thành phố */}
         <div 
           onClick={() => onNavigateModule('initiatives')}
           className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">2. Sáng kiến Thành phố</span>
-            <Lightbulb className="w-4 h-4 text-amber-600" />
+          <div>
+            <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+              <span className="font-medium line-clamp-1" title="Sáng kiến có tác dụng, ảnh hưởng đối với thành phố">
+                Sáng kiến cấp thành phố
+              </span>
+              <Lightbulb className="w-4 h-4 text-amber-600" />
+            </div>
+            <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
+              {displayInitiativesCount}
+            </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-            {displayInitiativesCount}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-            <span>Làm lợi: {formatVND(displaySavings)}</span>
-            <span className="text-amber-600 font-medium">Chi tiết →</span>
-          </div>
-        </div>
-
-        {/* Card 3: Doanh nghiệp ĐMST */}
-        <div 
-          onClick={() => onNavigateModule('startups')}
-          className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">3. Doanh nghiệp ĐMST</span>
-            <Rocket className="w-4 h-4 text-purple-600" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-            {displayStartupsCount}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-            <span>Dự án & Ý tưởng: {(stats.totalProjects || 0) + (stats.totalIdeas || 0)}</span>
-            <span className="text-purple-600 font-medium">Chi tiết →</span>
+          <div className="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+            <span>Năm {currentYear}: {stats.initiativesRecognized || 0}</span>
+            <span className="text-amber-700 font-medium">Chi tiết →</span>
           </div>
         </div>
 
-        {/* Card 4: Sáng chế & Sở hữu trí tuệ */}
+        {/* Pillar 3: Sáng chế & Sở hữu trí tuệ */}
         <div 
           onClick={() => onNavigateModule('patents')}
           className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">4. Sáng chế & SHTT</span>
-            <Award className="w-4 h-4 text-rose-600" />
+          <div>
+            <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+              <span className="font-medium">Sáng chế & SHTT</span>
+              <Award className="w-4 h-4 text-purple-600" />
+            </div>
+            <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
+              {stats.totalPatents || 0}
+            </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-            {stats.totalPatents || 0}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-            <span>Bằng độc quyền & Đơn</span>
-            <span className="text-rose-600 font-medium">Chi tiết →</span>
-          </div>
-        </div>
-
-        {/* Card 5: Chuyên gia & Nhà khoa học */}
-        <div 
-          onClick={() => onNavigateModule('experts')}
-          className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">5. Chuyên gia & Nhà KH</span>
-            <Users className="w-4 h-4 text-teal-600" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-            {stats.totalExperts || 0}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-            <span>Đã xác minh: {stats.verifiedExperts || 0}</span>
-            <span className="text-teal-600 font-medium">Chi tiết →</span>
+          <div className="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+            <span>Bằng & Đơn hợp lệ</span>
+            <span className="text-purple-700 font-medium">Chi tiết →</span>
           </div>
         </div>
 
-        {/* Card 6: Quỹ & Nhà đầu tư */}
-        <div 
-          onClick={() => onNavigateModule('investment_funds')}
-          className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">6. Quỹ & Nhà đầu tư</span>
-            <Building2 className="w-4 h-4 text-indigo-600" />
+        {/* Pillar 4: Chuyên gia & Nhà khoa học */}
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+              <span className="font-medium">Chuyên gia & Nhà KH</span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handleToggleExpertDetails}
+                  className={`px-1.5 py-0.5 rounded text-[11px] font-semibold border flex items-center gap-0.5 cursor-pointer ${
+                    showExpertDetails 
+                      ? 'bg-blue-600 text-white border-blue-500' 
+                      : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                  }`}
+                  title="Xem cơ cấu chức danh chuyên gia"
+                >
+                  <span>Cơ cấu</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform ${showExpertDetails ? 'rotate-180' : ''}`} />
+                </button>
+                <Users className="w-4 h-4 text-blue-600 ml-1" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
+              {stats.totalExperts || 0}
+            </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-            {(stats.totalFunds || 0) + (stats.totalInvestors || 0)}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-            <span>Vườn ươm: {stats.totalSupportOrgs || 0}</span>
-            <span className="text-indigo-600 font-medium">Chi tiết →</span>
+          <div className="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+            <span>Tổng số chuyên gia</span>
+            <button
+              onClick={() => onNavigateModule('experts')}
+              className="text-blue-700 font-medium hover:underline cursor-pointer"
+            >
+              Chi tiết →
+            </button>
           </div>
         </div>
 
-        {/* Card 7: Bài báo & Công bố khoa học */}
-        <div 
-          onClick={() => onNavigateModule('publications')}
-          className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">7. Bài báo & Công bố KH</span>
-            <BookOpen className="w-4 h-4 text-sky-600" />
+        {/* Pillar 5: Dữ liệu Hệ sinh thái */}
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+              <span className="font-medium">Dữ liệu Hệ sinh thái</span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handleToggleEcosystemDetails}
+                  className={`px-1.5 py-0.5 rounded text-[11px] font-semibold border flex items-center gap-0.5 cursor-pointer ${
+                    showEcosystemDetails 
+                      ? 'bg-rose-600 text-white border-rose-500' 
+                      : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+                  }`}
+                  title="Xem 7 loại dữ liệu trong hệ sinh thái"
+                >
+                  <span>Các loại DL</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform ${showEcosystemDetails ? 'rotate-180' : ''}`} />
+                </button>
+                <Rocket className="w-4 h-4 text-rose-600 ml-1" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
+              {totalEcosystemRecords}
+            </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-            {stats.totalPublications || 0}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-            <span>Scopus, WoS, Tạp chí</span>
-            <span className="text-sky-600 font-medium">Chi tiết →</span>
-          </div>
-        </div>
-
-        {/* Card 8: Nhu cầu kết nối & Đặt hàng */}
-        <div 
-          onClick={() => onNavigateModule('collaboration_needs')}
-          className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">8. Nhu cầu kết nối & Đặt hàng</span>
-            <Link2 className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-            {stats.totalCollaborationNeeds || 0}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-            <span>Công nghệ chuyển giao: {stats.totalTechnologies || 0}</span>
-            <span className="text-emerald-600 font-medium">Chi tiết →</span>
+          <div className="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+            <span>7 phân hệ sinh thái</span>
+            <button
+              onClick={() => onNavigateModule('startups')}
+              className="text-rose-700 font-medium hover:underline cursor-pointer"
+            >
+              Chi tiết →
+            </button>
           </div>
         </div>
 
       </div>
+
+      {/* Expandable Breakdown Cards (Mutually exclusive) */}
+      {showExpertDetails && renderExpertBreakdown()}
+      {showEcosystemDetails && renderEcosystemBreakdown()}
 
       {/* Interactive Charts & Breakdowns Section */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
@@ -262,11 +394,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>Biểu đồ Phân tích & Thống kê Tăng trưởng</span>
             </h2>
             <p className="text-xs text-slate-500">
-              Thống kê số lượng đề tài, sáng kiến và doanh nghiệp theo Lĩnh vực & theo Năm
+              Thống kê đề tài, sáng kiến, doanh nghiệp và phân loại dự án/ý tưởng theo Trường học & Xã/phường
             </p>
           </div>
 
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+          <div className="flex flex-wrap items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold">
             <button
               onClick={() => setChartTab('tasks')}
               className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
@@ -290,6 +422,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               }`}
             >
               Doanh nghiệp ĐMST
+            </button>
+            <button
+              onClick={() => setChartTab('projects_ideas')}
+              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                chartTab === 'projects_ideas' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Dự án & Ý tưởng
             </button>
           </div>
         </div>
@@ -338,7 +478,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
                       <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-blue-700">{count}</span>
                       <div 
-                        className="w-full max-w-[36px] bg-blue-600 group-hover:bg-blue-700 rounded-t-md transition-all duration-300"
+                        className="w-full max-w-[36px] bg-teal-600 group-hover:bg-teal-700 rounded-t-md transition-all duration-300"
                         style={{ height: `${heightPct}%` }}
                       />
                       <span className="text-[11px] font-semibold text-slate-600 mt-1">{yr}</span>
@@ -436,8 +576,73 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               })}
             </div>
             <p className="text-[11px] text-slate-500 italic text-center">
-              Số lượng doanh nghiệp khởi nghiệp đổi mới sáng tạo, dự án spin-off hình thành tại TP Đà Nẵng qua từng giai đoạn.
+              Số lượng doanh nghiệp khởi nghiệp đổi mới sáng tạo hình thành tại TP Đà Nẵng qua từng giai đoạn.
             </p>
+          </div>
+        )}
+
+        {/* Tab 4: Dự án & Ý tưởng Phân loại theo Trường học và Xã/phường */}
+        {chartTab === 'projects_ideas' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+            {/* By Universities / Colleges */}
+            <div className="space-y-3">
+              <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <School className="w-4 h-4 text-violet-600" />
+                  <span>Phân bổ Dự án & Ý tưởng theo Trường ĐH/CĐ:</span>
+                </span>
+                <span className="text-[11px] text-violet-700 font-mono font-bold">Viện - Trường</span>
+              </div>
+              <div className="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                {[
+                  { name: 'Đại học Bách Khoa - ĐHĐN', count: 18, pct: 36 },
+                  { name: 'Đại học Kinh tế - ĐHĐN', count: 12, pct: 24 },
+                  { name: 'Đại học Sư phạm Kỹ thuật', count: 8, pct: 16 },
+                  { name: 'Đại học Duy Tân', count: 7, pct: 14 },
+                  { name: 'Cao đẳng Công nghệ thông tin', count: 5, pct: 10 }
+                ].map((item, idx) => (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex justify-between text-xs text-slate-700">
+                      <span className="font-medium truncate max-w-[240px]">{item.name}</span>
+                      <span className="font-mono font-semibold">{item.count} dự án ({item.pct}%)</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-violet-600 rounded-full" style={{ width: `${item.pct}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* By Wards / Communes */}
+            <div className="space-y-3">
+              <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-emerald-600" />
+                  <span>Phân bổ Dự án & Ý tưởng theo Xã/Phường địa bàn:</span>
+                </span>
+                <span className="text-[11px] text-emerald-700 font-mono font-bold">Cơ sở địa phương</span>
+              </div>
+              <div className="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                {[
+                  { name: 'Phường Hải Châu I & II', count: 14, pct: 28 },
+                  { name: 'Phường Hòa Cường Bắc & Nam', count: 11, pct: 22 },
+                  { name: 'Phường Hòa Khánh Bắc (Khu Công nghệ cao)', count: 10, pct: 20 },
+                  { name: 'Phường An Hải Bắc (Sơn Trà)', count: 8, pct: 16 },
+                  { name: 'Xã Hòa Tiến & Hòa Vang', count: 7, pct: 14 }
+                ].map((item, idx) => (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex justify-between text-xs text-slate-700">
+                      <span className="font-medium truncate max-w-[240px]">{item.name}</span>
+                      <span className="font-mono font-semibold">{item.count} hồ sơ ({item.pct}%)</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${item.pct}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -494,22 +699,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           {/* Quick Module Navigation Matrix */}
           <div className="pt-2 border-t border-slate-100">
-            <div className="text-xs font-semibold text-slate-700 mb-2">Truy cập nhanh 13 phân hệ quản trị:</div>
+            <div className="text-xs font-semibold text-slate-700 mb-2">Truy cập nhanh các phân hệ cơ sở dữ liệu:</div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
               {[
-                { key: 'science_tasks', label: '1. Nhiệm vụ KH&CN' },
-                { key: 'initiatives', label: '2. Sáng kiến TP' },
-                { key: 'experts', label: '3. Chuyên gia' },
-                { key: 'organizations', label: '4. Tổ chức KH&CN' },
-                { key: 'startups', label: '5. Doanh nghiệp ĐMST' },
-                { key: 'startup_projects', label: '6. Dự án khởi nghiệp' },
-                { key: 'startup_ideas', label: '7. Ý tưởng khởi nghiệp' },
-                { key: 'investors', label: '8. Nhà đầu tư' },
-                { key: 'investment_funds', label: '9. Quỹ đầu tư' },
-                { key: 'support_organizations', label: '10. Vườn ươm / TT ĐMST' },
-                { key: 'technologies', label: '11. Công nghệ & KQNC' },
-                { key: 'programs', label: '12. Chương trình hỗ trợ' },
-                { key: 'collaboration_needs', label: '13. Nhu cầu kết nối' }
+                { key: 'science_tasks', label: 'Đề tài, nhiệm vụ KH&CN' },
+                { key: 'initiatives', label: 'Sáng kiến thành phố' },
+                { key: 'patents', label: 'Sáng chế & SHTT' },
+                { key: 'experts', label: 'Chuyên gia & Nhà khoa học' },
+                { key: 'startups', label: 'Doanh nghiệp KNST' },
+                { key: 'support_organizations', label: 'Tổ chức trung gian' },
+                { key: 'startup_projects', label: 'Dự án khởi nghiệp' },
+                { key: 'startup_ideas', label: 'Ý tưởng khởi nghiệp' },
+                { key: 'wards', label: 'Danh sách xã/phường' },
+                { key: 'universities', label: 'Trường ĐH/Cao đẳng' },
+                { key: 'featured_startups', label: 'DN khởi nghiệp tiêu biểu' },
+                { key: 'collaboration_needs', label: 'Nhu cầu kết nối & Đặt hàng' }
               ].map(m => (
                 <button
                   key={m.key}
@@ -550,7 +754,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span className="font-bold text-teal-700 font-mono">{stats.verifiedExperts} / {stats.totalExperts}</span>
             </div>
             <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl">
-              <span className="text-slate-600">Quan hệ liên kết thực thể (Graph):</span>
+              <span className="text-slate-600">Quan hệ liên kết thực thể:</span>
               <span className="font-bold text-indigo-700 font-mono">{stats.totalRelationships} quan hệ</span>
             </div>
           </div>

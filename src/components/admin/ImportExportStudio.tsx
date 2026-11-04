@@ -2,7 +2,18 @@ import React, { useState } from 'react';
 import { ModuleType } from '../../types';
 import { api } from '../../services/api';
 import { MODULE_NAMES } from './ModuleCrudView';
-import { Upload, Download, CheckCircle2, AlertTriangle, FileText, ArrowRight, RotateCcw, Database } from 'lucide-react';
+import { 
+  Upload, 
+  Download, 
+  CheckCircle2, 
+  AlertTriangle, 
+  FileText, 
+  ArrowRight, 
+  RotateCcw, 
+  Database,
+  FileSpreadsheet
+} from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface ImportExportStudioProps {
   initialModule?: ModuleType;
@@ -32,7 +43,10 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
       return `code,title,field,ownerName,problemSolved,solutionDetails,costSavings,investmentCost\nSK-IMP-01,Ứng dụng IoT chiếu sáng công cộng thông minh,Chiếu sáng đô thị & Tiết kiệm năng lượng,Công ty CP Chiếu sáng Đô thị,Lãng phí điện năng chiếu sáng ban đêm,Tự động điều chỉnh độ sáng theo mật độ phương tiện,1200000000,300000000\nSK-IMP-02,Hệ thống camera AI giám sát vứt rác bờ sông,Môi trường đô thị,UBND Quận Hoàn Kiếm,Tình trạng đổ trộm xà bần phế thải ven đê,Camera cảm biến tự phát chuông cảnh báo và gửi hình ảnh về phường,450000000,80000000`;
     }
     if (mod === 'experts') {
-      return `title,academicTitle,position,workplace,primaryField,publicEmail\nGS.TS. Trần Quốc Hùng,GS,Trưởng khoa Cơ điện tử,Đại học Bách Khoa,Tự động hóa & Robot y tế,hung.tq@hust.edu.vn\nTS. Lê Mai Anh,TS,Nghiên cứu viên cao cấp,Viện Hàn lâm KH&CN VN,Công nghệ Sinh học Vi sinh,anh.lm@vast.vn`;
+      return `code,title,field,ownerName,academicTitle,position,workplace,primaryField,publicEmail,phone,birthYear\nCG-IMP-01,GS.TS. Trần Quốc Hùng,Tự động hóa,Đại học Bách Khoa,GS,Trưởng khoa Cơ điện tử,Đại học Bách Khoa,Tự động hóa & Robot y tế,hung.tq@dut.udn.vn,0905123456,1975\nCG-IMP-02,TS. Lê Mai Anh,Công nghệ sinh học,Viện Hàn lâm KH&CN VN,TS,Nghiên cứu viên cao cấp,Viện Hàn lâm KH&CN VN,Công nghệ Sinh học Vi sinh,anh.lm@vast.vn,0912345678,1982`;
+    }
+    if (mod === 'science_tasks') {
+      return `code,title,field,ownerName,managementLevel,principalInvestigator,executionTime,totalBudgetApproved\nNV-IMP-01,Nghiên cứu công nghệ xử lý nước thải công nghiệp bán dẫn,Môi trường & Công nghệ cao,Đại học Sư phạm Kỹ thuật,Cấp thành phố,PGS.TS Nguyễn Văn A,2024-2026,2000000000\nNV-IMP-02,Phát triển nền tảng dữ liệu mở đô thị thông minh,Công nghệ thông tin,Trung tâm CNTT&TT Đà Nẵng,Cấp sở,ThS. Lê Thị B,2025-2026,1200000000`;
     }
     return `code,title,field,ownerName,description\nTEST-01,Dữ liệu mẫu 1,Công nghệ thông tin,Trung tâm CNTT,Mô tả chi tiết nội dung mẫu 1\nTEST-02,Dữ liệu mẫu 2,Nông nghiệp công nghệ cao,Hợp tác xã xanh,Mô tả chi tiết nội dung mẫu 2`;
   };
@@ -42,8 +56,113 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
     setImportResult(null);
   };
 
-  // RFC 4180-compatible CSV parser: supports quoted commas, escaped quotes,
-  // CRLF and line breaks inside quoted cells.
+  const handleDownloadExcelTemplate = () => {
+    try {
+      let sampleRows: Record<string, any>[] = [];
+      if (selectedModule === 'science_tasks') {
+        sampleRows = [
+          { 'code': 'NV-01', 'title': 'Nghiên cứu ứng dụng IoT trong giám sát môi trường', 'field': 'Công nghệ thông tin', 'ownerName': 'Đại học Bách Khoa', 'managementLevel': 'Cấp thành phố', 'principalInvestigator': 'PGS.TS Nguyễn Văn A', 'executionTime': '2024-2026', 'totalBudgetApproved': 1500000000 }
+        ];
+      } else if (selectedModule === 'initiatives') {
+        sampleRows = [
+          { 'code': 'SK-01', 'title': 'Hệ thống số hóa quy trình một cửa điện tử', 'field': 'Cải cách hành chính', 'ownerName': 'UBND Quận Hải Châu', 'recognitionYear': 2026, 'authors': 'Nguyễn Văn B', 'costSavings': 300000000 }
+        ];
+      } else if (selectedModule === 'experts') {
+        sampleRows = [
+          { 'code': 'CG-01', 'title': 'GS.TS. Trần Quốc Hùng', 'field': 'Tự động hóa', 'ownerName': 'Đại học Bách Khoa', 'birthYear': '1975', 'email': 'hung.tq@dut.udn.vn', 'phone': '0905123456', 'specialty': 'Robot y tế', 'academicDegree': 'Tiến sĩ' }
+        ];
+      } else {
+        sampleRows = [
+          { 'code': 'MA-01', 'title': 'Bản ghi mẫu', 'field': 'Công nghệ thông tin', 'ownerName': 'Đơn vị phụ trách', 'description': 'Mô tả tóm tắt nội dung bản ghi' }
+        ];
+      }
+
+      const ws = XLSX.utils.json_to_sheet(sampleRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, selectedModule.slice(0, 31));
+      XLSX.writeFile(wb, `bieu-mau-nhap-${selectedModule}.xlsx`);
+    } catch (err: any) {
+      alert('Lỗi tải tệp mẫu Excel: ' + err.message);
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+    if (isExcel) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = new Uint8Array(ev.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const json = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { defval: '' });
+          if (json.length === 0) {
+            setImportError('Tệp Excel không chứa dòng dữ liệu nào.');
+            setParsedRows([]);
+          } else {
+            setParsedRows(json);
+            setImportError(null);
+            const csvText = XLSX.utils.sheet_to_csv(worksheet);
+            setRawText(csvText);
+          }
+        } catch (err: any) {
+          setImportError('Lỗi đọc tệp Excel: ' + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const content = ev.target?.result as string;
+        setRawText(content);
+        try {
+          const rows = parseCsvText(content);
+          setParsedRows(rows);
+          setImportError(rows.length ? null : 'Không tìm thấy dữ liệu hợp lệ trong nội dung CSV.');
+          setImportResult(null);
+        } catch (err: any) {
+          setParsedRows([]);
+          setImportError(err.message || 'Không thể đọc nội dung CSV.');
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      const records = await api.getModuleRecords(selectedModule);
+      const exportData = records.map((r, i) => {
+        const base: Record<string, any> = {
+          'STT': i + 1,
+          'Mã định danh': r.code,
+          'Tên bản ghi': r.title,
+          'Lĩnh vực': r.field,
+          'Đơn vị / Chủ thể': r.ownerName,
+          'Trạng thái': r.status,
+          'Phạm vi': r.publicityLevel === 'public' ? 'Công khai' : 'Nội bộ'
+        };
+        Object.entries(r).forEach(([k, v]) => {
+          if (!['id', 'code', 'title', 'field', 'ownerName', 'status', 'publicityLevel', 'history'].includes(k) && typeof v !== 'object') {
+            base[k] = v;
+          }
+        });
+        return base;
+      });
+
+      const ws = XLSX.utils.json_to_sheet(exportData.length > 0 ? exportData : [{ 'Mã': 'MDD-01', 'Tên': 'Mẫu' }]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, selectedModule.slice(0, 31));
+      XLSX.writeFile(wb, `du-lieu-${selectedModule}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } catch (err: any) {
+      alert('Lỗi xuất tệp Excel: ' + err.message);
+    }
+  };
+
+  // RFC 4180-compatible CSV parser
   const parseCsvText = (text: string) => {
     const input = text.replace(/^\uFEFF/, '');
     const matrix: string[][] = [];
@@ -152,28 +271,21 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
             Quản trị & Xuất/Nhập Dữ liệu Tập trung
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Hỗ trợ nhập Excel / CSV, đối soát trùng lặp và xuất batch SQL cho Cloudflare D1
+            Hỗ trợ nhập Excel (.xlsx, .xls), CSV chuẩn UTF-8, đối soát trùng lặp và sao lưu D1
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <a
-            href="/api/d1/export-sql?download=1"
-            className="px-3 py-1.5 bg-teal-800 hover:bg-teal-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm text-xs"
-            title="Tải tệp lệnh SQL batch cho Cloudflare D1 database"
-          >
-            <Database className="w-3.5 h-3.5" />
-            Xuất SQL Cloudflare D1
-          </a>
           <button
             type="button"
-            onClick={handleReconcileD1}
-            disabled={isReconciling}
-            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors flex items-center gap-1.5 border border-slate-300 text-xs"
+            onClick={handleExportExcel}
+            className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm text-xs cursor-pointer"
+            title="Xuất dữ liệu toàn bộ phân hệ ra tệp Excel (.xlsx)"
           >
-            <RotateCcw className={`w-3.5 h-3.5 ${isReconciling ? 'animate-spin' : ''}`} />
-            {isReconciling ? 'Đang đối soát...' : 'Đối soát CSDL D1'}
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            Tải Excel (.xlsx)
           </button>
+
           <a
             href={api.getExportUrl(selectedModule)}
             download={selectedModule + '.csv'}
@@ -182,6 +294,25 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
             <Download className="w-3.5 h-3.5" />
             Tải CSV phân hệ
           </a>
+
+          <a
+            href="/api/d1/export-sql?download=1"
+            className="px-3 py-1.5 bg-teal-800 hover:bg-teal-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm text-xs"
+            title="Tải tệp lệnh SQL batch cho Cloudflare D1 database"
+          >
+            <Database className="w-3.5 h-3.5" />
+            Xuất SQL D1
+          </a>
+
+          <button
+            type="button"
+            onClick={handleReconcileD1}
+            disabled={isReconciling}
+            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors flex items-center gap-1.5 border border-slate-300 text-xs cursor-pointer"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 ${isReconciling ? 'animate-spin' : ''}`} />
+            {isReconciling ? 'Đang đối soát...' : 'Đối soát CSDL D1'}
+          </button>
         </div>
       </div>
 
@@ -195,7 +326,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
             </div>
             <button
               onClick={() => setD1Report(null)}
-              className="text-xs text-slate-400 hover:text-slate-700"
+              className="text-xs text-slate-400 hover:text-slate-700 cursor-pointer"
             >
               Đóng
             </button>
@@ -212,10 +343,10 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
       )}
 
       {/* Select Module & Load Template */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 items-end">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 items-end">
         <div>
           <label className="block text-slate-600 font-semibold mb-1">
-            1. Chọn phân hệ dữ liệu cần nhập:
+            1. Chọn phân hệ dữ liệu:
           </label>
           <select
             value={selectedModule}
@@ -235,11 +366,22 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
         <div>
           <button
             type="button"
-            onClick={handleLoadSample}
-            className="w-full h-9 px-3 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg font-medium flex items-center justify-center gap-1.5"
+            onClick={handleDownloadExcelTemplate}
+            className="w-full h-9 px-3 bg-white border border-teal-300 hover:bg-teal-50 text-teal-800 rounded-lg font-semibold flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
           >
-            <FileText className="w-3.5 h-3.5 text-teal-700" />
-            Tải tệp mẫu chuẩn ({selectedModule})
+            <FileSpreadsheet className="w-3.5 h-3.5 text-teal-700" />
+            Tải mẫu Excel (.xlsx)
+          </button>
+        </div>
+
+        <div>
+          <button
+            type="button"
+            onClick={handleLoadSample}
+            className="w-full h-9 px-3 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg font-medium flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <FileText className="w-3.5 h-3.5 text-slate-500" />
+            Xem mẫu CSV
           </button>
         </div>
 
@@ -248,21 +390,35 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
             type="button"
             onClick={handlePreview}
             disabled={!rawText.trim()}
-            className="w-full h-9 px-3 bg-teal-800 disabled:opacity-50 hover:bg-teal-700 text-white rounded-lg font-medium flex items-center justify-center gap-1.5 shadow-sm"
+            className="w-full h-9 px-3 bg-teal-800 disabled:opacity-50 hover:bg-teal-700 text-white rounded-lg font-medium flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
           >
-            <span>Phân tích & Xem trước dữ liệu</span>
+            <span>Xem trước dữ liệu</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
+      {/* File Upload & Drag-and-drop */}
+      <div className="border-2 border-dashed border-slate-300 hover:border-teal-500 rounded-xl p-4 text-center space-y-2 bg-slate-50/60 transition-colors">
+        <Upload className="w-6 h-6 text-slate-400 mx-auto" />
+        <div className="text-slate-700 font-semibold text-xs">
+          Tải lên tệp Excel (.xlsx, .xls) hoặc tệp CSV
+        </div>
+        <input
+          type="file"
+          accept=".xlsx,.xls,.csv,.txt"
+          onChange={handleFileUpload}
+          className="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-800 file:text-white hover:file:bg-teal-700 cursor-pointer"
+        />
+      </div>
+
       {/* CSV Input Area */}
       <div className="space-y-1.5">
         <label className="block text-slate-600 font-semibold">
-          2. Dán nội dung định dạng CSV hoặc tải tệp:
+          Hoặc dán trực tiếp nội dung CSV (Header row):
         </label>
         <textarea
-          rows={6}
+          rows={5}
           value={rawText}
           onChange={(e) => setRawText(e.target.value)}
           placeholder="Dán dữ liệu CSV có dòng tiêu đề (Header row)..."
@@ -275,12 +431,12 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="font-semibold text-slate-800">
-              3. Bản xem trước kết quả ánh xạ ({parsedRows.length} dòng):
+              Bản xem trước kết quả ánh xạ ({parsedRows.length} dòng):
             </div>
             <button
               onClick={handleExecuteImport}
               disabled={isProcessing}
-              className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+              className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <Upload className="w-3.5 h-3.5" />
               {isProcessing ? 'Đang xác thực & nhập...' : `Xác nhận nhập ${parsedRows.length} bản ghi`}
@@ -337,7 +493,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
               <span className="text-xl font-bold font-mono">{importResult.duplicates.length}</span>
             </div>
             <div className="p-3 bg-red-50 text-red-950 border border-red-200 rounded-lg">
-              <span className="block font-medium">Lỗi dữ liệu (thiếu trường):</span>
+              <span className="block font-medium">Lỗi dữ liệu:</span>
               <span className="text-xl font-bold font-mono">{importResult.errors.length}</span>
             </div>
           </div>
