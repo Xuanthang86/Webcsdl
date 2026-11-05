@@ -194,13 +194,15 @@ apiRouter.post('/auth/change-password', (req: AuthenticatedRequest, res: Respons
     return;
   }
 
-  // Verify current password if provided
-  if (currentPassword) {
-    const authCheck = db.authenticateUser(req.user.username, currentPassword);
-    if (!authCheck) {
-      res.status(400).json({ success: false, message: 'Mật khẩu hiện tại không chính xác.' });
-      return;
-    }
+  // Verify current password strictly - Section VII.5
+  if (!currentPassword) {
+    res.status(400).json({ success: false, message: 'Vui lòng nhập mật khẩu hiện tại.' });
+    return;
+  }
+  const authCheck = db.authenticateUser(req.user.username, currentPassword);
+  if (!authCheck) {
+    res.status(400).json({ success: false, message: 'Mật khẩu hiện tại không chính xác.' });
+    return;
   }
 
   try {
@@ -351,16 +353,43 @@ apiRouter.get('/modules/:moduleType', (req: AuthenticatedRequest, res: Response)
   const isPublicOnly = req.user?.role === 'public_user';
   const records = db.getModuleRecords(moduleType, isPublicOnly);
 
-  // Sorting
-  const sortBy = (req.query.sortBy as string) || 'createdAt';
-  const order = req.query.order === 'asc' ? 1 : -1;
-  records.sort((a, b) => {
-    const valA = a[sortBy] ?? '';
-    const valB = b[sortBy] ?? '';
-    if (valA < valB) return -order;
-    if (valA > valB) return order;
-    return 0;
-  });
+  // Sorting: specialized for Wards (Phường -> Xã -> Đặc khu) and Universities (Đại học -> Cao đẳng) per Section VI
+  if (moduleType === 'wards') {
+    records.sort((a, b) => {
+      const getRank = (t: string = '') => {
+        if (/^phường/i.test(t)) return 1;
+        if (/^xã/i.test(t)) return 2;
+        if (/^đặc khu/i.test(t)) return 3;
+        return 4;
+      };
+      const rankA = getRank(a.title);
+      const rankB = getRank(b.title);
+      if (rankA !== rankB) return rankA - rankB;
+      return (a.title || '').localeCompare(b.title || '', 'vi');
+    });
+  } else if (moduleType === 'universities') {
+    records.sort((a, b) => {
+      const getRank = (t: string = '') => {
+        if (/đại học|\bđh\b/i.test(t)) return 1;
+        if (/cao đẳng|\bcđ\b/i.test(t)) return 2;
+        return 3;
+      };
+      const rankA = getRank(a.title);
+      const rankB = getRank(b.title);
+      if (rankA !== rankB) return rankA - rankB;
+      return (a.title || '').localeCompare(b.title || '', 'vi');
+    });
+  } else {
+    const sortBy = (req.query.sortBy as string) || 'createdAt';
+    const order = req.query.order === 'asc' ? 1 : -1;
+    records.sort((a, b) => {
+      const valA = a[sortBy] ?? '';
+      const valB = b[sortBy] ?? '';
+      if (valA < valB) return -order;
+      if (valA > valB) return order;
+      return 0;
+    });
+  }
 
   res.json({
     success: true,
@@ -409,6 +438,15 @@ apiRouter.post('/modules/:moduleType', (req: AuthenticatedRequest, res: Response
     res.status(400).json({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' });
     return;
   }
+
+  // Enforce Section VII.1 RBAC module restriction
+  if (req.user.role !== 'super_admin' && req.user.role !== 'system_admin' && req.user.role !== 'public_user') {
+    if (req.user.managedModules && req.user.managedModules.length > 0 && !req.user.managedModules.includes(moduleType)) {
+      res.status(403).json({ success: false, message: 'Tài khoản không được phân quyền quản lý phân hệ này.' });
+      return;
+    }
+  }
+
   const config = db.getSystemConfig();
 
   // If public user, check if public submission is allowed
@@ -438,6 +476,15 @@ apiRouter.put('/modules/:moduleType/:id', (req: AuthenticatedRequest, res: Respo
     res.status(400).json({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' });
     return;
   }
+
+  // Enforce Section VII.1 RBAC module restriction
+  if (req.user.role !== 'super_admin' && req.user.role !== 'system_admin' && req.user.role !== 'public_user') {
+    if (req.user.managedModules && req.user.managedModules.length > 0 && !req.user.managedModules.includes(moduleType)) {
+      res.status(403).json({ success: false, message: 'Tài khoản không được phân quyền quản lý phân hệ này.' });
+      return;
+    }
+  }
+
   const id = req.params.id;
 
   // Check edit rights
@@ -468,6 +515,15 @@ apiRouter.delete('/modules/:moduleType/:id', requirePermission('canDelete'), (re
     res.status(400).json({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' });
     return;
   }
+
+  // Enforce Section VII.1 RBAC module restriction
+  if (req.user.role !== 'super_admin' && req.user.role !== 'system_admin') {
+    if (req.user.managedModules && req.user.managedModules.length > 0 && !req.user.managedModules.includes(moduleType)) {
+      res.status(403).json({ success: false, message: 'Tài khoản không được phân quyền quản lý phân hệ này.' });
+      return;
+    }
+  }
+
   const id = req.params.id;
 
   const success = db.deleteRecord(moduleType, id, req.user);
@@ -555,6 +611,15 @@ apiRouter.post('/import/:moduleType', requirePermission('canImportExport'), (req
     res.status(400).json({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' });
     return;
   }
+
+  // Enforce Section VII.1 RBAC module restriction on import
+  if (req.user.role !== 'super_admin' && req.user.role !== 'system_admin') {
+    if (req.user.managedModules && req.user.managedModules.length > 0 && !req.user.managedModules.includes(moduleType)) {
+      res.status(403).json({ success: false, message: 'Tài khoản không được phân quyền nhập dữ liệu cho phân hệ này.' });
+      return;
+    }
+  }
+
   const items = req.body.items;
 
   if (!Array.isArray(items) || items.length === 0) {

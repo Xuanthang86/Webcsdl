@@ -227,8 +227,7 @@ export default function App() {
         });
       }
       setCurrentView('home');
-      setSuccessToast('Đã đăng xuất an toàn khỏi hệ thống');
-      setTimeout(() => setSuccessToast(null), 3000);
+      // Toast removed per Section VII.7
     }
   };
 
@@ -297,12 +296,9 @@ export default function App() {
     const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'];
     if (administrativeRoles.includes(user.role)) {
       setCurrentView('admin');
-      setSuccessToast(`Đăng nhập thành công! Chuyển hướng đến Cổng Quản trị (${user.fullName})`);
     } else {
       setCurrentView('home');
-      setSuccessToast(`Đăng nhập thành công với vai trò: ${user.fullName}`);
     }
-    setTimeout(() => setSuccessToast(null), 3500);
   };
 
   const handleApplyAdvancedSearch = (params: any) => {

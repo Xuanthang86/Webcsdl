@@ -15,6 +15,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [rememberMe, setRememberMe] = useState(true);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -22,6 +24,15 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
 
     try {
       const user = await api.login(username, password);
+      if (rememberMe) {
+        try {
+          localStorage.setItem('portal_remember_username', username);
+        } catch {}
+      } else {
+        try {
+          localStorage.removeItem('portal_remember_username');
+        } catch {}
+      }
       onSuccess(user);
     } catch (err: any) {
       setError(err.message || 'Tên đăng nhập hoặc mật khẩu không chính xác.');
@@ -54,7 +65,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
           </div>
           <button
             onClick={onClose}
-            className="text-slate-300 hover:text-white p-1 rounded-lg transition-colors"
+            className="text-slate-300 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -75,6 +86,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
               <UserIcon className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
               <input
                 type="text"
+                name="username"
+                autoComplete="username"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 placeholder="Nhập tên đăng nhập (vd: superadmin)"
@@ -90,6 +103,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
               <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
               <input
                 type={showPassword ? 'text' : 'password'}
+                name="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Nhập mật khẩu"
@@ -99,13 +114,25 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded focus:outline-none"
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded focus:outline-none cursor-pointer"
                 title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-0.5">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={e => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded text-teal-800 border-slate-300 focus:ring-teal-700 cursor-pointer"
+              />
+              <span className="text-xs font-medium text-slate-700">Ghi nhớ tài khoản</span>
+            </label>
           </div>
 
           {/* Quick Credential Hints for Testing / Evaluation */}

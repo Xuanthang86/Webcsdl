@@ -1,0 +1,878 @@
+# PROMPT RÀ SOÁT, SỬA LỖI VÀ HOÀN THIỆN TOÀN DIỆN WEBSITE CSDL KHOA HỌC VÀ CÔNG NGHỆ THÀNH PHỐ ĐÀ NẴNG
+
+**Repository:** https://github.com/Xuanthang86/Webcsdl  
+**Nhánh cần kiểm tra:** `main`  
+**Mục tiêu:** Hoàn thiện giao diện, Dashboard, quản lý dữ liệu, nhập Excel/CSV, phân quyền, bảo mật và tính ổn định của toàn bộ website.
+
+## I. NGUYÊN TẮC BẮT BUỘC – KHÔNG ĐƯỢC LÀM HỎNG HỆ THỐNG
+
+1. Trước khi sửa, phải đọc mã nguồn mới nhất trên GitHub, kiểm tra lịch sử commit và đối chiếu toàn bộ các thành phần có liên quan đến yêu cầu.
+2. Tiếp tục sử dụng nhánh `fix/d1-schema-auth-staging` hiện có để thực hiện công việc. Không tạo nhánh mới, không tạo thêm nhánh sửa lỗi từ `main`, không tự ý chuyển sang nhánh khác.
+3. Không push, merge hoặc cập nhật `main` trong quá trình xử lý.
+4. Không chạy migration, không thay đổi cấu trúc D1 Production, không chỉnh sửa binding hoặc cấu hình Production và không triển khai Production khi chưa hoàn tất kiểm thử Staging.
+5. Không xóa, reset, seed lại, ghi đè hoặc thay thế dữ liệu đang tồn tại. Đặc biệt phải bảo toàn dữ liệu trong D1, dữ liệu hồ sơ, tệp đính kèm, nhật ký và các dữ liệu do người dùng đã nhập.
+6. Không thay thế dữ liệu thật bằng dữ liệu mẫu, dữ liệu giả lập hoặc số liệu hard-code. Không tự ý thay đổi nội dung dữ liệu đang hoạt động.
+7. Giữ nguyên kiến trúc, cấu trúc thư mục, công nghệ, thiết kế tổng thể, chức năng, quy trình nghiệp vụ và những nội dung đang hoạt động ổn định. Không viết lại website từ đầu.
+8. Không xóa hoặc thay thế một chức năng đang hoạt động chỉ vì muốn triển khai chức năng mới. Phải sửa đúng thành phần liên quan và bảo đảm tương thích ngược.
+9. Trước khi thay đổi một thành phần dùng chung, phải kiểm tra tất cả các vị trí đang sử dụng thành phần đó để tránh ảnh hưởng dây chuyền.
+10. Không sửa đồng thời hai cơ chế API khác nhau theo suy đoán. Phải xác định chính xác luồng đang phục vụ website trên Cloudflare, phân biệt `server/routes/api.ts`, `worker/index.ts`, `server/db.ts` và các dịch vụ frontend. Chỉ cập nhật những lớp thực sự cần thiết để bảo đảm cùng một nghiệp vụ hoạt động thống nhất.
+11. Không lưu mật khẩu người dùng dạng văn bản thuần trong `localStorage`, `sessionStorage`, file hoặc cơ sở dữ liệu. Chức năng ghi nhớ tài khoản phải sử dụng cơ chế quản lý mật khẩu an toàn của trình duyệt.
+12. Mọi thay đổi về bảo mật và phân quyền phải được kiểm soát ở cả frontend và backend/Worker. Không chỉ ẩn nút hoặc ẩn menu trên giao diện.
+13. Không được kết luận đã hoàn thành nếu mới chỉ sửa giao diện hoặc kiểm tra bằng dữ liệu mẫu. Phải kiểm thử thao tác thực tế trên Staging.
+14. Nếu phát hiện yêu cầu nào xung đột với cấu trúc dữ liệu hoặc chức năng hiện có, phải phân tích và lựa chọn phương án bảo toàn dữ liệu, không tự ý loại bỏ yêu cầu hoặc thay đổi nghiệp vụ.
+
+## II. RÀ SOÁT VÀ HOÀN THIỆN GIAO DIỆN, MÀU SẮC TOÀN WEBSITE
+
+### 1. Đổi tông màu header và hoàn thiện nhận diện
+
+Đổi màu thanh header hiện đang có nền trắng sang tông màu khoa học – công nghệ, theo hướng **xanh da trời sáng, nền sáng (light base), nhẹ nhàng, hiện đại, chuyên nghiệp và hài hòa**.
+
+Yêu cầu cụ thể:
+
+- Không sử dụng nền trắng đơn điệu cho thanh header.
+- Ưu tiên tone xanh da trời nhạt, có cảm giác công nghệ, tri thức, dữ liệu và đổi mới sáng tạo.
+- Có thể tham khảo nền `#EAF4FB` hoặc `#DCECF8`, kết hợp màu nhấn xanh công nghệ và xanh teal ở mức vừa phải.
+- Màu chữ phải rõ ràng, có độ tương phản tốt, không bị chìm trên nền.
+- Giữ nguyên logo, nội dung, chức năng điều hướng và bố cục đang hoạt động.
+- Áp dụng đồng bộ cho header trang chủ và header trang quản trị, nhưng phải phân biệt hợp lý giữa hai khu vực.
+- Hoàn thiện bảng màu tổng thể: header, sidebar, nền Dashboard, thẻ thống kê, nút thao tác, menu, bảng dữ liệu, biểu mẫu, modal, footer, trạng thái và thông báo.
+- Nền Dashboard phải sáng hơn, dễ nhìn, không gây mỏi mắt.
+- Các màu sắc phải thống nhất, tránh tình trạng mỗi phân hệ có một bảng màu khác nhau.
+- Không sử dụng các màu quá đậm hoặc quá rực làm nền chính.
+- Bảo đảm hiển thị tốt trên laptop, PC, máy tính bảng và điện thoại.
+
+### 2. Header trong giao diện Admin
+
+Bổ sung thanh header riêng cho giao diện quản trị, chỉ hiển thị đúng hai nội dung, mỗi nội dung trên một hàng:
+
+**TRANG QUẢN TRỊ**
+
+**CƠ SỞ DỮ LIỆU VỀ KHOA HỌC, CÔNG NGHỆ VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG**
+
+Yêu cầu:
+
+- “TRANG QUẢN TRỊ” có kích thước chữ lớn hơn.
+- Dòng tên cơ sở dữ liệu có kích thước nhỏ hơn nhưng vẫn nổi bật, rõ ràng.
+- Hai dòng cùng màu chữ, cùng phong cách nhận diện.
+- Nền header dùng tone xanh công nghệ sáng, không dùng nền trắng.
+- Không thêm nội dung quảng bá, khẩu hiệu hoặc thông tin không được yêu cầu.
+- Không để header chiếm quá nhiều chiều cao làm thu hẹp vùng làm việc.
+- Responsive trên các kích thước màn hình.
+
+### 3. Sidebar Admin
+
+- Tăng chiều rộng menu Admin để nội dung không bị cắt, không phải xuống dòng bất hợp lý.
+- Tăng kích thước chữ toàn bộ giao diện Admin, bảo đảm dễ đọc.
+- Đổi:
+  - “Quản trị KHCN & KNĐMST”
+  - “Thành phố Đà Nẵng”
+  
+  thành:
+  - “Quản trị dữ liệu KHCN & KNĐMST”
+  - “Thành phố Đà Nẵng”.
+- Bỏ dòng “10 CSDL Chuẩn Hóa Cốt Lõi 10”.
+- Bỏ nội dung “Hệ thống Quản trị CSDL TP Đà Nẵng” ở cuối menu Admin.
+- Sửa “Cổng công khai” thành “Truy cập Trang chủ”.
+- Nút “Truy cập Trang chủ” phải nằm trên một hàng, có viền và màu nền phù hợp, dễ nhận biết.
+- Không làm mất các chức năng điều hướng hiện có.
+- Giảm khoảng cách và chiều cao phần footer để không tạo khoảng trống quá lớn.
+
+### 4. Đồng bộ tên và loại dữ liệu
+
+- Đồng bộ các loại dữ liệu trong menu Admin với các loại dữ liệu hiện có trên menu trang chủ.
+- Bảo đảm tên phân hệ, thứ tự, biểu tượng và cách gọi thống nhất.
+- Không tự ý xóa các phân hệ bổ trợ đang hoạt động.
+- Sửa “Quản Lý Tài Khoản & Phân Quyền Người Dùng” thành “Quản lý tài khoản & phân quyền người dùng”.
+
+## III. SỬA LỖI DASHBOARD VÀ THỐNG KÊ
+
+### 1. Lỗi Dashboard tải liên tục
+
+Hiện tại trang Dashboard có tình trạng liên tục hiển thị:
+
+“Đang đồng bộ số liệu thống kê thời gian thực...”
+
+và biểu tượng xoay vòng không kết thúc.
+
+Phải kiểm tra và xử lý dứt điểm:
+
+- Xác định nguyên nhân từ API, Worker, D1, trạng thái loading, Promise, xử lý lỗi hoặc cơ chế đồng bộ.
+- Kiểm tra API trả dữ liệu thống kê có đúng cấu trúc mà frontend đang chờ hay không.
+- Không để trạng thái loading kéo dài vô hạn.
+- Khi tải thành công, phải hiển thị số liệu thực tế.
+- Khi API lỗi, phải hiển thị thông báo lỗi rõ ràng và có nút thử tải lại.
+- Khi chưa có dữ liệu, hiển thị trạng thái chưa có dữ liệu phù hợp.
+- Không sử dụng số liệu giả để lấp đầy Dashboard.
+- Không che giấu lỗi API bằng cách trả về dữ liệu mẫu hoặc mảng rỗng.
+- Kiểm tra cả Dashboard trang chủ và Dashboard Admin.
+
+### 2. Dashboard chuyên gia và nhà khoa học
+
+- Chỉ hiển thị chỉ số “Tổng số chuyên gia”.
+- Không hiển thị ngay các mục “Theo lĩnh vực” và “Theo đơn vị”.
+- Khi người dùng nhấn “Cơ cấu”, mới mở phần thống kê chi tiết theo các tiêu chí phân loại.
+- Các số liệu phải lấy từ dữ liệu thực tế.
+- Không sử dụng dữ liệu phân loại hard-code.
+
+### 3. Dashboard dự án khởi nghiệp và ý tưởng khởi nghiệp
+
+- Có thống kê phân loại theo trường học và xã/phường.
+- Đối chiếu dữ liệu trong từng phân hệ để bảo đảm thống kê chính xác.
+- Nội dung yêu cầu ban đầu có chỗ ghi lặp “trường học và trường học”; không được vì lỗi diễn đạt mà bỏ mất tiêu chí xã/phường đã được nêu rõ trong yêu cầu chi tiết của hai phân hệ.
+- Hiển thị số liệu tổng và cơ cấu phù hợp, không tự tạo số liệu.
+
+### 4. Dashboard sáng kiến
+
+- Chỉ hiển thị tổng số sáng kiến ở phần tổng quan.
+- Bỏ chỉ số “Làm lợi hàng năm”.
+- Thay “Công nhận cấp TP” bằng chỉ số năm hiện tại.
+- Tên chỉ số phải tự động thay đổi theo năm hệ thống:
+  - Năm 2026 hiển thị “Năm 2026”.
+  - Năm 2027 hiển thị “Năm 2027”.
+  - Các năm tiếp theo tự động cập nhật tương tự.
+- Số liệu phải được tính từ các sáng kiến có năm công nhận tương ứng với năm hiện tại.
+- Không hard-code năm 2026 hoặc số liệu mặc định.
+- Kiểm tra logic lấy năm ở backend và frontend, bảo đảm thống nhất múi giờ và năm hệ thống.
+
+### 5. Dashboard hệ sinh thái
+
+- Chỉ hiển thị tổng số dữ liệu hệ sinh thái ở phần tổng quan.
+- Chỉ khi người dùng nhấn “Cơ cấu” mới hiển thị số liệu chi tiết theo từng loại.
+- Không hiển thị đồng thời toàn bộ các loại dữ liệu con khi chưa yêu cầu.
+
+### 6. Điều khiển mở/đóng cơ cấu trên laptop và PC
+
+Hiện tại trên giao diện laptop/PC, khi nhấn “Cơ cấu” ở chuyên gia thì phần cơ cấu được mở nhưng chưa đóng đúng khi tiếp tục nhấn các mục “7 loại con”.
+
+Yêu cầu:
+
+- Khi mở “Cơ cấu” chuyên gia và người dùng nhấn một mục trong 7 loại con, phần “Cơ cấu” phải đóng.
+- Khi mở một mục trong 7 loại con rồi nhấn “Cơ cấu”, phần mục con phải đóng.
+- Hai nhóm trạng thái phải loại trừ lẫn nhau.
+- Không để các phần nội dung chồng lấn hoặc cùng mở ngoài ý muốn.
+- Đồng bộ hành vi trên laptop, PC, tablet và mobile.
+
+## IV. ĐỒNG BỘ CẤU TRÚC DỮ LIỆU VÀ BIỂU MẪU NHẬP LIỆU
+
+Đây là yêu cầu trọng tâm.
+
+Toàn bộ trường dữ liệu của từng phân hệ phải đồng bộ giữa:
+
+1. Thêm mới thủ công.
+2. Chỉnh sửa bản ghi.
+3. Xem danh sách.
+4. Xem chi tiết.
+5. Nhập dữ liệu hàng loạt bằng Excel.
+6. Nhập dữ liệu hàng loạt bằng CSV.
+7. Tải biểu mẫu Excel/CSV.
+8. Xuất dữ liệu.
+9. Dashboard và thống kê.
+10. API, Worker và cơ sở dữ liệu D1.
+
+Không được xảy ra tình trạng biểu mẫu có trường nhưng API không lưu; Excel có cột nhưng dữ liệu không được đưa vào đúng trường; dữ liệu đã lưu nhưng không hiển thị; hoặc chỉnh sửa làm mất những trường đã nhập trước đó.
+
+Phải xây dựng hoặc hoàn thiện một cấu hình trường dữ liệu thống nhất cho từng phân hệ. Cấu hình này phải được dùng chung trong biểu mẫu thêm mới, chỉnh sửa, xem chi tiết, nhập hàng loạt, xuất dữ liệu và thống kê.
+
+### Yêu cầu chung về dữ liệu
+
+- STT tự động sinh, không bắt buộc người dùng nhập.
+- Phân biệt rõ trường hiển thị danh sách và trường chỉ hiển thị trong chi tiết.
+- Các trường nhiều giá trị phải hỗ trợ nhập, sửa, lưu và hiển thị đầy đủ.
+- Trường chọn danh mục phải có danh mục thống nhất, có khả năng bổ sung lựa chọn mới khi được phép.
+- Trường liên kết xã/phường, trường học, đơn vị, lĩnh vực phải có khả năng chọn từ dữ liệu danh mục tương ứng.
+- Không để dữ liệu nhập hàng loạt bị đưa nhầm vào trường khác.
+- Không bỏ dữ liệu không nhận diện được mà không thông báo.
+- Có bước xem trước, đối chiếu cột và xác nhận trước khi nhập.
+- Có báo cáo số bản ghi thành công, trùng lặp, không hợp lệ và lỗi.
+- Có khả năng tải tệp mẫu riêng cho từng phân hệ.
+- Các trường tệp đính kèm phải hỗ trợ tải lên, xem và quản lý theo quyền.
+- Không tự động xóa hoặc ghi đè bản ghi cũ khi nhập dữ liệu mới.
+- Phải có cơ chế phát hiện trùng lặp phù hợp với từng phân hệ.
+- Có thông báo cụ thể về dòng lỗi và nguyên nhân để người dùng sửa.
+
+## V. HOÀN THIỆN NHẬP DỮ LIỆU HÀNG LOẠT EXCEL VÀ CSV
+
+Hiện tại giao diện có chấp nhận chọn tệp `.xlsx`, `.xls` nhưng phần xử lý đọc tệp vẫn dùng `readAsText()` và phân tích theo CSV. Đây không phải là hỗ trợ Excel thực chất.
+
+Yêu cầu:
+
+1. Hỗ trợ tệp Excel chuẩn `.xlsx` và CSV.
+2. Có thể hỗ trợ `.xls` nếu giải pháp đọc tệp tương thích và kiểm thử đầy đủ.
+3. Không sử dụng cách đọc tệp nhị phân Excel như văn bản CSV.
+4. Kiểm tra dependency trong `package.json`; nếu cần thư viện đọc Excel, phải bổ sung giải pháp tương thích với phiên bản hiện tại của React, Vite, TypeScript và môi trường Cloudflare.
+5. Không được chỉ sửa thuộc tính `accept` của input để tuyên bố đã hỗ trợ Excel.
+6. Đọc đúng workbook, worksheet, tiêu đề cột, dữ liệu từng dòng và kiểu dữ liệu.
+7. Xử lý được tiếng Việt có dấu, ô trống, số, ngày tháng, dữ liệu nhiều dòng và nội dung có dấu phẩy.
+8. Có bước đối chiếu tên cột Excel/CSV với trường dữ liệu của phân hệ.
+9. Cho phép người dùng kiểm tra trước dữ liệu sẽ được nhập vào trường nào.
+10. Nếu tên cột không đúng hoặc thiếu trường bắt buộc, phải cảnh báo rõ.
+11. Không tự động nhập dữ liệu sai cấu trúc.
+12. Mỗi phân hệ có biểu mẫu Excel/CSV riêng, chứa đầy đủ các trường cần thiết.
+13. Biểu mẫu tải về phải đồng bộ với cấu trúc dữ liệu thực tế, không phải mẫu minh họa thiếu trường.
+14. Sau khi nhập thành công, phải cập nhật danh sách và Dashboard tương ứng.
+15. Bảo đảm API/Worker tiếp nhận đúng dữ liệu đã được chuẩn hóa từ frontend.
+
+## VI. DANH MỤC 10 PHÂN HỆ VÀ CÁC TRƯỜNG DỮ LIỆU BẮT BUỘC
+
+### 1. Đề tài, nhiệm vụ KH&CN
+
+**Tiêu đề danh sách:**
+
+DANH SÁCH CÁC ĐỀ TÀI, NHIỆM VỤ KH&CN
+
+**Nhập hàng loạt và thống kê Dashboard:**
+
+- Theo năm.
+- Theo lĩnh vực.
+- Theo đơn vị.
+- Theo cấp quản lý.
+
+**Bộ lọc danh sách:**
+
+- Năm.
+- Lĩnh vực.
+- Đơn vị.
+- Cấp quản lý.
+
+**Các trường hiển thị trong danh sách:**
+
+1. STT.
+2. Tên đề tài.
+3. Cấp quản lý.
+4. Cơ quan chủ trì.
+5. Chủ nhiệm đề tài.
+6. Thời gian thực hiện.
+7. Lĩnh vực.
+8. Tóm tắt đề tài.
+
+**Các trường xem chi tiết – chỉ tài khoản được cấp quyền mới được xem:**
+
+1. STT.
+2. Tên đề tài.
+3. Cấp quản lý.
+4. Cơ quan chủ trì.
+5. Chủ nhiệm đề tài.
+6. Thành viên tham gia.
+7. Thời gian thực hiện.
+8. Lĩnh vực.
+9. Tóm tắt đề tài.
+10. Tài liệu minh chứng.
+11. Ký hiệu Kho.
+
+### 2. Sáng kiến
+
+**Tiêu đề danh sách:**
+
+DANH SÁCH SÁNG KIẾN CÓ TÁC DỤNG, ẢNH HƯỞNG ĐỐI VỚI THÀNH PHỐ
+
+**Nhập hàng loạt và thống kê Dashboard:**
+
+- Theo năm công nhận.
+- Theo lĩnh vực.
+- Theo chuyên ngành.
+- Theo đơn vị.
+
+**Bộ lọc danh sách:**
+
+- Đơn vị.
+- Lĩnh vực.
+- Năm công nhận.
+
+**Các trường hiển thị trong danh sách:**
+
+1. STT.
+2. Năm công nhận.
+3. Tên sáng kiến.
+4. Tác giả.
+5. Chủ sở hữu.
+6. Địa chỉ chủ sở hữu.
+7. Lĩnh vực.
+
+### 3. Chuyên gia
+
+**Tiêu đề danh sách:**
+
+DANH SÁCH CHUYÊN GIA
+
+**Nhập hàng loạt và thống kê Dashboard:**
+
+- Theo lĩnh vực.
+- Theo chuyên ngành.
+- Theo học hàm.
+- Theo học vị.
+- Theo đơn vị.
+- Theo năm.
+
+**Bộ lọc danh sách:**
+
+- Đơn vị.
+- Lĩnh vực.
+- Chuyên ngành.
+- Học hàm.
+- Học vị.
+- Năm.
+
+**Các trường hiển thị trong danh sách:**
+
+1. STT.
+2. Tên chuyên gia.
+3. Năm sinh.
+4. Chuyên ngành.
+
+**Các trường xem chi tiết – chỉ tài khoản được cấp quyền mới được xem:**
+
+1. STT.
+2. Tên chuyên gia.
+3. Ngày tháng năm sinh.
+4. Giới tính.
+5. Học hàm.
+6. Học vị.
+7. Năm bắt đầu công tác.
+8. Chức danh nghiên cứu.
+9. Chức vụ.
+10. Email.
+11. Điện thoại.
+12. Lĩnh vực.
+13. Chuyên ngành.
+14. Tên đơn vị công tác.
+15. Quá trình đào tạo và học tập.
+16. Quá trình công tác.
+17. Ngoại ngữ.
+18. Tên bài báo/Tạp chí/Quốc gia.
+19. Tên văn bằng.
+20. Tên công trình/Kết quả nghiên cứu.
+21. Tên đề tài/Dự án.
+22. Giải thưởng.
+23. Kinh nghiệm.
+
+**Yêu cầu riêng đối với Ngoại ngữ:**
+
+- Tích hợp sẵn một số lựa chọn như tiếng Anh, tiếng Nhật, tiếng Hàn và các ngôn ngữ phổ biến khác.
+- Cho phép thêm mới lựa chọn khi cập nhật hồ sơ.
+- Hỗ trợ một chuyên gia có nhiều ngoại ngữ.
+
+**Yêu cầu riêng đối với Tên đề tài/Dự án:**
+
+Mỗi đề tài/dự án phải có các trường:
+
+- Cấp đề tài.
+- Thời gian thực hiện.
+- Thành viên.
+- Chủ trì/Tham gia.
+- Tình trạng.
+
+Phải hỗ trợ một chuyên gia tham gia nhiều đề tài/dự án.
+
+### 4. Doanh nghiệp khởi nghiệp sáng tạo
+
+**Tiêu đề danh sách:**
+
+DANH SÁCH CÁC DOANH NGHIỆP KHỞI NGHIỆP
+
+**Nhập hàng loạt và thống kê Dashboard:**
+
+- Thống kê số lượng doanh nghiệp theo lĩnh vực.
+- Phân loại theo trường học.
+- Phân loại theo xã/phường.
+
+**Các trường hiển thị và quản lý:**
+
+1. STT.
+2. Tên doanh nghiệp.
+3. Địa chỉ hoạt động.
+4. Website doanh nghiệp (nếu có).
+5. File logo doanh nghiệp.
+6. Lĩnh vực kinh doanh.
+7. Tóm tắt về doanh nghiệp và sản phẩm.
+8. Sản phẩm giải quyết vấn đề gì.
+9. Số lượng sáng lập viên.
+10. Tổng số nhân sự ở thời điểm hiện tại.
+11. Họ và tên người đứng đầu doanh nghiệp.
+12. Số điện thoại người đứng đầu doanh nghiệp.
+13. Email người đứng đầu doanh nghiệp.
+14. Năm bắt đầu khởi nghiệp.
+
+### 5. Tổ chức trung gian
+
+**Tiêu đề danh sách:**
+
+DANH SÁCH CÁC TỔ CHỨC TRUNG GIAN
+
+**Nhập hàng loạt và thống kê Dashboard:**
+
+- Thống kê tổng số tổ chức trung gian.
+
+**Các trường hiển thị và quản lý:**
+
+1. STT.
+2. Tên tổ chức.
+3. Địa chỉ.
+4. Thông tin về tổ chức.
+
+### 6. Dự án khởi nghiệp
+
+**Tiêu đề danh sách:**
+
+DANH SÁCH CÁC DỰ ÁN KHỞI NGHIỆP
+
+**Nhập hàng loạt và thống kê Dashboard:**
+
+- Theo lĩnh vực.
+- Theo năm.
+- Theo trường học.
+- Theo xã/phường.
+
+**Phân loại và bộ lọc:**
+
+- Trường học.
+- Xã/phường.
+
+**Các trường hiển thị trong danh sách:**
+
+1. STT.
+2. Tên dự án.
+3. Lĩnh vực khởi nghiệp.
+4. Sản phẩm giải quyết vấn đề.
+5. Người đứng đầu.
+6. Dự án được ươm tạo từ tổ chức (nếu có/Tự hình thành dự án).
+7. Năm bắt đầu khởi nghiệp.
+
+**Các trường xem chi tiết – chỉ tài khoản được cấp quyền mới được xem:**
+
+1. STT.
+2. Tên dự án.
+3. Địa chỉ hoạt động.
+4. Lĩnh vực khởi nghiệp.
+5. Tóm tắt về dự án.
+6. Sản phẩm giải quyết vấn đề.
+7. Số lượng thành viên tham gia dự án.
+8. Họ và tên người đứng đầu dự án.
+9. Số điện thoại người đứng đầu dự án.
+10. Email người đứng đầu dự án.
+11. Dự án được ươm tạo từ tổ chức (nếu có/Tự hình thành dự án).
+12. Năm bắt đầu khởi nghiệp.
+
+### 7. Ý tưởng khởi nghiệp
+
+**Tiêu đề danh sách:**
+
+DANH SÁCH CÁC Ý TƯỞNG KHỞI NGHIỆP
+
+**Nhập hàng loạt và thống kê Dashboard:**
+
+- Theo lĩnh vực.
+- Theo trường học.
+- Theo xã/phường.
+
+**Phân loại và bộ lọc:**
+
+- Trường học.
+- Xã/phường.
+
+**Các trường hiển thị trong danh sách:**
+
+1. STT.
+2. Tên ý tưởng.
+3. Lĩnh vực khởi nghiệp.
+4. Người đứng đầu.
+5. Giáo viên hướng dẫn.
+
+**Các trường xem chi tiết – chỉ tài khoản được cấp quyền mới được xem:**
+
+1. STT.
+2. Tên ý tưởng.
+3. Địa chỉ hoạt động (nếu có).
+4. Lĩnh vực khởi nghiệp.
+5. Ý tưởng thuộc xã/phường – trường học.
+6. Tóm tắt về ý tưởng (khoảng 150–200 từ).
+7. Sản phẩm giải quyết vấn đề gì.
+8. Số lượng thành viên tham gia ý tưởng khởi nghiệp.
+9. Người đứng đầu nhóm ý tưởng.
+10. Số điện thoại người đứng đầu.
+11. Email người đứng đầu.
+12. Tên thầy/cô giáo hướng dẫn thực hiện.
+13. Nhóm ý tưởng đang học tập/công tác tại đơn vị nào (tên đơn vị và địa chỉ).
+
+### 8. Xã/phường/đặc khu
+
+**Tiêu đề danh sách:**
+
+DANH SÁCH CÁC XÃ, PHƯỜNG, ĐẶC KHU TRÊN ĐỊA BÀN
+
+**Yêu cầu:**
+
+- Nhập dữ liệu hàng loạt.
+- Chỉ hiển thị một danh sách thống nhất.
+- Sắp xếp theo thứ tự: phường, xã, đặc khu.
+
+**Các trường:**
+
+1. STT.
+2. Tên xã/phường/đặc khu.
+3. Địa chỉ.
+4. Thông tin liên hệ.
+5. Website.
+
+### 9. Trường Đại học/Cao đẳng
+
+**Tiêu đề danh sách:**
+
+DANH SÁCH CÁC TRƯỜNG ĐẠI HỌC, CAO ĐẲNG TRÊN ĐỊA BÀN
+
+**Yêu cầu:**
+
+- Nhập dữ liệu hàng loạt.
+- Chỉ hiển thị một danh sách thống nhất.
+- Sắp xếp theo thứ tự: Đại học, Cao đẳng.
+
+**Các trường:**
+
+1. STT.
+2. Tên trường.
+3. Thuộc xã/phường.
+4. Địa chỉ.
+5. Thông tin liên hệ.
+6. Website.
+
+### 10. Doanh nghiệp khởi nghiệp tiêu biểu
+
+**Tiêu đề danh sách:**
+
+DANH SÁCH CÁC DOANH NGHIỆP KHỞI NGHIỆP TIÊU BIỂU
+
+**Yêu cầu:**
+
+- Nhập dữ liệu hàng loạt.
+- Phân loại doanh nghiệp theo lĩnh vực.
+
+**Các trường:**
+
+1. STT.
+2. Tên doanh nghiệp.
+3. Tên dự án.
+4. Người đại diện dự án.
+5. Địa chỉ.
+6. Thông tin liên hệ.
+7. Website.
+8. Thuộc xã/phường.
+
+## VII. PHÂN QUYỀN, BẢO MẬT VÀ KIỂM SOÁT TRUY CẬP
+
+### 1. Phân quyền theo phân hệ dữ liệu
+
+Hiện tại tôi đã tạo tài khoản UBND phường và phân quyền quản lý hai phân hệ:
+
+- Dự án khởi nghiệp.
+- Ý tưởng khởi nghiệp.
+
+Tuy nhiên, menu vẫn hiển thị và cho phép thao tác nhiều nội dung ngoài phạm vi được cấp.
+
+Phải xử lý triệt để.
+
+Khi Admin cấp quyền cho tài khoản được truy cập và quản lý phân hệ nào thì tài khoản đó chỉ được phép truy cập đúng các phân hệ được cấp.
+
+Đối với tài khoản UBND phường chỉ được giao hai phân hệ Dự án khởi nghiệp và Ý tưởng khởi nghiệp:
+
+- Chỉ hiển thị hai phân hệ được cấp quyền.
+- Chỉ được truy cập, xem và thực hiện các thao tác được cấp trong hai phân hệ này.
+- Không được nhìn thấy hoặc truy cập các phân hệ khác.
+- Không được truy cập các chức năng quản trị toàn hệ thống.
+
+Các chức năng sau phải bị ẩn khỏi menu và bị chặn cả khi truy cập URL/API trực tiếp nếu không được cấp quyền:
+
+1. Quản lý tất cả quan hệ liên kết toàn hệ thống.
+2. Nhập dữ liệu hàng loạt từ Excel/CSV.
+3. Tùy biến trường và thiết lập ẩn/hiện dữ liệu.
+4. Nhật ký truy vết hệ thống (Audit Logs).
+5. Cấu hình nhận diện thương hiệu và cơ quan chủ quản.
+6. Bộ kiểm thử nghiệm thu và an toàn bảo mật (Section XVI acceptance & security test suite).
+7. Các phân hệ dữ liệu khác không được cấp quyền.
+8. Các chức năng quản trị tài khoản, phân quyền và cấu hình hệ thống.
+
+### 2. Phân quyền chi tiết theo thao tác
+
+Không chỉ phân quyền theo phân hệ mà phải phân quyền riêng theo từng hành động:
+
+- Xem danh sách.
+- Xem chi tiết.
+- Thêm mới.
+- Chỉnh sửa.
+- Xóa.
+- Nhập dữ liệu hàng loạt.
+- Xuất dữ liệu.
+- Quản lý tệp đính kèm.
+- Quản lý quan hệ liên kết.
+- Phê duyệt.
+- Quản trị cấu hình.
+
+Admin có thể cấp từng quyền phù hợp với vai trò và nhiệm vụ của tài khoản.
+
+### 3. Quyền chỉ xem dữ liệu hạn chế
+
+Bổ sung một quyền riêng:
+
+**Người dùng được cấp quyền truy cập và xem dữ liệu hạn chế.**
+
+Yêu cầu:
+
+- Tài khoản chỉ được xem các phân hệ và trường dữ liệu đã được cấp.
+- Không được thêm, sửa, xóa hoặc nhập dữ liệu nếu không có quyền tương ứng.
+- Các trường thông tin chi tiết, tài liệu minh chứng, email, số điện thoại và thông tin hạn chế chỉ hiển thị khi tài khoản được cấp quyền xem.
+- Nếu chưa được cấp quyền, API không được trả về các trường hạn chế để frontend tự ẩn.
+- Phải kiểm tra quyền khi truy cập trực tiếp URL, gọi API hoặc gửi request thủ công.
+
+### 4. Kiểm tra lưu quyền phân hệ
+
+Hiện tại, khi chọn các phân hệ trong phần tạo tài khoản, mục “Phân quyền quản lý theo phân hệ dữ liệu” chưa được lưu ổn định.
+
+Phải kiểm tra:
+
+- Trạng thái checkbox khi tạo tài khoản.
+- Lưu danh sách `managedModules`.
+- Lưu các quyền thao tác tương ứng.
+- Cập nhật quyền khi sửa tài khoản.
+- Tải lại trang vẫn giữ nguyên các quyền đã lưu.
+- Đăng xuất và đăng nhập lại vẫn giữ nguyên quyền.
+- Quyền được trả về đúng từ API.
+- Quyền được kiểm tra tại backend/Worker.
+- Không được coi tài khoản có danh sách phân hệ trống là tài khoản được truy cập toàn bộ phân hệ, trừ vai trò quản trị toàn quyền được xác định rõ.
+- Không để frontend và backend sử dụng hai cách hiểu khác nhau về quyền.
+
+### 5. Bảo mật quản lý tài khoản
+
+- Khi đổi mật khẩu phải bắt buộc nhập mật khẩu hiện tại.
+- Backend phải xác thực mật khẩu hiện tại trước khi cho phép thay đổi.
+- Không được bỏ qua kiểm tra khi `currentPassword` rỗng hoặc không được gửi lên.
+- Không lưu hoặc trả mật khẩu dạng văn bản thuần.
+- Không cho phép Admin cấp quyền cao hơn thẩm quyền của chính mình.
+- Không cho phép hạ quyền tài khoản có quyền cao hơn.
+- Không cho phép tự ý thay đổi hoặc vô hiệu hóa tài khoản quản trị có cấp quyền cao hơn.
+- Kiểm soát quyền kích hoạt/vô hiệu hóa tài khoản theo đúng vai trò.
+- Không cho phép tài khoản cấp thấp sửa quyền hoặc phân hệ quản lý của tài khoản cấp cao.
+- Kiểm tra cả frontend và backend.
+- Ghi nhật ký các thao tác thay đổi tài khoản, quyền và trạng thái hoạt động.
+
+### 6. Ghi nhớ tài khoản
+
+Hiện tại có nội dung “Ghi nhớ tài khoản (Chỉ lưu tên đăng nhập)”.
+
+Yêu cầu:
+
+- Sửa thành “Ghi nhớ tài khoản”.
+- Hỗ trợ trình duyệt ghi nhớ cả username và password để phục vụ đăng nhập lần sau.
+- Sử dụng cơ chế quản lý mật khẩu an toàn của trình duyệt, thông qua các thuộc tính `autocomplete` phù hợp và cấu trúc biểu mẫu đăng nhập chuẩn.
+- Cho phép người dùng chủ động lưu thông tin qua trình quản lý mật khẩu của trình duyệt.
+- Không tự xây dựng cơ chế lưu password dạng plaintext trong `localStorage`, `sessionStorage` hoặc cookie không an toàn.
+- Không làm ảnh hưởng cơ chế đăng nhập và session hiện có.
+
+### 7. Thông báo đăng nhập/đăng xuất
+
+Bỏ các thông báo không cần thiết:
+
+- “Đăng xuất an toàn khỏi hệ thống”.
+- “Đăng nhập thành công! Chuyển hướng đến Cổng Quản trị (Quản lý)”.
+
+Không làm mất thông báo lỗi bảo mật hoặc thông báo cần thiết khi thao tác thất bại.
+
+## VIII. ĐỒNG BỘ CÁC CHỨC NĂNG QUẢN LÝ DỮ LIỆU
+
+### 1. Thêm mới và chỉnh sửa
+
+- Biểu mẫu thêm mới phải có đầy đủ các trường được quy định ở Mục VI.
+- Biểu mẫu chỉnh sửa phải tải đúng dữ liệu đã lưu.
+- Không được làm mất trường dữ liệu khi chỉnh sửa một trường khác.
+- Các trường chi tiết phải được lưu và truy xuất đúng.
+- Phải hỗ trợ dữ liệu nhiều giá trị, nhiều thành viên, nhiều đề tài/dự án, nhiều ngoại ngữ và nhiều tệp minh chứng khi phù hợp.
+- Trường dữ liệu phải có kiểu phù hợp, không lưu tất cả thành một chuỗi nếu cần phân loại hoặc thống kê.
+
+### 2. Hiển thị danh sách và chi tiết
+
+- Danh sách chỉ hiển thị các trường được xác định cho danh sách.
+- Khi mở chi tiết, hiển thị đầy đủ trường chi tiết theo quyền.
+- Không để trường chi tiết bị mất sau khi nhập hàng loạt.
+- Không để trường dữ liệu hiển thị trùng lặp hoặc sai tên.
+- Các cột bảng phải có khả năng hiển thị tốt trên màn hình nhỏ.
+
+### 3. Liên kết dữ liệu
+
+- Trường trường học phải liên kết được với danh mục trường Đại học/Cao đẳng.
+- Trường xã/phường phải liên kết được với danh mục xã/phường/đặc khu.
+- Các trường lĩnh vực, đơn vị, chuyên ngành và năm phải hỗ trợ lọc, tìm kiếm, thống kê.
+- Bảo đảm các quan hệ dữ liệu không bị mất khi cập nhật.
+- Không tự động xóa dữ liệu liên quan khi chỉnh sửa hoặc nhập thêm dữ liệu.
+
+## IX. HOÀN THIỆN CÁC CHỨC NĂNG QUẢN TRỊ KHÁC
+
+1. Kiểm tra toàn bộ menu Admin và các phân hệ đang hoạt động.
+2. Không tự ý xóa các chức năng bổ trợ, quản lý quan hệ, quản lý tài liệu, audit log hoặc cấu hình hệ thống; chỉ giới hạn theo quyền.
+3. Đồng bộ các nút thao tác, trạng thái, bộ lọc và thông báo.
+4. Các nút lưu, sửa, xóa, nhập, xuất phải có phản hồi thành công/thất bại chính xác.
+5. Các nút xóa phải có xác nhận trước khi thực hiện.
+6. Không cho phép thao tác xóa khi người dùng không có quyền.
+7. Kiểm tra lỗi API nhưng không được tự động hiển thị danh sách rỗng như thể không có dữ liệu.
+8. Bảo đảm footer trong Admin hiển thị hợp lý, không chiếm quá nhiều diện tích.
+9. Không để nội dung bị tràn ngang trên laptop, PC và điện thoại.
+10. Không làm thay đổi nội dung, dữ liệu và chức năng trang chủ đang hoạt động ổn định.
+
+## X. KIỂM THỬ VÀ TIÊU CHÍ NGHIỆM THU
+
+Sau khi sửa, phải thực hiện kiểm thử thực tế trên Staging.
+
+### 1. Kiểm thử giao diện
+
+- Header trang chủ.
+- Header Admin.
+- Sidebar Admin.
+- Màu sắc tổng thể.
+- Dashboard trang chủ.
+- Dashboard Admin.
+- Các phân hệ dữ liệu.
+- Footer.
+- Responsive trên PC, laptop, tablet và mobile.
+
+### 2. Kiểm thử Dashboard
+
+- Không còn vòng xoay đồng bộ vô hạn.
+- Tải được số liệu thật.
+- Có trạng thái lỗi và nút tải lại.
+- Không sử dụng dữ liệu hard-code thay thế dữ liệu thật.
+- Thống kê chuyên gia chỉ hiển thị tổng số trước khi mở cơ cấu.
+- Sáng kiến hiển thị đúng năm hiện tại.
+- Hệ sinh thái chỉ mở chi tiết khi nhấn “Cơ cấu”.
+- Cơ cấu chuyên gia và 7 loại con đóng/mở đúng trạng thái.
+
+### 3. Kiểm thử nhập Excel/CSV
+
+Thực hiện riêng cho cả 10 phân hệ:
+
+- Tải biểu mẫu.
+- Nhập tệp Excel `.xlsx`.
+- Nhập tệp CSV.
+- Xem trước dữ liệu.
+- Đối chiếu cột.
+- Xác nhận nhập.
+- Kiểm tra bản ghi được lưu.
+- Kiểm tra trường dữ liệu.
+- Kiểm tra danh sách.
+- Kiểm tra chi tiết.
+- Kiểm tra Dashboard.
+- Kiểm tra lỗi và dữ liệu trùng.
+- Kiểm tra tệp có tiếng Việt.
+- Kiểm tra dữ liệu có ô trống, nhiều giá trị và nội dung dài.
+
+### 4. Kiểm thử CRUD
+
+Với từng phân hệ:
+
+- Thêm mới thủ công.
+- Chỉnh sửa.
+- Xem danh sách.
+- Xem chi tiết.
+- Lọc và tìm kiếm.
+- Xuất dữ liệu.
+- Kiểm tra dữ liệu sau khi tải lại trang.
+
+### 5. Kiểm thử phân quyền
+
+Tạo và kiểm thử ít nhất các tình huống:
+
+- Super Admin.
+- System Admin.
+- Cán bộ quản lý dữ liệu.
+- Tài khoản UBND phường chỉ được cấp Dự án khởi nghiệp và Ý tưởng khởi nghiệp.
+- Tài khoản chỉ xem dữ liệu hạn chế.
+- Tài khoản không có quyền quản trị.
+
+Đối với tài khoản UBND phường:
+
+- Chỉ hiển thị đúng hai phân hệ được cấp.
+- Không nhìn thấy các menu quản trị toàn hệ thống.
+- Không truy cập được các phân hệ khác.
+- Không gọi được API ngoài phạm vi.
+- Không được nhập, xuất, sửa hoặc xóa nếu không có quyền.
+- Đăng xuất, đăng nhập lại vẫn giữ đúng quyền.
+
+### 6. Kiểm thử bảo mật
+
+- Đổi mật khẩu bắt buộc mật khẩu cũ.
+- Mật khẩu cũ sai phải bị từ chối.
+- Không thể nâng quyền trái phép.
+- Không thể hạ quyền tài khoản cao hơn.
+- Không thể vô hiệu hóa tài khoản vượt thẩm quyền.
+- Không truy cập được API trái phép.
+- Không lộ thông tin mật khẩu.
+- Không lưu mật khẩu dạng văn bản thuần.
+- Kiểm tra session và cookie sau đăng nhập, đăng xuất, tải lại trang.
+
+### 7. Kiểm tra kỹ thuật
+
+- Chạy `npm run build`.
+- Chạy `npm run lint`.
+- Xử lý các lỗi TypeScript, build và lỗi runtime phát sinh từ phần sửa.
+- Kiểm tra API và Worker.
+- Kiểm tra log.
+- Kiểm tra cấu trúc dữ liệu.
+- Kiểm tra các chức năng hiện có sau khi sửa.
+- Không chấp nhận việc bỏ qua lỗi build hoặc lint.
+
+## XI. QUY TRÌNH THỰC HIỆN VÀ BÀN GIAO
+
+Thực hiện theo trình tự:
+
+**Bước 1 – Rà soát**
+
+- Đọc code mới nhất.
+- Xác định các file liên quan.
+- Đối chiếu từng yêu cầu với hiện trạng.
+- Phân loại: đã hoàn thành, chưa hoàn thành, đang lỗi, cần sửa.
+- Không sửa trước khi hiểu rõ luồng dữ liệu và chức năng.
+
+**Bước 2 – Lập kế hoạch**
+
+- Liệt kê các file dự kiến sửa.
+- Nêu rõ nguyên nhân lỗi.
+- Xác định các chức năng có nguy cơ bị ảnh hưởng.
+- Có phương án bảo toàn dữ liệu và tương thích ngược.
+
+**Bước 3 – Thực hiện**
+
+- Chỉ sửa những phần cần thiết.
+- Không viết lại toàn bộ hệ thống.
+- Không xóa chức năng ổn định.
+- Không thay đổi Production.
+- Không chạy migration.
+
+**Bước 4 – Kiểm thử**
+
+- Build.
+- Lint.
+- Kiểm thử giao diện.
+- Kiểm thử API.
+- Kiểm thử nhập Excel/CSV.
+- Kiểm thử CRUD.
+- Kiểm thử Dashboard.
+- Kiểm thử phân quyền và bảo mật.
+- Kiểm thử trên Staging.
+
+**Bước 5 – Báo cáo**
+
+Bàn giao báo cáo rõ ràng theo từng nhóm:
+
+1. Các lỗi đã phát hiện.
+2. Nguyên nhân từng lỗi.
+3. Các file đã sửa.
+4. Các chức năng đã hoàn thành.
+5. Các chức năng đã kiểm thử thành công.
+6. Các lỗi còn tồn tại, nếu có.
+7. Kết quả build.
+8. Kết quả lint.
+9. Kết quả kiểm thử Staging.
+10. Các nội dung chưa thể kiểm thử và lý do.
+
+**Điều kiện kết thúc:**
+
+Chỉ được xác nhận hoàn thành khi các yêu cầu trên đã được xử lý và kiểm thử thực tế đạt yêu cầu. Không push/merge `main`, không chạy migration và không triển khai Production. Chờ tôi xem xét kết quả và có chỉ đạo tiếp theo.
+
+**YÊU CẦU QUAN TRỌNG NHẤT:**
+
+Không làm lại website từ đầu, không thay đổi những nội dung đang hoạt động ổn định, không làm mất dữ liệu và không sửa theo kiểu đối phó trên giao diện. Phải xử lý đúng nguyên nhân ở cả frontend, API, Worker và cơ sở dữ liệu; bảo đảm toàn bộ dữ liệu được nhập, lưu, chỉnh sửa, hiển thị, thống kê và phân quyền thống nhất, chính xác.
