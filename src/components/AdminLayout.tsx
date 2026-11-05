@@ -151,15 +151,27 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           <div className="w-6 h-6 rounded bg-teal-600 group-hover:bg-teal-500 text-white flex items-center justify-center font-bold text-xs transition-colors">
             ĐN
           </div>
-          <span className="font-bold text-xs group-hover:text-teal-300 transition-colors">Cổng Quản Trị Dữ Liệu KHCN & KNĐMST</span>
+          <span className="font-bold text-xs group-hover:text-teal-300 transition-colors">Cổng Quản Trị Dữ Liệu KHCN</span>
         </div>
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-1.5 text-slate-300 hover:text-white cursor-pointer"
-          title={sidebarOpen ? "Đóng thanh công cụ" : "Mở thanh công cụ"}
-        >
-          {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="px-2 py-1 bg-rose-950/60 text-rose-300 hover:text-white hover:bg-rose-900/60 border border-rose-800/40 rounded-lg cursor-pointer flex items-center gap-1 text-xs"
+              title="Đăng xuất khỏi hệ thống"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="text-[11px] font-semibold">Đăng xuất</span>
+            </button>
+          )}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-1.5 text-slate-300 hover:text-white cursor-pointer"
+            title={sidebarOpen ? "Đóng thanh công cụ" : "Mở thanh công cụ"}
+          >
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Admin Sidebar */}
@@ -343,8 +355,25 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </nav>
         </div>
 
-        {/* Sidebar Footer - Section II.3: Single-line button 'Truy cập Trang chủ', removed 'Hệ thống Quản trị CSDL TP Đà Nẵng' */}
-        <div className="p-3.5 border-t border-slate-800 text-xs text-slate-500">
+        {/* Sidebar Footer */}
+        <div className="p-3.5 border-t border-slate-800 text-xs text-slate-500 space-y-2">
+          {currentUser && (
+            <div className="px-2.5 py-2 bg-slate-800/80 rounded-lg border border-slate-700/60 text-[11px] text-slate-300 flex items-center justify-between">
+              <div className="truncate mr-2">
+                <div className="font-semibold text-white truncate">{currentUser.fullName || currentUser.username}</div>
+                <div className="text-teal-400 text-[10px] truncate">{currentUser.role}</div>
+              </div>
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  className="p-1 text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 rounded transition-colors cursor-pointer"
+                  title="Đăng xuất"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          )}
           <button
             onClick={onBackToPublic}
             className="w-full py-2 px-3 bg-slate-800/90 hover:bg-slate-700/90 text-teal-300 hover:text-white border border-teal-500/30 hover:border-teal-400 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs"
@@ -353,21 +382,44 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             <ArrowLeft className="w-4 h-4 text-teal-400" />
             <span>Truy cập Trang chủ</span>
           </button>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="w-full py-2 px-3 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 hover:text-white border border-rose-800/40 hover:border-rose-700 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs"
+              title="Đăng xuất khỏi hệ thống quản trị"
+            >
+              <LogOut className="w-4 h-4 text-rose-400" />
+              <span>Đăng xuất</span>
+            </button>
+          )}
         </div>
       </aside>
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         
-        {/* Admin Dedicated Top Header Bar (Section II.2: exactly two rows, #EAF4FB background, prominent matching text) */}
-        <header className="bg-[#EAF4FB] border-b border-sky-200 px-4 sm:px-6 lg:px-8 py-3.5 shrink-0 shadow-2xs">
-          <div className="max-w-7xl mx-auto flex flex-col justify-center">
-            <h1 className="text-base sm:text-lg md:text-xl font-black text-slate-800 tracking-tight leading-tight uppercase">
-              TRANG QUẢN TRỊ
-            </h1>
-            <p className="text-xs sm:text-sm font-bold text-slate-700 tracking-tight leading-normal mt-0.5">
-              CƠ SỞ DỮ LIỆU VỀ KHOA HỌC, CÔNG NGHỆ VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG
-            </p>
+        {/* Admin Dedicated Top Header Bar (darkened to #D4E8F8, matching tone) */}
+        <header className="bg-[#D4E8F8] border-b border-sky-300 px-4 sm:px-6 lg:px-8 py-3.5 shrink-0 shadow-2xs">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div className="flex flex-col justify-center min-w-0">
+              <h1 className="text-base sm:text-lg md:text-xl font-black text-slate-800 tracking-tight leading-tight uppercase">
+                TRANG QUẢN TRỊ
+              </h1>
+              <p className="text-xs sm:text-sm font-bold text-slate-700 tracking-tight leading-normal mt-0.5 truncate">
+                CƠ SỞ DỮ LIỆU VỀ KHOA HỌC, CÔNG NGHỆ VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG
+              </p>
+            </div>
+            {onLogout && (
+              <button
+                type="button"
+                onClick={onLogout}
+                className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-300 hover:border-rose-400 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0"
+                title="Đăng xuất khỏi tài khoản quản trị"
+              >
+                <LogOut className="w-3.5 h-3.5 text-rose-700" />
+                <span className="hidden sm:inline">Đăng xuất</span>
+              </button>
+            )}
           </div>
         </header>
 

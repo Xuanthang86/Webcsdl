@@ -318,25 +318,19 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tài liệu minh chứng:</span>
                     <div className="sm:col-span-2">
-                      {isAuthorized ? (
-                        <div className="space-y-1.5">
-                          <div className="text-slate-800 font-medium">
-                            {entity.evidenceDocuments || entity.attachmentSummary || (Array.isArray(entity.attachments) && entity.attachments.length > 0 ? entity.attachments.map((a: any) => typeof a === 'string' ? a : (a.name || a.title || a.url)).filter(Boolean).join('; ') : null) || 'Quyết định phê duyệt số 142/QĐ-SKHCN; Hợp đồng nghiên cứu KH&CN số 18/HĐ-KHCN; Biên bản nghiệm thu chính thức cấp TP.'}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setShowAttachments(true)}
-                            className="text-teal-800 hover:text-teal-900 font-semibold underline inline-flex items-center gap-1 text-[11px]"
-                          >
-                            <Paperclip className="w-3 h-3" />
-                            Xem và tải tệp đính kèm hồ sơ minh chứng
-                          </button>
+                      <div className="space-y-1.5">
+                        <div className="text-slate-800 font-medium">
+                          {entity.evidenceDocuments || entity.attachmentSummary || (Array.isArray(entity.attachments) && entity.attachments.length > 0 ? entity.attachments.map((a: any) => typeof a === 'string' ? a : (a.name || a.title || a.url)).filter(Boolean).join('; ') : null) || 'Quyết định phê duyệt số 142/QĐ-SKHCN; Hợp đồng nghiên cứu KH&CN số 18/HĐ-KHCN; Biên bản nghiệm thu chính thức cấp TP.'}
                         </div>
-                      ) : (
-                        <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
-                          <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
-                        </span>
-                      )}
+                        <button
+                          type="button"
+                          onClick={() => setShowAttachments(true)}
+                          className="text-teal-800 hover:text-teal-900 font-semibold underline inline-flex items-center gap-1 text-[11px] cursor-pointer"
+                        >
+                          <Paperclip className="w-3 h-3" />
+                          Xem và tải tệp đính kèm hồ sơ minh chứng
+                        </button>
+                      </div>
                     </div>
                   </div>
 

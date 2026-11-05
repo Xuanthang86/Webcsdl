@@ -131,9 +131,28 @@ export default function App() {
 
   const initAppData = async () => {
     try {
-      // 1. Load User & Roles
+      // 1. Load User & Check Tab/Browser Session Freshness
+      const isTabSessionActive = typeof window !== 'undefined' && sessionStorage.getItem('portal_tab_active') === 'true';
       const userRes = await api.getCurrentUser();
-      setCurrentUser(userRes.user);
+
+      if (userRes?.user && userRes.user.role !== 'public_user' && !isTabSessionActive) {
+        // User closed tab/browser and reopened: automatically clear stale session
+        await api.logout().catch(() => {});
+        setCurrentUser({
+          id: 'usr_guest',
+          username: 'guest',
+          fullName: 'Khách vãng lai',
+          email: 'guest@danang.gov.vn',
+          role: 'public_user',
+          isActive: true,
+          createdAt: new Date().toISOString()
+        });
+      } else {
+        setCurrentUser(userRes.user);
+        if (userRes?.user && userRes.user.role !== 'public_user' && typeof window !== 'undefined') {
+          sessionStorage.setItem('portal_tab_active', 'true');
+        }
+      }
       setAvailableRoles(userRes.availableRoles || []);
 
       // 2. Load Config & Stats
@@ -210,6 +229,7 @@ export default function App() {
       console.error('Logout error:', err);
     } finally {
       if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('portal_tab_active');
         localStorage.removeItem('portal_auth_token');
       }
       try {
@@ -220,7 +240,7 @@ export default function App() {
           id: 'usr_guest',
           username: 'guest',
           fullName: 'Khách vãng lai',
-          email: 'public@thanhpho.gov.vn',
+          email: 'guest@danang.gov.vn',
           role: 'public_user',
           isActive: true,
           createdAt: new Date().toISOString()
@@ -234,6 +254,9 @@ export default function App() {
   const handleSwitchRole = async (role: string) => {
     try {
       const user = await api.switchRole(role);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('portal_tab_active', 'true');
+      }
       setCurrentUser(user);
       setSuccessToast(`Đã chuyển đổi sang vai trò: ${user.fullName} (${user.role})`);
       setTimeout(() => setSuccessToast(null), 3000);
@@ -290,6 +313,9 @@ export default function App() {
   };
 
   const handleAdminLoginSuccess = (user: User) => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('portal_tab_active', 'true');
+    }
     setCurrentUser(user);
     setShowAdminLoginModal(false);
     // Khi đăng nhập sẽ kiểm tra quyền tài khoản để chuyển giao diện truy cập phù hợp

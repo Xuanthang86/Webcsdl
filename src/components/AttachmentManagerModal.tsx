@@ -10,7 +10,8 @@ import {
   Copy, 
   CheckCircle2, 
   Loader2, 
-  HardDrive 
+  HardDrive,
+  Download
 } from 'lucide-react';
 
 interface AttachmentItem {
@@ -72,6 +73,24 @@ export const AttachmentManagerModal: React.FC<AttachmentManagerModalProps> = ({
     navigator.clipboard.writeText(url);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleDownloadFile = (att: AttachmentItem) => {
+    let downloadUrl = att.cdnUrl;
+    if (downloadUrl.includes('drive.google.com/file/d/')) {
+      const match = downloadUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        downloadUrl = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+      }
+    }
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = att.fileName || 'tai_lieu_minh_chung.pdf';
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const handleDelete = async (id: string) => {
@@ -299,6 +318,15 @@ export const AttachmentManagerModal: React.FC<AttachmentManagerModalProps> = ({
                             <ExternalLink className="w-3 h-3" />
                             <span>Mở tệp</span>
                           </a>
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadFile(att)}
+                            className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 cursor-pointer"
+                            title="Tải tệp tin về máy"
+                          >
+                            <Download className="w-3 h-3 text-emerald-600" />
+                            <span>Tải xuống</span>
+                          </button>
                           <button
                             onClick={() => handleDelete(att.id)}
                             className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 ml-auto flex items-center gap-0.5"

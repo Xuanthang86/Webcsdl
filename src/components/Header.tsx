@@ -198,7 +198,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-[#EAF4FB]/95 backdrop-blur-md border-b border-sky-200 shadow-xs">
+      <header className="sticky top-0 z-50 bg-[#D4E8F8]/95 backdrop-blur-md border-b border-sky-300 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Zone 1: Logo & Brand Wordmark + 3-line Menu on Mobile */}

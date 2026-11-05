@@ -74,6 +74,16 @@ export const api = {
     return data.user;
   },
 
+  async register(params: { username: string; password: string; fullName: string; email?: string; role?: string; phone?: string; organization?: string }): Promise<User> {
+    const res = await authFetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params)
+    });
+    const data = await parseJsonResponse(res);
+    return data.user;
+  },
+
   async logout(): Promise<void> {
     try {
       const res = await authFetch('/api/auth/logout', { 

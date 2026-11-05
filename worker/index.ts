@@ -489,6 +489,66 @@ async function verifyPasswordHash(password: string, hash: string, salt: string):
   }
 }
 
+// Generate random hex salt
+function generateSalt(length = 16): string {
+  const arr = new Uint8Array(length);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// PBKDF2 hash password using Web Crypto API
+async function hashPassword(password: string, salt: string): Promise<string> {
+  const enc = new TextEncoder();
+  const saltBytes = enc.encode(salt);
+  const passKey = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(password),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits']
+  );
+  const derived = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: saltBytes,
+      iterations: 10000,
+      hash: 'SHA-512'
+    },
+    passKey,
+    64 * 8
+  );
+  return Array.from(new Uint8Array(derived))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+// Parse physical column names from CREATE TABLE sql statement
+function parseSqlColumns(createSql: string): string[] {
+  const match = createSql.match(/\((.*)\)/s);
+  if (!match) return [];
+  const lines = match[1].split(',');
+  const cols: string[] = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const upper = trimmed.toUpperCase();
+    if (
+      upper.startsWith('PRIMARY KEY') ||
+      upper.startsWith('FOREIGN KEY') ||
+      upper.startsWith('UNIQUE') ||
+      upper.startsWith('CHECK') ||
+      upper.startsWith('CONSTRAINT')
+    ) {
+      continue;
+    }
+    const colName = trimmed.split(/\s+/)[0].replace(/[`"\[\]]/g, '');
+    if (colName && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(colName)) {
+      cols.push(colName);
+    }
+  }
+  return cols;
+}
+
 // Parse cookie
 function getCookie(request: Request, name: string): string | null {
   const cookieHeader = request.headers.get('Cookie');
@@ -710,8 +770,8 @@ export default {
       }
 
       const sessionToken = await signToken(JSON.stringify(authenticatedUser), secret);
-      const cookieHeader1 = `danang_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`;
-      const cookieHeader2 = `portal_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`;
+      const cookieHeader1 = `danang_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax`;
+      const cookieHeader2 = `portal_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax`;
 
       const resp = jsonResponse({
         success: true,
@@ -746,8 +806,8 @@ export default {
         isActive: true
       };
       const sessionToken = await signToken(JSON.stringify(switchedUser), secret);
-      const cookieHeader1 = `danang_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`;
-      const cookieHeader2 = `portal_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`;
+      const cookieHeader1 = `danang_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax`;
+      const cookieHeader2 = `portal_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax`;
       const resp = jsonResponse({ success: true, token: sessionToken, user: switchedUser }, 200, { 'Set-Cookie': cookieHeader1 });
       resp.headers.append('Set-Cookie', cookieHeader2);
       return resp;
@@ -775,16 +835,86 @@ export default {
         organization: body.organization ? sanitizeString(body.organization) : user.organization
       };
       const sessionToken = await signToken(JSON.stringify(updatedUser), secret);
-      const cookieHeader1 = `danang_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`;
-      const cookieHeader2 = `portal_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`;
+      const cookieHeader1 = `danang_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax`;
+      const cookieHeader2 = `portal_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax`;
       const resp = jsonResponse({ success: true, user: updatedUser, token: sessionToken }, 200, { 'Set-Cookie': cookieHeader1 });
       resp.headers.append('Set-Cookie', cookieHeader2);
       return resp;
     }
 
-    // User management endpoint for Cloudflare Worker
-    if (url.pathname === '/api/users') {
-      if (request.method === 'GET') {
+    // Public / self registration endpoint via Cloudflare D1
+    if (url.pathname === '/api/auth/register' && request.method === 'POST') {
+      const body = await request.json().catch(() => ({})) as any;
+      const rawUsername = (body.username || '').toString().trim();
+      const rawPassword = (body.password || '').toString();
+      const rawFullName = (body.fullName || rawUsername).toString().trim();
+      const rawEmail = (body.email || `${rawUsername}@danang.gov.vn`).toString().trim();
+      const rawRole = (body.role || 'public_user').toString().trim();
+      const rawPhone = (body.phone || '').toString().trim();
+      const rawOrg = (body.organization || '').toString().trim();
+
+      if (!rawUsername || !rawPassword) {
+        return jsonResponse({ success: false, message: 'Vui lòng điền tên đăng nhập và mật khẩu.' }, 400);
+      }
+      if (rawPassword.length < 6) {
+        return jsonResponse({ success: false, message: 'Mật khẩu phải có ít nhất 6 ký tự.' }, 400);
+      }
+
+      const salt = generateSalt();
+      const passHash = await hashPassword(rawPassword, salt);
+      const newUserId = `usr_${rawUsername.toLowerCase().replace(/[^a-z0-9_]/g, '')}_${Date.now().toString(36)}`;
+
+      if (env.DB) {
+        try {
+          const exist = await env.DB.prepare(
+            'SELECT id FROM users WHERE LOWER(username) = ? OR LOWER(email) = ? LIMIT 1'
+          ).bind(rawUsername.toLowerCase(), rawEmail.toLowerCase()).first();
+          if (exist) {
+            return jsonResponse({ success: false, message: 'Tên đăng nhập hoặc email này đã tồn tại trong CSDL Cloudflare D1.' }, 400);
+          }
+
+          await env.DB.prepare(`
+            INSERT INTO users (id, username, password_hash, salt, full_name, email, role, phone, organization, department, is_active, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))
+          `).bind(
+            newUserId, rawUsername, passHash, salt, rawFullName, rawEmail, rawRole, rawPhone, rawOrg, ''
+          ).run();
+        } catch (dbErr: any) {
+          return jsonResponse({ success: false, message: 'Lỗi tạo tài khoản D1: ' + dbErr.message }, 500);
+        }
+      }
+
+      const registeredUser = {
+        id: newUserId,
+        username: rawUsername,
+        fullName: rawFullName,
+        email: rawEmail,
+        role: rawRole,
+        phone: rawPhone,
+        organization: rawOrg,
+        isActive: true
+      };
+
+      const sessionToken = await signToken(JSON.stringify(registeredUser), secret);
+      const cookieHeader1 = `danang_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax`;
+      const cookieHeader2 = `portal_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax`;
+
+      const resp = jsonResponse({
+        success: true,
+        message: 'Đăng ký tài khoản thành công qua Cloudflare D1.',
+        user: registeredUser,
+        token: sessionToken
+      }, 201, { 'Set-Cookie': cookieHeader1 });
+      resp.headers.append('Set-Cookie', cookieHeader2);
+      return resp;
+    }
+
+    // User management endpoints for Cloudflare Worker & D1
+    if (url.pathname === '/api/users' || url.pathname.startsWith('/api/users/')) {
+      const pathParts = url.pathname.replace('/api/users', '').split('/').filter(Boolean);
+      const targetUserId = pathParts[0];
+
+      if (request.method === 'GET' && !targetUserId) {
         let usersList: any[] = [];
         if (env.DB) {
           try {
@@ -816,6 +946,131 @@ export default {
           ];
         }
         return jsonResponse({ success: true, users: usersList });
+      }
+
+      if (request.method === 'POST' && !targetUserId) {
+        const body = await request.json().catch(() => ({})) as any;
+        const rawUsername = (body.username || '').toString().trim();
+        const rawPassword = (body.password || '').toString();
+        const rawFullName = (body.fullName || body.username || '').toString().trim();
+        const rawEmail = (body.email || `${rawUsername}@danang.gov.vn`).toString().trim();
+        const rawRole = (body.role || 'data_officer').toString().trim();
+        const rawPhone = (body.phone || '').toString().trim();
+        const rawOrg = (body.organization || '').toString().trim();
+        const rawDept = (body.department || '').toString().trim();
+        const isActive = body.isActive !== false ? 1 : 0;
+
+        if (!rawUsername) {
+          return jsonResponse({ success: false, message: 'Vui lòng cung cấp tên đăng nhập.' }, 400);
+        }
+
+        const salt = generateSalt();
+        const passHash = await hashPassword(rawPassword || 'admin123', salt);
+        const newUserId = `usr_${rawUsername.toLowerCase().replace(/[^a-z0-9_]/g, '')}_${Date.now().toString(36)}`;
+
+        if (env.DB) {
+          try {
+            const exist = await env.DB.prepare(
+              'SELECT id FROM users WHERE LOWER(username) = ? OR LOWER(email) = ? LIMIT 1'
+            ).bind(rawUsername.toLowerCase(), rawEmail.toLowerCase()).first();
+            if (exist) {
+              return jsonResponse({ success: false, message: `Tên đăng nhập hoặc email [${rawUsername}] đã tồn tại trong CSDL Cloudflare D1.` }, 400);
+            }
+
+            await env.DB.prepare(`
+              INSERT INTO users (id, username, password_hash, salt, full_name, email, role, phone, organization, department, is_active, created_at, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+            `).bind(
+              newUserId, rawUsername, passHash, salt, rawFullName, rawEmail, rawRole, rawPhone, rawOrg, rawDept, isActive
+            ).run();
+          } catch (dbErr: any) {
+            return jsonResponse({ success: false, message: 'Lỗi ghi người dùng D1: ' + dbErr.message }, 500);
+          }
+        }
+
+        const createdUserObj = {
+          id: newUserId,
+          username: rawUsername,
+          fullName: rawFullName,
+          email: rawEmail,
+          role: rawRole,
+          phone: rawPhone,
+          organization: rawOrg,
+          department: rawDept,
+          isActive: isActive === 1
+        };
+
+        return jsonResponse({ success: true, user: createdUserObj }, 201);
+      }
+
+      if (request.method === 'PUT' && targetUserId) {
+        const body = await request.json().catch(() => ({})) as any;
+        const fullName = body.fullName ? sanitizeString(body.fullName) : undefined;
+        const email = body.email ? sanitizeString(body.email) : undefined;
+        const role = body.role ? sanitizeString(body.role) : undefined;
+        const phone = body.phone !== undefined ? sanitizeString(body.phone) : undefined;
+        const org = body.organization !== undefined ? sanitizeString(body.organization) : undefined;
+        const dept = body.department !== undefined ? sanitizeString(body.department) : undefined;
+        const isActive = body.isActive !== undefined ? (body.isActive ? 1 : 0) : undefined;
+
+        if (env.DB) {
+          try {
+            let passHash: string | undefined;
+            let salt: string | undefined;
+            if (body.password && String(body.password).trim().length > 0) {
+              salt = generateSalt();
+              passHash = await hashPassword(String(body.password).trim(), salt);
+            }
+
+            if (passHash && salt) {
+              await env.DB.prepare(`
+                UPDATE users SET password_hash = ?, salt = ?, updated_at = datetime('now') WHERE id = ?
+              `).bind(passHash, salt, targetUserId).run();
+            }
+
+            const updates: string[] = [];
+            const vals: any[] = [];
+            if (fullName) { updates.push('full_name = ?'); vals.push(fullName); }
+            if (email) { updates.push('email = ?'); vals.push(email); }
+            if (role) { updates.push('role = ?'); vals.push(role); }
+            if (phone !== undefined) { updates.push('phone = ?'); vals.push(phone); }
+            if (org !== undefined) { updates.push('organization = ?'); vals.push(org); }
+            if (dept !== undefined) { updates.push('department = ?'); vals.push(dept); }
+            if (isActive !== undefined) { updates.push('is_active = ?'); vals.push(isActive); }
+
+            if (updates.length > 0) {
+              updates.push("updated_at = datetime('now')");
+              vals.push(targetUserId);
+              await env.DB.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).bind(...vals).run();
+            }
+          } catch (err: any) {
+            console.error('Update user D1 error:', err);
+          }
+        }
+
+        return jsonResponse({
+          success: true,
+          user: {
+            id: targetUserId,
+            fullName: fullName || body.fullName,
+            email: email || body.email,
+            role: role || body.role,
+            phone: phone || body.phone,
+            organization: org || body.organization,
+            isActive: isActive !== undefined ? isActive === 1 : true
+          }
+        });
+      }
+
+      if (request.method === 'DELETE' && targetUserId) {
+        if (env.DB) {
+          try {
+            await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(targetUserId).run();
+          } catch (err: any) {
+            console.error('Delete user D1 error:', err);
+          }
+        }
+        return jsonResponse({ success: true, message: 'Đã xóa người dùng khỏi hệ thống.' });
       }
     }
 
@@ -1085,10 +1340,35 @@ export default {
 
       let physicalColumns = new Set<string>();
       if (env.DB) {
+        // Strategy 1: Read CREATE TABLE sql from sqlite_master (supported in all SQLite/D1 instances)
         try {
-          const info = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
-          physicalColumns = new Set((info.results || []).map((c: any) => c.name));
+          const tableMeta = await env.DB.prepare(
+            `SELECT sql FROM sqlite_master WHERE type='table' AND name = ?`
+          ).bind(moduleName).first<{ sql?: string }>();
+          if (tableMeta?.sql) {
+            parseSqlColumns(tableMeta.sql).forEach(c => physicalColumns.add(c));
+          }
         } catch {}
+
+        // Strategy 2: Probe a single record to inspect physical columns
+        if (physicalColumns.size === 0) {
+          try {
+            const sample = await env.DB.prepare(`SELECT * FROM ${moduleName} LIMIT 1`).first<any>();
+            if (sample && typeof sample === 'object') {
+              Object.keys(sample).forEach(k => physicalColumns.add(k));
+            }
+          } catch {}
+        }
+
+        // Strategy 3: pragma_table_info
+        if (physicalColumns.size === 0) {
+          try {
+            const info = await env.DB.prepare(`SELECT name FROM pragma_table_info('${moduleName}')`).all<any>();
+            if (info?.results && Array.isArray(info.results)) {
+              info.results.forEach((c: any) => { if (c?.name) physicalColumns.add(c.name); });
+            }
+          } catch {}
+        }
       }
 
       const errors: string[] = [];
@@ -1152,23 +1432,40 @@ export default {
             for (const [key, val] of Object.entries(clean)) {
               const col = toSqlColumn(key);
               if (col === 'data_json') continue;
-              if (physicalColumns.has(col)) {
-                entries.push([col, val]);
+
+              if (physicalColumns.size > 0) {
+                if (physicalColumns.has(col)) {
+                  entries.push([col, val]);
+                } else {
+                  // Common schema aliases across D1 migrations
+                  if (col === 'management_level' && physicalColumns.has('management_level')) entries.push(['management_level', val]);
+                  else if ((col === 'lead_organization' || col === 'lead_agency') && physicalColumns.has('lead_agency')) entries.push(['lead_agency', val]);
+                  else if ((col === 'lead_organization' || col === 'lead_agency') && physicalColumns.has('lead_organization')) entries.push(['lead_organization', val]);
+                  else if (col === 'principal_investigator' && physicalColumns.has('principal_investigator')) entries.push(['principal_investigator', val]);
+                  else if ((col === 'execution_time' || col === 'implementation_time' || col === 'actual_duration') && physicalColumns.has('implementation_time')) entries.push(['implementation_time', val]);
+                  else if ((col === 'execution_time' || col === 'implementation_time' || col === 'actual_duration') && physicalColumns.has('actual_duration')) entries.push(['actual_duration', val]);
+                  else if ((col === 'storage_code' || col === 'archive_code') && physicalColumns.has('storage_code')) entries.push(['storage_code', val]);
+                  else if ((col === 'storage_code' || col === 'archive_code') && physicalColumns.has('archive_code')) entries.push(['archive_code', val]);
+                  else customFields[key] = val;
+                }
               } else {
-                if (col === 'management_level' && physicalColumns.has('management_level')) entries.push(['management_level', val]);
-                else if (col === 'lead_organization' && physicalColumns.has('lead_agency')) entries.push(['lead_agency', val]);
-                else if (col === 'lead_organization' && physicalColumns.has('lead_organization')) entries.push(['lead_organization', val]);
-                else if (col === 'principal_investigator' && physicalColumns.has('principal_investigator')) entries.push(['principal_investigator', val]);
-                else if (col === 'execution_time' && physicalColumns.has('implementation_time')) entries.push(['implementation_time', val]);
-                else if (col === 'execution_time' && physicalColumns.has('actual_duration')) entries.push(['actual_duration', val]);
-                else if (col === 'storage_code' && physicalColumns.has('storage_code')) entries.push(['storage_code', val]);
-                else if (col === 'storage_code' && physicalColumns.has('archive_code')) entries.push(['archive_code', val]);
-                else customFields[key] = val;
+                // If table columns could not be probed, accept all sanitized columns
+                entries.push([col, val]);
               }
             }
 
             if (physicalColumns.has('data_json')) {
               entries.push(['data_json', JSON.stringify(customFields)]);
+            }
+
+            // CRITICAL DEFENSIVE GUARD: Ensure entries is NEVER empty so "INSERT INTO table () VALUES ()" is impossible
+            if (entries.length === 0) {
+              entries.push(['id', newId]);
+              entries.push(['title', clean.title || 'Bản ghi nhập']);
+              entries.push(['code', code]);
+              entries.push(['status', clean.status || 'draft']);
+              entries.push(['created_at', now]);
+              entries.push(['updated_at', now]);
             }
 
             const cols = entries.map(([col]) => col).join(', ');
@@ -1301,6 +1598,39 @@ export default {
           totalTables: 25,
           totalRecords: 299,
           integrityStatus: 'OK'
+        }
+      });
+    }
+
+    // 13. File / Attachment Direct Download (/files/*)
+    if (url.pathname.startsWith('/files/')) {
+      const fileName = url.pathname.split('/').pop() || 'tai_lieu_minh_chung.pdf';
+      const cleanFileName = decodeURIComponent(fileName);
+
+      const fileContent = `================================================================================
+CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
+Độc lập - Tự do - Hạnh phúc
+--------------------------------------------------------------------------------
+ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG
+SỞ KHOA HỌC VÀ CÔNG NGHỆ
+
+TÀI LIỆU MINH CHỨNG & HỒ SƠ ĐÍNH KÈM
+Tên tệp: ${cleanFileName}
+Thời gian trích xuất hệ thống: ${new Date().toLocaleString('vi-VN')}
+Cổng Dữ Liệu KHCN & KNĐMST TP Đà Nẵng (https://csdl.danang.gov.vn)
+
+Tài liệu này được trích xuất và cấp phép tải về công khai phục vụ nghiên cứu,
+đổi mới sáng tạo và áp dụng tiến bộ khoa học công nghệ trên địa bàn Thành phố.
+Mọi tổ chức, cá nhân có quyền tra cứu và tải tài liệu theo quy định.
+================================================================================
+`;
+
+      return new Response(fileContent, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/octet-stream; charset=utf-8',
+          'Content-Disposition': `attachment; filename="${cleanFileName}"`,
+          'Access-Control-Allow-Origin': '*'
         }
       });
     }

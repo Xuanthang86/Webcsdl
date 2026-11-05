@@ -14,7 +14,8 @@ import {
   Database,
   FileSpreadsheet,
   Layers,
-  Info
+  Info,
+  Loader2
 } from 'lucide-react';
 
 interface ImportExportStudioProps {
@@ -38,6 +39,13 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
   const [importError, setImportError] = useState<string | null>(null);
   const [d1Report, setD1Report] = useState<any | null>(null);
   const [isReconciling, setIsReconciling] = useState(false);
+  const [importProgress, setImportProgress] = useState<{
+    current: number;
+    total: number;
+    percent: number;
+    batchIndex: number;
+    totalBatches: number;
+  } | null>(null);
 
   // Multi-sheet Excel workbook state
   const [workbook, setWorkbook] = useState<XLSX.WorkBook | null>(null);
@@ -374,14 +382,55 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
     if (parsedRows.length === 0) return;
     setIsProcessing(true);
     setImportError(null);
+    setImportResult(null);
+
+    const BATCH_SIZE = 50;
+    const total = parsedRows.length;
+    const totalBatches = Math.ceil(total / BATCH_SIZE);
+    let allImportedCount = 0;
+    const allErrors: string[] = [];
+    const allDuplicates: string[] = [];
+
+    setImportProgress({
+      current: 0,
+      total,
+      percent: 0,
+      batchIndex: 0,
+      totalBatches
+    });
+
     try {
-      const res = await api.importRecords(selectedModule, parsedRows);
-      setImportResult(res);
+      for (let i = 0; i < total; i += BATCH_SIZE) {
+        const batch = parsedRows.slice(i, i + BATCH_SIZE);
+        const batchIndex = Math.floor(i / BATCH_SIZE) + 1;
+
+        const res = await api.importRecords(selectedModule, batch);
+        if (res.importedCount) allImportedCount += res.importedCount;
+        if (res.errors && res.errors.length > 0) allErrors.push(...res.errors);
+        if (res.duplicates && res.duplicates.length > 0) allDuplicates.push(...res.duplicates);
+
+        const currentCount = Math.min(i + batch.length, total);
+        const percent = Math.round((currentCount / total) * 100);
+        setImportProgress({
+          current: currentCount,
+          total,
+          percent,
+          batchIndex,
+          totalBatches
+        });
+      }
+
+      setImportResult({
+        importedCount: allImportedCount,
+        errors: allErrors,
+        duplicates: allDuplicates
+      });
       onImportComplete();
     } catch (err: any) {
       setImportError(err.message || 'Lỗi nhập dữ liệu.');
     } finally {
       setIsProcessing(false);
+      setImportProgress(null);
     }
   };
 
@@ -673,12 +722,53 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
             <button
               onClick={handleExecuteImport}
               disabled={isProcessing}
-              className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer text-xs"
+              className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 disabled:bg-emerald-900 disabled:opacity-80 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer text-xs"
             >
-              <Upload className="w-3.5 h-3.5" />
-              {isProcessing ? 'Đang xác thực & nhập...' : `Xác nhận nhập ${totalRows} bản ghi`}
+              {isProcessing ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Đang nhập... {importProgress ? `${importProgress.percent}%` : ''}</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Xác nhận nhập {totalRows} bản ghi</span>
+                </>
+              )}
             </button>
           </div>
+
+          {/* Live Progress Bar Indicator */}
+          {isProcessing && importProgress && (
+            <div className="p-4 bg-emerald-50/80 border border-emerald-300 rounded-xl space-y-2.5 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between text-xs font-bold text-emerald-950">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-emerald-700" />
+                  <span>Đang xác thực & nhập dữ liệu vào Cloudflare D1...</span>
+                </div>
+                <div className="font-mono text-emerald-800 font-extrabold">
+                  {importProgress.current} / {importProgress.total} dòng ({importProgress.percent}%)
+                </div>
+              </div>
+
+              {/* Progress Track */}
+              <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden shadow-inner">
+                <div
+                  className="bg-emerald-600 h-3 rounded-full transition-all duration-300 ease-out shadow-xs"
+                  style={{ width: `${importProgress.percent}%` }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-emerald-800">
+                <span>
+                  Đang ghi lô {importProgress.batchIndex} / {importProgress.totalBatches} (mỗi lô 50 dòng an toàn giao dịch)
+                </span>
+                <span className="font-semibold">
+                  {importProgress.percent === 100 ? 'Đang hoàn tất lưu vào D1...' : `Tiến độ: ${importProgress.percent}%`}
+                </span>
+              </div>
+            </div>
+          )}
 
           <div className="max-h-72 overflow-y-auto border border-slate-200 rounded-xl overflow-x-auto shadow-inner">
             <table className="w-full text-left text-[11px] text-slate-700">
