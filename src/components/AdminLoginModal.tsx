@@ -54,6 +54,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
   const [showRegPassword, setShowRegPassword] = useState(false);
 
+  const [registrationSuccessMessage, setRegistrationSuccessMessage] = useState<string | null>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -105,7 +107,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       }
 
       try {
-        const user = await api.register({
+        const res: any = await api.register({
           username: regUsername.trim(),
           password: regPassword,
           fullName: regFullName.trim(),
@@ -114,12 +116,18 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
           organization: regOrg.trim(),
           role: regRole
         });
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem("portal_tab_active", "true");
-        }
-        onSuccess(user);
+        
+        // Show pending approval notice, switch to login tab with prefilled username
+        setRegistrationSuccessMessage(
+          res.message || "Đăng ký tài khoản thành công! Tài khoản của bạn đang ở trạng thái Chờ duyệt. Quản trị viên hệ thống sẽ kiểm tra và kích hoạt tài khoản trước khi bạn có thể đăng nhập."
+        );
+        setUsername(regUsername.trim());
+        setPassword("");
+        setRegPassword("");
+        setRegConfirmPassword("");
+        setMode("login");
       } catch (err: any) {
-        setError(err.message || "Lỗi tạo tài khoản Cloudflare D1.");
+        setError(err.message || "Lỗi tạo tài khoản.");
       } finally {
         setLoading(false);
       }
@@ -140,12 +148,12 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             </div>
             <div>
               <h3 className="font-bold text-base leading-tight">
-                {mode === "login" ? "Đăng Nhập Quản Trị" : "Tạo Tài Khoản (Cloudflare D1)"}
+                {mode === "login" ? "Đăng nhập" : "Tạo tài khoản"}
               </h3>
               <p className="text-xs text-teal-200/80 mt-0.5">
                 {mode === "login"
-                  ? "Xác thực an toàn qua Cloudflare Workers + D1"
-                  : "Mã hóa bảo mật PBKDF2 lưu trực tiếp vào CSDL D1"}
+                  ? "Cổng dữ liệu Khoa học & Công nghệ thành phố Đà Nẵng"
+                  : "Đăng ký tài khoản dành cho cán bộ, chuyên gia và tổ chức"}
               </p>
             </div>
           </div>
@@ -172,19 +180,29 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => { setMode("register"); setError(null); }}
+            onClick={() => { setMode("register"); setError(null); setRegistrationSuccessMessage(null); }}
             className={`flex-1 py-3 text-center transition-colors cursor-pointer ${
               mode === "register"
                 ? "bg-white text-teal-800 border-b-2 border-teal-800 font-bold"
                 : "text-slate-500 hover:text-slate-800"
             }`}
           >
-            + Tạo tài khoản mới (Cloudflare D1)
+            + Tạo tài khoản mới
           </button>
         </div>
 
         {/* Modal Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+          {registrationSuccessMessage && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 mt-0.5" />
+              <div className="space-y-1">
+                <span className="font-bold text-emerald-800">Đăng ký thành công!</span>
+                <p className="text-emerald-700 leading-relaxed">{registrationSuccessMessage}</p>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
@@ -373,11 +391,26 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                     placeholder="Xác nhận lại mật khẩu"
                     className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-teal-700 focus:outline-none"
                   />
+                  {regConfirmPassword.length > 0 && (
+                    <div className="pt-1 text-[11px] font-medium">
+                      {regPassword === regConfirmPassword ? (
+                        <span className="text-emerald-700 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>✓ Mật khẩu xác nhận trùng khớp</span>
+                        </span>
+                      ) : (
+                        <span className="text-rose-600 flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          <span>⚠ Mật khẩu xác nhận không khớp</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                Tài khoản sẽ được tạo lập trực tiếp vào CSDL Cloudflare D1 và mã hóa an toàn bằng PBKDF2 (SHA-512).
+              <div className="text-[11px] text-amber-800 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+                Lưu ý: Sau khi đăng ký, tài khoản sẽ ở trạng thái Chờ duyệt. Quản trị viên hệ thống sẽ kiểm tra và kích hoạt trước khi bạn có thể đăng nhập.
               </div>
             </div>
           )}
@@ -398,17 +431,17 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
               {loading ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Đang xử lý qua Cloudflare...</span>
+                  <span>Đang xử lý...</span>
                 </>
               ) : mode === "login" ? (
                 <>
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Đăng nhập Quản Trị</span>
+                  <span>Đăng nhập</span>
                 </>
               ) : (
                 <>
                   <UserPlus className="w-4 h-4" />
-                  <span>Xác nhận Tạo Tài Khoản</span>
+                  <span>Đăng ký tài khoản</span>
                 </>
               )}
             </button>

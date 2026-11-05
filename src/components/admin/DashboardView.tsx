@@ -33,7 +33,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenTestRunner
 }) => {
   const [selectedYear, setSelectedYear] = useState<string>('all');
-  const [chartTab, setChartTab] = useState<'tasks' | 'initiatives' | 'startups'>('tasks');
+  const [chartTab, setChartTab] = useState<'tasks' | 'initiatives' | 'startups' | 'patents' | 'experts' | 'projects' | 'ideas' | 'support_orgs' | 'universities' | 'wards'>('tasks');
 
   const currentYear = new Date().getFullYear();
   const stats: AggregatedStats = rawStats || {
@@ -96,6 +96,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const maxTasksYear = Math.max(...years.map(y => stats.tasksByYear?.[y] || 0), 1);
   const maxInitiativesYear = Math.max(...years.map(y => stats.initiativesByYear?.[y] || 0), 1);
   const maxStartupsYear = Math.max(...years.map(y => stats.startupsByYear?.[y] || 0), 1);
+  const maxPatentsYear = Math.max(...years.map(y => stats.patentsByYear?.[y] || 0), 1);
+  const maxExpertsYear = Math.max(...years.map(y => stats.expertsByYear?.[y] || 0), 1);
+  const maxProjectsYear = Math.max(...years.map(y => stats.projectsByYear?.[y] || 0), 1);
+  const maxIdeasYear = Math.max(...years.map(y => stats.ideasByYear?.[y] || 0), 1);
+  const maxSupportOrgsYear = Math.max(...years.map(y => stats.supportOrgsByYear?.[y] || 0), 1);
+  const maxUniversitiesYear = Math.max(...years.map(y => stats.universitiesByYear?.[y] || 0), 1);
+  const maxWardsYear = Math.max(...years.map(y => stats.wardsByYear?.[y] || 0), 1);
 
   return (
     <div className="space-y-6">
@@ -304,10 +311,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold overflow-x-auto scrollbar-none max-w-full">
             <button
               onClick={() => setChartTab('tasks')}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
                 chartTab === 'tasks' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -315,7 +322,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
             <button
               onClick={() => setChartTab('initiatives')}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
                 chartTab === 'initiatives' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -323,11 +330,67 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
             <button
               onClick={() => setChartTab('startups')}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
                 chartTab === 'startups' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Doanh nghiệp ĐMST
+            </button>
+            <button
+              onClick={() => setChartTab('patents')}
+              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+                chartTab === 'patents' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Sáng chế & SHTT
+            </button>
+            <button
+              onClick={() => setChartTab('experts')}
+              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+                chartTab === 'experts' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Chuyên gia & Nhà KH
+            </button>
+            <button
+              onClick={() => setChartTab('projects')}
+              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+                chartTab === 'projects' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Dự án KN
+            </button>
+            <button
+              onClick={() => setChartTab('ideas')}
+              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+                chartTab === 'ideas' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Ý tưởng KN
+            </button>
+            <button
+              onClick={() => setChartTab('support_orgs')}
+              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+                chartTab === 'support_orgs' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Tổ chức hỗ trợ
+            </button>
+            <button
+              onClick={() => setChartTab('universities')}
+              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+                chartTab === 'universities' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Trường ĐH/CĐ
+            </button>
+            <button
+              onClick={() => setChartTab('wards')}
+              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+                chartTab === 'wards' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Xã/Phường
             </button>
           </div>
         </div>
@@ -353,7 +416,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-teal-700 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.max(pct, 4)}%` }}
+                          style={{ width: `${count > 0 ? Math.max(pct, 4) : 0}%` }}
                         />
                       </div>
                     </div>
@@ -371,7 +434,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="h-48 flex items-end justify-between gap-3 pt-6 px-4 bg-slate-50 rounded-xl border border-slate-100">
                 {years.map(yr => {
                   const count = stats.tasksByYear?.[yr] || 0;
-                  const heightPct = Math.max(12, Math.round((count / maxTasksYear) * 100));
+                  const heightPct = count > 0 ? Math.max(8, Math.round((count / maxTasksYear) * 100)) : 0;
                   return (
                     <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
                       <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-blue-700">{count}</span>
@@ -412,7 +475,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.max(pct, 4)}%` }}
+                          style={{ width: `${count > 0 ? Math.max(pct, 4) : 0}%` }}
                         />
                       </div>
                     </div>
@@ -430,7 +493,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="h-48 flex items-end justify-between gap-3 pt-6 px-4 bg-slate-50 rounded-xl border border-slate-100">
                 {years.map(yr => {
                   const count = stats.initiativesByYear?.[yr] || 0;
-                  const heightPct = Math.max(12, Math.round((count / maxInitiativesYear) * 100));
+                  const heightPct = count > 0 ? Math.max(8, Math.round((count / maxInitiativesYear) * 100)) : 0;
                   return (
                     <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
                       <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-amber-700">{count}</span>
@@ -455,12 +518,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="space-y-3 pt-2">
             <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
               <span>Thống kê số lượng Doanh nghiệp Khởi nghiệp ĐMST thành lập & ươm tạo theo Năm (2021 - 2026):</span>
-              <span className="text-[11px] text-purple-700 font-mono font-bold">Hệ sinh thái khởi nghiệp</span>
+              <span className="text-[11px] text-purple-700 font-mono font-bold">Tổng: {stats.totalStartups}</span>
             </div>
             <div className="h-48 flex items-end justify-between gap-4 pt-6 px-8 bg-slate-50 rounded-xl border border-slate-100">
               {years.map(yr => {
                 const count = stats.startupsByYear?.[yr] || 0;
-                const heightPct = Math.max(12, Math.round((count / maxStartupsYear) * 100));
+                const heightPct = count > 0 ? Math.max(8, Math.round((count / maxStartupsYear) * 100)) : 0;
                 return (
                   <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
                     <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-purple-700">{count}</span>
@@ -475,6 +538,209 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
             <p className="text-[11px] text-slate-500 italic text-center">
               Số lượng doanh nghiệp khởi nghiệp đổi mới sáng tạo, dự án spin-off hình thành tại TP Đà Nẵng qua từng giai đoạn.
+            </p>
+          </div>
+        )}
+
+        {/* Tab 4: Sáng chế & Sở hữu trí tuệ Charts */}
+        {chartTab === 'patents' && (
+          <div className="space-y-3 pt-2">
+            <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
+              <span>Thống kê số lượng Sáng chế & Văn bằng SHTT nộp đơn/cấp bằng theo Năm (2021 - 2026):</span>
+              <span className="text-[11px] text-indigo-700 font-mono font-bold">Tổng: {stats.totalPatents || 0}</span>
+            </div>
+            <div className="h-48 flex items-end justify-between gap-4 pt-6 px-8 bg-slate-50 rounded-xl border border-slate-100">
+              {years.map(yr => {
+                const count = stats.patentsByYear?.[yr] || 0;
+                const heightPct = count > 0 ? Math.max(8, Math.round((count / maxPatentsYear) * 100)) : 0;
+                return (
+                  <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+                    <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-indigo-700">{count}</span>
+                    <div 
+                      className="w-full max-w-[48px] bg-indigo-600 group-hover:bg-indigo-700 rounded-t-md transition-all duration-300"
+                      style={{ height: `${heightPct}%` }}
+                    />
+                    <span className="text-[11px] font-semibold text-slate-600 mt-1">{yr}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-slate-500 italic text-center">
+              Số lượng bằng sáng chế, giải pháp hữu ích và văn bằng sở hữu trí tuệ được bảo hộ hợp pháp.
+            </p>
+          </div>
+        )}
+
+        {/* Tab 5: Chuyên gia & Nhà khoa học Charts */}
+        {chartTab === 'experts' && (
+          <div className="space-y-3 pt-2">
+            <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
+              <span>Thống kê phân bổ Chuyên gia & Nhà khoa học tham gia mạng lưới theo giai đoạn:</span>
+              <span className="text-[11px] text-cyan-700 font-mono font-bold">Tổng: {stats.totalExperts || 0}</span>
+            </div>
+            <div className="h-48 flex items-end justify-between gap-4 pt-6 px-8 bg-slate-50 rounded-xl border border-slate-100">
+              {years.map(yr => {
+                const count = stats.expertsByYear?.[yr] || 0;
+                const heightPct = count > 0 ? Math.max(8, Math.round((count / maxExpertsYear) * 100)) : 0;
+                return (
+                  <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+                    <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-cyan-700">{count}</span>
+                    <div 
+                      className="w-full max-w-[48px] bg-cyan-600 group-hover:bg-cyan-700 rounded-t-md transition-all duration-300"
+                      style={{ height: `${heightPct}%` }}
+                    />
+                    <span className="text-[11px] font-semibold text-slate-600 mt-1">{yr}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-slate-500 italic text-center">
+              Số lượng nhà khoa học, chuyên gia công nghệ cao gia nhập hệ cơ sở dữ liệu chuyên gia Đà Nẵng.
+            </p>
+          </div>
+        )}
+
+        {/* Tab 6: Dự án khởi nghiệp Charts */}
+        {chartTab === 'projects' && (
+          <div className="space-y-3 pt-2">
+            <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
+              <span>Thống kê số lượng Dự án khởi nghiệp ĐMST được tiếp nhận & ươm tạo (2021 - 2026):</span>
+              <span className="text-[11px] text-emerald-700 font-mono font-bold">Tổng: {stats.totalProjects || 0}</span>
+            </div>
+            <div className="h-48 flex items-end justify-between gap-4 pt-6 px-8 bg-slate-50 rounded-xl border border-slate-100">
+              {years.map(yr => {
+                const count = stats.projectsByYear?.[yr] || 0;
+                const heightPct = count > 0 ? Math.max(8, Math.round((count / maxProjectsYear) * 100)) : 0;
+                return (
+                  <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+                    <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-emerald-700">{count}</span>
+                    <div 
+                      className="w-full max-w-[48px] bg-emerald-600 group-hover:bg-emerald-700 rounded-t-md transition-all duration-300"
+                      style={{ height: `${heightPct}%` }}
+                    />
+                    <span className="text-[11px] font-semibold text-slate-600 mt-1">{yr}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-slate-500 italic text-center">
+              Dự án khởi nghiệp đổi mới sáng tạo đăng ký qua các chương trình tăng tốc và ươm tạo của thành phố.
+            </p>
+          </div>
+        )}
+
+        {/* Tab 7: Ý tưởng khởi nghiệp Charts */}
+        {chartTab === 'ideas' && (
+          <div className="space-y-3 pt-2">
+            <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
+              <span>Thống kê số lượng Ý tưởng khởi nghiệp sáng tạo đề xuất qua các năm:</span>
+              <span className="text-[11px] text-amber-700 font-mono font-bold">Tổng: {stats.totalIdeas || 0}</span>
+            </div>
+            <div className="h-48 flex items-end justify-between gap-4 pt-6 px-8 bg-slate-50 rounded-xl border border-slate-100">
+              {years.map(yr => {
+                const count = stats.ideasByYear?.[yr] || 0;
+                const heightPct = count > 0 ? Math.max(8, Math.round((count / maxIdeasYear) * 100)) : 0;
+                return (
+                  <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+                    <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-amber-700">{count}</span>
+                    <div 
+                      className="w-full max-w-[48px] bg-amber-500 group-hover:bg-amber-600 rounded-t-md transition-all duration-300"
+                      style={{ height: `${heightPct}%` }}
+                    />
+                    <span className="text-[11px] font-semibold text-slate-600 mt-1">{yr}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-slate-500 italic text-center">
+              Ý tưởng khởi nghiệp mới từ sinh viên, cộng đồng sáng tạo và các cuộc thi ĐMST.
+            </p>
+          </div>
+        )}
+
+        {/* Tab 8: Tổ chức hỗ trợ Charts */}
+        {chartTab === 'support_orgs' && (
+          <div className="space-y-3 pt-2">
+            <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
+              <span>Thống kê mạng lưới Tổ chức hỗ trợ, Vườn ươm & Trung tâm ĐMST:</span>
+              <span className="text-[11px] text-rose-700 font-mono font-bold">Tổng: {stats.totalSupportOrgs || 0}</span>
+            </div>
+            <div className="h-48 flex items-end justify-between gap-4 pt-6 px-8 bg-slate-50 rounded-xl border border-slate-100">
+              {years.map(yr => {
+                const count = stats.supportOrgsByYear?.[yr] || 0;
+                const heightPct = count > 0 ? Math.max(8, Math.round((count / maxSupportOrgsYear) * 100)) : 0;
+                return (
+                  <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+                    <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-rose-700">{count}</span>
+                    <div 
+                      className="w-full max-w-[48px] bg-rose-600 group-hover:bg-rose-700 rounded-t-md transition-all duration-300"
+                      style={{ height: `${heightPct}%` }}
+                    />
+                    <span className="text-[11px] font-semibold text-slate-600 mt-1">{yr}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-slate-500 italic text-center">
+              Vườn ươm công lập và tư nhân, không gian làm việc chung (coworking) và tổ chức trung gian hỗ trợ khởi nghiệp.
+            </p>
+          </div>
+        )}
+
+        {/* Tab 9: Trường Đại học/Cao đẳng Charts */}
+        {chartTab === 'universities' && (
+          <div className="space-y-3 pt-2">
+            <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
+              <span>Thống kê mạng lưới Cơ sở Giáo dục Đại học & Cao đẳng tham gia Cổng:</span>
+              <span className="text-[11px] text-teal-700 font-mono font-bold">Tổng: {stats.totalUniversities || 0}</span>
+            </div>
+            <div className="h-48 flex items-end justify-between gap-4 pt-6 px-8 bg-slate-50 rounded-xl border border-slate-100">
+              {years.map(yr => {
+                const count = stats.universitiesByYear?.[yr] || 0;
+                const heightPct = count > 0 ? Math.max(8, Math.round((count / maxUniversitiesYear) * 100)) : 0;
+                return (
+                  <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+                    <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-teal-700">{count}</span>
+                    <div 
+                      className="w-full max-w-[48px] bg-teal-600 group-hover:bg-teal-700 rounded-t-md transition-all duration-300"
+                      style={{ height: `${heightPct}%` }}
+                    />
+                    <span className="text-[11px] font-semibold text-slate-600 mt-1">{yr}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-slate-500 italic text-center">
+              Các trường Đại học, Cao đẳng, Học viện thành viên thuộc mạng lưới đổi mới sáng tạo Đà Nẵng.
+            </p>
+          </div>
+        )}
+
+        {/* Tab 10: Xã/Phường Charts */}
+        {chartTab === 'wards' && (
+          <div className="space-y-3 pt-2">
+            <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
+              <span>Thống kê phân bổ dữ liệu địa bàn Phường / Xã / Đặc khu:</span>
+              <span className="text-[11px] text-slate-700 font-mono font-bold">Tổng: {stats.totalWards || 0} đơn vị</span>
+            </div>
+            <div className="h-48 flex items-end justify-between gap-4 pt-6 px-8 bg-slate-50 rounded-xl border border-slate-100">
+              {years.map(yr => {
+                const count = stats.wardsByYear?.[yr] || 0;
+                const heightPct = count > 0 ? Math.max(8, Math.round((count / maxWardsYear) * 100)) : 0;
+                return (
+                  <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+                    <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-slate-900">{count}</span>
+                    <div 
+                      className="w-full max-w-[48px] bg-slate-700 group-hover:bg-slate-800 rounded-t-md transition-all duration-300"
+                      style={{ height: `${heightPct}%` }}
+                    />
+                    <span className="text-[11px] font-semibold text-slate-600 mt-1">{yr}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-slate-500 italic text-center">
+              Dữ liệu đơn vị hành chính cấp xã, phường và đặc khu phục vụ phân bổ nguồn lực và quản lý địa bàn.
             </p>
           </div>
         )}

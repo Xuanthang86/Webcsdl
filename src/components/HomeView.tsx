@@ -125,7 +125,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <span>1. Cơ sở dữ liệu Đề tài, Nhiệm vụ KH&CN</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
-                Đề tài, Nhiệm vụ KH&CN Mới Nhất
+                Đề tài, nhiệm vụ KH&CN mới nhất
               </h2>
             </div>
             <button
@@ -214,7 +214,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <span>2. Cơ sở dữ liệu Sáng kiến cấp thành phố</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
-                Sáng Kiến Có Tác Dụng, Ảnh Hưởng Đối Với Thành Phố
+                Sáng kiến có tác dụng, ảnh hưởng đối với thành phố
               </h2>
             </div>
             <button
@@ -290,7 +290,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <span>3. Cơ sở dữ liệu Sáng chế & Sở hữu trí tuệ</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
-                Sáng Chế & Sở Hữu Trí Tuệ Mới Nhất
+                Sáng chế & sở hữu trí tuệ mới nhất
               </h2>
             </div>
             <button
@@ -365,7 +365,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <span>4. Cơ sở dữ liệu Chuyên gia & Nhà khoa học</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
-                Chuyên Gia & Nhà Khoa Học Tiêu Biểu
+                Chuyên gia & nhà khoa học tiêu biểu
               </h2>
             </div>
             <button
@@ -443,7 +443,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <span>5. Cơ sở dữ liệu Hệ sinh thái Khởi nghiệp Đổi mới sáng tạo</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
-                Dữ Liệu Hệ Sinh Thái Khởi Nghiệp Đổi Mới Sáng Tạo
+                Dữ liệu hệ sinh thái khởi nghiệp đổi mới sáng tạo
               </h2>
             </div>
             <button

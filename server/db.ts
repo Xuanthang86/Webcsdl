@@ -108,7 +108,7 @@ class DatabaseManager {
         if (parsed.systemConfig) {
           parsed.systemConfig.portalName = 'Cổng dữ liệu KHCN & KNĐMST TP Đà Nẵng';
           parsed.systemConfig.governingAgency = 'ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ';
-          parsed.systemConfig.contactAddress = 'Trung tâm Đổi mới sáng tạo Đà Nẵng';
+          parsed.systemConfig.contactAddress = 'Trung tâm Đổi mới sáng tạo Đà Nẵng, 24 Trần Phú, Hải Châu, Đà Nẵng';
           parsed.systemConfig.cityArea = 'Thành phố Đà Nẵng';
         }
         return parsed;
@@ -978,6 +978,52 @@ class DatabaseManager {
       featuredStartupsByField[f] = (featuredStartupsByField[f] || 0) + 1;
     });
 
+    // Patents breakdown by Year & Field
+    const patentsByYear: Record<string, number> = {};
+    const patentsByField: Record<string, number> = {};
+    yearsList.forEach(yr => { patentsByYear[yr] = 0; });
+    (this.data.patents || []).forEach((p: any) => {
+      const yr = String(p.filingDate?.slice(0, 4) || p.grantDate?.slice(0, 4) || p.createdAt?.slice(0, 4) || '2025');
+      if (patentsByYear[yr] !== undefined) patentsByYear[yr]++;
+      else patentsByYear[yr] = 1;
+      const f = p.field || 'Sở hữu trí tuệ';
+      patentsByField[f] = (patentsByField[f] || 0) + 1;
+    });
+
+    // Support organizations breakdown by Year
+    const supportOrgsByYear: Record<string, number> = {};
+    yearsList.forEach(yr => { supportOrgsByYear[yr] = 0; });
+    (this.data.support_organizations || []).forEach((so: any) => {
+      const yr = String(so.establishedYear || so.createdAt?.slice(0, 4) || '2024');
+      if (supportOrgsByYear[yr] !== undefined) supportOrgsByYear[yr]++;
+      else supportOrgsByYear[yr] = 1;
+    });
+
+    // Universities breakdown by Year
+    const universitiesByYear: Record<string, number> = {};
+    yearsList.forEach(yr => { universitiesByYear[yr] = 0; });
+    (this.data.universities || []).forEach((u: any) => {
+      const yr = String(u.establishedYear || u.createdAt?.slice(0, 4) || '2023');
+      if (universitiesByYear[yr] !== undefined) universitiesByYear[yr]++;
+      else universitiesByYear[yr] = 1;
+    });
+
+    // Wards breakdown by Year
+    const wardsByYear: Record<string, number> = {};
+    yearsList.forEach(yr => { wardsByYear[yr] = 0; });
+    (this.data.wards || []).forEach((w: any) => {
+      const yr = String(w.updatedAt?.slice(0, 4) || w.createdAt?.slice(0, 4) || '2025');
+      if (wardsByYear[yr] !== undefined) wardsByYear[yr]++;
+      else wardsByYear[yr] = 1;
+    });
+
+    // Ensure all standard years exist for remaining entities
+    yearsList.forEach(yr => {
+      if (expertsByYear[yr] === undefined) expertsByYear[yr] = 0;
+      if (projectsByYear[yr] === undefined) projectsByYear[yr] = 0;
+      if (ideasByYear[yr] === undefined) ideasByYear[yr] = 0;
+    });
+
     return {
       totalScienceTasks: tasks.length,
       tasksRunning: tasks.filter(t => (t.executionProgress || 0) < 100 && t.acceptanceResult !== 'Đã nghiệm thu' && t.acceptanceResult !== 'Xuất sắc' && t.acceptanceResult !== 'Đạt').length,
@@ -1045,7 +1091,12 @@ class DatabaseManager {
       expertsByYear,
       wardsByAreaType,
       universitiesByType,
-      featuredStartupsByField
+      featuredStartupsByField,
+      patentsByYear,
+      patentsByField,
+      supportOrgsByYear,
+      universitiesByYear,
+      wardsByYear
     };
   }
 

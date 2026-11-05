@@ -35,7 +35,7 @@ export default function App() {
     cityArea: 'Thành phố Đà Nẵng',
     contactEmail: 'sokhcn@danang.gov.vn',
     contactPhone: '0236.3822.459 / 0236.3830.214',
-    contactAddress: 'Trung tâm Đổi mới sáng tạo Đà Nẵng',
+    contactAddress: 'Trung tâm Đổi mới sáng tạo Đà Nẵng, 24 Trần Phú, Hải Châu, Đà Nẵng',
     websiteDomain: 'dost.danang.gov.vn',
     primaryColor: '#0f766e',
     enablePublicSubmissions: true,

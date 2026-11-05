@@ -76,8 +76,8 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
 
   // Form states
   const [formUsername, setFormUsername] = useState('');
-  const [formPassword, setFormPassword] = useState('admin123');
-  const [formConfirmPassword, setFormConfirmPassword] = useState('admin123');
+  const [formPassword, setFormPassword] = useState('');
+  const [formConfirmPassword, setFormConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formFullName, setFormFullName] = useState('');
@@ -244,6 +244,16 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
       fetchUsers();
     } catch (err: any) {
       alert(err.message || 'Lỗi thay đổi trạng thái');
+    }
+  };
+
+  const handleApproveUser = async (u: User) => {
+    try {
+      await api.updateUser(u.id, { isActive: true });
+      showToast(`Đã duyệt và kích hoạt tài khoản [@${u.username}] thành công!`);
+      fetchUsers();
+    } catch (err: any) {
+      alert(err.message || 'Lỗi duyệt tài khoản');
     }
   };
 
@@ -426,27 +436,31 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
 
                       {/* Status */}
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                        <button
-                          onClick={() => handleToggleStatus(u)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors cursor-pointer ${
-                            u.isActive 
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                              : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
-                          }`}
-                          title="Bấm để thay đổi trạng thái kích hoạt"
-                        >
-                          {u.isActive ? (
-                            <>
-                              <CheckCircle className="w-3 h-3 text-emerald-600" />
-                              <span>Hoạt động</span>
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="w-3 h-3 text-rose-600" />
-                              <span>Đã khóa</span>
-                            </>
-                          )}
-                        </button>
+                        {u.isActive ? (
+                          <button
+                            onClick={() => handleToggleStatus(u)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer"
+                            title="Bấm để tạm khóa tài khoản"
+                          >
+                            <CheckCircle className="w-3 h-3 text-emerald-600" />
+                            <span>Hoạt động</span>
+                          </button>
+                        ) : (
+                          <div className="inline-flex flex-col items-center gap-1">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border bg-amber-50 text-amber-800 border-amber-300">
+                              <AlertCircle className="w-3 h-3 text-amber-600" />
+                              <span>Chờ duyệt</span>
+                            </span>
+                            <button
+                              onClick={() => handleApproveUser(u)}
+                              className="px-2 py-0.5 bg-teal-800 hover:bg-teal-700 text-white text-[10px] font-bold rounded shadow-xs transition-colors cursor-pointer flex items-center gap-1"
+                              title="Duyệt và kích hoạt tài khoản này ngay lập tức"
+                            >
+                              <Check className="w-3 h-3" />
+                              <span>Duyệt tài khoản</span>
+                            </button>
+                          </div>
+                        )}
                       </td>
 
                       {/* Actions */}
@@ -589,6 +603,21 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  {formConfirmPassword.length > 0 && (
+                    <div className="pt-1 text-[11px] font-medium">
+                      {formPassword === formConfirmPassword ? (
+                        <span className="text-emerald-700 flex items-center gap-1">
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          <span>✓ Mật khẩu xác nhận trùng khớp</span>
+                        </span>
+                      ) : (
+                        <span className="text-rose-600 flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          <span>⚠ Mật khẩu xác nhận không khớp</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

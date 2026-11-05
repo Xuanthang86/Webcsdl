@@ -233,5 +233,10 @@ export interface AggregatedStats {
   wardsByAreaType?: Record<string, number>;
   universitiesByType?: Record<string, number>;
   featuredStartupsByField?: Record<string, number>;
+  patentsByYear?: Record<string, number>;
+  patentsByField?: Record<string, number>;
+  supportOrgsByYear?: Record<string, number>;
+  universitiesByYear?: Record<string, number>;
+  wardsByYear?: Record<string, number>;
 }
 

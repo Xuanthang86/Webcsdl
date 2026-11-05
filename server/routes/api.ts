@@ -133,6 +133,20 @@ apiRouter.post('/auth/login', (req: AuthenticatedRequest, res: Response): void =
     return;
   }
 
+  const trimmed = username.trim().toLowerCase();
+  const existingUser = db.getUsers().find(u => 
+    u.username.toLowerCase() === trimmed || 
+    (u.email && u.email.toLowerCase() === trimmed)
+  );
+
+  if (existingUser && existingUser.isActive === false) {
+    res.status(403).json({
+      success: false,
+      message: 'Tài khoản của bạn đang ở trạng thái Chờ duyệt. Vui lòng liên hệ Quản trị viên để được kiểm tra và kích hoạt tài khoản.'
+    });
+    return;
+  }
+
   try {
     const user = db.authenticateUser(username, password);
     if (!user) {
@@ -159,6 +173,61 @@ apiRouter.post('/auth/login', (req: AuthenticatedRequest, res: Response): void =
     res.json({ success: true, token: sessionToken, user: db.sanitizeUser(user) });
   } catch (err: any) {
     res.status(429).json({ success: false, message: err.message || 'Lỗi đăng nhập hệ thống' });
+  }
+});
+
+// Self-registration endpoint - sets isActive: false requiring Admin approval
+apiRouter.post('/auth/register', (req: AuthenticatedRequest, res: Response): void => {
+  const { username, password, fullName, email, role, phone, organization } = req.body;
+  const rawUsername = (username || '').toString().trim();
+  const rawPassword = (password || '').toString();
+
+  if (!rawUsername || !rawPassword) {
+    res.status(400).json({ success: false, message: 'Vui lòng điền tên đăng nhập và mật khẩu.' });
+    return;
+  }
+  if (rawPassword.length < 6) {
+    res.status(400).json({ success: false, message: 'Mật khẩu phải có ít nhất 6 ký tự.' });
+    return;
+  }
+
+  const existing = db.getUsers().find(u => 
+    u.username.toLowerCase() === rawUsername.toLowerCase() || 
+    (email && u.email?.toLowerCase() === email.toString().trim().toLowerCase())
+  );
+  if (existing) {
+    res.status(400).json({ success: false, message: 'Tên đăng nhập hoặc email này đã tồn tại trên hệ thống.' });
+    return;
+  }
+
+  try {
+    const newUser = db.createUser({
+      username: rawUsername,
+      password: rawPassword,
+      fullName: (fullName || rawUsername).toString().trim(),
+      email: (email || `${rawUsername}@danang.gov.vn`).toString().trim(),
+      role: (role || 'public_user') as UserRole,
+      phone: (phone || '').toString().trim(),
+      organization: (organization || '').toString().trim(),
+      isActive: false // Self-registered accounts require Admin approval before login!
+    });
+
+    db.addAuditLog({
+      userId: newUser.id,
+      userName: newUser.fullName,
+      userRole: newUser.role,
+      action: 'create',
+      details: `Đăng ký tài khoản tự do mới [${newUser.username}] - Trạng thái Chờ Quản trị viên xét duyệt.`
+    });
+
+    res.status(201).json({
+      success: true,
+      pendingApproval: true,
+      message: 'Đăng ký tài khoản thành công! Tài khoản của bạn đang ở trạng thái Chờ duyệt. Quản trị viên hệ thống sẽ kiểm tra và kích hoạt tài khoản trước khi bạn có thể đăng nhập.',
+      user: db.sanitizeUser(newUser)
+    });
+  } catch (err: any) {
+    res.status(400).json({ success: false, message: err.message || 'Lỗi đăng ký tài khoản' });
   }
 });
 

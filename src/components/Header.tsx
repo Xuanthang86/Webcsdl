@@ -22,7 +22,8 @@ import {
   KeyRound,
   Eye,
   EyeOff,
-  CheckCircle2
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -199,7 +200,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <>
       <header className="sticky top-0 z-50 bg-[#D4E8F8]/95 backdrop-blur-md border-b border-sky-300 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
+        <div className="max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 min-h-[4.25rem] py-1.5 flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Zone 1: Logo & Brand Wordmark + 3-line Menu on Mobile */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
@@ -227,11 +228,11 @@ export const Header: React.FC<HeaderProps> = ({
                 ĐN
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-[10px] sm:text-xs font-black tracking-tight text-slate-900 group-hover:text-teal-800 transition-colors uppercase leading-none">
-                  CỔNG DỮ LIỆU
+                <span className="text-[10px] sm:text-xs md:text-[13px] font-black tracking-tight text-teal-950 group-hover:text-teal-800 transition-colors uppercase leading-tight whitespace-nowrap">
+                  CƠ SỞ DỮ LIỆU VỀ KHOA HỌC, CÔNG NGHỆ
                 </span>
-                <span className="text-[9px] sm:text-[11px] md:text-xs font-bold text-teal-800 tracking-tight group-hover:text-teal-900 transition-colors truncate mt-0.5 leading-tight">
-                  KHCN & KNĐMST TP ĐÀ NẴNG
+                <span className="text-[9px] sm:text-[11px] md:text-xs font-bold text-teal-800 tracking-tight group-hover:text-teal-900 transition-colors uppercase mt-0.5 leading-tight whitespace-nowrap">
+                  VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG
                 </span>
               </div>
             </div>
@@ -889,6 +890,21 @@ export const Header: React.FC<HeaderProps> = ({
                           {showConfirmPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                         </button>
                       </div>
+                      {confirmPassword.length > 0 && (
+                        <div className="pt-1 text-[11px] font-medium">
+                          {newPassword === confirmPassword ? (
+                            <span className="text-emerald-700 flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>✓ Mật khẩu xác nhận trùng khớp</span>
+                            </span>
+                          ) : (
+                            <span className="text-rose-600 flex items-center gap-1">
+                              <AlertCircle className="w-3.5 h-3.5" />
+                              <span>⚠ Mật khẩu xác nhận không khớp</span>
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <button

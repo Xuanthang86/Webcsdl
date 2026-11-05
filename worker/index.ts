@@ -1081,6 +1081,13 @@ export default {
           ).bind(uLower, uLower).first() as any;
 
           if (d1User) {
+            if (d1User.is_active === 0 || d1User.is_active === false || d1User.is_active === '0') {
+              return jsonResponse({
+                success: false,
+                message: 'Tài khoản của bạn đang ở trạng thái Chờ duyệt. Vui lòng liên hệ Quản trị viên để được kiểm tra và kích hoạt tài khoản.'
+              }, 403);
+            }
+
             let isValid = false;
             const pHash = d1User.password_hash || d1User.passwordHash;
             const pSalt = d1User.salt || d1User.password_salt || d1User.passwordSalt;
@@ -1255,7 +1262,7 @@ export default {
 
           await env.DB.prepare(`
             INSERT INTO users (id, username, password_hash, salt, full_name, email, role, phone, organization, department, is_active, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'), datetime('now'))
           `).bind(
             newUserId, rawUsername, passHash, salt, rawFullName, rawEmail, rawRole, rawPhone, rawOrg, ''
           ).run();
@@ -1272,21 +1279,15 @@ export default {
         role: rawRole,
         phone: rawPhone,
         organization: rawOrg,
-        isActive: true
+        isActive: false
       };
 
-      const sessionToken = await signToken(JSON.stringify(registeredUser), secret);
-      const cookieHeader1 = `danang_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax`;
-      const cookieHeader2 = `portal_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; SameSite=Lax`;
-
-      const resp = jsonResponse({
+      return jsonResponse({
         success: true,
-        message: 'Đăng ký tài khoản thành công qua Cloudflare D1.',
-        user: registeredUser,
-        token: sessionToken
-      }, 201, { 'Set-Cookie': cookieHeader1 });
-      resp.headers.append('Set-Cookie', cookieHeader2);
-      return resp;
+        pendingApproval: true,
+        message: 'Đăng ký tài khoản thành công! Tài khoản của bạn đang ở trạng thái Chờ duyệt. Quản trị viên hệ thống sẽ kiểm tra và kích hoạt tài khoản trước khi bạn có thể đăng nhập.',
+        user: registeredUser
+      }, 201);
     }
 
     // User management endpoints for Cloudflare Worker & D1
@@ -1563,6 +1564,47 @@ export default {
       return jsonResponse({ success: true, data: [] });
     }
 
+    // Search API for Cloudflare Worker & D1
+    if (url.pathname === '/api/search' && request.method === 'GET') {
+      const q = (url.searchParams.get('q') || '').trim().toLowerCase();
+      const moduleType = url.searchParams.get('moduleType') || 'all';
+      const targetModules = moduleType !== 'all' && ALLOWED_MODULES.includes(moduleType)
+        ? [moduleType]
+        : ALLOWED_MODULES;
+
+      let results: any[] = [];
+      if (env.DB) {
+        try {
+          for (const mod of targetModules) {
+            let sql = `SELECT * FROM ${mod} WHERE publicity_level = 'public'`;
+            const params: any[] = [];
+            if (q) {
+              sql += ` AND (LOWER(title) LIKE ? OR LOWER(description) LIKE ?)`;
+              params.push(`%${q}%`, `%${q}%`);
+            }
+            sql += ` LIMIT 50`;
+            const res = await env.DB.prepare(sql).bind(...params).all();
+            if (res.results && res.results.length > 0) {
+              const mapped = res.results.map((r: any) => ({
+                ...r,
+                moduleType: mod,
+                fullName: r.full_name || r.name || r.title
+              }));
+              results.push(...mapped);
+            }
+          }
+        } catch (searchErr) {
+          console.warn('Worker search error:', searchErr);
+        }
+      }
+
+      return jsonResponse({
+        success: true,
+        total: results.length,
+        results
+      });
+    }
+
     // 7. Live Aggregated Statistics
     if (url.pathname === '/api/stats') {
       if (env.DB) {
@@ -1571,7 +1613,7 @@ export default {
           for (const mod of ALLOWED_MODULES) {
             try {
               const res = await env.DB.prepare(`SELECT COUNT(*) as count FROM ${mod}`).first<{ count: number }>();
-              counts[mod] = res?.count || 0;
+              counts[mod] = typeof res?.count === 'number' ? res.count : 0;
             } catch {
               counts[mod] = 0;
             }
@@ -1579,26 +1621,26 @@ export default {
           return jsonResponse({
             success: true,
             stats: {
-              totalScienceTasks: counts.science_tasks || 3,
-              totalInitiatives: counts.initiatives || 3,
-              totalExperts: counts.experts || 3,
-              totalStartups: counts.startups || 2,
-              totalSupportOrgs: counts.support_organizations || 1,
-              totalProjects: counts.startup_projects || 1,
-              totalIdeas: counts.startup_ideas || 1,
-              totalWards: counts.wards || 8,
-              totalUniversities: counts.universities || 6,
-              totalFeaturedStartups: counts.featured_startups || 5,
-              totalPatents: counts.patents || 2,
-              totalOrganizations: counts.organizations || 2,
-              totalInvestors: counts.investors || 1,
-              totalFunds: counts.investment_funds || 1,
-              totalTechnologies: counts.technologies || 1,
-              totalPrograms: counts.programs || 1,
-              totalCollaborationNeeds: counts.collaboration_needs || 2,
-              totalPublications: counts.publications || 2,
-              totalLabEquipments: counts.lab_equipments || 2,
-              totalPolicies: counts.policies || 2,
+              totalScienceTasks: counts.science_tasks ?? 3,
+              totalInitiatives: counts.initiatives ?? 3,
+              totalExperts: counts.experts ?? 3,
+              totalStartups: counts.startups ?? 2,
+              totalSupportOrgs: counts.support_organizations ?? 1,
+              totalProjects: counts.startup_projects ?? 1,
+              totalIdeas: counts.startup_ideas ?? 1,
+              totalWards: counts.wards ?? 8,
+              totalUniversities: counts.universities ?? 6,
+              totalFeaturedStartups: counts.featured_startups ?? 5,
+              totalPatents: counts.patents ?? 2,
+              totalOrganizations: counts.organizations ?? 2,
+              totalInvestors: counts.investors ?? 1,
+              totalFunds: counts.investment_funds ?? 1,
+              totalTechnologies: counts.technologies ?? 1,
+              totalPrograms: counts.programs ?? 1,
+              totalCollaborationNeeds: counts.collaboration_needs ?? 2,
+              totalPublications: counts.publications ?? 2,
+              totalLabEquipments: counts.lab_equipments ?? 2,
+              totalPolicies: counts.policies ?? 2,
               tasksAccepted: 18,
               totalBudgetApproved: 45000000000,
               totalCostSavings: 6500000000
