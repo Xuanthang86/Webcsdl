@@ -941,13 +941,18 @@ class DatabaseManager {
       projectsByWard[wd] = (projectsByWard[wd] || 0) + 1;
     });
 
-    // Ideas breakdown by Field, School, Ward
+    // Ideas breakdown by Field, School, Ward, Year
     const ideasByField: Record<string, number> = {};
+    const ideasByYear: Record<string, number> = {};
     const ideasBySchool: Record<string, number> = {};
     const ideasByWard: Record<string, number> = {};
+    yearsList.forEach(yr => { ideasByYear[yr] = 0; });
     ideas.forEach(id => {
       const f = id.field || 'Ý tưởng đổi mới';
       ideasByField[f] = (ideasByField[f] || 0) + 1;
+      const y = String(id.year || id.submissionYear || id.createdAt?.slice(0, 4) || '2024');
+      if (ideasByYear[y] !== undefined) ideasByYear[y]++;
+      else ideasByYear[y] = 1;
       const sc = id.school || (id.wardSchool && id.wardSchool.includes('ĐH') ? id.wardSchool : id.currentAffiliation) || 'Trường Đại học';
       ideasBySchool[sc] = (ideasBySchool[sc] || 0) + 1;
       const wd = id.ward || (id.address || 'Địa bàn xã/phường');
