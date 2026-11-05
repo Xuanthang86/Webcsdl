@@ -104,46 +104,28 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
   const totalEcosystemRecords = ecosystemItems.reduce((acc, curr) => acc + curr.count, 0);
 
   // Initiatives recognized in the current year
-  const currentYearInitiativesCount = stats?.initiativesInCurrentYear !== undefined
-    ? stats.initiativesInCurrentYear
-    : (stats?.initiativesByYear?.[String(currentYear)] ?? 14);
+  const currentYearInitiativesCount = stats?.initiativesInCurrentYear ?? 
+    (stats?.initiativesByYear?.[String(currentYear)] ?? 0);
 
-  // Breakdown data for Experts
-  const expertFields = stats?.expertsByField ? Object.entries(stats.expertsByField).map(([name, count]) => ({ name, count })) : [
-    { name: 'Công nghệ thông tin & Trí tuệ nhân tạo', count: 18 },
-    { name: 'Khoa học Y Dược & Chăm sóc sức khỏe', count: 12 },
-    { name: 'Nông nghiệp CNC & Công nghệ sinh học', count: 9 },
-    { name: 'Môi trường, Năng lượng & Vật liệu mới', count: 8 },
-    { name: 'Cơ khí, Tự động hóa & Điện tử', count: 7 }
-  ];
-
-  const expertUnits = stats?.expertsByWorkplace ? Object.entries(stats.expertsByWorkplace).map(([name, count]) => ({ name, count })) : [
-    { name: 'Đại học Đà Nẵng & Các trường thành viên', count: 24 },
-    { name: 'Viện Hàn lâm KH&CN Việt Nam (Khu vực MT)', count: 11 },
-    { name: 'Sở KH&CN và các Trung tâm Nghiên cứu', count: 9 },
-    { name: 'Các Doanh nghiệp KH&CN và Viện độc lập', count: 10 }
-  ];
-
-  const expertTitles = stats?.expertsByTitle ? Object.entries(stats.expertsByTitle).map(([name, count]) => ({ name, count })) : [
-    { name: 'Giáo sư (GS)', count: 12 },
-    { name: 'Phó Giáo sư (PGS)', count: 24 },
-    { name: 'Chuyên gia cao cấp', count: 18 }
-  ];
+  // Breakdown data for Experts from real stats
+  const expertFields = stats?.expertsByField ? Object.entries(stats.expertsByField).map(([name, count]) => ({ name, count })) : [];
+  const expertUnits = stats?.expertsByWorkplace ? Object.entries(stats.expertsByWorkplace).map(([name, count]) => ({ name, count })) : [];
+  const expertTitles = stats?.expertsByTitle ? Object.entries(stats.expertsByTitle).map(([name, count]) => ({ name, count })) : [];
 
   // School vs Ward distributions for Projects & Ideas
   const projectSchoolsCount = stats?.projectsBySchool 
     ? Object.values(stats.projectsBySchool).reduce((a, b) => a + b, 0) 
-    : Math.ceil((stats?.totalProjects || 10) * 0.6);
-  const projectWardsCount = (stats?.totalProjects || 10) - projectSchoolsCount > 0 
-    ? (stats?.totalProjects || 10) - projectSchoolsCount 
-    : 4;
+    : 0;
+  const projectWardsCount = stats?.projectsByWard 
+    ? Object.values(stats.projectsByWard).reduce((a, b) => a + b, 0) 
+    : 0;
 
   const ideaSchoolsCount = stats?.ideasBySchool 
     ? Object.values(stats.ideasBySchool).reduce((a, b) => a + b, 0) 
-    : Math.ceil((stats?.totalIdeas || 12) * 0.65);
-  const ideaWardsCount = (stats?.totalIdeas || 12) - ideaSchoolsCount > 0 
-    ? (stats?.totalIdeas || 12) - ideaSchoolsCount 
-    : 5;
+    : 0;
+  const ideaWardsCount = stats?.ideasByWard 
+    ? Object.values(stats.ideasByWard).reduce((a, b) => a + b, 0) 
+    : 0;
 
   return (
     <div className="bg-gradient-to-b from-[#EBF5FB] via-[#F3F9FD] to-[#E9F3FA] text-slate-800 pt-7 pb-8 px-4 sm:px-6 lg:px-8 border-b border-sky-200/90 shadow-xs">
@@ -209,12 +191,12 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
                 <div className="flex justify-between items-center">
                   <span>Đã nghiệm thu:</span>
                   <span className="font-mono text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                    {stats?.tasksAccepted || 18} đề tài
+                    {stats?.tasksAccepted ?? 0} đề tài
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Đang thực hiện:</span>
-                  <span className="font-mono text-amber-700 font-semibold">{stats?.tasksRunning || 12}</span>
+                  <span className="font-mono text-amber-700 font-semibold">{stats?.tasksRunning ?? 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Kinh phí NSNN:</span>

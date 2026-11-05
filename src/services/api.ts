@@ -203,10 +203,11 @@ export const api = {
   },
 
   // Module records
-  async getModuleRecords(moduleType: ModuleType, sortBy?: string, order?: 'asc' | 'desc'): Promise<BaseEntity[]> {
+  async getModuleRecords(moduleType: ModuleType, sortBy?: string, order?: 'asc' | 'desc', publicOnly?: boolean): Promise<BaseEntity[]> {
     const searchParams = new URLSearchParams();
     if (sortBy) searchParams.set('sortBy', sortBy);
     if (order) searchParams.set('order', order);
+    if (publicOnly) searchParams.set('publicOnly', 'true');
     const res = await authFetch(`/api/modules/${moduleType}?${searchParams.toString()}`, {
       headers: getAuthHeaders()
     });

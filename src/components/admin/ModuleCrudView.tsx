@@ -80,6 +80,8 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [attachmentEntity, setAttachmentEntity] = useState<BaseEntity | null>(null);
 
+  const [isSaving, setIsSaving] = useState(false);
+
   // Form State for Create/Edit
   const [formTitle, setFormTitle] = useState('');
   const [formField, setFormField] = useState('Công nghệ thông tin và Truyền thông');
@@ -157,12 +159,16 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
 
   const handleSaveForm = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formTitle) return;
+    if (!formTitle.trim()) {
+      showErrorToast('Vui lòng nhập tiêu đề hoặc tên đối tượng.');
+      return;
+    }
 
+    setIsSaving(true);
     try {
       const payload: Record<string, any> = {
         ...extraFields,
-        title: formTitle,
+        title: formTitle.trim(),
         field: formField,
         ownerName: formOwner,
         description: formDesc,
@@ -174,7 +180,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       if (editingRecord) {
         payload.updateNote = 'Chỉnh sửa thông tin từ giao diện quản trị';
         await api.updateRecord(moduleType, editingRecord.id, payload);
-        showToast(`Đã cập nhật bản ghi [${editingRecord.code}] thành công`);
+        showToast(`Đã lưu thông tin bản ghi [${editingRecord.code}] thành công`);
         setEditingRecord(null);
       } else {
         await api.createRecord(moduleType, payload);
@@ -183,7 +189,9 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       }
       await loadData();
     } catch (err: any) {
-      showErrorToast(err.message || 'Lỗi lưu bản ghi');
+      showErrorToast(err.message || 'Lỗi lưu thông tin bản ghi');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1471,9 +1479,11 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-teal-800 hover:bg-teal-700 text-white font-semibold rounded-lg cursor-pointer shadow-xs"
+                  disabled={isSaving}
+                  className="px-5 py-2 bg-teal-800 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold rounded-lg cursor-pointer shadow-xs flex items-center gap-1.5"
                 >
-                  {editingRecord ? 'Lưu thay đổi' : 'Tạo mới bản ghi'}
+                  {isSaving && <Clock className="w-4 h-4 animate-spin" />}
+                  <span>{isSaving ? 'Đang lưu...' : (editingRecord ? 'Lưu thông tin' : 'Tạo mới bản ghi')}</span>
                 </button>
               </div>
             </form>

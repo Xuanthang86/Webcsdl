@@ -413,7 +413,7 @@ class DatabaseManager {
   public getModuleRecords(moduleType: ModuleType, filterPublicOnly = false): any[] {
     const list = (this.data[moduleType] as any[]) || [];
     if (filterPublicOnly) {
-      return list.filter(item => item.publicityLevel === 'public' && (item.status === 'approved' || item.status === 'under_review'));
+      return list.filter(item => item.publicityLevel === 'public' && item.status === 'approved');
     }
     return list;
   }
@@ -696,7 +696,7 @@ class DatabaseManager {
       for (const item of records) {
         if (isPublicOnly) {
           if (item.publicityLevel !== 'public') continue;
-          if (item.status !== 'approved' && item.status !== 'under_review') continue;
+          if (item.status !== 'approved') continue;
         }
 
         if (filters.field && filters.field !== 'all') {
@@ -981,7 +981,7 @@ class DatabaseManager {
     return {
       totalScienceTasks: tasks.length,
       tasksRunning: tasks.filter(t => (t.executionProgress || 0) < 100 && t.acceptanceResult !== 'Đã nghiệm thu' && t.acceptanceResult !== 'Xuất sắc' && t.acceptanceResult !== 'Đạt').length,
-      tasksAccepted: acceptedTasksCount || 18,
+      tasksAccepted: acceptedTasksCount,
       tasksPending: tasks.filter(t => t.status === 'submitted' || t.status === 'under_review').length,
       totalInitiatives: initiatives.length,
       initiativesRecognized: recognizedInitiativesCount,

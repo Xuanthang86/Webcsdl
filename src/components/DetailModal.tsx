@@ -91,8 +91,20 @@ export const DetailModal: React.FC<DetailModalProps> = ({
     }
   };
 
+  const formatDateSafe = (dateVal?: any) => {
+    if (!dateVal) return '—';
+    try {
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return String(dateVal);
+      return d.toLocaleDateString('vi-VN');
+    } catch {
+      return String(dateVal);
+    }
+  };
+
   const handleDownloadFile = (fileName?: string) => {
-    const docName = fileName || `Ho_so_${entity.code || entity.id}_${entity.title.slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_')}.txt`;
+    const safeTitle = (entity.title || 'ban_ghi').slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_');
+    const docName = fileName || `Ho_so_${entity.code || entity.id}_${safeTitle}.txt`;
     const content = `================================================================================
 ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ
 CỔNG DỮ LIỆU TỔNG HỢP KH&CN, ĐỔI MỚI SÁNG TẠO VÀ KHỞI NGHIỆP CẤP THÀNH PHỐ
@@ -100,18 +112,18 @@ CỔNG DỮ LIỆU TỔNG HỢP KH&CN, ĐỔI MỚI SÁNG TẠO VÀ KHỞI NGHI�
 HỒ SƠ THÔNG TIN TRÍCH XUẤT CHÍNH THỨC
 Thời gian trích xuất: ${new Date().toLocaleString('vi-VN')}
 Mã số quản lý định danh: ${entity.code || entity.id}
-Phân hệ cơ sở dữ liệu: ${entity.moduleType}
+Phân hệ cơ sở dữ liệu: ${entity.moduleType || 'science_tasks'}
 
 1. THÔNG TIN CHUNG
-- Tiêu đề / Tên: ${entity.title}
+- Tiêu đề / Tên: ${entity.title || 'Chưa cập nhật tiêu đề'}
 - Lĩnh vực chuyên ngành: ${entity.field || 'Đa ngành'}
 - Chủ trì / Tác giả / Đơn vị sở hữu: ${entity.ownerName || 'Chưa cập nhật'}
 - Nguồn gốc dữ liệu: ${entity.source || 'Cơ quan có thẩm quyền'}
-- Trạng thái phê duyệt: ${entity.status}
-- Tình trạng xác minh: ${entity.verificationStatus}
-- Phạm vi công khai: ${entity.publicityLevel}
-- Ngày khởi tạo: ${entity.createdAt}
-- Cập nhật lần cuối: ${entity.updatedAt || entity.createdAt}
+- Trạng thái phê duyệt: ${entity.status || 'draft'}
+- Tình trạng xác minh: ${entity.verificationStatus || 'pending'}
+- Phạm vi công khai: ${entity.publicityLevel || 'public'}
+- Ngày khởi tạo: ${entity.createdAt || '—'}
+- Cập nhật lần cuối: ${entity.updatedAt || entity.createdAt || '—'}
 
 2. MÔ TẢ TÓM TẮT NỘI DUNG
 ${entity.description || 'Không có mô tả chi tiết'}
@@ -137,7 +149,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
   };
 
   const handleCopyLink = () => {
-    const url = `${window.location.origin}?module=${entity.moduleType}&id=${entity.id}`;
+    const url = `${window.location.origin}?module=${entity.moduleType || 'science_tasks'}&id=${entity.id}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -184,14 +196,14 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
               <span className="font-mono font-medium text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                {entity.code}
+                {entity.code || entity.id}
               </span>
               <span aria-hidden="true">·</span>
               <span className="font-semibold text-slate-700 capitalize">
-                {entity.moduleType.replace(/_/g, ' ')}
+                {(entity.moduleType || 'science_tasks').replace(/_/g, ' ')}
               </span>
               <span aria-hidden="true">·</span>
-              <span>Cập nhật: {new Date(entity.updatedAt || entity.createdAt).toLocaleDateString('vi-VN')}</span>
+              <span>Cập nhật: {formatDateSafe(entity.updatedAt || entity.createdAt)}</span>
               {isAuthorized && (
                 <span className="bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded font-semibold text-[11px] border border-emerald-200 flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3 text-emerald-600" />
@@ -200,7 +212,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
               )}
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
-              {entity.title}
+              {entity.title || 'Không có tiêu đề'}
             </h2>
           </div>
 
@@ -291,7 +303,9 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <span className="sm:col-span-2">
                       {isAuthorized ? (
                         <span className="text-slate-800 font-medium">
-                          {Array.isArray(entity.members) ? entity.members.join(', ') : (entity.members || entity.projectTeam || 'TS. Lê Thị Mai, ThS. Nguyễn Văn Bình, KS. Trần Quốc Tuấn, CN. Hoàng Anh')}
+                          {Array.isArray(entity.members) 
+                            ? entity.members.map((m: any) => typeof m === 'string' ? m : (m?.name || m?.fullName || JSON.stringify(m))).join(', ') 
+                            : (typeof entity.members === 'string' ? entity.members : (typeof entity.projectTeam === 'string' ? entity.projectTeam : 'TS. Lê Thị Mai, ThS. Nguyễn Văn Bình, KS. Trần Quốc Tuấn, CN. Hoàng Anh'))}
                         </span>
                       ) : (
                         <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
@@ -1221,20 +1235,20 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                 <span>Mạng lưới liên kết dữ liệu trực thuộc ({relationships.length})</span>
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                {relationships.map((rel) => {
+                {relationships.filter(Boolean).map((rel) => {
                   const isSource = rel.sourceId === entity.id;
-                  const targetTitle = isSource ? rel.targetTitle : rel.sourceTitle;
-                  const targetModule = isSource ? rel.targetModule : rel.sourceModule;
+                  const targetTitle = isSource ? (rel.targetTitle || 'Bản ghi liên kết') : (rel.sourceTitle || 'Bản ghi liên kết');
+                  const targetModule = (isSource ? rel.targetModule : rel.sourceModule) || 'science_tasks';
                   const targetId = isSource ? rel.targetId : rel.sourceId;
                   return (
                     <div
-                      key={rel.id}
+                      key={rel.id || Math.random()}
                       onClick={() => onOpenEntity(targetModule, targetId)}
                       className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-teal-50/50 hover:border-teal-300 transition-colors cursor-pointer flex items-center justify-between group"
                     >
                       <div className="space-y-0.5 min-w-0 pr-2">
                         <span className="text-[10px] font-semibold uppercase text-teal-700 block truncate">
-                          {rel.relationType} · {targetModule.replace(/_/g, ' ')}
+                          {rel.relationType || 'Liên kết'} · {String(targetModule).replace(/_/g, ' ')}
                         </span>
                         <span className="font-semibold text-slate-900 group-hover:text-teal-900 block truncate">
                           {targetTitle}

@@ -350,7 +350,7 @@ apiRouter.get('/modules/:moduleType', (req: AuthenticatedRequest, res: Response)
     res.status(400).json({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' });
     return;
   }
-  const isPublicOnly = req.user?.role === 'public_user';
+  const isPublicOnly = req.query.publicOnly === 'true' || req.user?.role === 'public_user';
   const records = db.getModuleRecords(moduleType, isPublicOnly);
 
   // Sorting: specialized for Wards (Phường -> Xã -> Đặc khu) and Universities (Đại học -> Cao đẳng) per Section VI

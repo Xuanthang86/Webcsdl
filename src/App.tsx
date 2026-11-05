@@ -44,49 +44,43 @@ export default function App() {
   });
 
   const INITIAL_STATS: AggregatedStats = {
-    totalScienceTasks: 18,
-    tasksRunning: 12,
-    tasksAccepted: 15,
-    tasksPending: 3,
-    totalInitiatives: 15,
-    initiativesRecognized: 14,
-    initiativesInCurrentYear: 14,
+    totalScienceTasks: 0,
+    tasksRunning: 0,
+    tasksAccepted: 0,
+    tasksPending: 0,
+    totalInitiatives: 0,
+    initiativesRecognized: 0,
+    initiativesInCurrentYear: 0,
     currentYear: new Date().getFullYear(),
-    totalPatents: 8,
-    totalExperts: 32,
-    verifiedExperts: 28,
-    totalStartups: 14,
-    totalSupportOrgs: 5,
-    totalProjects: 10,
-    totalIdeas: 12,
-    totalWards: 56,
-    totalUniversities: 8,
-    totalFeaturedStartups: 7,
-    totalOrganizations: 16,
-    totalInvestors: 6,
-    totalFunds: 4,
-    totalPrograms: 7,
-    totalPublications: 45,
-    totalTechnologies: 18,
-    totalCollaborationNeeds: 9,
-    totalLabEquipments: 12,
-    totalPolicies: 15,
-    totalRelationships: 38,
-    pendingApprovalsCount: 2,
-    fieldBreakdown: { 'Công nghệ thông tin, Chuyển đổi số & AI': 6 },
-    statusBreakdown: { approved: 15, under_review: 3 },
-    totalBudgetApproved: 32500000000,
-    totalCostSavings: 8400000000,
-    tasksByField: {
-      'Công nghệ thông tin, Chuyển đổi số & AI': 6,
-      'Y Dược & Công nghệ sinh học': 4,
-      'Nông nghiệp công nghệ cao': 3,
-      'Môi trường, Năng lượng & Biến đổi khí hậu': 3,
-      'Cơ khí tự động hóa & Vật liệu mới': 2
-    },
-    tasksByYear: { '2023': 4, '2024': 6, '2025': 6, '2026': 2 },
-    initiativesByYear: { '2023': 3, '2024': 5, '2025': 5, '2026': 2 },
-    startupsByYear: { '2023': 3, '2024': 6, '2025': 4, '2026': 1 }
+    totalPatents: 0,
+    totalExperts: 0,
+    verifiedExperts: 0,
+    totalStartups: 0,
+    totalSupportOrgs: 0,
+    totalProjects: 0,
+    totalIdeas: 0,
+    totalWards: 0,
+    totalUniversities: 0,
+    totalFeaturedStartups: 0,
+    totalOrganizations: 0,
+    totalInvestors: 0,
+    totalFunds: 0,
+    totalPrograms: 0,
+    totalPublications: 0,
+    totalTechnologies: 0,
+    totalCollaborationNeeds: 0,
+    totalLabEquipments: 0,
+    totalPolicies: 0,
+    totalRelationships: 0,
+    pendingApprovalsCount: 0,
+    fieldBreakdown: {},
+    statusBreakdown: { approved: 0, under_review: 0, draft: 0, needs_revision: 0 },
+    totalBudgetApproved: 0,
+    totalCostSavings: 0,
+    tasksByField: {},
+    tasksByYear: {},
+    initiativesByYear: {},
+    startupsByYear: {}
   };
 
   const [stats, setStats] = useState<AggregatedStats | null>(INITIAL_STATS);
@@ -131,27 +125,10 @@ export default function App() {
 
   const initAppData = async () => {
     try {
-      // 1. Load User & Check Tab/Browser Session Freshness
-      const isTabSessionActive = typeof window !== 'undefined' && sessionStorage.getItem('portal_tab_active') === 'true';
+      // 1. Load User
       const userRes = await api.getCurrentUser();
-
-      if (userRes?.user && userRes.user.role !== 'public_user' && !isTabSessionActive) {
-        // User closed tab/browser and reopened: automatically clear stale session
-        await api.logout().catch(() => {});
-        setCurrentUser({
-          id: 'usr_guest',
-          username: 'guest',
-          fullName: 'Khách vãng lai',
-          email: 'guest@danang.gov.vn',
-          role: 'public_user',
-          isActive: true,
-          createdAt: new Date().toISOString()
-        });
-      } else {
+      if (userRes?.user) {
         setCurrentUser(userRes.user);
-        if (userRes?.user && userRes.user.role !== 'public_user' && typeof window !== 'undefined') {
-          sessionStorage.setItem('portal_tab_active', 'true');
-        }
       }
       setAvailableRoles(userRes.availableRoles || []);
 
@@ -163,7 +140,7 @@ export default function App() {
       setSystemConfig(configData);
       setStats(statsData);
 
-      // 3. Load Featured Showcase Data for all 10 types (top 3 each)
+      // 3. Load Featured Showcase Data for all 10 types (top 3 each, public approved only)
       const [
         tasks,
         inits,
@@ -179,19 +156,19 @@ export default function App() {
         needs,
         pols
       ] = await Promise.all([
-        api.getModuleRecords('science_tasks'),
-        api.getModuleRecords('initiatives'),
-        api.getModuleRecords('patents'),
-        api.getModuleRecords('experts'),
-        api.getModuleRecords('startups'),
-        api.getModuleRecords('support_organizations'),
-        api.getModuleRecords('startup_projects'),
-        api.getModuleRecords('startup_ideas'),
-        api.getModuleRecords('wards'),
-        api.getModuleRecords('universities'),
-        api.getModuleRecords('featured_startups'),
-        api.getModuleRecords('collaboration_needs'),
-        api.getModuleRecords('policies')
+        api.getModuleRecords('science_tasks', undefined, undefined, true),
+        api.getModuleRecords('initiatives', undefined, undefined, true),
+        api.getModuleRecords('patents', undefined, undefined, true),
+        api.getModuleRecords('experts', undefined, undefined, true),
+        api.getModuleRecords('startups', undefined, undefined, true),
+        api.getModuleRecords('support_organizations', undefined, undefined, true),
+        api.getModuleRecords('startup_projects', undefined, undefined, true),
+        api.getModuleRecords('startup_ideas', undefined, undefined, true),
+        api.getModuleRecords('wards', undefined, undefined, true),
+        api.getModuleRecords('universities', undefined, undefined, true),
+        api.getModuleRecords('featured_startups', undefined, undefined, true),
+        api.getModuleRecords('collaboration_needs', undefined, undefined, true),
+        api.getModuleRecords('policies', undefined, undefined, true)
       ]);
 
       setFeaturedTasks(tasks.slice(0, 3));

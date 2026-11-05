@@ -833,7 +833,45 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
             SINGLE MODULE VIEW: TABLE OR GRID
            ========================================================================= */
         <div className="space-y-6">
-          {viewMode === 'table' ? (
+          {processedResults.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3 shadow-2xs">
+              <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                <Search className="w-6 h-6" />
+              </div>
+              <div className="text-base font-bold text-slate-800">Không tìm thấy dữ liệu phù hợp</div>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
+                Không có bản ghi nào khớp với điều kiện tìm kiếm hoặc bộ lọc hiện tại. Hãy thử đặt lại bộ lọc hoặc chọn tất cả phân hệ.
+              </p>
+              <div className="flex items-center justify-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery('');
+                    setSelectedField('');
+                    setStatusFilter('all');
+                    setFilterYear('all');
+                    setFilterUnit('all');
+                    setFilterLevel('all');
+                    setFilterSpecialty('all');
+                    setFilterAcademicRank('all');
+                    setFilterDegree('all');
+                    setFilterSchoolWard('all');
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-teal-800 hover:bg-teal-700 text-white font-semibold rounded-xl text-xs transition-colors cursor-pointer shadow-xs"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Đặt lại bộ lọc</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedModule('all')}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors cursor-pointer"
+                >
+                  <span>Xem tất cả phân hệ</span>
+                </button>
+              </div>
+            </div>
+          ) : viewMode === 'table' ? (
             <>
               {/* MOBILE ADAPTIVE CARDS (block md:hidden):
                   No STT prefix displayed on mobile;
