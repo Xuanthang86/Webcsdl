@@ -22,7 +22,13 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(() => {
+    try {
+      return localStorage.getItem("portal_remember_username") || "";
+    } catch {
+      return "";
+    }
+  });
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -35,11 +41,12 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     setError(null);
     setLoading(true);
 
+    const cleanUsername = username.trim();
     try {
-      const user = await api.login(username, password);
+      const user = await api.login(cleanUsername, password);
       if (rememberMe) {
         try {
-          localStorage.setItem("portal_remember_username", username);
+          localStorage.setItem("portal_remember_username", cleanUsername);
         } catch {}
       } else {
         try {

@@ -15,6 +15,15 @@ function getAuthHeaders(extraHeaders: Record<string, string> = {}): Record<strin
   return { ...extraHeaders };
 }
 
+function authFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+  const headers = getAuthHeaders((init.headers as Record<string, string>) || {});
+  return fetch(input, {
+    ...init,
+    credentials: 'include',
+    headers
+  });
+}
+
 async function parseJsonResponse<T = any>(res: Response): Promise<T> {
   if (res.status === 401 && typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('portal:auth-expired'));
@@ -39,14 +48,14 @@ async function parseJsonResponse<T = any>(res: Response): Promise<T> {
 export const api = {
   // Auth
   async getCurrentUser(): Promise<{ user: User; availableRoles: Array<{ role: string; label: string }> }> {
-    const res = await fetch('/api/auth/me', {
+    const res = await authFetch('/api/auth/me', {
       headers: getAuthHeaders()
     });
     return parseJsonResponse(res);
   },
 
   async switchRole(role: string): Promise<User> {
-    const res = await fetch('/api/auth/switch-role', {
+    const res = await authFetch('/api/auth/switch-role', {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ role })
@@ -56,7 +65,7 @@ export const api = {
   },
 
   async login(username: string, password?: string): Promise<User> {
-    const res = await fetch('/api/auth/login', {
+    const res = await authFetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -67,7 +76,7 @@ export const api = {
 
   async logout(): Promise<void> {
     try {
-      const res = await fetch('/api/auth/logout', { 
+      const res = await authFetch('/api/auth/logout', { 
         method: 'POST',
         headers: getAuthHeaders()
       });
@@ -77,7 +86,7 @@ export const api = {
   },
 
   async changePassword(params: { currentPassword?: string; newPassword: string; confirmPassword?: string }): Promise<{ success: boolean; message?: string; user?: User }> {
-    const res = await fetch('/api/auth/change-password', {
+    const res = await authFetch('/api/auth/change-password', {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(params)
@@ -86,7 +95,7 @@ export const api = {
   },
 
   async updateProfile(params: { phone?: string; organization?: string }): Promise<{ success: boolean; message?: string; user?: User }> {
-    const res = await fetch('/api/auth/profile', {
+    const res = await authFetch('/api/auth/profile', {
       method: 'PUT',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(params)
@@ -95,7 +104,7 @@ export const api = {
   },
 
   async getUsers(): Promise<User[]> {
-    const res = await fetch('/api/users', {
+    const res = await authFetch('/api/users', {
       headers: getAuthHeaders()
     });
     const data = await parseJsonResponse(res);
@@ -103,7 +112,7 @@ export const api = {
   },
 
   async createUser(userData: Partial<User>): Promise<User> {
-    const res = await fetch('/api/users', {
+    const res = await authFetch('/api/users', {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(userData)
@@ -113,7 +122,7 @@ export const api = {
   },
 
   async updateUser(id: string, userData: Partial<User>): Promise<User> {
-    const res = await fetch(`/api/users/${id}`, {
+    const res = await authFetch(`/api/users/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(userData)
@@ -123,7 +132,7 @@ export const api = {
   },
 
   async deleteUser(id: string): Promise<boolean> {
-    const res = await fetch(`/api/users/${id}`, {
+    const res = await authFetch(`/api/users/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -133,7 +142,7 @@ export const api = {
 
   // Config
   async getConfig(): Promise<SystemConfig> {
-    const res = await fetch('/api/config', {
+    const res = await authFetch('/api/config', {
       headers: getAuthHeaders()
     });
     const data = await parseJsonResponse(res);
@@ -141,7 +150,7 @@ export const api = {
   },
 
   async updateConfig(config: Partial<SystemConfig>): Promise<SystemConfig> {
-    const res = await fetch('/api/config', {
+    const res = await authFetch('/api/config', {
       method: 'PUT',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(config)
@@ -153,7 +162,7 @@ export const api = {
   // Stats
   async getStats(year?: string): Promise<AggregatedStats> {
     const url = year ? `/api/stats?year=${encodeURIComponent(year)}` : '/api/stats';
-    const res = await fetch(url, {
+    const res = await authFetch(url, {
       headers: getAuthHeaders()
     });
     const data = await parseJsonResponse(res);
@@ -177,7 +186,7 @@ export const api = {
     if (params.status) searchParams.set('status', params.status);
     if (params.verificationStatus) searchParams.set('verificationStatus', params.verificationStatus);
 
-    const res = await fetch(`/api/search?${searchParams.toString()}`, {
+    const res = await authFetch(`/api/search?${searchParams.toString()}`, {
       headers: getAuthHeaders()
     });
     return await parseJsonResponse(res);
@@ -188,7 +197,7 @@ export const api = {
     const searchParams = new URLSearchParams();
     if (sortBy) searchParams.set('sortBy', sortBy);
     if (order) searchParams.set('order', order);
-    const res = await fetch(`/api/modules/${moduleType}?${searchParams.toString()}`, {
+    const res = await authFetch(`/api/modules/${moduleType}?${searchParams.toString()}`, {
       headers: getAuthHeaders()
     });
     const json = await parseJsonResponse(res);
@@ -196,14 +205,14 @@ export const api = {
   },
 
   async getRecordById(moduleType: ModuleType, id: string): Promise<{ data: BaseEntity; relationships: EntityRelationship[] }> {
-    const res = await fetch(`/api/modules/${moduleType}/${id}`, {
+    const res = await authFetch(`/api/modules/${moduleType}/${id}`, {
       headers: getAuthHeaders()
     });
     return parseJsonResponse(res);
   },
 
   async createRecord(moduleType: ModuleType, payload: any): Promise<BaseEntity> {
-    const res = await fetch(`/api/modules/${moduleType}`, {
+    const res = await authFetch(`/api/modules/${moduleType}`, {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
@@ -213,7 +222,7 @@ export const api = {
   },
 
   async updateRecord(moduleType: ModuleType, id: string, payload: any): Promise<BaseEntity> {
-    const res = await fetch(`/api/modules/${moduleType}/${id}`, {
+    const res = await authFetch(`/api/modules/${moduleType}/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
@@ -223,7 +232,7 @@ export const api = {
   },
 
   async deleteRecord(moduleType: ModuleType, id: string): Promise<boolean> {
-    const res = await fetch(`/api/modules/${moduleType}/${id}`, {
+    const res = await authFetch(`/api/modules/${moduleType}/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -233,7 +242,7 @@ export const api = {
 
   // Workflow
   async transitionWorkflow(moduleType: ModuleType, id: string, status: string, note?: string): Promise<BaseEntity> {
-    const res = await fetch(`/api/modules/${moduleType}/${id}/workflow`, {
+    const res = await authFetch(`/api/modules/${moduleType}/${id}/workflow`, {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ status, note })
@@ -245,13 +254,13 @@ export const api = {
   // Relationships
   async getRelationships(entityId?: string): Promise<EntityRelationship[]> {
     const url = entityId ? `/api/relationships?entityId=${entityId}` : '/api/relationships';
-    const res = await fetch(url, { headers: getAuthHeaders() });
+    const res = await authFetch(url, { headers: getAuthHeaders() });
     const json = await parseJsonResponse(res);
     return json.data || [];
   },
 
   async createRelationship(rel: Omit<EntityRelationship, 'id' | 'createdAt'>): Promise<EntityRelationship> {
-    const res = await fetch('/api/relationships', {
+    const res = await authFetch('/api/relationships', {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(rel)
@@ -261,7 +270,7 @@ export const api = {
   },
 
   async deleteRelationship(id: string): Promise<boolean> {
-    const res = await fetch(`/api/relationships/${id}`, { 
+    const res = await authFetch(`/api/relationships/${id}`, { 
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -271,7 +280,7 @@ export const api = {
 
   // Import / Export
   async importRecords(moduleType: ModuleType, items: any[]): Promise<{ importedCount: number; errors: string[]; duplicates: string[] }> {
-    const res = await fetch(`/api/import/${moduleType}`, {
+    const res = await authFetch(`/api/import/${moduleType}`, {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ items })
@@ -290,7 +299,7 @@ export const api = {
 
   // Audit Logs
   async getAuditLogs(limit = 100): Promise<AuditLog[]> {
-    const res = await fetch(`/api/audit-logs?limit=${limit}`, {
+    const res = await authFetch(`/api/audit-logs?limit=${limit}`, {
       headers: getAuthHeaders()
     });
     const json = await parseJsonResponse(res);
@@ -300,7 +309,7 @@ export const api = {
   // Connections
   async getConnections(needId?: string): Promise<ConnectionMessage[]> {
     const url = needId ? `/api/connections?needId=${needId}` : '/api/connections';
-    const res = await fetch(url, { headers: getAuthHeaders() });
+    const res = await authFetch(url, { headers: getAuthHeaders() });
     const json = await parseJsonResponse(res);
     return json.data || [];
   },
@@ -314,7 +323,7 @@ export const api = {
     message: string;
     proposedCapability?: string;
   }): Promise<ConnectionMessage> {
-    const res = await fetch('/api/connections', {
+    const res = await authFetch('/api/connections', {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
@@ -324,7 +333,7 @@ export const api = {
   },
 
   async updateConnectionStatus(id: string, status: 'accepted' | 'declined'): Promise<boolean> {
-    const res = await fetch(`/api/connections/${id}`, {
+    const res = await authFetch(`/api/connections/${id}`, {
       method: 'PATCH',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ status })
@@ -339,7 +348,7 @@ export const api = {
   },
 
   async restoreBackup(snapshot: any): Promise<boolean> {
-    const res = await fetch('/api/restore', {
+    const res = await authFetch('/api/restore', {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(snapshot)
@@ -355,7 +364,7 @@ export const api = {
     passedTests: number;
     results: Array<{ id: number; name: string; passed: boolean; message: string; durationMs: number }>;
   }> {
-    const res = await fetch('/api/test-suite/run', { 
+    const res = await authFetch('/api/test-suite/run', { 
       method: 'POST',
       headers: getAuthHeaders()
     });
@@ -365,7 +374,7 @@ export const api = {
 
   // Form Management (Section VIII.3)
   async getFormConfig(moduleType: string): Promise<any> {
-    const res = await fetch(`/api/forms/${moduleType}`, {
+    const res = await authFetch(`/api/forms/${moduleType}`, {
       headers: getAuthHeaders()
     });
     const json = await parseJsonResponse(res);
@@ -373,7 +382,7 @@ export const api = {
   },
 
   async updateFormConfig(moduleType: string, config: any): Promise<any> {
-    const res = await fetch(`/api/forms/${moduleType}`, {
+    const res = await authFetch(`/api/forms/${moduleType}`, {
       method: 'PUT',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(config)
@@ -384,14 +393,14 @@ export const api = {
 
   // Cloudflare D1 & SQL Export / Reconcile
   async exportD1Sql(download = false): Promise<string> {
-    const res = await fetch(`/api/d1/export-sql${download ? '?download=1' : ''}`, {
+    const res = await authFetch(`/api/d1/export-sql${download ? '?download=1' : ''}`, {
       headers: getAuthHeaders()
     });
     return res.text();
   },
 
   async reconcileD1(): Promise<any> {
-    const res = await fetch('/api/d1/reconcile', {
+    const res = await authFetch('/api/d1/reconcile', {
       headers: getAuthHeaders()
     });
     const json = await parseJsonResponse(res);
@@ -400,7 +409,7 @@ export const api = {
 
   // ImageKit & Attachments
   async getImageKitAuth(): Promise<{ token: string; expire: number; signature: string; publicKey: string; urlEndpoint: string }> {
-    const res = await fetch('/api/imagekit/auth', {
+    const res = await authFetch('/api/imagekit/auth', {
       headers: getAuthHeaders()
     });
     return parseJsonResponse(res);
@@ -415,7 +424,7 @@ export const api = {
     moduleType?: string;
     title?: string;
   }): Promise<any> {
-    const res = await fetch('/api/imagekit/upload', {
+    const res = await authFetch('/api/imagekit/upload', {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data)
@@ -429,7 +438,7 @@ export const api = {
     if (filter?.entityId) params.append('entityId', filter.entityId);
     if (filter?.moduleType) params.append('moduleType', filter.moduleType);
     const query = params.toString() ? `?${params.toString()}` : '';
-    const res = await fetch(`/api/attachments${query}`, {
+    const res = await authFetch(`/api/attachments${query}`, {
       headers: getAuthHeaders()
     });
     const json = await parseJsonResponse(res);
@@ -437,7 +446,7 @@ export const api = {
   },
 
   async deleteAttachment(id: string): Promise<boolean> {
-    const res = await fetch(`/api/attachments/${id}`, {
+    const res = await authFetch(`/api/attachments/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
