@@ -440,9 +440,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
               <div className="flex flex-col justify-center min-w-0">
                 <span className="text-xs sm:text-sm font-black text-slate-800 tracking-tight leading-tight uppercase">
-                  CƠ SỞ DỮ LIỆU VỀ KHOA HỌC, CÔNG NGHỆ
+                  CỔNG DỮ LIỆU
                 </span>
-                <span className="text-[11px] sm:text-xs font-bold text-teal-800 tracking-tight leading-tight mt-0.5 uppercase">
+                <span className="text-[11px] sm:text-xs font-black text-slate-800 tracking-tight leading-tight mt-0.5 uppercase">
+                  VỀ KHOA HỌC, CÔNG NGHỆ
+                </span>
+                <span className="text-[10px] sm:text-[11px] font-bold text-teal-800 tracking-tight leading-tight mt-0.5 uppercase">
                   VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG
                 </span>
               </div>

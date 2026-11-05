@@ -228,12 +228,25 @@ export const Header: React.FC<HeaderProps> = ({
                 ĐN
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-[10px] sm:text-xs md:text-[13px] font-black tracking-tight text-teal-950 group-hover:text-teal-800 transition-colors uppercase leading-tight whitespace-nowrap">
-                  CƠ SỞ DỮ LIỆU VỀ KHOA HỌC, CÔNG NGHỆ
-                </span>
-                <span className="text-[9px] sm:text-[11px] md:text-xs font-bold text-teal-800 tracking-tight group-hover:text-teal-900 transition-colors uppercase mt-0.5 leading-tight whitespace-nowrap">
-                  VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG
-                </span>
+                {/* Mobile: 2 lines: CỔNG DỮ LIỆU / KHCN & KNĐMST TP ĐÀ NẴNG */}
+                <div className="sm:hidden flex flex-col min-w-0">
+                  <span className="text-[11px] font-black tracking-tight text-teal-950 group-hover:text-teal-800 transition-colors uppercase leading-tight whitespace-nowrap">
+                    CỔNG DỮ LIỆU
+                  </span>
+                  <span className="text-[9px] font-bold text-teal-800 tracking-tight group-hover:text-teal-900 transition-colors uppercase mt-0.5 leading-tight whitespace-nowrap">
+                    KHCN & KNĐMST TP ĐÀ NẴNG
+                  </span>
+                </div>
+
+                {/* Desktop (sm+): exactly 2 lines: CƠ SỞ DỮ LIỆU / VỀ KHCN VÀ KNĐMST THÀNH PHỐ ĐÀ NẴNG */}
+                <div className="hidden sm:flex flex-col min-w-0">
+                  <span className="text-xs md:text-[13px] font-black tracking-tight text-teal-950 group-hover:text-teal-800 transition-colors uppercase leading-tight whitespace-nowrap">
+                    CƠ SỞ DỮ LIỆU
+                  </span>
+                  <span className="text-[11px] md:text-xs font-bold text-teal-800 tracking-tight group-hover:text-teal-900 transition-colors uppercase mt-0.5 leading-tight whitespace-nowrap">
+                    VỀ KHCN VÀ KNĐMST THÀNH PHỐ ĐÀ NẴNG
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -245,8 +258,8 @@ export const Header: React.FC<HeaderProps> = ({
                 onNavigate('home');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className={`transition-colors whitespace-nowrap hover:text-slate-900 py-1 cursor-pointer ${
-                currentView === 'home' ? 'text-teal-800 font-bold border-b-2 border-teal-800' : ''
+              className={`transition-colors whitespace-nowrap hover:text-slate-900 py-1 cursor-pointer text-sm font-bold ${
+                currentView === 'home' ? 'text-teal-800 border-b-2 border-teal-800' : ''
               }`}
             >
               Trang chủ

@@ -409,7 +409,8 @@ async function ensureUsersTable(db: any) {
       id TEXT PRIMARY KEY,
       username TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
-      salt TEXT NOT NULL,
+      salt TEXT,
+      password_salt TEXT,
       full_name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       role TEXT NOT NULL,
@@ -423,9 +424,11 @@ async function ensureUsersTable(db: any) {
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     )`).run();
-    try {
-      await db.prepare('ALTER TABLE users ADD COLUMN managed_modules TEXT').run();
-    } catch {}
+    try { await db.prepare('ALTER TABLE users ADD COLUMN salt TEXT').run(); } catch {}
+    try { await db.prepare('ALTER TABLE users ADD COLUMN password_salt TEXT').run(); } catch {}
+    try { await db.prepare('ALTER TABLE users ADD COLUMN managed_modules TEXT').run(); } catch {}
+    try { await db.prepare('ALTER TABLE users ADD COLUMN failed_attempts INTEGER DEFAULT 0').run(); } catch {}
+    try { await db.prepare('ALTER TABLE users ADD COLUMN locked_until INTEGER DEFAULT 0').run(); } catch {}
   } catch (err) {
     console.warn('ensureUsersTable warning:', err);
   }
@@ -1404,9 +1407,49 @@ export default {
           ? (Array.isArray(body.managedModules) ? JSON.stringify(body.managedModules) : String(body.managedModules))
           : undefined;
 
+        if (targetUserId) {
+          let isTargetAdmin = targetUserId === 'usr_superadmin' || targetUserId === 'admin' || targetUserId === 'usr_sysadmin';
+          let existingUserRow: any = null;
+          if (env.DB) {
+            try {
+              existingUserRow = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(targetUserId).first();
+              if (existingUserRow && (existingUserRow.username === 'admin' || existingUserRow.role === 'super_admin' || existingUserRow.role === 'system_admin')) {
+                isTargetAdmin = true;
+              }
+            } catch {}
+          }
+
+          if (isTargetAdmin) {
+            if (isActive === 0) {
+              return jsonResponse({ success: false, message: 'Không được phép vô hiệu hóa tài khoản Quản trị viên hệ thống (Admin)!' }, 403);
+            }
+            if (role && role !== 'super_admin' && role !== 'system_admin') {
+              return jsonResponse({ success: false, message: 'Không được phép hạ quyền tài khoản Quản trị viên hệ thống (Admin)!' }, 403);
+            }
+            if (body.password && String(body.password).trim().length > 0) {
+              if (!body.currentPassword) {
+                return jsonResponse({ success: false, message: 'Khi đổi mật khẩu tài khoản Admin, bắt buộc phải nhập mật khẩu hiện tại.' }, 400);
+              }
+              if (existingUserRow) {
+                const pSalt = existingUserRow.salt || existingUserRow.password_salt || '';
+                const valid = await verifyPasswordHash(body.currentPassword, existingUserRow.password_hash, pSalt);
+                if (!valid) {
+                  return jsonResponse({ success: false, message: 'Mật khẩu hiện tại không chính xác.' }, 400);
+                }
+              }
+            }
+          }
+        }
+
         if (env.DB) {
           try {
             await ensureUsersTable(env.DB);
+            let userCols = new Set<string>();
+            try {
+              const info = await env.DB.prepare("SELECT name FROM pragma_table_info('users')").all<any>();
+              if (info?.results) (info.results as any[]).forEach(r => userCols.add(r.name));
+            } catch {}
+
             let passHash: string | undefined;
             let salt: string | undefined;
             if (body.password && String(body.password).trim().length > 0) {
@@ -1415,9 +1458,19 @@ export default {
             }
 
             if (passHash && salt) {
-              await env.DB.prepare(`
-                UPDATE users SET password_hash = ?, salt = ?, updated_at = datetime('now') WHERE id = ?
-              `).bind(passHash, salt, targetUserId).run();
+              if (userCols.has('salt') && userCols.has('password_salt')) {
+                await env.DB.prepare(`
+                  UPDATE users SET password_hash = ?, salt = ?, password_salt = ?, updated_at = datetime('now') WHERE id = ?
+                `).bind(passHash, salt, salt, targetUserId).run();
+              } else if (userCols.has('password_salt')) {
+                await env.DB.prepare(`
+                  UPDATE users SET password_hash = ?, password_salt = ?, updated_at = datetime('now') WHERE id = ?
+                `).bind(passHash, salt, targetUserId).run();
+              } else {
+                await env.DB.prepare(`
+                  UPDATE users SET password_hash = ?, salt = ?, updated_at = datetime('now') WHERE id = ?
+                `).bind(passHash, salt, targetUserId).run();
+              }
             }
 
             const updates: string[] = [];
@@ -1459,8 +1512,15 @@ export default {
       }
 
       if (request.method === 'DELETE' && targetUserId) {
+        if (targetUserId === 'usr_superadmin' || targetUserId === 'admin' || targetUserId === 'usr_sysadmin') {
+          return jsonResponse({ success: false, message: 'Không được phép xóa tài khoản Quản trị viên hệ thống (Admin)!' }, 403);
+        }
         if (env.DB) {
           try {
+            const u = await env.DB.prepare('SELECT username, role FROM users WHERE id = ?').bind(targetUserId).first<any>();
+            if (u && (u.username === 'admin' || u.role === 'super_admin' || u.role === 'system_admin')) {
+              return jsonResponse({ success: false, message: 'Không được phép xóa tài khoản Quản trị viên hệ thống (Admin)!' }, 403);
+            }
             await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(targetUserId).run();
           } catch (err: any) {
             console.error('Delete user D1 error:', err);
@@ -1789,6 +1849,71 @@ export default {
           }
         }
         return jsonResponse({ success: true, data: clean }, 201);
+      }
+
+      // PUT /api/modules/:moduleName/:id
+      if (recordId && (request.method === 'PUT' || request.method === 'PATCH')) {
+        const body = await request.json().catch(() => ({})) as any;
+        const clean = sanitizeObject(body);
+        clean.updated_at = new Date().toISOString();
+
+        if (env.DB) {
+          try {
+            await ensureTable(env.DB, moduleName);
+
+            let physicalCols = new Set<string>();
+            try {
+              const meta = await env.DB.prepare(
+                `SELECT sql FROM sqlite_master WHERE type='table' AND name = ?`
+              ).bind(moduleName).first<{ sql?: string }>();
+              if (meta?.sql) parseSqlColumns(meta.sql).forEach(c => physicalCols.add(c));
+            } catch {}
+
+            const entries: Array<[string, any]> = [];
+            const custom: Record<string, any> = {};
+
+            for (const [k, v] of Object.entries(clean)) {
+              if (k === 'id') continue;
+              const col = toSqlColumn(k);
+              if (!col || col === 'data_json') {
+                if (k !== 'data_json') custom[k] = v;
+                continue;
+              }
+              if (physicalCols.size > 0 && !physicalCols.has(col)) {
+                custom[k] = v;
+              } else {
+                entries.push([col, v]);
+              }
+            }
+
+            if (physicalCols.has('data_json') || physicalCols.size === 0) {
+              entries.push(['data_json', JSON.stringify(custom)]);
+            }
+
+            if (entries.length > 0) {
+              const setClause = entries.map(([c]) => `"${c}" = ?`).join(', ');
+              const values = entries.map(([, val]) => typeof val === 'object' && val !== null ? JSON.stringify(val) : val);
+              values.push(recordId);
+
+              await env.DB.prepare(`UPDATE ${moduleName} SET ${setClause} WHERE id = ?`).bind(...values).run();
+            }
+          } catch (e: any) {
+            return jsonResponse({ success: false, message: 'Lỗi cập nhật D1: ' + e.message }, 500);
+          }
+        }
+        return jsonResponse({ success: true, data: { ...clean, id: recordId } });
+      }
+
+      // DELETE /api/modules/:moduleName/:id
+      if (recordId && request.method === 'DELETE') {
+        if (env.DB) {
+          try {
+            await env.DB.prepare(`DELETE FROM ${moduleName} WHERE id = ?`).bind(recordId).run();
+          } catch (e: any) {
+            return jsonResponse({ success: false, message: 'Lỗi xóa bản ghi D1: ' + e.message }, 500);
+          }
+        }
+        return jsonResponse({ success: true, message: 'Đã xóa bản ghi thành công.' });
       }
     }
 

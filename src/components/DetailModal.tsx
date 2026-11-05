@@ -428,7 +428,70 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
           )}
 
           {/* =========================================================================
-              MODULE 3: CHUYÊN GIA & NHÀ KHOA HỌC
+              MODULE 3: SÁNG CHẾ & SỞ HỮU TRÍ TUỆ
+              Columns: STT, Số bằng/Số đơn, Tên sáng chế, Tác giả, Chủ sở hữu, Lĩnh vực, Tóm tắt
+             ========================================================================= */}
+          {entity.moduleType === 'patents' && (
+            <div className="space-y-4">
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+                <div className="bg-purple-50/70 px-4 py-3 border-b border-purple-200 font-bold text-xs uppercase tracking-wider text-purple-950 flex items-center gap-2">
+                  <Award className="w-4 h-4 text-purple-700" />
+                  <span>Chi tiết Sáng chế & Sở hữu trí tuệ</span>
+                </div>
+                <div className="divide-y divide-slate-100 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Mã / STT:</span>
+                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{entity.code || entity.id}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Tên sáng chế / Giải pháp:</span>
+                    <span className="sm:col-span-2 font-bold text-slate-900 text-sm">{entity.title}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Số bằng / Số đơn:</span>
+                    <span className="sm:col-span-2 font-mono font-bold text-purple-900 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-block w-fit">
+                      {entity.patentNumber || entity.code || '28492/SHTT'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Loại hình bảo hộ:</span>
+                    <span className="sm:col-span-2 font-medium text-slate-800">{entity.ipType || entity.patentType || 'Bằng độc quyền Sáng chế'}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Tác giả sáng chế:</span>
+                    <span className="sm:col-span-2 font-semibold text-slate-900">
+                      {Array.isArray(entity.authors) ? entity.authors.join(', ') : (entity.authors || entity.inventors || '—')}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Chủ sở hữu văn bằng:</span>
+                    <span className="sm:col-span-2 font-medium text-slate-800">{entity.ownerName || entity.applicant || '—'}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Lĩnh vực công nghệ:</span>
+                    <span className="sm:col-span-2 font-semibold text-teal-800">{entity.field || 'Khoa học Kỹ thuật và Công nghệ'}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Tóm tắt sáng chế:</span>
+                    <p className="sm:col-span-2 text-slate-700 leading-relaxed">{entity.description || entity.abstract || 'Chưa cập nhật tóm tắt nội dung sáng chế.'}</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Cơ quan cấp bằng:</span>
+                    <span className="sm:col-span-2 text-slate-700">{entity.issuingAgency || 'Cục Sở hữu trí tuệ Việt Nam'}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Tình trạng bảo hộ:</span>
+                    <span className="sm:col-span-2 font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block w-fit">
+                      {entity.status === 'approved' ? 'Đã cấp bằng bảo hộ chính thức' : 'Đang thẩm định đơn'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* =========================================================================
+              MODULE 4: CHUYÊN GIA & NHÀ KHOA HỌC
               Public list: STT, Tên Chuyên gia, Năm sinh, Chuyên ngành
               Authorized detail: STT, Tên Chuyên gia, Ngày tháng năm sinh, Giới tính, Học hàm, Học vị, Năm bắt đầu công tác, Chức danh nghiên cứu, Chức vụ, Email, Điện thoại, Lĩnh vực, Chuyên ngành, Tên đơn vị công tác, Quá trình đào tạo và học tập, Quá trình công tác, Ngoại ngữ (tích hợp sẵn tiếng Anh, tiếng Nhật, tiếng Hàn... và thêm mới), Tên bài báo/Tạp chí/Quốc gia, Tên văn bằng, Tên công trình/Kết quả nghiên cứu, Tên đề tài/Dự án (Cấp đề tài, Thời gian, Thành viên, Chủ trì/Tham gia, Tình trạng), Giải thưởng, Kinh nghiệm.
              ========================================================================= */}
@@ -1222,6 +1285,69 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <span className="font-semibold text-slate-500">Thuộc xã / phường:</span>
                     <span className="sm:col-span-2 font-medium text-slate-800">{entity.ward || entity.wardSchool || 'Phường Thạch Thang, Quận Hải Châu'}</span>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Fallback View for Auxiliary / Specialized Modules */}
+          {!['science_tasks', 'initiatives', 'patents', 'experts', 'startups', 'support_organizations', 'startup_projects', 'startup_ideas', 'wards', 'universities', 'featured_startups'].includes(entity.moduleType) && (
+            <div className="space-y-4">
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+                <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 font-bold text-xs uppercase tracking-wider text-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-teal-700" />
+                    <span>Hồ sơ chi tiết dữ liệu {(entity.moduleType || '').replace(/_/g, ' ')}</span>
+                  </div>
+                  <span className="font-mono text-teal-800">{entity.code || entity.id}</span>
+                </div>
+                <div className="divide-y divide-slate-100 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Mã / STT:</span>
+                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{entity.code || entity.id}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Tiêu đề / Tên:</span>
+                    <span className="sm:col-span-2 font-bold text-slate-900 text-base">{entity.title}</span>
+                  </div>
+                  {entity.field && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                      <span className="font-semibold text-slate-500">Lĩnh vực:</span>
+                      <span className="sm:col-span-2 font-semibold text-teal-800">{entity.field}</span>
+                    </div>
+                  )}
+                  {entity.ownerName && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                      <span className="font-semibold text-slate-500">Chủ trì / Sở hữu:</span>
+                      <span className="sm:col-span-2 font-medium text-slate-800">{entity.ownerName}</span>
+                    </div>
+                  )}
+                  {entity.description && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                      <span className="font-semibold text-slate-500">Mô tả chi tiết:</span>
+                      <p className="sm:col-span-2 text-slate-700 leading-relaxed whitespace-pre-line">{entity.description}</p>
+                    </div>
+                  )}
+                  {entity.address && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                      <span className="font-semibold text-slate-500">Địa chỉ:</span>
+                      <span className="sm:col-span-2 text-slate-800">{entity.address}</span>
+                    </div>
+                  )}
+                  {entity.contactInfo && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                      <span className="font-semibold text-slate-500">Thông tin liên hệ:</span>
+                      <span className="sm:col-span-2 font-mono text-slate-800">{entity.contactInfo}</span>
+                    </div>
+                  )}
+                  {entity.website && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                      <span className="font-semibold text-slate-500">Website:</span>
+                      <a href={entity.website} target="_blank" rel="noreferrer" className="sm:col-span-2 text-teal-700 hover:underline inline-flex items-center gap-1 font-mono">
+                        {entity.website} <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -24,7 +24,33 @@ import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdvancedSearchModal } from './components/AdvancedSearchModal';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'browse' | 'admin'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'browse' | 'admin'>(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'admin' || hash === 'browse' || hash === 'home') {
+        return hash as any;
+      }
+      const saved = localStorage.getItem('portal_current_view');
+      if (saved === 'admin' || saved === 'browse' || saved === 'home') {
+        return saved as any;
+      }
+    }
+    return 'home';
+  });
+
+  // Keep localStorage and URL hash in sync with view
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('portal_current_view', currentView);
+      if (currentView === 'home') {
+        if (window.location.hash) {
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      } else {
+        window.location.hash = currentView;
+      }
+    }
+  }, [currentView]);
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
   const [showAdvancedSearchModal, setShowAdvancedSearchModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | undefined>();
@@ -208,6 +234,8 @@ export default function App() {
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('portal_tab_active');
         localStorage.removeItem('portal_auth_token');
+        localStorage.removeItem('portal_current_view');
+        window.location.hash = '';
       }
       try {
         const guestData = await api.getCurrentUser();
