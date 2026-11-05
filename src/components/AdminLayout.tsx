@@ -98,16 +98,16 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   };
 
   const coreModulesList: { mod: ModuleType; label: string; icon: any; color: string }[] = [
-    { mod: 'science_tasks', label: '1. Đề tài, nhiệm vụ KH&CN', icon: FileText, color: 'text-teal-400' },
-    { mod: 'initiatives', label: '2. Sáng kiến thành phố', icon: Lightbulb, color: 'text-amber-400' },
-    { mod: 'experts', label: '3. Chuyên gia', icon: GraduationCap, color: 'text-blue-400' },
-    { mod: 'startups', label: '4. Doanh nghiệp KNST', icon: Rocket, color: 'text-rose-400' },
-    { mod: 'support_organizations', label: '5. Tổ chức trung gian', icon: Building2, color: 'text-cyan-400' },
-    { mod: 'startup_projects', label: '6. Dự án khởi nghiệp', icon: Target, color: 'text-emerald-400' },
-    { mod: 'startup_ideas', label: '7. Ý tưởng khởi nghiệp', icon: Lightbulb, color: 'text-yellow-400' },
-    { mod: 'wards', label: '8. Danh sách xã/phường', icon: MapPin, color: 'text-indigo-400' },
-    { mod: 'universities', label: '9. Trường ĐH/Cao đẳng', icon: School, color: 'text-violet-400' },
-    { mod: 'featured_startups', label: '10. DN khởi nghiệp tiêu biểu', icon: Star, color: 'text-amber-300' }
+    { mod: 'science_tasks', label: 'Đề tài, nhiệm vụ KH&CN', icon: FileText, color: 'text-teal-400' },
+    { mod: 'initiatives', label: 'Sáng kiến thành phố', icon: Lightbulb, color: 'text-amber-400' },
+    { mod: 'experts', label: 'Chuyên gia & Nhà khoa học', icon: GraduationCap, color: 'text-blue-400' },
+    { mod: 'startups', label: 'Doanh nghiệp khởi nghiệp sáng tạo', icon: Rocket, color: 'text-rose-400' },
+    { mod: 'support_organizations', label: 'Tổ chức trung gian', icon: Building2, color: 'text-cyan-400' },
+    { mod: 'startup_projects', label: 'Dự án khởi nghiệp', icon: Target, color: 'text-emerald-400' },
+    { mod: 'startup_ideas', label: 'Ý tưởng khởi nghiệp', icon: Lightbulb, color: 'text-yellow-400' },
+    { mod: 'wards', label: 'Danh sách xã/phường', icon: MapPin, color: 'text-indigo-400' },
+    { mod: 'universities', label: 'Trường ĐH/Cao đẳng trên địa bàn', icon: School, color: 'text-violet-400' },
+    { mod: 'featured_startups', label: 'Doanh nghiệp khởi nghiệp tiêu biểu', icon: Star, color: 'text-amber-300' }
   ];
 
   const visibleCoreModules = userAllowedModules
@@ -363,15 +363,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 <div className="font-semibold text-white truncate">{currentUser.fullName || currentUser.username}</div>
                 <div className="text-teal-400 text-[10px] truncate">{currentUser.role}</div>
               </div>
-              {onLogout && (
-                <button
-                  onClick={onLogout}
-                  className="p-1 text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 rounded transition-colors cursor-pointer"
-                  title="Đăng xuất"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                </button>
-              )}
             </div>
           )}
           <button
@@ -382,16 +373,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             <ArrowLeft className="w-4 h-4 text-teal-400" />
             <span>Truy cập Trang chủ</span>
           </button>
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className="w-full py-2 px-3 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 hover:text-white border border-rose-800/40 hover:border-rose-700 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs"
-              title="Đăng xuất khỏi hệ thống quản trị"
-            >
-              <LogOut className="w-4 h-4 text-rose-400" />
-              <span>Đăng xuất</span>
-            </button>
-          )}
         </div>
       </aside>
 
@@ -399,8 +380,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         
         {/* Admin Dedicated Top Header Bar (darkened to #D4E8F8, matching tone) */}
-        <header className="bg-[#D4E8F8] border-b border-sky-300 px-4 sm:px-6 lg:px-8 py-3.5 shrink-0 shadow-2xs">
-          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <header className="bg-[#D4E8F8] border-b border-sky-300 px-4 sm:px-6 py-3.5 shrink-0 shadow-2xs">
+          <div className="w-full flex items-center justify-between gap-4">
             <div className="flex flex-col justify-center min-w-0">
               <h1 className="text-base sm:text-lg md:text-xl font-black text-slate-800 tracking-tight leading-tight uppercase">
                 TRANG QUẢN TRỊ
@@ -423,8 +404,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-          <div className="max-w-7xl mx-auto space-y-6">
+        <main className="flex-1 p-4 sm:p-6 overflow-y-auto w-full">
+          <div className="w-full space-y-6">
             {activeTab === 'dashboard' && (
               <DashboardView
                 stats={stats}

@@ -61,8 +61,381 @@ const ALLOWED_MODULES = [
   'policies'
 ];
 
-// Convert camelCase to snake_case for physical D1 columns
+const MODULE_SCHEMAS: Record<string, string> = {
+  science_tasks: `CREATE TABLE IF NOT EXISTS science_tasks (
+    id TEXT PRIMARY KEY,
+    code TEXT,
+    module_type TEXT DEFAULT 'science_tasks',
+    title TEXT NOT NULL,
+    stt INTEGER,
+    management_level TEXT,
+    lead_agency TEXT,
+    lead_organization TEXT,
+    principal_investigator TEXT,
+    implementation_time TEXT,
+    execution_time TEXT,
+    actual_duration TEXT,
+    field TEXT,
+    description TEXT,
+    summary TEXT,
+    members TEXT,
+    experts TEXT,
+    budget_vnd REAL DEFAULT 0,
+    acceptance_year INTEGER,
+    status TEXT DEFAULT 'approved',
+    verification_status TEXT DEFAULT 'verified',
+    publicity_level TEXT DEFAULT 'public',
+    acceptance_result TEXT,
+    scientific_products TEXT,
+    storage_code TEXT,
+    archive_code TEXT,
+    attachments TEXT,
+    data_json TEXT,
+    created_by TEXT,
+    updated_by TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+  initiatives: `CREATE TABLE IF NOT EXISTS initiatives (
+    id TEXT PRIMARY KEY,
+    code TEXT,
+    module_type TEXT DEFAULT 'initiatives',
+    title TEXT NOT NULL,
+    stt INTEGER,
+    recognition_year INTEGER,
+    author TEXT,
+    authors TEXT,
+    owner TEXT,
+    owner_name TEXT,
+    owner_address TEXT,
+    field TEXT,
+    description TEXT,
+    summary TEXT,
+    problem_solved TEXT,
+    solution_details TEXT,
+    decision_number TEXT,
+    status TEXT DEFAULT 'approved',
+    verification_status TEXT DEFAULT 'verified',
+    publicity_level TEXT DEFAULT 'public',
+    attachments TEXT,
+    data_json TEXT,
+    created_by TEXT,
+    updated_by TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+  experts: `CREATE TABLE IF NOT EXISTS experts (
+    id TEXT PRIMARY KEY,
+    code TEXT,
+    module_type TEXT DEFAULT 'experts',
+    title TEXT NOT NULL,
+    name TEXT,
+    stt INTEGER,
+    birth_year INTEGER,
+    email TEXT,
+    public_email TEXT,
+    phone TEXT,
+    public_phone TEXT,
+    specialty TEXT,
+    specialization TEXT,
+    workplace TEXT,
+    department TEXT,
+    degree TEXT,
+    academic_title TEXT,
+    position TEXT,
+    field TEXT,
+    primary_field TEXT,
+    description TEXT,
+    profile_summary TEXT,
+    status TEXT DEFAULT 'approved',
+    verification_status TEXT DEFAULT 'verified',
+    publicity_level TEXT DEFAULT 'public',
+    data_json TEXT,
+    created_by TEXT,
+    updated_by TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+  startups: `CREATE TABLE IF NOT EXISTS startups (
+    id TEXT PRIMARY KEY,
+    code TEXT,
+    module_type TEXT DEFAULT 'startups',
+    title TEXT NOT NULL,
+    name TEXT,
+    brand_name TEXT,
+    stt INTEGER,
+    operating_address TEXT,
+    address TEXT,
+    headquarters TEXT,
+    website TEXT,
+    logo_file TEXT,
+    logo_url TEXT,
+    business_field TEXT,
+    field TEXT,
+    summary TEXT,
+    description TEXT,
+    problem_solved TEXT,
+    founders_count INTEGER DEFAULT 1,
+    founder_count INTEGER DEFAULT 1,
+    total_staff INTEGER DEFAULT 1,
+    current_staff_count INTEGER DEFAULT 1,
+    leader_name TEXT,
+    representative TEXT,
+    leader_phone TEXT,
+    leader_email TEXT,
+    founding_year INTEGER,
+    founded_year TEXT,
+    status TEXT DEFAULT 'approved',
+    verification_status TEXT DEFAULT 'verified',
+    publicity_level TEXT DEFAULT 'public',
+    attachments TEXT,
+    data_json TEXT,
+    created_by TEXT,
+    updated_by TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+  support_organizations: `CREATE TABLE IF NOT EXISTS support_organizations (
+    id TEXT PRIMARY KEY,
+    code TEXT,
+    module_type TEXT DEFAULT 'support_organizations',
+    title TEXT NOT NULL,
+    name TEXT,
+    stt INTEGER,
+    address TEXT,
+    organization_type TEXT,
+    support_type TEXT,
+    governing_body TEXT,
+    field TEXT,
+    description TEXT,
+    contact_email TEXT,
+    contact_phone TEXT,
+    website TEXT,
+    status TEXT DEFAULT 'approved',
+    verification_status TEXT DEFAULT 'verified',
+    publicity_level TEXT DEFAULT 'public',
+    data_json TEXT,
+    created_by TEXT,
+    updated_by TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+  startup_projects: `CREATE TABLE IF NOT EXISTS startup_projects (
+    id TEXT PRIMARY KEY,
+    code TEXT,
+    module_type TEXT DEFAULT 'startup_projects',
+    title TEXT NOT NULL,
+    stt INTEGER,
+    operating_address TEXT,
+    address TEXT,
+    field TEXT,
+    summary TEXT,
+    description TEXT,
+    problem_solved TEXT,
+    members_count INTEGER DEFAULT 1,
+    member_count INTEGER DEFAULT 1,
+    leader_name TEXT,
+    leader_phone TEXT,
+    leader_email TEXT,
+    incubated_at TEXT,
+    incubator TEXT,
+    founding_year INTEGER,
+    start_year TEXT,
+    stage TEXT,
+    status TEXT DEFAULT 'approved',
+    verification_status TEXT DEFAULT 'verified',
+    publicity_level TEXT DEFAULT 'public',
+    attachments TEXT,
+    data_json TEXT,
+    created_by TEXT,
+    updated_by TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+  startup_ideas: `CREATE TABLE IF NOT EXISTS startup_ideas (
+    id TEXT PRIMARY KEY,
+    code TEXT,
+    module_type TEXT DEFAULT 'startup_ideas',
+    title TEXT NOT NULL,
+    stt INTEGER,
+    operating_address TEXT,
+    address TEXT,
+    field TEXT,
+    ward_or_school TEXT,
+    ward_school TEXT,
+    summary TEXT,
+    description TEXT,
+    problem_solved TEXT,
+    members_count INTEGER DEFAULT 1,
+    member_count INTEGER DEFAULT 1,
+    leader_name TEXT,
+    leader_phone TEXT,
+    leader_email TEXT,
+    mentor_name TEXT,
+    mentor_teacher TEXT,
+    affiliated_unit TEXT,
+    current_affiliation TEXT,
+    status TEXT DEFAULT 'approved',
+    verification_status TEXT DEFAULT 'verified',
+    publicity_level TEXT DEFAULT 'public',
+    data_json TEXT,
+    created_by TEXT,
+    updated_by TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+  wards: `CREATE TABLE IF NOT EXISTS wards (
+    id TEXT PRIMARY KEY,
+    code TEXT,
+    module_type TEXT DEFAULT 'wards',
+    title TEXT NOT NULL,
+    name TEXT,
+    stt INTEGER,
+    address TEXT,
+    district TEXT,
+    contact_phone TEXT,
+    contact_info TEXT,
+    website TEXT,
+    field TEXT,
+    description TEXT,
+    status TEXT DEFAULT 'approved',
+    verification_status TEXT DEFAULT 'verified',
+    publicity_level TEXT DEFAULT 'public',
+    data_json TEXT,
+    created_by TEXT,
+    updated_by TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+  universities: `CREATE TABLE IF NOT EXISTS universities (
+    id TEXT PRIMARY KEY,
+    code TEXT,
+    module_type TEXT DEFAULT 'universities',
+    title TEXT NOT NULL,
+    name TEXT,
+    stt INTEGER,
+    ward TEXT,
+    address TEXT,
+    website TEXT,
+    contact_email TEXT,
+    contact_phone TEXT,
+    contact_info TEXT,
+    field TEXT,
+    status TEXT DEFAULT 'approved',
+    verification_status TEXT DEFAULT 'verified',
+    publicity_level TEXT DEFAULT 'public',
+    data_json TEXT,
+    created_by TEXT,
+    updated_by TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+  featured_startups: `CREATE TABLE IF NOT EXISTS featured_startups (
+    id TEXT PRIMARY KEY,
+    code TEXT,
+    module_type TEXT DEFAULT 'featured_startups',
+    title TEXT NOT NULL,
+    project_name TEXT,
+    representative TEXT,
+    stt INTEGER,
+    address TEXT,
+    ward TEXT,
+    contact_info TEXT,
+    website_link TEXT,
+    website TEXT,
+    field TEXT,
+    highlight_achievement TEXT,
+    status TEXT DEFAULT 'approved',
+    verification_status TEXT DEFAULT 'verified',
+    publicity_level TEXT DEFAULT 'public',
+    data_json TEXT,
+    created_by TEXT,
+    updated_by TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+  patents: `CREATE TABLE IF NOT EXISTS patents (
+    id TEXT PRIMARY KEY,
+    code TEXT,
+    module_type TEXT DEFAULT 'patents',
+    title TEXT NOT NULL,
+    stt INTEGER,
+    application_number TEXT,
+    grant_number TEXT,
+    patent_type TEXT,
+    filing_date TEXT,
+    grant_date TEXT,
+    inventor TEXT,
+    assignee TEXT,
+    field TEXT,
+    status TEXT DEFAULT 'approved',
+    verification_status TEXT DEFAULT 'verified',
+    publicity_level TEXT DEFAULT 'public',
+    data_json TEXT,
+    created_by TEXT,
+    updated_by TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`
+};
+
+async function ensureTable(db: any, tableName: string) {
+  if (!db) return;
+  try {
+    const ddl = MODULE_SCHEMAS[tableName] || `CREATE TABLE IF NOT EXISTS ${tableName} (
+      id TEXT PRIMARY KEY,
+      code TEXT,
+      module_type TEXT DEFAULT '${tableName}',
+      title TEXT NOT NULL,
+      field TEXT,
+      description TEXT,
+      status TEXT DEFAULT 'approved',
+      data_json TEXT,
+      created_by TEXT,
+      updated_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`;
+    await db.prepare(ddl).run();
+  } catch (err) {
+    console.warn(`ensureTable warning for ${tableName}:`, err);
+  }
+}
+
+async function ensureUsersTable(db: any) {
+  if (!db) return;
+  try {
+    await db.prepare(`CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      username TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      salt TEXT NOT NULL,
+      full_name TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      role TEXT NOT NULL,
+      phone TEXT,
+      organization TEXT,
+      department TEXT,
+      is_active INTEGER DEFAULT 1,
+      managed_modules TEXT,
+      failed_attempts INTEGER DEFAULT 0,
+      locked_until INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`).run();
+    try {
+      await db.prepare('ALTER TABLE users ADD COLUMN managed_modules TEXT').run();
+    } catch {}
+  } catch (err) {
+    console.warn('ensureUsersTable warning:', err);
+  }
+}
+
+// Convert camelCase to snake_case for physical D1 columns - only allow valid SQL identifiers
 function toSqlColumn(key: string): string {
+  if (!key || typeof key !== 'string') return '';
+  // Reject keys with spaces, punctuation, or non-ascii characters
+  if (/[^a-zA-Z0-9_]/.test(key)) return '';
   return key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 }
 
@@ -248,6 +621,13 @@ function normalizeImportedRow(moduleType: string, raw: Record<string, any>): Rec
     const wd = findVal(['ward', 'thuộc xã/ phường', 'thuộc xã/phường', 'xã/phường']);
     if (wd) row.ward = String(wd).trim();
   }
+
+  // Strip raw Vietnamese/spaced header keys so they do not become invalid SQL column names
+  Object.keys(row).forEach(k => {
+    if (/[^\w]/.test(k)) {
+      delete row[k];
+    }
+  });
 
   return row;
 }
@@ -918,7 +1298,8 @@ export default {
         let usersList: any[] = [];
         if (env.DB) {
           try {
-            const { results } = await env.DB.prepare('SELECT id, username, full_name, email, role, phone, organization, department, is_active FROM users ORDER BY created_at DESC LIMIT 100').all();
+            await ensureUsersTable(env.DB);
+            const { results } = await env.DB.prepare('SELECT id, username, full_name, email, role, phone, organization, department, is_active, managed_modules FROM users ORDER BY created_at DESC LIMIT 100').all();
             if (results && results.length > 0) {
               usersList = results.map((u: any) => ({
                 id: u.id,
@@ -929,7 +1310,8 @@ export default {
                 phone: u.phone,
                 organization: u.organization,
                 department: u.department,
-                isActive: u.is_active === 1 || u.isActive === true
+                isActive: u.is_active === 1 || u.isActive === true,
+                managedModules: u.managed_modules ? (typeof u.managed_modules === 'string' ? JSON.parse(u.managed_modules) : u.managed_modules) : []
               }));
             }
           } catch (err) {
@@ -938,11 +1320,11 @@ export default {
         }
         if (usersList.length === 0) {
           usersList = [
-            { id: 'usr_superadmin', username: 'superadmin', fullName: 'Quản trị viên Cấp cao', email: 'superadmin@danang.gov.vn', role: 'super_admin', isActive: true },
-            { id: 'usr_sysadmin', username: 'sysadmin', fullName: 'Quản trị viên Hệ thống', email: 'sysadmin@danang.gov.vn', role: 'system_admin', isActive: true },
-            { id: 'usr_leader', username: 'leader', fullName: 'Lãnh đạo Cơ quan', email: 'leader@danang.gov.vn', role: 'agency_leader', isActive: true },
-            { id: 'usr_officer', username: 'officer', fullName: 'Cán bộ Quản lý Dữ liệu', email: 'officer@danang.gov.vn', role: 'data_officer', isActive: true },
-            { id: 'usr_evaluator', username: 'evaluator', fullName: 'Chuyên gia Thẩm định', email: 'evaluator@danang.gov.vn', role: 'evaluator_expert', isActive: true }
+            { id: 'usr_superadmin', username: 'superadmin', fullName: 'Quản trị viên Cấp cao', email: 'superadmin@danang.gov.vn', role: 'super_admin', isActive: true, managedModules: [] },
+            { id: 'usr_sysadmin', username: 'sysadmin', fullName: 'Quản trị viên Hệ thống', email: 'sysadmin@danang.gov.vn', role: 'system_admin', isActive: true, managedModules: [] },
+            { id: 'usr_leader', username: 'leader', fullName: 'Lãnh đạo Cơ quan', email: 'leader@danang.gov.vn', role: 'agency_leader', isActive: true, managedModules: [] },
+            { id: 'usr_officer', username: 'officer', fullName: 'Cán bộ Quản lý Dữ liệu', email: 'officer@danang.gov.vn', role: 'data_officer', isActive: true, managedModules: ['science_tasks', 'initiatives'] },
+            { id: 'usr_evaluator', username: 'evaluator', fullName: 'Chuyên gia Thẩm định', email: 'evaluator@danang.gov.vn', role: 'evaluator_expert', isActive: true, managedModules: [] }
           ];
         }
         return jsonResponse({ success: true, users: usersList });
@@ -959,6 +1341,9 @@ export default {
         const rawOrg = (body.organization || '').toString().trim();
         const rawDept = (body.department || '').toString().trim();
         const isActive = body.isActive !== false ? 1 : 0;
+        const managedModules = Array.isArray(body.managedModules)
+          ? JSON.stringify(body.managedModules)
+          : (typeof body.managedModules === 'string' ? body.managedModules : '[]');
 
         if (!rawUsername) {
           return jsonResponse({ success: false, message: 'Vui lòng cung cấp tên đăng nhập.' }, 400);
@@ -970,6 +1355,7 @@ export default {
 
         if (env.DB) {
           try {
+            await ensureUsersTable(env.DB);
             const exist = await env.DB.prepare(
               'SELECT id FROM users WHERE LOWER(username) = ? OR LOWER(email) = ? LIMIT 1'
             ).bind(rawUsername.toLowerCase(), rawEmail.toLowerCase()).first();
@@ -978,10 +1364,10 @@ export default {
             }
 
             await env.DB.prepare(`
-              INSERT INTO users (id, username, password_hash, salt, full_name, email, role, phone, organization, department, is_active, created_at, updated_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+              INSERT INTO users (id, username, password_hash, salt, full_name, email, role, phone, organization, department, is_active, managed_modules, created_at, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
             `).bind(
-              newUserId, rawUsername, passHash, salt, rawFullName, rawEmail, rawRole, rawPhone, rawOrg, rawDept, isActive
+              newUserId, rawUsername, passHash, salt, rawFullName, rawEmail, rawRole, rawPhone, rawOrg, rawDept, isActive, managedModules
             ).run();
           } catch (dbErr: any) {
             return jsonResponse({ success: false, message: 'Lỗi ghi người dùng D1: ' + dbErr.message }, 500);
@@ -997,7 +1383,8 @@ export default {
           phone: rawPhone,
           organization: rawOrg,
           department: rawDept,
-          isActive: isActive === 1
+          isActive: isActive === 1,
+          managedModules: Array.isArray(body.managedModules) ? body.managedModules : []
         };
 
         return jsonResponse({ success: true, user: createdUserObj }, 201);
@@ -1012,9 +1399,13 @@ export default {
         const org = body.organization !== undefined ? sanitizeString(body.organization) : undefined;
         const dept = body.department !== undefined ? sanitizeString(body.department) : undefined;
         const isActive = body.isActive !== undefined ? (body.isActive ? 1 : 0) : undefined;
+        const managedModules = body.managedModules !== undefined
+          ? (Array.isArray(body.managedModules) ? JSON.stringify(body.managedModules) : String(body.managedModules))
+          : undefined;
 
         if (env.DB) {
           try {
+            await ensureUsersTable(env.DB);
             let passHash: string | undefined;
             let salt: string | undefined;
             if (body.password && String(body.password).trim().length > 0) {
@@ -1037,6 +1428,7 @@ export default {
             if (org !== undefined) { updates.push('organization = ?'); vals.push(org); }
             if (dept !== undefined) { updates.push('department = ?'); vals.push(dept); }
             if (isActive !== undefined) { updates.push('is_active = ?'); vals.push(isActive); }
+            if (managedModules !== undefined) { updates.push('managed_modules = ?'); vals.push(managedModules); }
 
             if (updates.length > 0) {
               updates.push("updated_at = datetime('now')");
@@ -1057,7 +1449,10 @@ export default {
             role: role || body.role,
             phone: phone || body.phone,
             organization: org || body.organization,
-            isActive: isActive !== undefined ? isActive === 1 : true
+            isActive: isActive !== undefined ? isActive === 1 : true,
+            managedModules: body.managedModules !== undefined
+              ? (Array.isArray(body.managedModules) ? body.managedModules : [])
+              : []
           }
         });
       }
@@ -1277,6 +1672,7 @@ export default {
       if (!recordId && request.method === 'GET') {
         if (env.DB) {
           try {
+            await ensureTable(env.DB, moduleName);
             const limit = parseInt(url.searchParams.get('limit') || '100', 10);
             const offset = parseInt(url.searchParams.get('offset') || '0', 10);
             const results = await env.DB.prepare(`SELECT * FROM ${moduleName} LIMIT ? OFFSET ?`).bind(limit, offset).all();
@@ -1299,17 +1695,52 @@ export default {
         const body = await request.json().catch(() => ({})) as any;
         const clean = sanitizeObject(body);
         const newId = `${moduleName.slice(0, 4)}_${Date.now()}`;
-        clean.id = newId;
-        clean.created_at = new Date().toISOString();
+        clean.id = clean.id || newId;
+        clean.created_at = clean.created_at || new Date().toISOString();
         clean.updated_at = new Date().toISOString();
         clean.status = clean.status || 'submitted';
 
         if (env.DB) {
           try {
-            const keys = Object.keys(clean);
-            const cols = keys.map(k => k.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)).join(', ');
-            const placeholders = keys.map(() => '?').join(', ');
-            const values = keys.map(k => clean[k]);
+            await ensureTable(env.DB, moduleName);
+
+            let physicalCols = new Set<string>();
+            try {
+              const meta = await env.DB.prepare(
+                `SELECT sql FROM sqlite_master WHERE type='table' AND name = ?`
+              ).bind(moduleName).first<{ sql?: string }>();
+              if (meta?.sql) parseSqlColumns(meta.sql).forEach(c => physicalCols.add(c));
+            } catch {}
+
+            const entries: Array<[string, any]> = [];
+            const custom: Record<string, any> = {};
+
+            for (const [k, v] of Object.entries(clean)) {
+              const col = toSqlColumn(k);
+              if (!col || col === 'data_json') {
+                if (k !== 'data_json') custom[k] = v;
+                continue;
+              }
+              if (physicalCols.size > 0 && !physicalCols.has(col)) {
+                custom[k] = v;
+              } else {
+                entries.push([col, v]);
+              }
+            }
+
+            if (physicalCols.has('data_json') || physicalCols.size === 0) {
+              entries.push(['data_json', JSON.stringify(custom)]);
+            }
+
+            if (entries.length === 0) {
+              entries.push(['id', clean.id]);
+              entries.push(['title', clean.title || 'Bản ghi mới']);
+            }
+
+            const cols = entries.map(([c]) => `"${c}"`).join(', ');
+            const placeholders = entries.map(() => '?').join(', ');
+            const values = entries.map(([, val]) => typeof val === 'object' && val !== null ? JSON.stringify(val) : val);
+
             await env.DB.prepare(`INSERT INTO ${moduleName} (${cols}) VALUES (${placeholders})`).bind(...values).run();
           } catch (e: any) {
             return jsonResponse({ success: false, message: 'Lỗi ghi dữ liệu D1: ' + e.message }, 500);
@@ -1340,6 +1771,8 @@ export default {
 
       let physicalColumns = new Set<string>();
       if (env.DB) {
+        await ensureTable(env.DB, moduleName);
+
         // Strategy 1: Read CREATE TABLE sql from sqlite_master (supported in all SQLite/D1 instances)
         try {
           const tableMeta = await env.DB.prepare(
@@ -1431,7 +1864,10 @@ export default {
 
             for (const [key, val] of Object.entries(clean)) {
               const col = toSqlColumn(key);
-              if (col === 'data_json') continue;
+              if (!col || col === 'data_json') {
+                if (key !== 'data_json') customFields[key] = val;
+                continue;
+              }
 
               if (physicalColumns.size > 0) {
                 if (physicalColumns.has(col)) {
@@ -1468,7 +1904,7 @@ export default {
               entries.push(['updated_at', now]);
             }
 
-            const cols = entries.map(([col]) => col).join(', ');
+            const cols = entries.map(([col]) => `"${col}"`).join(', ');
             const placeholders = entries.map(() => '?').join(', ');
             const values = entries.map(([, val]) => typeof val === 'object' && val !== null ? JSON.stringify(val) : val);
 
