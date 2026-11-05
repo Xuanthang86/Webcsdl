@@ -61,6 +61,288 @@ const ALLOWED_MODULES = [
   'policies'
 ];
 
+// Convert camelCase to snake_case for physical D1 columns
+function toSqlColumn(key: string): string {
+  return key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+}
+
+function normalizeImportedRow(moduleType: string, raw: Record<string, any>): Record<string, any> {
+  const row: Record<string, any> = { ...raw };
+  const findVal = (keys: string[]) => {
+    for (const k of keys) {
+      if (raw[k] !== undefined && raw[k] !== '') return raw[k];
+      const lowerK = k.toLowerCase().replace(/[\s\-_/\\()]/g, '');
+      for (const [rk, rv] of Object.entries(raw)) {
+        const lowerRk = rk.toLowerCase().replace(/[\s\-_/\\()]/g, '');
+        if (lowerRk === lowerK && rv !== undefined && rv !== '') {
+          return rv;
+        }
+      }
+    }
+    return undefined;
+  };
+
+  const sttVal = findVal(['stt', 'số thứ tự', 'số tt']);
+  if (sttVal) row.stt = Number(sttVal) || undefined;
+
+  const titleVal = findVal([
+    'title', 'tên', 'tên đề tài', 'tên sáng kiến', 'tên chuyên gia', 'tên doanh nghiệp',
+    'tên tổ chức', 'tên dự án', 'tên ý tưởng', 'tên xã/phường/đặc khu', 'tên xã/phường',
+    'tên trường', 'tên trường đại học, cao đẳng', 'tên trường đại học/cao đẳng', 'họ và tên', 'fullName'
+  ]);
+  if (titleVal && !row.title) row.title = String(titleVal).trim();
+
+  const fieldVal = findVal(['field', 'lĩnh vực', 'lĩnh vực kinh doanh', 'lĩnh vực khởi nghiệp']);
+  if (fieldVal && !row.field) row.field = String(fieldVal).trim();
+
+  if (moduleType === 'science_tasks') {
+    const mgmt = findVal(['managementLevel', 'cấp quản lý', 'cấp đề tài']);
+    if (mgmt) row.managementLevel = String(mgmt).trim();
+    const lead = findVal(['leadOrganization', 'cơ quan chủ trì', 'đơn vị chủ trì']);
+    if (lead) row.leadOrganization = String(lead).trim();
+    const pi = findVal(['principalInvestigator', 'chủ nhiệm đề tài', 'chủ nhiệm']);
+    if (pi) row.principalInvestigator = String(pi).trim();
+    const exec = findVal(['executionTime', 'thời gian thực hiện', 'thời gian']);
+    if (exec) row.executionTime = String(exec).trim();
+    const desc = findVal(['description', 'tóm tắt đề tài', 'tóm tắt']);
+    if (desc) row.description = String(desc).trim();
+    const mem = findVal(['members', 'thành viên tham gia', 'thành viên']);
+    if (mem) row.members = Array.isArray(mem) ? mem : String(mem).split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
+    const docs = findVal(['attachments', 'tài liệu minh chứng']);
+    if (docs) {
+      if (Array.isArray(docs)) {
+        row.attachments = docs;
+      } else {
+        const docStr = String(docs).trim();
+        if (docStr.startsWith('http://') || docStr.startsWith('https://') || docStr.startsWith('/')) {
+          row.attachments = [{ name: docStr.split('/').pop() || docStr, url: docStr }];
+        } else {
+          row.attachments = [{ name: docStr }];
+        }
+      }
+    }
+    const arch = findVal(['storageCode', 'ký hiệu kho', 'mã lưu kho', 'archiveCode']);
+    if (arch) {
+      row.storageCode = String(arch).trim();
+      row.archiveCode = String(arch).trim();
+    }
+  } else if (moduleType === 'initiatives') {
+    const yr = findVal(['recognitionYear', 'năm công nhận', 'năm']);
+    if (yr) row.recognitionYear = String(yr).trim();
+    const auth = findVal(['authors', 'tác giả']);
+    if (auth) row.authors = Array.isArray(auth) ? auth : String(auth).split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
+    const own = findVal(['ownerName', 'chủ sở hữu']);
+    if (own) row.ownerName = String(own).trim();
+    const addr = findVal(['ownerAddress', 'địa chỉ chủ sở hữu', 'địa chỉ']);
+    if (addr) row.ownerAddress = String(addr).trim();
+  } else if (moduleType === 'experts') {
+    const by = findVal(['birthYear', 'năm sinh']);
+    if (by) row.birthYear = String(by).trim();
+    const bd = findVal(['birthDate', 'ngày tháng năm sinh', 'ngày sinh']);
+    if (bd) row.birthDate = String(bd).trim();
+    const gen = findVal(['gender', 'giới tính']);
+    if (gen) row.gender = String(gen).trim();
+    const spec = findVal(['specialty', 'chuyên ngành', 'chuyên môn']);
+    if (spec) row.specialty = String(spec).trim();
+    const wp = findVal(['workplace', 'đơn vị công tác', 'nơi công tác']);
+    if (wp) row.workplace = String(wp).trim();
+    const em = findVal(['email', 'email liên hệ']);
+    if (em) row.email = String(em).trim();
+    const ph = findVal(['phone', 'điện thoại', 'số điện thoại']);
+    if (ph) row.phone = String(ph).trim();
+  } else if (moduleType === 'startups') {
+    const addr = findVal(['address', 'địa chỉ hoạt động', 'địa chỉ']);
+    if (addr) row.address = String(addr).trim();
+    const web = findVal(['website', 'website doanh nghiệp']);
+    if (web) row.website = String(web).trim();
+    const logo = findVal(['logoUrl', 'file logo doanh nghiệp', 'logo']);
+    if (logo) row.logoUrl = String(logo).trim();
+    const desc = findVal(['description', 'tóm tắt về doanh nghiệp và sản phẩm', 'tóm tắt']);
+    if (desc) row.description = String(desc).trim();
+    const prob = findVal(['problemSolved', 'sản phẩm giải quyết vấn đề gì', 'vấn đề giải quyết']);
+    if (prob) row.problemSolved = String(prob).trim();
+    const fCount = findVal(['founderCount', 'số lượng sáng lập viên']);
+    if (fCount) row.founderCount = Number(fCount) || fCount;
+    const sCount = findVal(['currentStaffCount', 'tổng số nhân sự ở thời điểm hiện tại', 'nhân sự']);
+    if (sCount) row.currentStaffCount = Number(sCount) || sCount;
+    const leader = findVal(['leaderName', 'họ và tên người đứng đầu doanh nghiệp', 'người đứng đầu']);
+    if (leader) row.leaderName = String(leader).trim();
+    const ph = findVal(['leaderPhone', 'số điện thoại người đứng đầu doanh nghiệp', 'số điện thoại']);
+    if (ph) row.leaderPhone = String(ph).trim();
+    const em = findVal(['leaderEmail', 'email người đứng đầu doanh nghiệp', 'email']);
+    if (em) row.leaderEmail = String(em).trim();
+    const yr = findVal(['foundedYear', 'năm bắt đầu khởi nghiệp', 'năm thành lập']);
+    if (yr) row.foundedYear = String(yr).trim();
+  } else if (moduleType === 'support_organizations') {
+    const addr = findVal(['address', 'địa chỉ']);
+    if (addr) row.address = String(addr).trim();
+    const desc = findVal(['description', 'thông tin về tổ chức', 'thông tin']);
+    if (desc) row.description = String(desc).trim();
+  } else if (moduleType === 'startup_projects') {
+    const addr = findVal(['address', 'địa chỉ hoạt động', 'địa chỉ']);
+    if (addr) row.address = String(addr).trim();
+    const desc = findVal(['description', 'tóm tắt về dự án', 'tóm tắt']);
+    if (desc) row.description = String(desc).trim();
+    const prob = findVal(['problemSolved', 'sản phẩm giải quyết vấn đề', 'vấn đề giải quyết']);
+    if (prob) row.problemSolved = String(prob).trim();
+    const mem = findVal(['memberCount', 'số lượng thành viên tham gia dự án', 'số thành viên']);
+    if (mem) row.memberCount = Number(mem) || mem;
+    const leader = findVal(['leaderName', 'họ và tên người đứng đầu dự án', 'người đứng đầu']);
+    if (leader) row.leaderName = String(leader).trim();
+    const ph = findVal(['leaderPhone', 'số điện thoại người đứng đầu dự án', 'sđt']);
+    if (ph) row.leaderPhone = String(ph).trim();
+    const em = findVal(['leaderEmail', 'email người đứng đầu dự án', 'email']);
+    if (em) row.leaderEmail = String(em).trim();
+    const inc = findVal(['incubator', 'dự án được ươm tạo từ tổ chức', 'nơi ươm tạo']);
+    if (inc) row.incubator = String(inc).trim();
+    const yr = findVal(['startYear', 'năm bắt đầu khởi nghiệp', 'năm bắt đầu']);
+    if (yr) row.startYear = String(yr).trim();
+  } else if (moduleType === 'startup_ideas') {
+    const addr = findVal(['address', 'địa chỉ hoạt động', 'địa chỉ']);
+    if (addr) row.address = String(addr).trim();
+    const ws = findVal(['wardSchool', 'ý tưởng thuộc xã/phường - trường học', 'thuộc trường']);
+    if (ws) row.wardSchool = String(ws).trim();
+    const desc = findVal(['description', 'tóm tắt về ý tưởng', 'tóm tắt']);
+    if (desc) row.description = String(desc).trim();
+    const prob = findVal(['problemSolved', 'sản phẩm giải quyết vấn đề gì', 'vấn đề giải quyết']);
+    if (prob) row.problemSolved = String(prob).trim();
+    const mem = findVal(['memberCount', 'số lượng thành viên tham gia ý tưởng khởi nghiệp', 'số thành viên']);
+    if (mem) row.memberCount = Number(mem) || mem;
+    const leader = findVal(['leaderName', 'người đứng đầu nhóm ý tưởng', 'người đứng đầu']);
+    if (leader) row.leaderName = String(leader).trim();
+    const ph = findVal(['leaderPhone', 'số điện thoại người đứng đầu', 'sđt']);
+    if (ph) row.leaderPhone = String(ph).trim();
+    const em = findVal(['leaderEmail', 'email người đứng đầu', 'email']);
+    if (em) row.leaderEmail = String(em).trim();
+    const mentor = findVal(['mentorTeacher', 'tên thầy/cô giáo hướng dẫn thực hiện', 'giáo viên hướng dẫn']);
+    if (mentor) row.mentorTeacher = String(mentor).trim();
+    const aff = findVal(['currentAffiliation', 'nhóm ý tưởng đang học tập/công tác tại đơn vị nào', 'đơn vị công tác']);
+    if (aff) row.currentAffiliation = String(aff).trim();
+  } else if (moduleType === 'wards') {
+    const addr = findVal(['address', 'địa chỉ']);
+    if (addr) row.address = String(addr).trim();
+    const contact = findVal(['contactInfo', 'thông tin liên hệ']);
+    if (contact) row.contactInfo = String(contact).trim();
+    const web = findVal(['website', 'website']);
+    if (web) row.website = String(web).trim();
+  } else if (moduleType === 'universities') {
+    const wd = findVal(['ward', 'thuộc xã/ phường', 'thuộc xã/phường', 'xã/phường']);
+    if (wd) row.ward = String(wd).trim();
+    const addr = findVal(['address', 'địa chỉ']);
+    if (addr) row.address = String(addr).trim();
+    const contact = findVal(['contactInfo', 'thông tin liên hệ']);
+    if (contact) row.contactInfo = String(contact).trim();
+    const web = findVal(['website', 'website']);
+    if (web) row.website = String(web).trim();
+  } else if (moduleType === 'featured_startups') {
+    const prj = findVal(['projectName', 'tên dự án']);
+    if (prj) row.projectName = String(prj).trim();
+    const rep = findVal(['representative', 'người đại diện dự án', 'người đại diện']);
+    if (rep) row.representative = String(rep).trim();
+    const addr = findVal(['address', 'địa chỉ']);
+    if (addr) row.address = String(addr).trim();
+    const contact = findVal(['contactInfo', 'thông tin liên hệ']);
+    if (contact) row.contactInfo = String(contact).trim();
+    const web = findVal(['website', 'website']);
+    if (web) row.website = String(web).trim();
+    const wd = findVal(['ward', 'thuộc xã/ phường', 'thuộc xã/phường', 'xã/phường']);
+    if (wd) row.ward = String(wd).trim();
+  }
+
+  return row;
+}
+
+function getTemplateHeaders(moduleType: string): { headers: string[]; sampleRow: string[] } {
+  if (moduleType === 'science_tasks') {
+    return {
+      headers: [
+        'STT',
+        'Tên đề tài',
+        'Cấp quản lý',
+        'Cơ quan chủ trì',
+        'Chủ nhiệm đề tài',
+        'Thành viên tham gia',
+        'Thời gian thực hiện',
+        'Lĩnh vực',
+        'Tóm tắt đề tài',
+        'Tài liệu minh chứng',
+        'Ký hiệu Kho'
+      ],
+      sampleRow: [
+        '1',
+        'Nghiên cứu ứng dụng công nghệ AI trong cảnh báo sạt lở ven sông',
+        'Cấp Thành phố',
+        'Đại học Bách Khoa - ĐH Đà Nẵng',
+        'PGS.TS. Lê Quang Dũng',
+        'TS. Nguyễn Văn A, ThS. Trần Thị B',
+        '24 tháng',
+        'Công nghệ thông tin',
+        'Ứng dụng học sâu và cảm biến địa chấn không dây để phát hiện nguy cơ sạt lở ven sông và ngập lụt đô thị',
+        'Quyết định số 142/QĐ-SKHCN',
+        'KHO-KHCN-ĐN-2024/089'
+      ]
+    };
+  }
+  if (moduleType === 'initiatives') {
+    return {
+      headers: ['STT', 'Năm công nhận', 'Tên sáng kiến', 'Tác giả', 'Chủ sở hữu', 'Địa chỉ chủ sở hữu', 'Lĩnh vực'],
+      sampleRow: ['1', '2026', 'Mô hình tiết kiệm năng lượng tòa nhà thông minh', 'Nguyễn Thị B, Trần C', 'Trung tâm Đổi mới sáng tạo', 'Quận Hải Châu, TP. Đà Nẵng', 'Năng lượng & Môi trường']
+    };
+  }
+  if (moduleType === 'experts') {
+    return {
+      headers: ['STT', 'Tên Chuyên gia', 'Năm sinh', 'Chuyên ngành'],
+      sampleRow: ['1', 'GS.TS. Trần Quốc Hùng', '1975', 'Trí tuệ nhân tạo & Robot y tế']
+    };
+  }
+  if (moduleType === 'startups') {
+    return {
+      headers: ['STT', 'Tên doanh nghiệp', 'Địa chỉ hoạt động', 'Website doanh nghiệp (nếu có)', 'File logo doanh nghiệp', 'Lĩnh vực kinh doanh', 'Tóm tắt về doanh nghiệp và sản phẩm', 'Sản phẩm giải quyết vấn đề gì', 'Số lượng sáng lập viên', 'Tổng số nhân sự ở thời điểm hiện tại', 'Họ và tên người đứng đầu doanh nghiệp', 'Số điện thoại người đứng đầu doanh nghiệp', 'Email người đứng đầu doanh nghiệp', 'Năm bắt đầu khởi nghiệp'],
+      sampleRow: ['1', 'Công ty CP Giải pháp Công nghệ Xanh', 'Số 123 Nguyễn Văn Linh, Hải Châu, Đà Nẵng', 'https://greentech.vn', '/logos/greentech.png', 'Công nghệ Môi trường', 'Cung cấp hệ thống quan trắc nước thải tự động', 'Tự động hóa phân tích nồng độ chất thải theo thời gian thực', '3', '25', 'Lê Hoàng Nam', '0905123456', 'contact@greentech.vn', '2023']
+    };
+  }
+  if (moduleType === 'support_organizations') {
+    return {
+      headers: ['STT', 'Tên tổ chức', 'Địa chỉ', 'Thông tin về tổ chức'],
+      sampleRow: ['1', 'Trung tâm Hỗ trợ Khởi nghiệp Đổi mới sáng tạo Đà Nẵng', 'Số 48 Phan Đình Phùng, Hải Châu, Đà Nẵng', 'Đơn vị sự nghiệp công lập hỗ trợ ươm tạo, kết nối vốn và đào tạo khởi nghiệp']
+    };
+  }
+  if (moduleType === 'startup_projects') {
+    return {
+      headers: ['STT', 'Tên dự án', 'Lĩnh vực khởi nghiệp', 'Sản phẩm giải quyết vấn đề', 'Người đứng đầu', 'Dự án được ươm tạo từ tổ chức (Nếu có/Tự hình thành dự án)', 'Năm bắt đầu khởi nghiệp'],
+      sampleRow: ['1', 'Hệ thống trạm sạc xe điện thông minh SmartCharge', 'Năng lượng xanh & Giao thông', 'Mạng lưới sạc nhanh tích hợp thanh toán tự động qua App', 'Phạm Minh Tuấn', 'Vườn ươm Doanh nghiệp Đà Nẵng (DNES)', '2024']
+    };
+  }
+  if (moduleType === 'startup_ideas') {
+    return {
+      headers: ['STT', 'Tên ý tưởng', 'Lĩnh vực khởi nghiệp', 'Người đứng đầu', 'Giáo viên hướng dẫn'],
+      sampleRow: ['1', 'Ứng dụng vi tảo hấp thụ CO2 và xử lý khí thải công nghiệp', 'Công nghệ sinh học & Môi trường', 'Trần Thị Thu Hà', 'TS. Nguyễn Đắc Lực']
+    };
+  }
+  if (moduleType === 'wards') {
+    return {
+      headers: ['STT', 'Tên xã/phường/đặc khu', 'Địa chỉ', 'Thông tin liên hệ', 'Website'],
+      sampleRow: ['1', 'Phường Thạch Thang', 'Số 12 Quang Trung, Quận Hải Châu, TP. Đà Nẵng', '0236.3822123', 'https://thachthang.danang.gov.vn']
+    };
+  }
+  if (moduleType === 'universities') {
+    return {
+      headers: ['STT', 'Tên trường', 'Thuộc xã/ phường', 'Địa chỉ', 'Thông tin liên hệ', 'Website'],
+      sampleRow: ['1', 'Trường Đại học Bách Khoa - Đại học Đà Nẵng', 'Phường Hòa Khánh Bắc', 'Số 54 Nguyễn Lương Bằng, Quận Liên Chiểu, TP. Đà Nẵng', '0236.3842308', 'https://dut.udn.vn']
+    };
+  }
+  if (moduleType === 'featured_startups') {
+    return {
+      headers: ['STT', 'Tên doanh nghiệp', 'Tên dự án', 'Người đại diện dự án', 'Địa chỉ', 'Thông tin liên hệ', 'Website', 'Thuộc xã/ phường'],
+      sampleRow: ['1', 'Công ty CP EM&AI', 'Nền tảng Voicebot AI trợ lý ảo thông minh', 'Lê Ngọc Trí', 'Tầng 5, Tòa nhà DNC, Hải Châu, Đà Nẵng', '0912345678', 'https://emandai.net', 'Phường Thạch Thang']
+    };
+  }
+  return {
+    headers: ['STT', 'Mã', 'Tiêu đề / Tên', 'Lĩnh vực', 'Chủ sở hữu / Đơn vị'],
+    sampleRow: ['1', 'SAMPLE-001', 'Dữ liệu mẫu', 'Đa ngành', 'UBND Thành phố Đà Nẵng']
+  };
+}
+
 // Helper: Response with CORS & standard headers
 function jsonResponse(data: any, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(data), {
@@ -591,7 +873,228 @@ export default {
       }
     }
 
-    // 9. D1 Export SQL & Reconcile
+    // 9. Batch Import Endpoint (/api/import/:moduleType)
+    if (url.pathname.startsWith('/api/import/')) {
+      const moduleName = url.pathname.replace('/api/import/', '').split('/')[0];
+      if (!ALLOWED_MODULES.includes(moduleName)) {
+        return jsonResponse({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' }, 400);
+      }
+      if (currentUser.role === 'public_user') {
+        return jsonResponse({ success: false, message: 'Vui lòng đăng nhập để thực hiện nhập dữ liệu.' }, 401);
+      }
+      if (currentUser.role === 'partner_officer' && !['startup_projects', 'startup_ideas'].includes(moduleName)) {
+        return jsonResponse({ success: false, message: 'Tài khoản đơn vị chỉ được phép thao tác trên phân hệ được phân công.' }, 403);
+      }
+
+      const body = await request.json().catch(() => ({})) as any;
+      const items = body.items;
+      if (!Array.isArray(items) || items.length === 0) {
+        return jsonResponse({ success: false, message: 'Dữ liệu tệp không hợp lệ hoặc rỗng.' }, 400);
+      }
+
+      let physicalColumns = new Set<string>();
+      if (env.DB) {
+        try {
+          const info = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
+          physicalColumns = new Set((info.results || []).map((c: any) => c.name));
+        } catch {}
+      }
+
+      const errors: string[] = [];
+      const duplicates: string[] = [];
+      let importedCount = 0;
+
+      // Query existing titles & codes for duplicate detection
+      const existingList: Array<{ code?: string; title?: string }> = [];
+      if (env.DB) {
+        try {
+          const q = await env.DB.prepare(`SELECT code, title FROM ${moduleName}`).all<any>();
+          if (q.results) existingList.push(...q.results);
+        } catch {}
+      }
+
+      for (let idx = 0; idx < items.length; idx++) {
+        const rawRow = items[idx];
+        const rowNum = idx + 1;
+        const row = normalizeImportedRow(moduleName, rawRow);
+
+        if (!row.title || String(row.title).trim() === '') {
+          errors.push(`Dòng ${rowNum}: Thiếu tiêu đề / tên bắt buộc.`);
+          continue;
+        }
+
+        const isDup = existingList.some(
+          exist =>
+            (row.code && exist.code && exist.code.toLowerCase() === String(row.code).trim().toLowerCase()) ||
+            (exist.title && exist.title.toLowerCase() === String(row.title).trim().toLowerCase())
+        );
+
+        if (isDup) {
+          duplicates.push(`Dòng ${rowNum}: Bản ghi trùng lặp mã hoặc tiêu đề ("${row.title}"). Bỏ qua.`);
+          continue;
+        }
+
+        const now = new Date().toISOString();
+        const codePrefix = moduleName.slice(0, 3).toUpperCase();
+        const code = row.code || `${codePrefix}-IMP-${Date.now().toString().slice(-4)}${idx}`;
+        const newId = `${moduleName.slice(0, 4)}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}_${idx}`;
+
+        const clean: Record<string, any> = {
+          ...row,
+          id: newId,
+          code,
+          module_type: moduleName,
+          created_at: now,
+          updated_at: now,
+          created_by: currentUser.fullName || 'Quản trị viên',
+          updated_by: currentUser.fullName || 'Quản trị viên',
+          status: row.status || 'draft',
+          verification_status: row.verificationStatus || 'unverified',
+          publicity_level: row.publicityLevel || 'public'
+        };
+
+        if (env.DB) {
+          try {
+            const customFields: Record<string, any> = {};
+            const entries: Array<[string, any]> = [];
+
+            for (const [key, val] of Object.entries(clean)) {
+              const col = toSqlColumn(key);
+              if (col === 'data_json') continue;
+              if (physicalColumns.has(col)) {
+                entries.push([col, val]);
+              } else {
+                if (col === 'management_level' && physicalColumns.has('management_level')) entries.push(['management_level', val]);
+                else if (col === 'lead_organization' && physicalColumns.has('lead_agency')) entries.push(['lead_agency', val]);
+                else if (col === 'lead_organization' && physicalColumns.has('lead_organization')) entries.push(['lead_organization', val]);
+                else if (col === 'principal_investigator' && physicalColumns.has('principal_investigator')) entries.push(['principal_investigator', val]);
+                else if (col === 'execution_time' && physicalColumns.has('implementation_time')) entries.push(['implementation_time', val]);
+                else if (col === 'execution_time' && physicalColumns.has('actual_duration')) entries.push(['actual_duration', val]);
+                else if (col === 'storage_code' && physicalColumns.has('storage_code')) entries.push(['storage_code', val]);
+                else if (col === 'storage_code' && physicalColumns.has('archive_code')) entries.push(['archive_code', val]);
+                else customFields[key] = val;
+              }
+            }
+
+            if (physicalColumns.has('data_json')) {
+              entries.push(['data_json', JSON.stringify(customFields)]);
+            }
+
+            const cols = entries.map(([col]) => col).join(', ');
+            const placeholders = entries.map(() => '?').join(', ');
+            const values = entries.map(([, val]) => typeof val === 'object' && val !== null ? JSON.stringify(val) : val);
+
+            await env.DB.prepare(`INSERT INTO ${moduleName} (${cols}) VALUES (${placeholders})`).bind(...values).run();
+            existingList.push({ code, title: clean.title });
+            importedCount++;
+          } catch (insertErr: any) {
+            errors.push(`Dòng ${rowNum}: Lỗi ghi CSDL D1 (${insertErr.message}).`);
+          }
+        } else {
+          importedCount++;
+        }
+      }
+
+      if (env.DB && importedCount > 0) {
+        try {
+          await env.DB.prepare(`
+            INSERT INTO audit_logs (id, user_id, user_name, user_role, action, target_module, details, timestamp)
+            VALUES (?, ?, ?, ?, 'import', ?, ?, datetime('now'))
+          `).bind(
+            `log_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+            currentUser.id,
+            currentUser.fullName,
+            currentUser.role,
+            moduleName,
+            `Nhập dữ liệu hàng loạt thành công: ${importedCount} bản ghi (Lỗi: ${errors.length}, Trùng: ${duplicates.length})`
+          ).run();
+        } catch {}
+      }
+
+      return jsonResponse({
+        success: true,
+        result: {
+          importedCount,
+          errors,
+          duplicates
+        }
+      });
+    }
+
+    // 10. Template Download Endpoint (/api/templates/:moduleType)
+    if (url.pathname.startsWith('/api/templates/')) {
+      const moduleName = url.pathname.replace('/api/templates/', '').split('/')[0];
+      const { headers, sampleRow } = getTemplateHeaders(moduleName);
+      const csvContent = '\uFEFF' + [
+        headers.map(h => `"${h.replace(/"/g, '""')}"`).join(','),
+        sampleRow.map(v => `"${v.replace(/"/g, '""')}"`).join(',')
+      ].join('\n');
+
+      return new Response(csvContent, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': `attachment; filename="Mau_nhap_lieu_${moduleName}.csv"`,
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
+    // 11. Module Export CSV Endpoint (/api/export/:moduleType)
+    if (url.pathname.startsWith('/api/export/')) {
+      const moduleName = url.pathname.replace('/api/export/', '').split('/')[0];
+      let rows: any[] = [];
+      if (env.DB) {
+        try {
+          const res = await env.DB.prepare(`SELECT * FROM ${moduleName} ORDER BY created_at DESC`).all<any>();
+          rows = res.results || [];
+        } catch {}
+      }
+
+      const { headers } = getTemplateHeaders(moduleName);
+      const csvLines: string[] = [];
+      csvLines.push(headers.map(h => `"${h.replace(/"/g, '""')}"`).join(','));
+
+      rows.forEach((r, idx) => {
+        if (moduleName === 'science_tasks') {
+          const vals = [
+            String(idx + 1),
+            r.title || '',
+            r.management_level || '',
+            r.lead_organization || r.lead_agency || '',
+            r.principal_investigator || '',
+            Array.isArray(r.members) ? r.members.join(', ') : (r.members || ''),
+            r.execution_time || r.implementation_time || r.actual_duration || '',
+            r.field || '',
+            r.description || '',
+            Array.isArray(r.attachments) ? r.attachments.map((a: any) => a.name || a).join(', ') : (r.attachments || ''),
+            r.storage_code || r.archive_code || ''
+          ];
+          csvLines.push(vals.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+        } else {
+          const vals = [
+            String(idx + 1),
+            r.code || '',
+            r.title || '',
+            r.field || '',
+            r.owner_name || r.lead_organization || ''
+          ];
+          csvLines.push(vals.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+        }
+      });
+
+      const csvData = '\uFEFF' + csvLines.join('\n');
+      return new Response(csvData, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': `attachment; filename="${moduleName}_export.csv"`,
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
+    // 12. D1 Export SQL & Reconcile
     if (url.pathname === '/api/d1/export-sql') {
       return jsonResponse({
         success: true,

@@ -727,8 +727,32 @@ apiRouter.get('/templates/:moduleType', (req: AuthenticatedRequest, res: Respons
   let sampleRow: string[] = ['1', 'Dữ liệu mẫu chuẩn hoá', 'Công nghệ thông tin', 'Sở Khoa học và Công nghệ'];
 
   if (moduleType === 'science_tasks') {
-    headers = ['STT', 'Tên đề tài', 'Cấp quản lý', 'Cơ quan chủ trì', 'Chủ nhiệm đề tài', 'Thời gian thực hiện', 'Lĩnh vực', 'Tóm tắt đề tài'];
-    sampleRow = ['1', 'Nghiên cứu ứng dụng công nghệ AI trong giám sát đô thị thông minh', 'Cấp Thành phố', 'Đại học Đà Nẵng', 'PGS.TS. Nguyễn Văn A', '24 tháng', 'Công nghệ thông tin', 'Xây dựng mô hình thị giác máy tính nhận diện hành vi'];
+    headers = [
+      'STT',
+      'Tên đề tài',
+      'Cấp quản lý',
+      'Cơ quan chủ trì',
+      'Chủ nhiệm đề tài',
+      'Thành viên tham gia',
+      'Thời gian thực hiện',
+      'Lĩnh vực',
+      'Tóm tắt đề tài',
+      'Tài liệu minh chứng',
+      'Ký hiệu Kho'
+    ];
+    sampleRow = [
+      '1',
+      'Nghiên cứu ứng dụng công nghệ AI trong cảnh báo sạt lở ven sông',
+      'Cấp Thành phố',
+      'Đại học Bách Khoa - ĐH Đà Nẵng',
+      'PGS.TS. Lê Quang Dũng',
+      'TS. Nguyễn Văn A, ThS. Trần Thị B',
+      '24 tháng',
+      'Công nghệ thông tin',
+      'Ứng dụng học sâu và cảm biến địa chấn không dây để phát hiện nguy cơ sạt lở ven sông và ngập lụt đô thị',
+      'Quyết định số 142/QĐ-SKHCN',
+      'KHO-KHCN-ĐN-2024/089'
+    ];
   } else if (moduleType === 'initiatives') {
     headers = ['STT', 'Năm công nhận', 'Tên sáng kiến', 'Tác giả', 'Chủ sở hữu', 'Địa chỉ chủ sở hữu', 'Lĩnh vực'];
     sampleRow = ['1', '2026', 'Mô hình tiết kiệm năng lượng tòa nhà thông minh', 'Nguyễn Thị B, Trần C', 'Trung tâm Đổi mới sáng tạo', 'Quận Hải Châu, TP. Đà Nẵng', 'Năng lượng & Môi trường'];

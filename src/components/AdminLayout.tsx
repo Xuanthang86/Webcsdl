@@ -134,7 +134,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   // Ensure active module is in allowed list if user has restrictions
   React.useEffect(() => {
     if (userAllowedModules && userAllowedModules.length > 0 && !userAllowedModules.includes(activeModule)) {
-      setActiveModule(userAllowedModules[0]);
+      setActiveModule(userAllowedModules[0] as ModuleType);
     }
   }, [userAllowedModules, activeModule]);
 

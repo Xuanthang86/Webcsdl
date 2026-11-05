@@ -285,6 +285,36 @@ async function runAll() {
     const dupRes = db.batchImport('initiatives', [importItems[0]], superAdmin);
     if (dupRes.duplicates.length === 0) throw new Error('Cơ chế phát hiện trùng lặp không kích hoạt');
 
+    // Test importing science_tasks with exactly 11 raw Excel Vietnamese columns (NO ID column)
+    const rawExcelScienceTasks = [
+      {
+        'STT': '1',
+        'Tên đề tài': `Nghiên cứu thử nghiệm nhập Excel 11 trường ${runId}`,
+        'Cấp quản lý': 'Cấp Thành phố',
+        'Cơ quan chủ trì': 'Trường ĐH Bách Khoa - ĐH Đà Nẵng',
+        'Chủ nhiệm đề tài': 'PGS.TS. Lê Quang Dũng',
+        'Thành viên tham gia': 'TS. Trần Văn Nam, ThS. Nguyễn Thị Mai',
+        'Thời gian thực hiện': '2024 - 2026',
+        'Lĩnh vực': 'Công nghệ thông tin',
+        'Tóm tắt đề tài': 'Nghiên cứu giải pháp thử nghiệm nhập Excel không cần ID',
+        'Tài liệu minh chứng': 'Thuyết minh đề tài; Quyết định phê duyệt số 142',
+        'Ký hiệu Kho': `KHO-TEST-${runId}`
+      }
+    ];
+    const taskImportRes = db.batchImport('science_tasks', rawExcelScienceTasks, superAdmin);
+    if (taskImportRes.importedCount !== 1) {
+      throw new Error(`Nhập Đề tài KH&CN với 11 cột Excel thất bại: ${taskImportRes.errors.join('; ')}`);
+    }
+
+    // Verify imported record has all 11 mapped fields
+    const importedTask = db.getModuleRecords('science_tasks', false).find(t => t.title?.includes(String(runId)));
+    if (!importedTask) throw new Error('Không tìm thấy đề tài vừa nhập');
+    if (!importedTask.id || !importedTask.code) throw new Error('Hệ thống không tự động sinh ID/Code cho đề tài');
+    if (!importedTask.principalInvestigator || !importedTask.leadOrganization) throw new Error('Ánh xạ trường chủ nhiệm/chủ trì thất bại');
+    if (importedTask.storageCode !== `KHO-TEST-${runId}` && importedTask.archiveCode !== `KHO-TEST-${runId}`) {
+      throw new Error('Ánh xạ Ký hiệu Kho thất bại');
+    }
+
     // Dọn dẹp
     const all = db.getModuleRecords('initiatives', false);
     for (const item of all) {
@@ -292,7 +322,9 @@ async function runAll() {
         db.deleteRecord('initiatives', item.id, superAdmin);
       }
     }
-    return `Đã nhập và xác thực thành công ${importRes.importedCount} bản ghi; kiểm tra trùng lặp chuẩn xác`;
+    db.deleteRecord('science_tasks', importedTask.id, superAdmin);
+
+    return `Đã nhập và xác thực thành công ${importRes.importedCount + taskImportRes.importedCount} bản ghi (bao gồm 11 trường Đề tài KH&CN không cần ID); kiểm tra trùng lặp chuẩn xác`;
   });
 
   // Kịch bản 15: Xuất file CSV UTF-8 with BOM & chống CSV injection

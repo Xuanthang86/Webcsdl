@@ -321,7 +321,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       {isAuthorized ? (
                         <div className="space-y-1.5">
                           <div className="text-slate-800 font-medium">
-                            {entity.evidenceDocuments || 'Quyết định phê duyệt số 142/QĐ-SKHCN; Hợp đồng nghiên cứu KH&CN số 18/HĐ-KHCN; Biên bản nghiệm thu chính thức cấp TP.'}
+                            {entity.evidenceDocuments || entity.attachmentSummary || (Array.isArray(entity.attachments) && entity.attachments.length > 0 ? entity.attachments.map((a: any) => typeof a === 'string' ? a : (a.name || a.title || a.url)).filter(Boolean).join('; ') : null) || 'Quyết định phê duyệt số 142/QĐ-SKHCN; Hợp đồng nghiên cứu KH&CN số 18/HĐ-KHCN; Biên bản nghiệm thu chính thức cấp TP.'}
                           </div>
                           <button
                             type="button"
@@ -346,7 +346,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <div className="sm:col-span-2">
                       {isAuthorized ? (
                         <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2.5 py-1 rounded border border-slate-300">
-                          {entity.archiveCode || entity.warehouseCode || 'KHO-KHCN-ĐN-2024/089'}
+                          {entity.storageCode || entity.archiveCode || entity.warehouseCode || 'KHO-KHCN-ĐN-2024/089'}
                         </span>
                       ) : (
                         <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">

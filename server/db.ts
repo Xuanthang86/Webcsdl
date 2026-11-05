@@ -1225,6 +1225,8 @@ class DatabaseManager {
     if (fieldVal && !row.field) row.field = String(fieldVal).trim();
 
     if (moduleType === 'science_tasks') {
+      const sttVal = findVal(['stt', 'số thứ tự', 'số tt']);
+      if (sttVal) row.stt = Number(sttVal) || undefined;
       const mgmt = findVal(['managementLevel', 'cấp quản lý', 'cấp đề tài']);
       if (mgmt) row.managementLevel = String(mgmt).trim();
       const lead = findVal(['leadOrganization', 'cơ quan chủ trì', 'đơn vị chủ trì']);
@@ -1238,9 +1240,23 @@ class DatabaseManager {
       const mem = findVal(['members', 'thành viên tham gia', 'thành viên']);
       if (mem) row.members = Array.isArray(mem) ? mem : String(mem).split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
       const docs = findVal(['attachments', 'tài liệu minh chứng']);
-      if (docs) row.attachments = Array.isArray(docs) ? docs : [{ name: String(docs), url: '#' }];
+      if (docs) {
+        if (Array.isArray(docs)) {
+          row.attachments = docs;
+        } else {
+          const docStr = String(docs).trim();
+          if (docStr.startsWith('http://') || docStr.startsWith('https://') || docStr.startsWith('/')) {
+            row.attachments = [{ name: docStr.split('/').pop() || docStr, url: docStr }];
+          } else {
+            row.attachments = [{ name: docStr }];
+          }
+        }
+      }
       const arch = findVal(['storageCode', 'ký hiệu kho', 'mã lưu kho', 'archiveCode']);
-      if (arch) row.storageCode = String(arch).trim();
+      if (arch) {
+        row.storageCode = String(arch).trim();
+        row.archiveCode = String(arch).trim();
+      }
     } else if (moduleType === 'initiatives') {
       const yr = findVal(['recognitionYear', 'năm công nhận', 'năm']);
       if (yr) row.recognitionYear = String(yr).trim();

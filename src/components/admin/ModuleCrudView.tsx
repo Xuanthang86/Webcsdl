@@ -396,6 +396,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                           {item.managementLevel && <span className="bg-teal-50 text-teal-700 px-1.5 py-0.2 rounded border border-teal-200">{item.managementLevel}</span>}
                           {item.principalInvestigator && <span>Chủ nhiệm: <strong className="text-slate-700">{item.principalInvestigator}</strong></span>}
                           {item.executionTime && <span className="text-slate-400">· {item.executionTime}</span>}
+                          {(item.storageCode || item.archiveCode) && <span className="bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded font-mono border border-slate-200">Kho: {item.storageCode || item.archiveCode}</span>}
                         </div>
                       )}
 
@@ -749,6 +750,46 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                           className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
                         />
                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Thành viên tham gia</label>
+                        <input
+                          type="text"
+                          value={Array.isArray(extraFields.members) ? extraFields.members.join(', ') : (extraFields.members || '')}
+                          onChange={(e) => setExtra('members', e.target.value)}
+                          placeholder="VD: TS. Nguyễn Văn A, ThS. Trần Thị B"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Ký hiệu Kho lưu trữ</label>
+                        <input
+                          type="text"
+                          value={extraFields.storageCode || extraFields.archiveCode || ''}
+                          onChange={(e) => {
+                            setExtra('storageCode', e.target.value);
+                            setExtra('archiveCode', e.target.value);
+                          }}
+                          placeholder="VD: KHO-CNTT-2024-01"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg font-mono text-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Tài liệu minh chứng</label>
+                      <input
+                        type="text"
+                        value={extraFields.evidenceDocuments || extraFields.attachmentSummary || ''}
+                        onChange={(e) => {
+                          setExtra('evidenceDocuments', e.target.value);
+                          setExtra('attachmentSummary', e.target.value);
+                        }}
+                        placeholder="VD: Quyết định phê duyệt số 142/QĐ-SKHCN; Biên bản nghiệm thu chính thức"
+                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
