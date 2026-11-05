@@ -77,14 +77,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
   };
 
   const renderRecognitionBadge = (scope?: string) => {
-    if (!scope || scope === 'Chưa công nhận' || scope === 'Đang thẩm định') {
-      return (
-        <span className="text-slate-600 bg-slate-100 px-2 py-0.5 rounded text-[11px] font-medium border border-slate-200">
-          Đang thẩm định
-        </span>
-      );
-    }
-    const scopeLabel = scope.includes('thành phố') || scope.includes('TP') ? 'Cấp thành phố' : scope;
+    const scopeLabel = (!scope || scope === 'Chưa công nhận' || scope === 'Đang thẩm định' || scope.includes('thành phố') || scope.includes('TP')) 
+      ? 'Cấp thành phố' 
+      : scope;
     return (
       <span className="text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded text-[11px] font-bold border border-amber-300">
         Sáng kiến đã công nhận ({scopeLabel})
@@ -152,7 +147,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-mono text-teal-800 font-bold bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                      STT {idx + 1} · {item.code}
+                      <span className="hidden sm:inline">STT {idx + 1} · </span>{item.code}
                     </span>
                     <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                       {item.managementLevel || item.managingAgency || 'Cấp Thành phố'}
@@ -186,8 +181,18 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 </div>
 
                 <div className="pt-3 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-emerald-700 font-semibold text-[11px]">
-                    {item.acceptanceResult ? `Nghiệm thu: ${item.acceptanceResult}` : 'Đang thực hiện'}
+                  <span className={`font-semibold text-[11px] ${
+                    item.acceptanceResult === 'Đang nghiệm thu' || item.status === 'under_review'
+                      ? 'text-amber-700'
+                      : (item.acceptanceResult === 'Đã nghiệm thu' || item.acceptanceResult === 'Xuất sắc' || item.acceptanceResult === 'Đạt' || item.status === 'approved')
+                      ? 'text-emerald-700'
+                      : 'text-slate-600'
+                  }`}>
+                    {item.acceptanceResult === 'Đang nghiệm thu' || item.status === 'under_review'
+                      ? 'Đang nghiệm thu'
+                      : (item.acceptanceResult === 'Đã nghiệm thu' || item.acceptanceResult === 'Xuất sắc' || item.acceptanceResult === 'Đạt' || item.status === 'approved')
+                      ? 'Đã nghiệm thu'
+                      : 'Chưa nghiệm thu'}
                   </span>
                   <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
                     Xem chi tiết
@@ -231,7 +236,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-mono text-amber-900 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                      STT {idx + 1} · Năm {item.recognitionYear || '2025'}
+                      <span className="hidden sm:inline">STT {idx + 1} · </span>Năm {item.recognitionYear || '2025'}
                     </span>
                     {renderRecognitionBadge(item.recognizedScope)}
                   </div>
@@ -307,7 +312,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-mono text-purple-900 font-bold bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                      STT {idx + 1} · {item.patentNumber || item.code}
+                      <span className="hidden sm:inline">STT {idx + 1} · </span>{item.patentNumber || item.code}
                     </span>
                     <span className="text-[11px] font-semibold text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
                       {item.patentType || 'Bằng sáng chế'}
@@ -386,10 +391,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-blue-900 font-bold text-xs">STT {idx + 1}</span>
-                        <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          Đã xác minh
-                        </span>
+                        <span className="hidden sm:inline font-mono text-blue-900 font-bold text-xs">STT {idx + 1}</span>
                       </div>
                       <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-800 transition-colors truncate">
                         {item.title || item.fullName}
@@ -564,7 +566,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     >
                       <div className="space-y-2.5">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-mono text-rose-900 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                          <span className="hidden sm:inline font-mono text-rose-900 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
                             STT {idx + 1}
                           </span>
                           <span className="text-[11px] font-mono text-slate-500">
@@ -619,7 +621,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-mono text-cyan-900 font-bold bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                          <span className="hidden sm:inline font-mono text-cyan-900 font-bold bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
                             STT {idx + 1}
                           </span>
                           <span className="text-[11px] text-cyan-700 font-medium">Tổ chức trung gian</span>
@@ -667,7 +669,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-mono text-emerald-900 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          <span className="hidden sm:inline font-mono text-emerald-900 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                             STT {idx + 1}
                           </span>
                           <span className="text-[11px] font-mono text-slate-500">Năm {item.startYear || '2024'}</span>
@@ -720,7 +722,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-mono text-yellow-900 font-bold bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200">
+                          <span className="hidden sm:inline font-mono text-yellow-900 font-bold bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200">
                             STT {idx + 1}
                           </span>
                           <span className="text-[11px] text-amber-800 font-medium truncate max-w-[150px]">
@@ -775,10 +777,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-mono text-indigo-900 font-bold bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                          <span className="hidden sm:inline font-mono text-indigo-900 font-bold bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
                             STT {idx + 1}
                           </span>
-                          <span className="text-[11px] text-indigo-700 font-medium">Địa bàn cơ sở</span>
                         </div>
                         <h4 className="font-bold text-slate-900 group-hover:text-indigo-800 transition-colors text-sm">
                           {item.title}
@@ -823,10 +824,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-mono text-violet-900 font-bold bg-violet-50 px-2 py-0.5 rounded border border-violet-200">
+                          <span className="hidden sm:inline font-mono text-violet-900 font-bold bg-violet-50 px-2 py-0.5 rounded border border-violet-200">
                             STT {idx + 1}
                           </span>
-                          <span className="text-[11px] text-violet-700 font-medium">Viện trường ĐMST</span>
                         </div>
                         <h4 className="font-bold text-slate-900 group-hover:text-violet-800 transition-colors text-sm line-clamp-2">
                           {item.title}
@@ -872,7 +872,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-mono text-amber-900 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                          <span className="hidden sm:inline font-mono text-amber-900 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                             STT {idx + 1}
                           </span>
                           <span className="text-[11px] text-amber-700 font-medium">Tiêu biểu thành phố</span>

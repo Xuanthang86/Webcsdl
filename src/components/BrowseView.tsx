@@ -411,14 +411,14 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 text-slate-500 text-xs shrink-0">
+            <div className="w-full sm:w-auto flex flex-wrap items-center justify-between sm:justify-end gap-1.5 sm:gap-2 text-slate-500 text-xs">
               {selectedModule !== 'all' && (
                 <>
-                  <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                  <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 shrink-0">
                     <button
                       type="button"
                       onClick={() => setViewMode('table')}
-                      className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
+                      className={`px-2 sm:px-2.5 py-1 rounded-md text-[11px] sm:text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0 ${
                         viewMode === 'table' ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
                       title="Xem dạng bảng chuẩn hoá"
@@ -429,7 +429,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setViewMode('grid')}
-                      className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
+                      className={`px-2 sm:px-2.5 py-1 rounded-md text-[11px] sm:text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0 ${
                         viewMode === 'grid' ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
                       title="Xem dạng thẻ"
@@ -442,7 +442,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   <a
                     href={`/api/export/${selectedModule}`}
                     download
-                    className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                    className="px-2 sm:px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0 whitespace-nowrap text-[11px] sm:text-xs"
                     title="Xuất tệp CSV dữ liệu theo biểu mẫu chuẩn"
                   >
                     <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
@@ -451,13 +451,13 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                   <button
                     onClick={() => setSelectedModule('all')}
-                    className="text-teal-800 font-semibold hover:underline cursor-pointer"
+                    className="text-teal-800 font-semibold hover:underline cursor-pointer shrink-0 whitespace-nowrap text-[11px] sm:text-xs"
                   >
                     ← Tất cả phân hệ
                   </button>
                 </>
               )}
-              <span>Tổng cộng: <strong className="text-slate-900 font-bold">{processedResults.length}</strong> kết quả</span>
+              <span className="shrink-0 whitespace-nowrap text-[11px] sm:text-xs">Tổng cộng: <strong className="text-slate-900 font-bold">{processedResults.length}</strong> kết quả</span>
             </div>
           </div>
 
@@ -793,10 +793,14 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                       </div>
 
                       <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                        <span className="text-[11px] flex items-center gap-1 text-emerald-700">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Đã xác minh
-                        </span>
+                        {item.moduleType !== 'experts' ? (
+                          <span className="text-[11px] flex items-center gap-1 text-emerald-700">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Đã xác minh
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-blue-700 font-medium">Hồ sơ chuyên gia</span>
+                        )}
                         <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
                           Chi tiết
                           <ArrowRight className="w-3 h-3" />
@@ -830,15 +834,115 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
            ========================================================================= */
         <div className="space-y-6">
           {viewMode === 'table' ? (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-700">
+            <>
+              {/* MOBILE ADAPTIVE CARDS (block md:hidden):
+                  No STT prefix displayed on mobile;
+                  Title spreads evenly across 100% width with no left compression;
+                  Metadata and direct 'Xem chi tiết' button without horizontal scrolling */}
+              <div className="block md:hidden space-y-3">
+                {processedResults.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3"
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 flex-wrap gap-1">
+                        <span className="font-mono text-teal-800 font-semibold">{item.code || item.field || 'CSDL'}</span>
+                        {item.managementLevel && (
+                          <span className="font-semibold text-teal-900 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                            {item.managementLevel}
+                          </span>
+                        )}
+                        {item.recognitionYear && (
+                          <span className="font-semibold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                            Năm {item.recognitionYear}
+                          </span>
+                        )}
+                        {item.birthYear && (
+                          <span className="font-mono font-semibold text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                            Sinh năm {item.birthYear}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Tiêu đề trải đều toàn bộ bề ngang màn hình, không bị ép 1 bên trái */}
+                      <h3
+                        onClick={() => onViewDetail(item)}
+                        className="w-full text-sm font-bold text-slate-900 hover:text-teal-800 cursor-pointer leading-snug break-words"
+                      >
+                        {item.title}
+                      </h3>
+
+                      {/* Chi tiết các trường dữ liệu */}
+                      <div className="space-y-1 text-xs text-slate-600 bg-slate-50/80 p-2.5 rounded-lg border border-slate-100">
+                        {selectedModule === 'science_tasks' && (
+                          <>
+                            <div><span className="text-slate-400">Cơ quan chủ trì:</span> <span className="font-medium text-slate-800">{item.leadOrganization || item.ownerName || '—'}</span></div>
+                            <div><span className="text-slate-400">Chủ nhiệm đề tài:</span> <span className="font-semibold text-slate-900">{item.principalInvestigator || '—'}</span></div>
+                            <div><span className="text-slate-400">Thời gian:</span> <span className="font-mono text-slate-800">{item.executionTime || item.actualDuration || '18 tháng'}</span></div>
+                            <div><span className="text-slate-400">Lĩnh vực:</span> <span className="text-teal-800 font-medium">{item.field || 'Đa ngành'}</span></div>
+                            <div>
+                              <span className="text-slate-400">Trạng thái:</span>{' '}
+                              <span className={`font-semibold ${
+                                item.acceptanceResult === 'Đang nghiệm thu' ? 'text-amber-700' : 'text-emerald-700'
+                              }`}>
+                                {item.acceptanceResult === 'Đang nghiệm thu' ? 'Đang nghiệm thu' : (item.acceptanceResult === 'Đã nghiệm thu' || item.status === 'approved' || item.acceptanceResult === 'Xuất sắc' || item.acceptanceResult === 'Đạt') ? 'Đã nghiệm thu' : 'Chưa nghiệm thu'}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                        {selectedModule === 'initiatives' && (
+                          <>
+                            <div><span className="text-slate-400">Tác giả:</span> <span className="font-semibold text-slate-900">{Array.isArray(item.authors) ? item.authors.join(', ') : (item.authors || '—')}</span></div>
+                            <div><span className="text-slate-400">Chủ sở hữu:</span> <span className="font-medium text-slate-800">{item.ownerName || '—'}</span></div>
+                            <div><span className="text-slate-400">Địa chỉ:</span> <span className="text-slate-700">{item.ownerAddress || 'TP. Đà Nẵng'}</span></div>
+                            <div><span className="text-slate-400">Lĩnh vực:</span> <span className="text-amber-800 font-medium">{item.field || '—'}</span></div>
+                          </>
+                        )}
+                        {selectedModule === 'experts' && (
+                          <>
+                            <div><span className="text-slate-400">Chuyên ngành:</span> <span className="font-semibold text-slate-900">{item.specialty || item.primaryField || item.field || '—'}</span></div>
+                            <div><span className="text-slate-400">Đơn vị:</span> <span className="text-slate-800">{item.workplace || item.organization || '—'}</span></div>
+                          </>
+                        )}
+                        {!['science_tasks', 'initiatives', 'experts'].includes(selectedModule) && (
+                          <>
+                            {item.leadOrganization || item.ownerName ? (
+                              <div><span className="text-slate-400">Đơn vị / Tác giả:</span> <span className="font-medium text-slate-800">{item.leadOrganization || item.ownerName}</span></div>
+                            ) : null}
+                            {item.address ? (
+                              <div><span className="text-slate-400">Địa chỉ:</span> <span className="text-slate-700">{item.address}</span></div>
+                            ) : null}
+                            {item.field ? (
+                              <div><span className="text-slate-400">Lĩnh vực:</span> <span className="text-teal-800 font-medium">{item.field}</span></div>
+                            ) : null}
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => onViewDetail(item)}
+                      className="w-full py-2 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <span>Xem chi tiết hồ sơ</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* DESKTOP DATA TABLE (hidden md:block) */}
+              <div className="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-700">
                   <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[11px] tracking-wider whitespace-nowrap">
                     
                     {/* 1. Science Tasks: STT, Tên đề tài, Cấp quản lý, Cơ quan chủ trì, Chủ nhiệm đề tài, Thời gian thực hiện, Lĩnh vực, Tóm tắt đề tài */}
                     {selectedModule === 'science_tasks' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[260px]">Tên đề tài</th>
                         <th className="py-3 px-4 w-32">Cấp quản lý</th>
                         <th className="py-3 px-4 w-44">Cơ quan chủ trì</th>
@@ -853,7 +957,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     {/* 2. Initiatives: STT, Năm công nhận, Tên sáng kiến, Tác giả, Chủ sở hữu, Địa chỉ chủ sở hữu, Lĩnh vực */}
                     {selectedModule === 'initiatives' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 w-28 text-center">Năm công nhận</th>
                         <th className="py-3 px-4 min-w-[260px]">Tên sáng kiến</th>
                         <th className="py-3 px-4 w-36">Tác giả</th>
@@ -867,7 +971,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     {/* 3. Experts: STT, Tên Chuyên gia, Năm sinh, Chuyên ngành */}
                     {selectedModule === 'experts' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[240px]">Tên Chuyên gia</th>
                         <th className="py-3 px-4 w-28 text-center">Năm sinh</th>
                         <th className="py-3 px-4 min-w-[260px]">Chuyên ngành</th>
@@ -878,7 +982,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     {/* 4. Startups: STT, Tên doanh nghiệp, Địa chỉ hoạt động, Website, File logo, Lĩnh vực, Tóm tắt, Sản phẩm giải quyết vấn đề, Số sáng lập viên, Nhân sự, Người đứng đầu, SĐT, Email, Năm bắt đầu */}
                     {selectedModule === 'startups' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[220px]">Tên doanh nghiệp</th>
                         <th className="py-3 px-4 min-w-[180px]">Địa chỉ hoạt động</th>
                         <th className="py-3 px-4 w-32">Website</th>
@@ -899,7 +1003,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     {/* 5. Support Organizations: STT, Tên tổ chức, Địa chỉ, Thông tin về tổ chức */}
                     {selectedModule === 'support_organizations' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[280px]">Tên tổ chức</th>
                         <th className="py-3 px-4 min-w-[260px]">Địa chỉ</th>
                         <th className="py-3 px-4 min-w-[320px]">Thông tin về tổ chức</th>
@@ -910,7 +1014,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     {/* 6. Startup Projects: STT, Tên dự án, Lĩnh vực khởi nghiệp, Sản phẩm giải quyết vấn đề, Người đứng đầu, Dự án được ươm tạo từ tổ chức, Năm bắt đầu khởi nghiệp */}
                     {selectedModule === 'startup_projects' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[240px]">Tên dự án</th>
                         <th className="py-3 px-4 w-36">Lĩnh vực khởi nghiệp</th>
                         <th className="py-3 px-4 min-w-[260px]">Sản phẩm giải quyết vấn đề</th>
@@ -924,7 +1028,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     {/* 7. Startup Ideas: STT, Tên ý tưởng, Lĩnh vực khởi nghiệp, Người đứng đầu, Giáo viên hướng dẫn */}
                     {selectedModule === 'startup_ideas' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[260px]">Tên ý tưởng</th>
                         <th className="py-3 px-4 w-36">Lĩnh vực khởi nghiệp</th>
                         <th className="py-3 px-4 w-40">Người đứng đầu</th>
@@ -936,7 +1040,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     {/* 8. Wards: STT, Tên xã/phường/đặc khu, Địa chỉ, Thông tin liên hệ, Website */}
                     {selectedModule === 'wards' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[220px]">Tên xã / phường / đặc khu</th>
                         <th className="py-3 px-4 min-w-[280px]">Địa chỉ</th>
                         <th className="py-3 px-4 w-36">Thông tin liên hệ</th>
@@ -948,7 +1052,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     {/* 9. Universities: STT, Tên trường, Thuộc xã/ phường, Địa chỉ, Thông tin liên hệ, Website */}
                     {selectedModule === 'universities' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[260px]">Tên trường</th>
                         <th className="py-3 px-4 w-36">Thuộc xã / phường</th>
                         <th className="py-3 px-4 min-w-[280px]">Địa chỉ</th>
@@ -961,7 +1065,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     {/* 10. Featured Startups: STT, Tên doanh nghiệp, Tên dự án, Người đại diện dự án, Địa chỉ, Thông tin liên hệ, Website, Thuộc xã/ phường */}
                     {selectedModule === 'featured_startups' && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 min-w-[220px]">Tên doanh nghiệp</th>
                         <th className="py-3 px-4 min-w-[220px]">Tên dự án</th>
                         <th className="py-3 px-4 w-36">Người đại diện dự án</th>
@@ -976,7 +1080,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     {/* Other modules fallback */}
                     {!['science_tasks', 'initiatives', 'experts', 'startups', 'support_organizations', 'startup_projects', 'startup_ideas', 'wards', 'universities', 'featured_startups'].includes(selectedModule) && (
                       <tr>
-                        <th className="py-3 px-3 w-12 text-center">STT</th>
+                        <th className="hidden sm:table-cell py-3 px-3 w-12 text-center">STT</th>
                         <th className="py-3 px-4 w-32">Mã bản ghi</th>
                         <th className="py-3 px-4 min-w-[260px]">Tiêu đề / Tên</th>
                         <th className="py-3 px-4 w-40">Lĩnh vực</th>
@@ -991,7 +1095,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                       const stt = (currentPage - 1) * PAGE_SIZE + idx + 1;
                       return (
                         <tr key={item.id} className="hover:bg-teal-50/30 transition-colors">
-                          <td className="py-3 px-3 text-center text-slate-400 font-mono text-[11px]">
+                          <td className="hidden sm:table-cell py-3 px-3 text-center text-slate-400 font-mono text-[11px]">
                             {stt}
                           </td>
 
@@ -1349,6 +1453,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                 </table>
               </div>
             </div>
+            </>
           ) : (
             /* Grid View */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1381,10 +1486,14 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   </div>
 
                   <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                    <span className="text-[11px] flex items-center gap-1 text-emerald-700">
-                      <CheckCircle2 className="w-3 h-3" />
-                      Đã xác minh
-                    </span>
+                    {item.moduleType !== 'experts' && selectedModule !== 'experts' ? (
+                      <span className="text-[11px] flex items-center gap-1 text-emerald-700">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Đã xác minh
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-blue-700 font-medium">Hồ sơ chuyên gia</span>
+                    )}
                     <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
                       Xem hồ sơ
                       <ArrowRight className="w-3 h-3" />

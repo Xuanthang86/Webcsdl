@@ -107,7 +107,7 @@ export interface ScienceTask extends BaseEntity {
   expectedOutputs: string;
   kpiTargets: string;
   executionProgress: number;   // 0 - 100%
-  acceptanceResult?: 'Xuất sắc' | 'Đạt' | 'Không đạt' | 'Chờ nghiệm thu';
+  acceptanceResult?: 'Đã nghiệm thu' | 'Đang nghiệm thu' | 'Chưa nghiệm thu' | 'Xuất sắc' | 'Đạt' | 'Không đạt' | 'Chờ nghiệm thu';
   approvalDecisionNumber?: string;
   acceptanceDecisionNumber?: string;
   scientificProducts?: string[];

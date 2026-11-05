@@ -201,13 +201,27 @@ export const Header: React.FC<HeaderProps> = ({
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
           
-          {/* Zone 1: Logo & Brand Wordmark */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
-            {/* Logo and Brand Name - Click navigates to Home */}
+          {/* Zone 1: Logo & Brand Wordmark + 3-line Menu on Mobile */}
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
+            {/* Dấu 3 gạch ngang bên trái logo trên mobile - mở Danh mục Cơ sở dữ liệu */}
+            <button
+              type="button"
+              onClick={() => setMenuDrawerOpen(true)}
+              className="lg:hidden p-1.5 -ml-1 text-slate-700 hover:text-teal-800 hover:bg-slate-100 rounded-lg transition-colors flex items-center shrink-0 cursor-pointer"
+              title="Danh mục Cơ sở dữ liệu"
+              aria-label="Danh mục dữ liệu"
+            >
+              <Menu className="w-5 h-5 text-slate-800" />
+            </button>
+
+            {/* Logo and Brand Name - Click navigates to Home & scrolls to top */}
             <div 
-              onClick={() => onNavigate('home')} 
+              onClick={() => {
+                onNavigate('home');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }} 
               className="cursor-pointer flex items-center gap-2 sm:gap-2.5 min-w-0 group"
-              title="Trở về Trang chủ Cổng Dữ Liệu"
+              title="Trở về đầu Trang chủ Cổng Dữ Liệu"
             >
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-teal-800 text-white flex items-center justify-center font-bold text-xs sm:text-base shadow-xs group-hover:bg-teal-700 transition-colors shrink-0">
                 ĐN
@@ -223,10 +237,13 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Zone 2: Navigation Links: Trang chủ; Danh mục Cơ sở dữ liệu; Đăng nhập */}
-          <nav className="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm font-medium text-slate-600 shrink-0">
+          {/* Zone 2: Navigation Links: Trang chủ; Danh mục Cơ sở dữ liệu; (Chỉ hiển thị trên Desktop lg+, mobile đã đưa vào dấu 3 gạch ngang) */}
+          <nav className="hidden lg:flex items-center gap-6 text-xs sm:text-sm font-medium text-slate-600 shrink-0">
             <button
-              onClick={() => onNavigate('home')}
+              onClick={() => {
+                onNavigate('home');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               className={`transition-colors whitespace-nowrap hover:text-slate-900 py-1 cursor-pointer ${
                 currentView === 'home' ? 'text-teal-800 font-semibold border-b-2 border-teal-800' : ''
               }`}

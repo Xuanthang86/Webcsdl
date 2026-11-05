@@ -645,7 +645,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                             <td className="py-2.5 px-3 font-mono">2022 - 2024</td>
                             <td className="py-2.5 px-3">8 thành viên</td>
                             <td className="py-2.5 px-3 font-semibold text-slate-900">Chủ nhiệm đề tài</td>
-                            <td className="py-2.5 px-3 text-emerald-700 font-medium">Đã nghiệm thu (Xuất sắc)</td>
+                            <td className="py-2.5 px-3 text-emerald-700 font-medium">Đã nghiệm thu</td>
                           </tr>
                           <tr className="hover:bg-slate-50">
                             <td className="py-2.5 px-3 font-medium text-slate-900">Xây dựng bản đồ số tài nguyên du lịch thông minh trên nền tảng GIS</td>

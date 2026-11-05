@@ -851,7 +851,7 @@ class DatabaseManager {
       i => i.recognizedScope === 'Cấp thành phố' || i.recognizedScope === 'Toàn quốc'
     ).length;
 
-    const acceptedTasksCount = tasks.filter(t => t.acceptanceResult === 'Xuất sắc' || t.acceptanceResult === 'Đạt' || t.status === 'approved').length;
+    const acceptedTasksCount = tasks.filter(t => t.acceptanceResult === 'Đã nghiệm thu' || t.acceptanceResult === 'Xuất sắc' || t.acceptanceResult === 'Đạt' || t.status === 'approved').length;
 
     // Current Year calculation for Initiatives
     const currentYear = new Date().getFullYear();
@@ -971,7 +971,7 @@ class DatabaseManager {
 
     return {
       totalScienceTasks: tasks.length,
-      tasksRunning: tasks.filter(t => (t.executionProgress || 0) < 100 && t.acceptanceResult !== 'Xuất sắc' && t.acceptanceResult !== 'Đạt').length,
+      tasksRunning: tasks.filter(t => (t.executionProgress || 0) < 100 && t.acceptanceResult !== 'Đã nghiệm thu' && t.acceptanceResult !== 'Xuất sắc' && t.acceptanceResult !== 'Đạt').length,
       tasksAccepted: acceptedTasksCount || 18,
       tasksPending: tasks.filter(t => t.status === 'submitted' || t.status === 'under_review').length,
       totalInitiatives: initiatives.length,
