@@ -1107,9 +1107,12 @@ export default {
             }
             if (taskColumns.has('data_json')) {
               const jsonPaths = [
-                '$.acceptanceResult', '$.acceptance_result', '$.trangthai',
-                '$.completionStatus', '$.completion_status', '$.taskStatus',
-                '$.task_status', '$.result', '$.__custom__acceptance_result'
+                '$.acceptanceResult', '$.acceptance_result', '$.acceptanceOutcome',
+                '$.acceptance_outcome', '$.trangthai', '$.trangThai',
+                '$.tinhTrangNghiemThu', '$.tinh_trang_nghiem_thu', '$.nghiemThu',
+                '$.nghiem_thu', '$.completionStatus', '$.completion_status',
+                '$.taskStatus', '$.task_status', '$.resultStatus', '$.result_status',
+                '$.result', '$.__custom__acceptance_result'
               ];
               for (const path of jsonPaths) {
                 acceptanceExpressions.push(`CASE WHEN json_valid(data_json) THEN json_extract(data_json, '${path}') END`);
