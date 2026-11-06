@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ModuleType, BaseEntity, User, ApprovalStatus } from '../../types';
 import { api } from '../../services/api';
 import { 
@@ -99,6 +99,8 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   const [taskLevelFilter, setTaskLevelFilter] = useState('all');
   const [taskYearFilter, setTaskYearFilter] = useState('all');
   const [taskUnitFilter, setTaskUnitFilter] = useState('all');
+  const [showTaskUnitSuggestions, setShowTaskUnitSuggestions] = useState(false);
+  const taskUnitFilterRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -496,6 +498,18 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   const availableTaskUnits = moduleType === 'science_tasks'
     ? Array.from(new Set(records.flatMap(getScienceTaskUnits))).sort((a, b) => a.localeCompare(b, 'vi'))
     : [];
+  const filteredTaskUnitSuggestions = availableTaskUnits
+    .filter(unit => taskUnitFilter === 'all' || normalizeScienceTaskText(unit).includes(normalizeScienceTaskText(taskUnitFilter)))
+    .slice(0, 30);
+
+  useEffect(() => {
+    if (!showTaskUnitSuggestions) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!taskUnitFilterRef.current?.contains(event.target as Node)) setShowTaskUnitSuggestions(false);
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [showTaskUnitSuggestions]);
 
   const filteredRecords = records.filter(item => {
     if (statusFilter !== 'all' && item.status !== statusFilter) return false;
@@ -512,13 +526,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       if (taskYearFilter !== 'all' && !getScienceTaskYears(item).includes(taskYearFilter)) return false;
       if (taskUnitFilter !== 'all') {
         const unitQuery = normalizeScienceTaskText(taskUnitFilter);
-        const unitValues = [
-          item.leadOrganization, item.hostOrganization, item.ownerName,
-          item.proposingOrg, item.organization, item.managingAgency
-        ];
-        if (!unitValues.some(value =>
-          typeof value === 'string' && normalizeScienceTaskText(value).includes(unitQuery)
-        )) return false;
+        if (!getScienceTaskUnits(item).some(value => normalizeScienceTaskText(value).includes(unitQuery))) return false;
       }
     }
     return true;
@@ -698,20 +706,45 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                 <option value="all">Tất cả năm</option>
                 {availableTaskYears.map(year => <option key={year} value={year}>{year}</option>)}
               </select>
-              <input
-                aria-label="Tìm đơn vị chủ trì"
-                type="search"
-                list="admin-task-unit-suggestions"
-                value={taskUnitFilter === 'all' ? '' : taskUnitFilter}
-                onChange={(e) => { setTaskUnitFilter(e.target.value.trim() ? e.target.value : 'all'); setCurrentPage(1); }}
-                onKeyDown={(e) => { if (e.key === 'Escape') setTaskUnitFilter('all'); }}
-                placeholder="Đơn vị chủ trì..."
-                autoComplete="off"
-                className="h-9 w-full sm:w-52 min-w-0 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs"
-              />
-              <datalist id="admin-task-unit-suggestions">
-                {availableTaskUnits.map(unit => <option key={unit} value={unit} />)}
-              </datalist>
+              <div ref={taskUnitFilterRef} className="relative w-full sm:w-52 min-w-0">
+                <input
+                  aria-label="Tìm đơn vị chủ trì"
+                  type="search"
+                  list="admin-task-unit-suggestions"
+                  value={taskUnitFilter === 'all' ? '' : taskUnitFilter}
+                  onFocus={() => setShowTaskUnitSuggestions(true)}
+                  onChange={(e) => { setTaskUnitFilter(e.target.value.trim() ? e.target.value : 'all'); setCurrentPage(1); setShowTaskUnitSuggestions(true); }}
+                  onKeyDown={(e) => { if (e.key === 'Escape') setShowTaskUnitSuggestions(false); }}
+                  placeholder="Đơn vị chủ trì..."
+                  autoComplete="off"
+                  aria-expanded={showTaskUnitSuggestions}
+                  aria-controls="admin-task-unit-suggestions"
+                  className="h-9 w-full min-w-0 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs"
+                />
+                <datalist id="admin-task-unit-suggestions">
+                  {availableTaskUnits.map(unit => <option key={unit} value={unit} />)}
+                </datalist>
+                {showTaskUnitSuggestions && (
+                  <div id="admin-task-unit-suggestions" role="listbox" className="absolute left-0 right-0 top-full z-[100] mt-1 max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+                    <div className="flex items-center justify-between px-2 py-1 border-b border-slate-100">
+                      <span className="text-[10px] font-semibold text-slate-500">Gợi ý đơn vị chủ trì</span>
+                      <button type="button" onClick={() => setShowTaskUnitSuggestions(false)} className="text-[10px] font-semibold text-teal-700 px-2 py-1">Đóng ✕</button>
+                    </div>
+                    {filteredTaskUnitSuggestions.length > 0 ? filteredTaskUnitSuggestions.map(unit => (
+                      <button
+                        key={unit}
+                        type="button"
+                        onClick={() => { setTaskUnitFilter(unit); setCurrentPage(1); setShowTaskUnitSuggestions(false); }}
+                        className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-700 hover:bg-teal-50 hover:text-teal-900"
+                      >
+                        {unit}
+                      </button>
+                    )) : (
+                      <div className="px-3 py-2 text-xs text-slate-500">Không có đơn vị phù hợp.</div>
+                    )}
+                  </div>
+                )}
+              </div>
             </>
           )}
           <span className="text-slate-400 whitespace-nowrap">Trạng thái:</span>
