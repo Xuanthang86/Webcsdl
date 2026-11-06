@@ -117,11 +117,26 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
 
       case 'experts':
         return {
-          headers: ['STT', 'Tên Chuyên gia', 'Năm sinh', 'Chuyên ngành'],
+          headers: [
+            'STT', 'Tên Chuyên gia', 'Ngày tháng năm sinh', 'Giới tính', 'Học hàm', 'Học vị',
+            'Năm bắt đầu công tác', 'Chức danh nghiên cứu', 'Chức vụ', 'Email', 'Điện thoại',
+            'Lĩnh vực', 'Chuyên ngành', 'Tên đơn vị công tác', 'Quá trình đào tạo và học tập',
+            'Quá trình công tác', 'Ngoại ngữ', 'Tên bài báo/Tạp chí/Quốc gia', 'Tên văn bằng',
+            'Tên công trình/Kết quả nghiên cứu', 'Tên đề tài/Dự án', 'Giải thưởng', 'Kinh nghiệm'
+          ],
           rows: [
-            ['1', 'GS.TS. Trần Quốc Hùng', '1975', 'Trí tuệ nhân tạo & Robot y tế'],
-            ['2', 'PGS.TS. Hoàng Kim Oanh', '1980', 'Công nghệ Sinh học & Y dược'],
-            ['3', 'TS. Lê Mai Anh', '1985', 'Khoa học Môi trường & Năng lượng mới']
+            [
+              '1', 'GS.TS. Trần Quốc Hùng', '15/08/1975', 'Nam', 'Giáo sư', 'Tiến sĩ',
+              '2001', 'Nghiên cứu viên cao cấp', 'Trưởng phòng nghiên cứu', 'hung.tq@example.vn',
+              '0905123456', 'Công nghệ thông tin', 'Trí tuệ nhân tạo & Robot y tế',
+              'Trường Đại học Bách khoa - Đại học Đà Nẵng',
+              '1993-1998: Kỹ sư CNTT; 2000-2004: Tiến sĩ Khoa học máy tính',
+              '2004-2012: Giảng viên; 2013-nay: Trưởng phòng nghiên cứu',
+              'Tiếng Anh (C1); Tiếng Nhật (N2)', 'Bài báo AI và Robot y tế, IEEE, Hoa Kỳ',
+              'Bằng Tiến sĩ Khoa học máy tính', 'Hệ thống robot hỗ trợ chẩn đoán hình ảnh',
+              'Đề tài AI y tế cấp thành phố (2024-2026), Chủ trì', 'Giải thưởng KH&CN thành phố 2025',
+              '20 năm nghiên cứu và triển khai ứng dụng AI'
+            ]
           ]
         };
 
@@ -150,20 +165,38 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
 
       case 'startup_projects':
         return {
-          headers: ['STT', 'Tên dự án', 'Lĩnh vực khởi nghiệp', 'Sản phẩm giải quyết vấn đề', 'Người đứng đầu', 'Dự án được ươm tạo từ tổ chức (Nếu có/Tự hình thành dự án)', 'Năm bắt đầu khởi nghiệp'],
-          rows: [
-            ['1', 'Hệ thống trạm sạc xe điện thông minh SmartCharge', 'Năng lượng xanh', 'Mạng lưới trạm sạc nhanh đa năng tích hợp thanh toán qua App', 'Phạm Minh Tuấn', 'Vườn ươm Doanh nghiệp Đà Nẵng (DNES)', '2024'],
-            ['2', 'Robot lau pin mặt trời tự động SolarClean', 'Tự động hóa', 'Làm sạch các tấm pin trên mái nhà xưởng không dùng nước', 'Đỗ Hoàng Long', 'Trung tâm Đổi mới sáng tạo Đà Nẵng', '2024']
-          ]
+          headers: [
+            'STT', 'Tên dự án', 'Địa chỉ hoạt động', 'Lĩnh vực khởi nghiệp', 'Tóm tắt về dự án',
+            'Sản phẩm giải quyết vấn đề', 'Số lượng thành viên tham gia dự án',
+            'Họ và tên người đứng đầu dự án', 'Số điện thoại người đứng đầu dự án',
+            'Email người đứng đầu dự án', 'Dự án được ươm tạo từ tổ chức (Nếu có/Tự hình thành dự án)',
+            'Năm bắt đầu khởi nghiệp'
+          ],
+          rows: [[
+            '1', 'Hệ thống trạm sạc xe điện thông minh SmartCharge', '58 Nguyễn Chí Thanh, Đà Nẵng',
+            'Năng lượng xanh', 'Mạng lưới trạm sạc nhanh kết nối các điểm giao thông và thanh toán số.',
+            'Trạm sạc nhanh đa năng tích hợp thanh toán qua ứng dụng', '5', 'Phạm Minh Tuấn',
+            '0905123456', 'tuan@example.vn', 'Vườn ươm Doanh nghiệp Đà Nẵng (DNES)', '2024'
+          ]]
         };
 
       case 'startup_ideas':
         return {
-          headers: ['STT', 'Tên ý tưởng', 'Lĩnh vực khởi nghiệp', 'Người đứng đầu', 'Giáo viên hướng dẫn'],
-          rows: [
-            ['1', 'Vật liệu đóng gói tự phân hủy từ vỏ tôm phế phụ phẩm thủy sản', 'Công nghệ vật liệu mới', 'Lê Thị Thu Thảo', 'TS. Nguyễn Đắc Lực'],
-            ['2', 'Ứng dụng vi tảo xử lý nước thải dệt nhuộm và thu hồi sinh khối', 'Môi trường & Sinh học', 'Trần Anh Khoa', 'PGS.TS. Vũ Đình Thành']
-          ]
+          headers: [
+            'STT', 'Tên ý tưởng', 'Địa chỉ hoạt động (Nếu có)', 'Lĩnh vực khởi nghiệp',
+            'Ý tưởng thuộc Xã/phường - Trường học', 'Tóm tắt về ý tưởng',
+            'Sản phẩm giải quyết vấn đề gì', 'Số lượng thành viên tham gia ý tưởng khởi nghiệp',
+            'Người đứng đầu nhóm ý tưởng', 'Số điện thoại người đứng đầu', 'Email người đứng đầu',
+            'Tên thầy/cô giáo hướng dẫn thực hiện',
+            'Nhóm ý tưởng đang học tập/công tác tại đơn vị nào? (Tên đơn vị và Địa chỉ)'
+          ],
+          rows: [[
+            '1', 'Vật liệu đóng gói tự phân hủy từ vỏ tôm phế phụ phẩm thủy sản',
+            'Đà Nẵng', 'Công nghệ vật liệu mới', 'Trường Đại học Bách khoa - Đại học Đà Nẵng',
+            'Nghiên cứu vật liệu bao gói sinh học từ phụ phẩm vỏ tôm, góp phần giảm rác thải nhựa và tạo giá trị gia tăng cho phụ phẩm thủy sản.',
+            'Vật liệu đóng gói tự phân hủy sinh học', '4', 'Lê Thị Thu Thảo', '0905123456',
+            'thao@example.vn', 'TS. Nguyễn Đắc Lực', 'Trường Đại học Bách khoa, 54 Nguyễn Lương Bằng, Đà Nẵng'
+          ]]
         };
 
       case 'wards':
