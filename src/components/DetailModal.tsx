@@ -233,8 +233,8 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
       >
         
         {/* Modal Top Header */}
-        <div className="sticky top-0 bg-white/95 backdrop-blur-md px-6 py-4 border-b border-slate-200 flex items-start justify-between gap-4 z-10">
-          <div className="space-y-1">
+        <div className="sticky top-0 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 z-10">
+          <div className="w-full min-w-0 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
               <span className="font-mono font-medium text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
                 {entity.code || entity.id}
@@ -252,12 +252,12 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                 </span>
               )}
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
+            <h2 className="w-full min-w-0 text-lg sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug break-words [overflow-wrap:anywhere]">
               {entity.title || 'Không có tiêu đề'}
             </h2>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="w-full sm:w-auto flex items-center justify-end gap-2 shrink-0">
             {downloadSuccessToast && (
               <span className="text-[11px] text-teal-700 font-semibold bg-teal-50 px-2 py-1 rounded-lg border border-teal-200 animate-in fade-in">
                 Đã tải tệp về máy!
