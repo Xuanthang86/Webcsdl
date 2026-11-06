@@ -1133,8 +1133,12 @@ export default {
                   )
                   AND ${acceptanceValue} NOT LIKE '%không đạt%'
                   AND ${acceptanceValue} NOT LIKE '%khong dat%'
+                  AND ${acceptanceValue} NOT LIKE '%chưa đạt%'
+                  AND ${acceptanceValue} NOT LIKE '%chua dat%'
                   AND ${acceptanceValue} NOT LIKE '%chưa nghiệm thu%'
                   AND ${acceptanceValue} NOT LIKE '%chua nghiem thu%'
+                  AND ${acceptanceValue} NOT LIKE '%đang nghiệm thu%'
+                  AND ${acceptanceValue} NOT LIKE '%dang nghiem thu%'
                   THEN 1
                 END) as accepted,
                 ${acceptedBudget} as budget
