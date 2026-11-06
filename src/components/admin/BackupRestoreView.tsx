@@ -119,7 +119,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
       // The exported UTF-8 JSON includes a BOM for compatibility with
       // iOS file providers. Strip it before JSON.parse so backups created
       // by this screen can always be restored by the same screen.
-      const fileText = (await file.text()).replace(/^\\uFEFF/, '');
+      const fileText = (await file.text()).replace(/^\uFEFF/, '');
       const parsed = JSON.parse(fileText);
       if (!parsed || typeof parsed !== 'object' || !parsed.systemConfig || !Array.isArray(parsed.science_tasks)) {
         throw new Error('Tệp không có cấu trúc bản sao lưu dữ liệu hợp lệ.');
