@@ -905,6 +905,13 @@ export default {
           }
 
           const isAdminAccount = ['super_admin', 'system_admin'].includes(existing.role);
+          if (existing.role === 'super_admin' && (
+            (body.role !== undefined && body.role !== existing.role) ||
+            (body.isActive !== undefined && Boolean(body.isActive) !== Boolean(existing.is_active)) ||
+            body.managedModules !== undefined
+          )) {
+            return jsonResponse({ success: false, message: 'Tài khoản Super Admin được bảo vệ: không thể thay đổi vai trò, trạng thái hoặc quyền theo phân hệ.' }, 403, corsHeaders);
+          }
 
           if (userId === currentUser.id && (
             (body.role !== undefined && body.role !== existing.role) ||
