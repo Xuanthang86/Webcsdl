@@ -69,10 +69,11 @@ const matchesSpecializedField = (record: BaseEntity, selectedField: string): boo
   const definition = SPECIALIZED_FIELDS.find(field => field.name === selectedField);
   if (!definition) return true;
 
+  const data = record as any;
   const searchableValues = [
-    record.field, record.specialty, record.primaryField, record.researchField,
-    record.scientificField, record.researchArea, record.sector, record.topic,
-    record.keywords, record.category, record.technology, record.title, record.summary
+    data.field, data.specialty, data.primaryField, data.researchField,
+    data.scientificField, data.researchArea, data.sector, data.topic,
+    data.keywords, data.category, data.technology, data.title, data.summary
   ];
   const recordText = normalizeScienceTaskText(searchableValues
     .filter(value => typeof value === 'string' && value.trim())
