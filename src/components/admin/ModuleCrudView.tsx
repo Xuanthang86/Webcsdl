@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { AttachmentManagerModal } from '../AttachmentManagerModal';
+import { getScienceTaskUnit, getScienceTaskYear, matchesScienceTaskLevel, normalizeScienceTaskText } from '../../utils/scienceTaskFilters';
 
 interface ModuleCrudViewProps {
   moduleType: ModuleType;
@@ -95,6 +96,9 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [taskLevelFilter, setTaskLevelFilter] = useState('all');
+  const [taskYearFilter, setTaskYearFilter] = useState('all');
+  const [taskUnitFilter, setTaskUnitFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -389,6 +393,9 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     loadData();
     setSelectedIds([]);
     setCurrentPage(1);
+    setTaskLevelFilter('all');
+    setTaskYearFilter('all');
+    setTaskUnitFilter('all');
   }, [moduleType]);
 
   const handleOpenCreate = () => {
@@ -483,6 +490,13 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     .replace(/[đĐ]/g, 'd')
     .toLowerCase();
 
+  const availableTaskYears = moduleType === 'science_tasks'
+    ? Array.from(new Set(records.map(getScienceTaskYear).filter(Boolean))).sort().reverse()
+    : [];
+  const availableTaskUnits = moduleType === 'science_tasks'
+    ? Array.from(new Set(records.map(getScienceTaskUnit).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'vi'))
+    : [];
+
   const filteredRecords = records.filter(item => {
     if (statusFilter !== 'all' && item.status !== statusFilter) return false;
     if (searchQuery.trim()) {
@@ -491,6 +505,21 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
         .map(value => Array.isArray(value) ? value.join(' ') : (value && typeof value === 'object' ? JSON.stringify(value) : String(value ?? '')))
         .join(' ');
       if (!normalizeSearchText(searchableText).includes(q)) return false;
+    }
+
+    if (moduleType === 'science_tasks') {
+      if (taskLevelFilter !== 'all' && !matchesScienceTaskLevel(item, taskLevelFilter)) return false;
+      if (taskYearFilter !== 'all' && getScienceTaskYear(item) !== taskYearFilter) return false;
+      if (taskUnitFilter !== 'all') {
+        const unitQuery = normalizeScienceTaskText(taskUnitFilter);
+        const unitValues = [
+          item.leadOrganization, item.hostOrganization, item.ownerName,
+          item.proposingOrg, item.organization, item.managingAgency
+        ];
+        if (!unitValues.some(value =>
+          typeof value === 'string' && normalizeScienceTaskText(value).includes(unitQuery)
+        )) return false;
+      }
     }
     return true;
   });
@@ -645,7 +674,45 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
+          {moduleType === 'science_tasks' && (
+            <>
+              <select
+                aria-label="Lọc cấp quản lý"
+                value={taskLevelFilter}
+                onChange={(e) => { setTaskLevelFilter(e.target.value); setCurrentPage(1); }}
+                className="h-9 max-w-full px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs font-medium"
+              >
+                <option value="all">Tất cả cấp quản lý</option>
+                <option value="Cấp Quốc gia">Cấp Quốc gia</option>
+                <option value="Cấp Thành phố">Cấp Tỉnh/Thành phố</option>
+                <option value="Cấp Cơ sở">Cấp Cơ sở</option>
+              </select>
+              <select
+                aria-label="Lọc năm thực hiện"
+                value={taskYearFilter}
+                onChange={(e) => { setTaskYearFilter(e.target.value); setCurrentPage(1); }}
+                className="h-9 max-w-full px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs font-medium"
+              >
+                <option value="all">Tất cả năm</option>
+                {availableTaskYears.map(year => <option key={year} value={year}>{year}</option>)}
+              </select>
+              <input
+                aria-label="Tìm đơn vị chủ trì"
+                type="search"
+                list="admin-task-unit-suggestions"
+                value={taskUnitFilter === 'all' ? '' : taskUnitFilter}
+                onChange={(e) => { setTaskUnitFilter(e.target.value.trim() ? e.target.value : 'all'); setCurrentPage(1); }}
+                onKeyDown={(e) => { if (e.key === 'Escape') setTaskUnitFilter('all'); }}
+                placeholder="Đơn vị chủ trì..."
+                autoComplete="off"
+                className="h-9 w-full sm:w-52 min-w-0 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs"
+              />
+              <datalist id="admin-task-unit-suggestions">
+                {availableTaskUnits.map(unit => <option key={unit} value={unit} />)}
+              </datalist>
+            </>
+          )}
           <span className="text-slate-400 whitespace-nowrap">Trạng thái:</span>
           <select
             value={statusFilter}
