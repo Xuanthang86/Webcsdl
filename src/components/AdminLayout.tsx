@@ -172,7 +172,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
       {/* Admin Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-72 sm:w-80 bg-slate-900 text-slate-300 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-auto lg:min-h-screen shrink-0 flex flex-col justify-between border-r border-slate-800
+        fixed inset-y-0 left-0 z-50 w-72 sm:w-80 bg-slate-800 text-slate-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-auto lg:min-h-screen shrink-0 flex flex-col justify-between border-r border-slate-800
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="p-4 space-y-4 overflow-y-auto">
@@ -222,7 +222,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             <button
               onClick={() => { setActiveTab('dashboard'); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold transition-colors text-sm ${
-                activeTab === 'dashboard' ? 'bg-sky-800 text-white shadow-xs' : 'hover:bg-slate-800 text-slate-300'
+                activeTab === 'dashboard' ? 'bg-sky-700/80 text-white shadow-xs' : 'hover:bg-slate-700 text-slate-100'
               }`}
             >
               <LayoutDashboard className="w-4 h-4 text-sky-400 shrink-0" />
@@ -241,8 +241,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                       onClick={() => handleSelectModule(item.mod)}
                       className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${
                         isActive
-                          ? 'bg-sky-800 text-white font-bold shadow-xs'
-                          : 'hover:bg-slate-800 text-slate-300'
+                          ? 'bg-sky-700/80 text-white font-bold shadow-xs'
+                          : 'hover:bg-slate-700 text-slate-100'
                       }`}
                     >
                       <IconComponent className={`w-4 h-4 ${item.color} shrink-0`} />
@@ -270,8 +270,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                         onClick={() => handleSelectModule(item.mod)}
                         className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${
                           isActive
-                            ? 'bg-sky-800 text-white font-bold shadow-xs'
-                            : 'hover:bg-slate-800 text-slate-300'
+                            ? 'bg-sky-700/80 text-white font-bold shadow-xs'
+                            : 'hover:bg-slate-700 text-slate-100'
                         }`}
                       >
                         <IconComponent className={`w-4 h-4 ${item.color} shrink-0`} />
@@ -315,7 +315,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                         className={`w-full text-left px-2.5 py-1.5 rounded-md text-[11px] truncate transition-colors ${
                           activeTab === 'module_crud' && activeModule === item.mod
                             ? 'bg-teal-900/70 text-teal-200 font-semibold'
-                            : 'hover:bg-slate-800/80 text-slate-400 hover:text-slate-200'
+                            : 'hover:bg-slate-700/80 text-slate-200 hover:text-white'
                         }`}
                       >
                         {item.label}
@@ -329,7 +329,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <button
                 onClick={() => { setActiveTab('relationships'); setSidebarOpen(false); }}
                 className={`w-full flex items-start text-left justify-start gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'relationships' ? 'bg-sky-800 text-white font-bold shadow-xs' : 'hover:bg-slate-800 text-slate-300'
+                  activeTab === 'relationships' ? 'bg-sky-700/80 text-white font-bold shadow-xs' : 'hover:bg-slate-700 text-slate-100'
                 }`}
               >
                 <LinkIcon className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
@@ -339,7 +339,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <button
                 onClick={() => { setActiveTab('import_export'); setSidebarOpen(false); }}
                 className={`w-full flex items-start text-left justify-start gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'import_export' ? 'bg-sky-800 text-white font-bold shadow-xs' : 'hover:bg-slate-800 text-slate-300'
+                  activeTab === 'import_export' ? 'bg-sky-700/80 text-white font-bold shadow-xs' : 'hover:bg-slate-700 text-slate-100'
                 }`}
               >
                 <Upload className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
@@ -349,7 +349,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <button
                 onClick={() => { setActiveTab('form_config'); setSidebarOpen(false); }}
                 className={`w-full flex items-start text-left justify-start gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'form_config' ? 'bg-sky-800 text-white font-bold shadow-xs' : 'hover:bg-slate-800 text-slate-300'
+                  activeTab === 'form_config' ? 'bg-sky-700/80 text-white font-bold shadow-xs' : 'hover:bg-slate-700 text-slate-100'
                 }`}
               >
                 <Sliders className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
@@ -360,7 +360,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 <button
                   onClick={() => { setActiveTab('users'); setSidebarOpen(false); }}
                   className={`w-full flex items-start text-left justify-start gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'users' ? 'bg-sky-800 text-white font-bold shadow-xs' : 'hover:bg-slate-800 text-slate-300'
+                    activeTab === 'users' ? 'bg-sky-700/80 text-white font-bold shadow-xs' : 'hover:bg-slate-700 text-slate-100'
                   }`}
                 >
                   <Users className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
@@ -371,7 +371,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <button
                 onClick={() => { setActiveTab('audit_logs'); setSidebarOpen(false); }}
                 className={`w-full flex items-start text-left justify-start gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'audit_logs' ? 'bg-sky-800 text-white font-bold shadow-xs' : 'hover:bg-slate-800 text-slate-300'
+                  activeTab === 'audit_logs' ? 'bg-sky-700/80 text-white font-bold shadow-xs' : 'hover:bg-slate-700 text-slate-100'
                 }`}
               >
                 <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
@@ -381,7 +381,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <button
                 onClick={() => { setActiveTab('system_config'); setSidebarOpen(false); }}
                 className={`w-full flex items-start text-left justify-start gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'system_config' ? 'bg-sky-800 text-white font-bold shadow-xs' : 'hover:bg-slate-800 text-slate-300'
+                  activeTab === 'system_config' ? 'bg-sky-700/80 text-white font-bold shadow-xs' : 'hover:bg-slate-700 text-slate-100'
                 }`}
               >
                 <Settings className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
@@ -391,7 +391,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <button
                 onClick={() => { setActiveTab('test_suite'); setSidebarOpen(false); }}
                 className={`w-full flex items-start text-left justify-start gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'test_suite' ? 'bg-sky-800 text-white font-bold shadow-xs' : 'hover:bg-slate-800 text-slate-300'
+                  activeTab === 'test_suite' ? 'bg-sky-700/80 text-white font-bold shadow-xs' : 'hover:bg-slate-700 text-slate-100'
                 }`}
               >
                 <FileCheck className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
