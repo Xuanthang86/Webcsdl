@@ -415,7 +415,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="flex items-center gap-1.5 bg-sky-800/90 hover:bg-sky-700 text-white border border-sky-600/60 hover:border-sky-400 px-2 sm:px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer shadow-xs max-w-[140px] sm:max-w-[210px] min-h-[40px]"
                 title="Xem thông tin tài khoản, đổi mật khẩu & quản trị"
               >
-                <div className="w-7 h-7 rounded-full bg-sky-950 text-sky-200 flex items-center justify-center font-bold text-xs shrink-0 border border-sky-600/40">
+                <div className="hidden md:flex w-7 h-7 rounded-full bg-sky-950 text-sky-200 items-center justify-center font-bold text-xs shrink-0 border border-sky-600/40">
                   <UserIcon className="w-4 h-4" />
                 </div>
                 <div className="flex flex-col text-left leading-tight min-w-0">
