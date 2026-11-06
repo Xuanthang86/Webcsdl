@@ -1954,6 +1954,7 @@ export default {
             if (rawValue === null || rawValue === undefined || rawValue === '') continue;
             const key = normalizeImportKey(rawKey);
             let target = aliases[key] || rawKey.replace(/([A-Z])/g, '_$1').toLowerCase();
+            if (['title', 'name', 'projectname'].includes(key) && !tableColumns.has(target)) target = primaryColumn;
             if (key === 'trangthai' && moduleName === 'science_tasks') target = 'acceptance_result';
             if (['tendetai', 'tensangkien', 'tenduan', 'tenytuong', 'tendoanhnghiep', 'tentochuc', 'tentruong', 'tenxaphuong', 'tenchuyengia'].includes(key)) {
               target = primaryColumn;
