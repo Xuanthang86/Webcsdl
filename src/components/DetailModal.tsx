@@ -93,8 +93,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({
 
   if (!entity) return null;
 
-  // Authorization check: public_user or guest cannot view restricted detailed fields
-  const isAuthorized = !!currentUser && currentUser.role !== 'public_user';
+  // Match the Worker authorization policy: privileged review roles or an explicit module grant.
+  const isAuthorized = !!currentUser && (
+    ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'].includes(currentUser.role) ||
+    Boolean(currentUser.managedModules?.includes(entity.moduleType || ''))
+  );
 
   const handleAddLanguage = (e: React.FormEvent) => {
     e.preventDefault();
