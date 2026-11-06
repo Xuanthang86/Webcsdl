@@ -166,7 +166,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               className="bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold px-2 py-0.5 text-xs focus:ring-1 focus:ring-teal-700 cursor-pointer"
             >
               <option value="all">Tất cả các năm</option>
-              {years.slice().reverse().map(yr => (
+              {availableYears.slice().reverse().map(yr => (
                 <option key={yr} value={yr}>Năm {yr}</option>
               ))}
             </select>
