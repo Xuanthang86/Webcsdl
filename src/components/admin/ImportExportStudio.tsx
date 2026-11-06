@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
-import { ModuleType } from '../../types';
+import { ModuleType, User } from '../../types';
 import { api } from '../../services/api';
 import { MODULE_NAMES } from './ModuleCrudView';
 import { 
@@ -20,11 +20,13 @@ import {
 
 interface ImportExportStudioProps {
   initialModule?: ModuleType;
+  currentUser?: User;
   onImportComplete: () => void;
 }
 
 export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
   initialModule = 'science_tasks',
+  currentUser,
   onImportComplete
 }) => {
   const [selectedModule, setSelectedModule] = useState<ModuleType>(initialModule);
@@ -862,7 +864,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
             </div>
           </div>
 
-          {pendingApprovalIds.length > 0 && (
+          {pendingApprovalIds.length > 0 && ['super_admin', 'system_admin'].includes(currentUser?.role || '') && (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
               <div className="font-semibold text-amber-950 text-xs">
                 {pendingApprovalIds.length} bản ghi đã được nhập ở trạng thái nháp và chưa hiển thị công khai.
