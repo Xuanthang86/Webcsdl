@@ -864,7 +864,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
             </div>
           </div>
 
-          {pendingApprovalIds.length > 0 && ['super_admin', 'system_admin'].includes(currentUser?.role || '') && (
+          {pendingApprovalIds.length > 0 && ['super_admin', 'system_admin', 'agency_leader'].includes(currentUser?.role || '') && (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
               <div className="font-semibold text-amber-950 text-xs">
                 {pendingApprovalIds.length} bản ghi đã được nhập ở trạng thái nháp và chưa hiển thị công khai.
