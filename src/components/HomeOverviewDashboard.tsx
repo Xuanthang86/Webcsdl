@@ -127,6 +127,10 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
     ? Object.values(stats.ideasByWard).reduce((a, b) => a + b, 0) 
     : 0;
 
+  const totalTasks = stats?.totalScienceTasks || 0;
+  const acceptedTasks = Math.min(stats?.tasksAccepted ?? 0, totalTasks);
+  const runningTasks = Math.max(0, totalTasks - acceptedTasks);
+
   return (
     <div className="bg-gradient-to-b from-[#EBF5FB] via-[#F3F9FD] to-[#E9F3FA] text-slate-800 pt-7 pb-8 px-4 sm:px-6 lg:px-8 border-b border-sky-200/90 shadow-xs">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -156,13 +160,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
           </div>
         </div>
 
-        {/* 5 Main Pillars:
-            1. Đề tài, nhiệm vụ KH&CN (với thống kê đã nghiệm thu)
-            2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố (chỉ hiển thị tổng số, Năm hiện tại, bỏ Làm lợi hàng năm)
-            3. Sáng chế & Sở hữu trí tuệ
-            4. Chuyên gia & Nhà khoa học (chỉ hiển thị tổng số, không hiển thị theo lĩnh vực và theo đơn vị ở mặt trước, click Cơ cấu để xem chi tiết)
-            5. Dữ liệu Hệ sinh thái (chỉ hiển thị tổng số dữ liệu, click Cơ cấu để xem 7 loại con; tương tác loại trừ toggle với Cơ cấu Chuyên gia)
-        */}
+        {/* 5 Main Pillars */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
           
           {/* Pillar 1: Nhiệm vụ, Đề tài KH&CN */}
@@ -181,9 +179,9 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-xs sm:text-[13px] font-bold text-slate-900 tracking-tight leading-snug">1. Đề tài, nhiệm vụ KH&CN</div>
-                <div className="text-2xl font-bold font-mono text-slate-900 mt-0.5">
-                  {stats?.totalScienceTasks || 0}
+                <div className="text-sm font-black text-slate-900 tracking-tight leading-snug">1. Đề tài, nhiệm vụ KH&CN</div>
+                <div className="text-2xl font-black font-mono text-slate-900 mt-0.5">
+                  {totalTasks}
                 </div>
               </div>
 
@@ -191,12 +189,12 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
                 <div className="flex justify-between items-center">
                   <span>Đã nghiệm thu:</span>
                   <span className="font-mono text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                    {stats?.tasksAccepted ?? 0} đề tài
+                    {acceptedTasks} đề tài
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Đang thực hiện:</span>
-                  <span className="font-mono text-amber-700 font-semibold">{stats?.tasksRunning ?? 0}</span>
+                  <span className="font-mono text-amber-700 font-semibold">{runningTasks}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Kinh phí NSNN:</span>
@@ -223,10 +221,10 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-xs sm:text-[13px] font-bold text-slate-900 tracking-tight line-clamp-2 leading-snug" title="2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố">
+                <div className="text-sm font-black text-slate-900 tracking-tight line-clamp-2 leading-snug" title="2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố">
                   2. Sáng kiến có tác dụng, ảnh hưởng đối với thành phố
                 </div>
-                <div className="text-2xl font-bold font-mono text-slate-900 mt-0.5">
+                <div className="text-2xl font-black font-mono text-slate-900 mt-0.5">
                   {stats?.totalInitiatives || 0}
                 </div>
               </div>
@@ -261,8 +259,8 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-xs sm:text-[13px] font-bold text-slate-900 tracking-tight leading-snug">3. Sáng chế & Sở hữu trí tuệ</div>
-                <div className="text-2xl font-bold font-mono text-slate-900 mt-0.5">
+                <div className="text-sm font-black text-slate-900 tracking-tight leading-snug">3. Sáng chế & Sở hữu trí tuệ</div>
+                <div className="text-2xl font-black font-mono text-slate-900 mt-0.5">
                   {stats?.totalPatents || 0}
                 </div>
               </div>
@@ -314,8 +312,8 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-xs sm:text-[13px] font-bold text-slate-900 tracking-tight leading-snug">4. Chuyên gia & Nhà khoa học</div>
-                <div className="text-2xl font-bold font-mono text-slate-900 mt-0.5">
+                <div className="text-sm font-black text-slate-900 tracking-tight leading-snug">4. Chuyên gia & Nhà khoa học</div>
+                <div className="text-2xl font-black font-mono text-slate-900 mt-0.5">
                   {stats?.totalExperts || 0}
                 </div>
               </div>
@@ -419,8 +417,8 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
 
               <div>
-                <div className="text-xs sm:text-[13px] font-bold text-slate-900 tracking-tight leading-snug">5. Dữ liệu Hệ sinh thái</div>
-                <div className="text-2xl font-bold font-mono text-slate-900 mt-0.5">
+                <div className="text-sm font-black text-slate-900 tracking-tight leading-snug">5. Dữ liệu Hệ sinh thái</div>
+                <div className="text-2xl font-black font-mono text-slate-900 mt-0.5">
                   {totalEcosystemRecords}
                 </div>
               </div>

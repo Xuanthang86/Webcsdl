@@ -300,6 +300,10 @@ export const api = {
     return json.result;
   },
 
+  async batchImport(moduleType: ModuleType, items: any[], conflictAction?: 'skip' | 'overwrite'): Promise<{ importedCount: number; errors: string[]; duplicates: string[] }> {
+    return this.importRecords(moduleType, items);
+  },
+
   getExportUrl(moduleType: ModuleType): string {
     return `/api/export/${moduleType}`;
   },

@@ -27,7 +27,8 @@ import {
   School,
   Tag,
   Star,
-  Sparkles
+  Sparkles,
+  RotateCcw
 } from 'lucide-react';
 
 interface BrowseViewProps {

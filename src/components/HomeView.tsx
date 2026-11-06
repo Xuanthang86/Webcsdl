@@ -120,19 +120,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <section className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2 border-b border-slate-200">
             <div>
-              <div className="text-[11px] font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-teal-700" />
-                <span>1. Cơ sở dữ liệu Đề tài, Nhiệm vụ KH&CN</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
-                Đề tài, nhiệm vụ KH&CN mới nhất
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                Đề tài, Nhiệm vụ KH&CN
               </h2>
             </div>
             <button
               onClick={() => onNavigateBrowse('science_tasks')}
               className="text-xs font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 group whitespace-nowrap self-start sm:self-auto cursor-pointer"
             >
-              <span>Xem tất cả đề tài ({stats?.totalScienceTasks || 0})</span>
+              <span>Xem tất cả ({stats?.totalScienceTasks || 0})</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
@@ -147,7 +143,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-mono text-teal-800 font-bold bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                      <span className="hidden sm:inline">STT {idx + 1} · </span>{item.code}
+                      {item.code || `NV-KHCN-00${idx + 1}`}
                     </span>
                     <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                       {item.managementLevel || item.managingAgency || 'Cấp Thành phố'}
@@ -209,11 +205,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <section className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2 border-b border-slate-200">
             <div>
-              <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
-                <Lightbulb className="w-3.5 h-3.5 text-amber-600" />
-                <span>2. Cơ sở dữ liệu Sáng kiến cấp thành phố</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Sáng kiến có tác dụng, ảnh hưởng đối với thành phố
               </h2>
             </div>
@@ -221,7 +213,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               onClick={() => onNavigateBrowse('initiatives')}
               className="text-xs font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 group whitespace-nowrap self-start sm:self-auto cursor-pointer"
             >
-              <span>Xem tất cả sáng kiến ({stats?.totalInitiatives || 0})</span>
+              <span>Xem tất cả ({stats?.totalInitiatives || 0})</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
@@ -236,9 +228,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-mono text-amber-900 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                      <span className="hidden sm:inline">STT {idx + 1} · </span>Năm {item.recognitionYear || '2025'}
+                      Năm công nhận: {item.recognitionYear || '2025'}
                     </span>
-                    {renderRecognitionBadge(item.recognizedScope)}
+                    <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                      Cấp thành phố
+                    </span>
                   </div>
 
                   <h3 className="text-base font-bold text-slate-900 group-hover:text-amber-800 transition-colors line-clamp-2 leading-snug">
@@ -283,21 +277,19 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         {/* ================= 3. SÁNG CHẾ & SỞ HỮU TRÍ TUỆ (3 dữ liệu con mới nhất) ================= */}
         <section className="space-y-4">
+        {/* ================= 3. SÁNG CHẾ & SỞ HỮU TRÍ TUỆ (3 dữ liệu con mới nhất) ================= */}
+        <section className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2 border-b border-slate-200">
             <div>
-              <div className="text-[11px] font-bold text-purple-800 uppercase tracking-wider flex items-center gap-1.5">
-                <Award className="w-3.5 h-3.5 text-purple-600" />
-                <span>3. Cơ sở dữ liệu Sáng chế & Sở hữu trí tuệ</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
-                Sáng chế & sở hữu trí tuệ mới nhất
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                Sáng chế & Sở hữu trí tuệ
               </h2>
             </div>
             <button
               onClick={() => onNavigateBrowse('patents')}
               className="text-xs font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 group whitespace-nowrap self-start sm:self-auto cursor-pointer"
             >
-              <span>Xem tất cả sáng chế ({stats?.totalPatents || 0})</span>
+              <span>Xem tất cả ({stats?.totalPatents || 0})</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
@@ -312,7 +304,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-mono text-purple-900 font-bold bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                      <span className="hidden sm:inline">STT {idx + 1} · </span>{item.patentNumber || item.code}
+                      {item.patentNumber || item.code || `SC-00${idx + 1}`}
                     </span>
                     <span className="text-[11px] font-semibold text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
                       {item.patentType || 'Bằng sáng chế'}
@@ -360,19 +352,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <section className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2 border-b border-slate-200">
             <div>
-              <div className="text-[11px] font-bold text-blue-800 uppercase tracking-wider flex items-center gap-1.5">
-                <GraduationCap className="w-3.5 h-3.5 text-blue-600" />
-                <span>4. Cơ sở dữ liệu Chuyên gia & Nhà khoa học</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
-                Chuyên gia & nhà khoa học tiêu biểu
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                Chuyên gia & Nhà khoa học
               </h2>
             </div>
             <button
               onClick={() => onNavigateBrowse('experts')}
               className="text-xs font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 group whitespace-nowrap self-start sm:self-auto cursor-pointer"
             >
-              <span>Xem tất cả chuyên gia ({stats?.totalExperts || 0})</span>
+              <span>Xem tất cả ({stats?.totalExperts || 0})</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
@@ -390,9 +378,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       {item.academicTitle || 'TS'}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="hidden sm:inline font-mono text-blue-900 font-bold text-xs">STT {idx + 1}</span>
-                      </div>
                       <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-800 transition-colors truncate">
                         {item.title || item.fullName}
                       </h3>
@@ -438,19 +423,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <section className="space-y-5 pt-4 border-t border-slate-200">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2 border-b border-slate-200">
             <div>
-              <div className="text-[11px] font-bold text-rose-800 uppercase tracking-wider flex items-center gap-1.5">
-                <Rocket className="w-3.5 h-3.5 text-rose-600" />
-                <span>5. Cơ sở dữ liệu Hệ sinh thái Khởi nghiệp Đổi mới sáng tạo</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-0.5">
-                Dữ liệu hệ sinh thái khởi nghiệp đổi mới sáng tạo
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                Dữ liệu Hệ sinh thái Khởi nghiệp đổi mới sáng tạo
               </h2>
             </div>
             <button
               onClick={() => onNavigateBrowse('startups')}
               className="text-xs font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 group whitespace-nowrap self-start sm:self-auto cursor-pointer"
             >
-              <span>Tra cứu toàn bộ Hệ sinh thái</span>
+              <span>Xem tất cả</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>

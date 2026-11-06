@@ -53,7 +53,23 @@ export default function App() {
   }, [currentView]);
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
   const [showAdvancedSearchModal, setShowAdvancedSearchModal] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | undefined>();
+  const [currentUser, setCurrentUser] = useState<User | undefined>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('portal_cached_user');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return undefined;
+  });
+
+  useEffect(() => {
+    if (currentUser && currentUser.role !== 'public_user') {
+      localStorage.setItem('portal_cached_user', JSON.stringify(currentUser));
+    } else if (currentUser && currentUser.role === 'public_user') {
+      localStorage.removeItem('portal_cached_user');
+    }
+  }, [currentUser]);
   const [availableRoles, setAvailableRoles] = useState<Array<{ role: string; label: string }>>([]);
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({
     portalName: 'Cổng dữ liệu Tổng hợp khoa học, công nghệ & khởi nghiệp đổi mới sáng tạo',
@@ -182,19 +198,19 @@ export default function App() {
         needs,
         pols
       ] = await Promise.all([
-        api.getModuleRecords('science_tasks', undefined, undefined, true),
-        api.getModuleRecords('initiatives', undefined, undefined, true),
-        api.getModuleRecords('patents', undefined, undefined, true),
-        api.getModuleRecords('experts', undefined, undefined, true),
-        api.getModuleRecords('startups', undefined, undefined, true),
-        api.getModuleRecords('support_organizations', undefined, undefined, true),
-        api.getModuleRecords('startup_projects', undefined, undefined, true),
-        api.getModuleRecords('startup_ideas', undefined, undefined, true),
-        api.getModuleRecords('wards', undefined, undefined, true),
-        api.getModuleRecords('universities', undefined, undefined, true),
-        api.getModuleRecords('featured_startups', undefined, undefined, true),
-        api.getModuleRecords('collaboration_needs', undefined, undefined, true),
-        api.getModuleRecords('policies', undefined, undefined, true)
+        api.getModuleRecords('science_tasks', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'science_tasks' as any }))),
+        api.getModuleRecords('initiatives', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'initiatives' as any }))),
+        api.getModuleRecords('patents', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'patents' as any }))),
+        api.getModuleRecords('experts', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'experts' as any }))),
+        api.getModuleRecords('startups', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'startups' as any }))),
+        api.getModuleRecords('support_organizations', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'support_organizations' as any }))),
+        api.getModuleRecords('startup_projects', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'startup_projects' as any }))),
+        api.getModuleRecords('startup_ideas', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'startup_ideas' as any }))),
+        api.getModuleRecords('wards', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'wards' as any }))),
+        api.getModuleRecords('universities', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'universities' as any }))),
+        api.getModuleRecords('featured_startups', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'featured_startups' as any }))),
+        api.getModuleRecords('collaboration_needs', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'collaboration_needs' as any }))),
+        api.getModuleRecords('policies', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'policies' as any })))
       ]);
 
       setFeaturedTasks(tasks.slice(0, 3));
@@ -234,6 +250,7 @@ export default function App() {
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('portal_tab_active');
         localStorage.removeItem('portal_auth_token');
+        localStorage.removeItem('portal_cached_user');
         localStorage.removeItem('portal_current_view');
         window.location.hash = '';
       }
@@ -273,12 +290,14 @@ export default function App() {
   };
 
   const handleOpenDetail = async (entity: BaseEntity) => {
+    if (!entity) return;
+    const modType = entity.moduleType || 'science_tasks';
     try {
-      const full = await api.getRecordById(entity.moduleType, entity.id);
-      setActiveDetailEntity(full.data || entity);
+      const full = await api.getRecordById(modType as any, entity.id);
+      setActiveDetailEntity({ ...(full.data || entity), moduleType: modType });
       setActiveRelationships(full.relationships || []);
     } catch (err) {
-      setActiveDetailEntity(entity);
+      setActiveDetailEntity({ ...entity, moduleType: modType });
       setActiveRelationships([]);
     }
   };

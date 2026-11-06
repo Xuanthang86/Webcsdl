@@ -71,13 +71,16 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
   const [actionSuccessToast, setActionSuccessToast] = useState<string | null>(null);
 
   // Form states
   const [formUsername, setFormUsername] = useState('');
+  const [formOldPassword, setFormOldPassword] = useState('');
   const [formPassword, setFormPassword] = useState('');
   const [formConfirmPassword, setFormConfirmPassword] = useState('');
+  const [showOldPassword, setShowOldPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formFullName, setFormFullName] = useState('');
@@ -112,8 +115,10 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
 
   const handleOpenCreate = () => {
     setFormUsername('');
+    setFormOldPassword('');
     setFormPassword('');
     setFormConfirmPassword('');
+    setShowOldPassword(false);
     setShowPassword(false);
     setShowConfirmPassword(false);
     setFormFullName('');
@@ -131,8 +136,10 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
   const handleOpenEdit = (u: User) => {
     setEditingUser(u);
     setFormUsername(u.username);
+    setFormOldPassword('');
     setFormPassword('');
     setFormConfirmPassword('');
+    setShowOldPassword(false);
     setShowPassword(false);
     setShowConfirmPassword(false);
     setFormFullName(u.fullName);
@@ -140,8 +147,8 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
     setFormPhone(u.phone || '');
     setFormOrganization(u.organization || '');
     setFormRole(u.role);
-    setFormIsActive(u.isActive);
-    setFormManagedModules(u.managedModules || []);
+    setFormIsActive(u.role === 'super_admin' || u.role === 'system_admin' ? true : u.isActive);
+    setFormManagedModules(u.role === 'super_admin' || u.role === 'system_admin' ? MANAGEABLE_MODULE_OPTIONS.map(m => m.key) : (u.managedModules || []));
     setFormOrgScope(u.organizationScope || '');
     setModalError(null);
   };
@@ -165,8 +172,13 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
     setModalError(null);
 
     // Validate password match
+    const isAdminEditing = editingUser && (editingUser.role === 'super_admin' || editingUser.role === 'system_admin');
     if (editingUser) {
       if (formPassword.trim()) {
+        if (isAdminEditing && !formOldPassword.trim()) {
+          setModalError('Vui lòng nhập mật khẩu cũ để xác thực thay đổi mật khẩu quản trị viên.');
+          return;
+        }
         if (formPassword !== formConfirmPassword) {
           setModalError('Mật khẩu mới và xác nhận mật khẩu không trùng khớp.');
           return;
@@ -194,18 +206,21 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
     try {
       if (editingUser) {
         // Update user
-        const updates: Partial<User> = {
+        const updates: Partial<User> & { oldPassword?: string } = {
           fullName: formFullName,
           email: formEmail,
           phone: formPhone,
           organization: formOrganization,
-          role: formRole,
-          isActive: formIsActive,
-          managedModules: formManagedModules,
+          role: isAdminEditing ? editingUser.role : formRole,
+          isActive: isAdminEditing ? true : formIsActive,
+          managedModules: isAdminEditing ? MANAGEABLE_MODULE_OPTIONS.map(m => m.key) : formManagedModules,
           organizationScope: formOrgScope
         };
         if (formPassword.trim()) {
           updates.password = formPassword.trim();
+          if (isAdminEditing) {
+            updates.oldPassword = formOldPassword.trim();
+          }
         }
         await api.updateUser(editingUser.id, updates);
         showToast(`Đã cập nhật thành công tài khoản [${editingUser.username}]`);
@@ -238,12 +253,16 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
   };
 
   const handleToggleStatus = async (u: User) => {
+    if (u.role === 'super_admin' || u.role === 'system_admin') {
+      showToast('Tài khoản Quản trị viên luôn duy trì hoạt động bảo vệ hệ thống.');
+      return;
+    }
     try {
       await api.updateUser(u.id, { isActive: !u.isActive });
       showToast(`Đã ${!u.isActive ? 'mở khóa' : 'khóa'} tài khoản [${u.username}]`);
       fetchUsers();
     } catch (err: any) {
-      alert(err.message || 'Lỗi thay đổi trạng thái');
+      showToast(err.message || 'Lỗi thay đổi trạng thái');
     }
   };
 
@@ -253,20 +272,31 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
       showToast(`Đã duyệt và kích hoạt tài khoản [@${u.username}] thành công!`);
       fetchUsers();
     } catch (err: any) {
-      alert(err.message || 'Lỗi duyệt tài khoản');
+      showToast(err.message || 'Lỗi duyệt tài khoản');
     }
   };
 
-  const handleDeleteUser = async (u: User) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa tài khoản [${u.username}] (${u.fullName})?`)) {
+  const handleDeleteUser = (u: User) => {
+    if (u.role === 'super_admin') {
+      showToast('Không được phép xóa tài khoản Super Admin.');
       return;
     }
+    if (currentUser?.id === u.id) {
+      showToast('Không thể tự xóa tài khoản của chính mình.');
+      return;
+    }
+    setUserToDelete(u);
+  };
+
+  const handleConfirmDeleteUser = async () => {
+    if (!userToDelete) return;
     try {
-      await api.deleteUser(u.id);
-      showToast(`Đã xóa tài khoản [${u.username}] thành công`);
+      await api.deleteUser(userToDelete.id);
+      showToast(`Đã xóa tài khoản [${userToDelete.username}] thành công`);
+      setUserToDelete(null);
       fetchUsers();
     } catch (err: any) {
-      alert(err.message || 'Lỗi xóa tài khoản');
+      showToast(err.message || 'Lỗi xóa tài khoản');
     }
   };
 
@@ -554,70 +584,99 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
               </div>
 
               {/* Password and Confirm Password Row with Eye/EyeOff toggles */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                <div className="space-y-1">
-                  <label className="font-semibold text-slate-700">
-                    {editingUser ? 'Mật khẩu mới (để trống nếu không đổi)' : 'Mật khẩu thiết lập *'}
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={formPassword}
-                      onChange={e => setFormPassword(e.target.value)}
-                      placeholder={editingUser ? 'Nhập mật khẩu mới nếu muốn đổi' : 'Tối thiểu 6 ký tự'}
-                      required={!editingUser}
-                      className="w-full pl-3 pr-9 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700 bg-white"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded focus:outline-none"
-                      title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                      aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-semibold text-slate-700">
-                    {editingUser ? 'Xác nhận mật khẩu mới' : 'Xác nhận mật khẩu *'}
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      value={formConfirmPassword}
-                      onChange={e => setFormConfirmPassword(e.target.value)}
-                      placeholder={editingUser ? 'Nhập lại mật khẩu mới' : 'Nhập lại mật khẩu'}
-                      required={!editingUser || !!formPassword}
-                      className="w-full pl-3 pr-9 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700 bg-white"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded focus:outline-none"
-                      title={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                      aria-label={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  {formConfirmPassword.length > 0 && (
-                    <div className="pt-1 text-[11px] font-medium">
-                      {formPassword === formConfirmPassword ? (
-                        <span className="text-emerald-700 flex items-center gap-1">
-                          <CheckCircle className="w-3.5 h-3.5" />
-                          <span>✓ Mật khẩu xác nhận trùng khớp</span>
-                        </span>
-                      ) : (
-                        <span className="text-rose-600 flex items-center gap-1">
-                          <AlertCircle className="w-3.5 h-3.5" />
-                          <span>⚠ Mật khẩu xác nhận không khớp</span>
-                        </span>
-                      )}
+              <div className="space-y-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                {editingUser && (editingUser.role === 'super_admin' || editingUser.role === 'system_admin') && (
+                  <div className="space-y-1">
+                    <label className="font-semibold text-rose-700 flex items-center gap-1">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Mật khẩu cũ của Quản trị viên * (Bắt buộc nếu đổi mật khẩu)</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showOldPassword ? 'text' : 'password'}
+                        value={formOldPassword}
+                        onChange={e => setFormOldPassword(e.target.value)}
+                        placeholder="Nhập mật khẩu hiện tại của tài khoản..."
+                        className="w-full pl-3 pr-9 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-600 bg-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowOldPassword(!showOldPassword)}
+                        className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded focus:outline-none"
+                        title={showOldPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                        aria-label={showOldPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                      >
+                        {showOldPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
                     </div>
-                  )}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700">
+                      {editingUser ? 'Mật khẩu mới (để trống nếu không đổi)' : 'Mật khẩu thiết lập *'}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={formPassword}
+                        onChange={e => setFormPassword(e.target.value)}
+                        placeholder={editingUser ? 'Nhập mật khẩu mới nếu muốn đổi' : 'Tối thiểu 6 ký tự'}
+                        required={!editingUser}
+                        className="w-full pl-3 pr-9 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700 bg-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded focus:outline-none"
+                        title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                        aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700">
+                      {editingUser ? 'Xác nhận mật khẩu mới' : 'Xác nhận mật khẩu *'}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={formConfirmPassword}
+                        onChange={e => setFormConfirmPassword(e.target.value)}
+                        placeholder={editingUser ? 'Nhập lại mật khẩu mới' : 'Nhập lại mật khẩu'}
+                        required={!editingUser || !!formPassword}
+                        className="w-full pl-3 pr-9 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-700 bg-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded focus:outline-none"
+                        title={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                        aria-label={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {formConfirmPassword.length > 0 && (
+                      <div className="pt-1 text-[11px] font-medium">
+                        {formPassword === formConfirmPassword ? (
+                          <span className="text-emerald-700 flex items-center gap-1">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            <span>✓ Mật khẩu xác nhận trùng khớp</span>
+                          </span>
+                        ) : (
+                          <span className="text-rose-600 flex items-center gap-1">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            <span>⚠ Mật khẩu xác nhận không khớp</span>
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -765,6 +824,46 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete User Confirmation Modal */}
+      {userToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Xác nhận xóa tài khoản</h3>
+                <p className="text-xs text-slate-500">Hành động này sẽ xóa vĩnh viễn tài khoản khỏi hệ thống</p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 space-y-1">
+              <div><strong>Tài khoản:</strong> <span className="font-mono font-bold text-slate-900">@{userToDelete.username}</span></div>
+              <div><strong>Họ và tên:</strong> {userToDelete.fullName}</div>
+              <div><strong>Vai trò:</strong> {ROLE_DEFINITIONS[userToDelete.role]?.label || userToDelete.role}</div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setUserToDelete(null)}
+                className="px-4 py-2 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold text-xs cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteUser}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-semibold text-xs transition-colors shadow-sm cursor-pointer"
+              >
+                Xác nhận xóa
+              </button>
+            </div>
           </div>
         </div>
       )}

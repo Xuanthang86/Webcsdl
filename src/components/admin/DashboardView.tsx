@@ -93,9 +93,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const displaySavings = activeYearData ? activeYearData.savings : stats.totalCostSavings;
 
   const years = ['2021', '2022', '2023', '2024', '2025', '2026'];
-  const maxTasksYear = Math.max(...years.map(y => stats.tasksByYear?.[y] || 0), 1);
-  const maxInitiativesYear = Math.max(...years.map(y => stats.initiativesByYear?.[y] || 0), 1);
-  const maxStartupsYear = Math.max(...years.map(y => stats.startupsByYear?.[y] || 0), 1);
+  const maxTasksYear = Math.max(...years.map(y => (stats.tasksByYear?.[y] ?? (stats.tasksByYear as any)?.[Number(y)]) || 0), 1);
+  const maxInitiativesYear = Math.max(...years.map(y => (stats.initiativesByYear?.[y] ?? (stats.initiativesByYear as any)?.[Number(y)]) || 0), 1);
+  const maxStartupsYear = Math.max(...years.map(y => (stats.startupsByYear?.[y] ?? (stats.startupsByYear as any)?.[Number(y)]) || 0), 1);
   const maxPatentsYear = Math.max(...years.map(y => stats.patentsByYear?.[y] || 0), 1);
   const maxExpertsYear = Math.max(...years.map(y => stats.expertsByYear?.[y] || 0), 1);
   const maxProjectsYear = Math.max(...years.map(y => stats.projectsByYear?.[y] || 0), 1);
@@ -433,8 +433,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
               <div className="h-48 flex items-end justify-between gap-3 pt-6 px-4 bg-slate-50 rounded-xl border border-slate-100">
                 {years.map(yr => {
-                  const count = stats.tasksByYear?.[yr] || 0;
-                  const heightPct = count > 0 ? Math.max(8, Math.round((count / maxTasksYear) * 100)) : 0;
+                  const count = (stats.tasksByYear?.[yr] ?? (stats.tasksByYear as any)?.[Number(yr)]) || 0;
+                  const heightPct = count > 0 ? Math.max(10, Math.round((count / maxTasksYear) * 100)) : 0;
                   return (
                     <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
                       <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-blue-700">{count}</span>
@@ -492,8 +492,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
               <div className="h-48 flex items-end justify-between gap-3 pt-6 px-4 bg-slate-50 rounded-xl border border-slate-100">
                 {years.map(yr => {
-                  const count = stats.initiativesByYear?.[yr] || 0;
-                  const heightPct = count > 0 ? Math.max(8, Math.round((count / maxInitiativesYear) * 100)) : 0;
+                  const count = (stats.initiativesByYear?.[yr] ?? (stats.initiativesByYear as any)?.[Number(yr)]) || 0;
+                  const heightPct = count > 0 ? Math.max(10, Math.round((count / maxInitiativesYear) * 100)) : 0;
                   return (
                     <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
                       <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-amber-700">{count}</span>
@@ -522,8 +522,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
             <div className="h-48 flex items-end justify-between gap-4 pt-6 px-8 bg-slate-50 rounded-xl border border-slate-100">
               {years.map(yr => {
-                const count = stats.startupsByYear?.[yr] || 0;
-                const heightPct = count > 0 ? Math.max(8, Math.round((count / maxStartupsYear) * 100)) : 0;
+                const count = (stats.startupsByYear?.[yr] ?? (stats.startupsByYear as any)?.[Number(yr)]) || 0;
+                const heightPct = count > 0 ? Math.max(10, Math.round((count / maxStartupsYear) * 100)) : 0;
                 return (
                   <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
                     <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-purple-700">{count}</span>

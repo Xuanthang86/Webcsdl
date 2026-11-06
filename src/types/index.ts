@@ -228,6 +228,7 @@ export interface AggregatedStats {
   projectsBySchool?: Record<string, number>;
   projectsByWard?: Record<string, number>;
   ideasByField?: Record<string, number>;
+  ideasByYear?: Record<string, number>;
   ideasBySchool?: Record<string, number>;
   ideasByWard?: Record<string, number>;
   wardsByAreaType?: Record<string, number>;
