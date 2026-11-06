@@ -104,7 +104,10 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
             </div>
           </div>
           <p className="text-sm text-slate-600">
-            Tệp sao lưu có thể chứa dữ liệu đề tài, người dùng, cấu hình và các dữ liệu nghiệp vụ khác. Hãy lưu trữ ở nơi an toàn và giới hạn người được phép truy cập.
+            Tệp sao lưu bao gồm toàn bộ bảng dữ liệu D1, cấu trúc bảng, tài khoản, cấu hình, nhật ký và dữ liệu nghiệp vụ. Hãy lưu trữ ở nơi an toàn và giới hạn người được phép truy cập.
+          </p>
+          <p className="text-xs text-amber-700">
+            Lưu ý: Tệp ảnh và media lưu bên ngoài trên ImageKit không được đóng gói vào JSON; các đường dẫn liên kết trong cơ sở dữ liệu vẫn được sao lưu.
           </p>
           <button
             type="button"
