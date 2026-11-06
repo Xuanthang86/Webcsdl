@@ -88,6 +88,27 @@ function hydrateModuleRow(row: any, moduleName?: string): any {
 }
 
 
+// Restricted detail access is granted to privileged review roles or explicitly
+// assigned module scopes. A public account never receives private detail fields.
+function canViewRestrictedModule(user: any, moduleName: string): boolean {
+  const privilegedRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'];
+  if (privilegedRoles.includes(String(user?.role || ''))) return true;
+  return Array.isArray(user?.managedModules) && user.managedModules.includes(moduleName);
+}
+
+function redactPublicDetail(item: any, moduleName: string): any {
+  if (!item) return item;
+  const restrictedByModule: Record<string, string[]> = {
+    science_tasks: ['members', 'projectTeam', 'evidenceFile', 'archiveCode', 'archiveSymbol', 'storageCode'],
+    experts: ['dateOfBirth', 'birthDate', 'gender', 'academicRank', 'degree', 'startYear', 'researchTitle', 'position', 'email', 'phone', 'field', 'workplace', 'education', 'educationHistory', 'workHistory', 'languages', 'publications', 'degreeName', 'researchOutputs', 'projects', 'awards', 'experience'],
+    startup_projects: ['operatingAddress', 'summary', 'membersCount', 'leaderPhone', 'leaderEmail'],
+    startup_ideas: ['operatingAddress', 'wardOrSchool', 'summary', 'problemSolved', 'membersCount', 'leaderPhone', 'leaderEmail', 'affiliatedUnit']
+  };
+  const safe = { ...item };
+  for (const key of restrictedByModule[moduleName] || []) delete safe[key];
+  return safe;
+}
+
 // Ensure each approved data module can retain additional fields without discarding
 // spreadsheet columns that are not yet represented in the physical D1 schema.
 async function ensureModuleDataJson(db: D1Database, moduleName: string): Promise<Set<string>> {
@@ -1277,6 +1298,7 @@ export default {
         if (!env.DB) return jsonResponse({ success: false, message: 'CSDL D1 chưa kết nối.' }, 500, corsHeaders);
         try {
           for (const mod of targetModules) {
+            const canViewRestrictedRecords = canViewRestrictedModule(currentUser, mod);
             const tableInfo = await env.DB.prepare(`PRAGMA table_info(${mod})`).all<any>();
             const columnNames = (tableInfo.results || []).map((column: any) => String(column.name));
             const columns = new Set(columnNames);
@@ -1674,7 +1696,7 @@ export default {
               if (!item) {
                 return jsonResponse({ success: false, message: 'Không tìm thấy bản ghi.' }, 404, corsHeaders);
               }
-              const canViewRestrictedRecord = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'].includes(currentUser.role);
+              const canViewRestrictedRecord = canViewRestrictedModule(currentUser, moduleName);
               if (!canViewRestrictedRecord) {
                 const status = String(item.status || '').toLowerCase();
                 const publicity = String(item.publicityLevel || 'public').toLowerCase();
@@ -1685,7 +1707,8 @@ export default {
               const rels = await env.DB.prepare(`
                 SELECT * FROM relationships WHERE source_id = ? OR target_id = ?
               `).bind(recordId, recordId).all();
-              return jsonResponse({ success: true, data: item, relationships: rels.results || [] }, 200, corsHeaders);
+              const responseItem = canViewRestrictedRecord ? item : redactPublicDetail(item, moduleName);
+              return jsonResponse({ success: true, data: responseItem, relationships: rels.results || [] }, 200, corsHeaders);
             } catch (e: any) {
               return jsonResponse({ success: false, message: e.message }, 500, corsHeaders);
             }
@@ -1699,7 +1722,7 @@ export default {
             try {
               const limit = Math.min(500, Math.max(1, parseInt(url.searchParams.get('limit') || '200', 10) || 200));
               const offset = Math.max(0, parseInt(url.searchParams.get('offset') || '0', 10) || 0);
-              const canViewRestrictedRecords = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'].includes(currentUser.role);
+              const canViewRestrictedRecords = canViewRestrictedModule(currentUser, moduleName);
               const publicOnly = url.searchParams.get('publicOnly') === 'true' || !canViewRestrictedRecords;
               let visibilityWhere = '';
               if (publicOnly) {
