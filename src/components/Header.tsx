@@ -401,7 +401,7 @@ export const Header: React.FC<HeaderProps> = ({
             {!isAuthenticated ? (
               <button
                 onClick={onOpenAdminLogin}
-                className="px-3 sm:px-4 py-2 sm:py-1.5 text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 shadow-sm border border-sky-400/40 cursor-pointer min-h-[40px] sm:min-h-0"
+                className="hidden md:flex px-3 sm:px-4 py-2 sm:py-1.5 text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 rounded-lg transition-colors whitespace-nowrap items-center gap-1.5 shadow-sm border border-sky-400/40 cursor-pointer min-h-[40px] sm:min-h-0"
                 title="Đăng nhập tài khoản hệ thống"
               >
                 <LogIn className="w-3.5 h-3.5 md:hidden" />
