@@ -265,7 +265,6 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     try {
       const exportData = filteredRecords.map((r, i) => {
         const base: Record<string, any> = {
-          'STT': i + 1,
           'Mã định danh': r.code,
           'Tên bản ghi': r.title,
           'Lĩnh vực': r.field,
@@ -273,12 +272,18 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
           'Trạng thái': r.status,
           'Phạm vi': r.publicityLevel === 'public' ? 'Công khai' : 'Nội bộ'
         };
-        // append extra attributes if present
+        // Append extra attributes, but never allow an imported STT field to
+        // overwrite the sequential row number generated for this export.
         Object.entries(r).forEach(([k, v]) => {
-          if (!['id', 'code', 'title', 'field', 'ownerName', 'status', 'publicityLevel', 'history'].includes(k) && typeof v !== 'object') {
+          const normalizedKey = k.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (!['id', 'code', 'title', 'field', 'ownerName', 'status', 'publicityLevel', 'history'].includes(k)
+            && !['stt', 'sothutu'].includes(normalizedKey)
+            && typeof v !== 'object') {
             base[k] = v;
           }
         });
+        // Set STT last so it is always 1, 2, 3... in the exported row order.
+        base['STT'] = i + 1;
         return base;
       });
 
