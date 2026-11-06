@@ -91,6 +91,9 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
   const [formIsActive, setFormIsActive] = useState(true);
   const [formManagedModules, setFormManagedModules] = useState<string[]>([]);
   const [formOrgScope, setFormOrgScope] = useState('');
+  const isCurrentSuperAdmin = currentUser?.role === 'super_admin';
+  const isEditingProtectedAdmin = Boolean(editingUser && ['super_admin', 'system_admin'].includes(editingUser.role));
+  const assignableRoles = Object.entries(ROLE_DEFINITIONS).filter(([role]) => isCurrentSuperAdmin || role !== 'super_admin');
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -245,6 +248,12 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
         });
         showToast(`Đã tạo tài khoản [${formUsername}] với vai trò [${formRole}]`);
         setShowCreateModal(false);
+        setFormUsername('');
+        setFormPassword('');
+        setFormConfirmPassword('');
+        setFormOldPassword('');
+        setFormEmail('');
+        setFormFullName('');
       }
       fetchUsers();
     } catch (err: any) {
@@ -496,13 +505,15 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            onClick={() => handleOpenEdit(u)}
-                            className="p-1.5 text-slate-600 hover:text-teal-800 hover:bg-teal-50 rounded-lg transition-colors cursor-pointer"
-                            title="Chỉnh sửa thông tin & phân quyền"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
+                          {(u.role !== 'super_admin' || isCurrentSuperAdmin) && (
+                            <button
+                              onClick={() => handleOpenEdit(u)}
+                              className="p-1.5 text-slate-600 hover:text-teal-800 hover:bg-teal-50 rounded-lg transition-colors cursor-pointer"
+                              title="Chỉnh sửa thông tin tài khoản"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                          )}
                           
                           {u.id !== currentUser?.id && u.role !== 'super_admin' && (
                             <button
@@ -541,7 +552,7 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
                 </div>
               </div>
               <button
-                onClick={() => { setShowCreateModal(false); setEditingUser(null); }}
+                onClick={() => { setShowCreateModal(false); setEditingUser(null); setFormUsername(''); setFormPassword(''); setFormConfirmPassword(''); setFormOldPassword(''); }}
                 className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
               >
                 <X className="w-5 h-5" />
@@ -555,12 +566,15 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
               </div>
             )}
 
-            <form onSubmit={handleSaveUser} className="space-y-4 text-xs">
+            <form onSubmit={handleSaveUser} autoComplete="off" className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="font-semibold text-slate-700">Tên đăng nhập (Username) *</label>
                   <input
                     type="text"
+                    name="new-account-username"
+                    autoComplete="off"
+                    spellCheck={false}
                     value={formUsername}
                     onChange={e => setFormUsername(e.target.value)}
                     placeholder="vd: canbo.khoahoc"
@@ -594,6 +608,8 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
                     <div className="relative">
                       <input
                         type={showOldPassword ? 'text' : 'password'}
+                        name="verify-current-admin-password"
+                        autoComplete="off"
                         value={formOldPassword}
                         onChange={e => setFormOldPassword(e.target.value)}
                         placeholder="Nhập mật khẩu hiện tại của tài khoản..."
@@ -620,6 +636,8 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
+                        name="new-account-password"
+                        autoComplete="new-password"
                         value={formPassword}
                         onChange={e => setFormPassword(e.target.value)}
                         placeholder={editingUser ? 'Nhập mật khẩu mới nếu muốn đổi' : 'Tối thiểu 6 ký tự'}
@@ -645,6 +663,8 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
                     <div className="relative">
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
+                        name="confirm-new-account-password"
+                        autoComplete="new-password"
                         value={formConfirmPassword}
                         onChange={e => setFormConfirmPassword(e.target.value)}
                         placeholder={editingUser ? 'Nhập lại mật khẩu mới' : 'Nhập lại mật khẩu'}
@@ -729,84 +749,84 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
                 </div>
               </div>
 
-              {/* Role Assignment */}
+              {/* Role Assignment: system admins cannot assign Super Admin. Existing administrator roles are immutable. */}
               <div className="space-y-1 pt-1">
-                <label className="font-semibold text-slate-700">Vai trò & Ma trận quyền hạn *</label>
-                <select
-                  value={formRole}
-                  onChange={e => setFormRole(e.target.value as UserRole)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white font-medium focus:ring-2 focus:ring-teal-700"
-                >
-                  {Object.entries(ROLE_DEFINITIONS).map(([rKey, def]) => (
-                    <option key={rKey} value={rKey}>
-                      {def.label} — {def.desc}
-                    </option>
-                  ))}
-                </select>
+                <label className="font-semibold text-slate-700">Vai trò tài khoản *</label>
+                {isEditingProtectedAdmin ? (
+                  <div className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-100 text-slate-700 font-semibold">
+                    {ROLE_DEFINITIONS[editingUser!.role]?.label} · Vai trò được bảo vệ, không thể thay đổi
+                  </div>
+                ) : (
+                  <select
+                    value={formRole}
+                    onChange={e => setFormRole(e.target.value as UserRole)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white font-medium focus:ring-2 focus:ring-teal-700"
+                  >
+                    {assignableRoles.map(([rKey, def]) => (
+                      <option key={rKey} value={rKey}>
+                        {def.label} — {def.desc}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <p className="text-[11px] text-teal-800 bg-teal-50 p-2.5 rounded-lg border border-teal-200 mt-1">
                   <strong>Mô tả quyền hạn:</strong> {ROLE_DEFINITIONS[formRole]?.desc}
                 </p>
               </div>
 
-              {/* Granular Module Permission Assignment (Checkboxes for 5 standardized groups) */}
-              <div className="space-y-2 pt-2 border-t border-slate-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="font-semibold text-slate-800 flex items-center gap-1.5">
-                      <Layers className="w-4 h-4 text-teal-700" />
-                      <span>Phân quyền quản lý theo phân hệ dữ liệu:</span>
-                    </label>
-                    <p className="text-[11px] text-slate-500">
-                      Chọn các loại cơ sở dữ liệu mà người dùng này được phép thêm, sửa, quản lý
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSelectAllModules}
-                    className="text-xs font-semibold text-teal-800 hover:underline"
-                  >
-                    {formManagedModules.length === MANAGEABLE_MODULE_OPTIONS.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200 max-h-48 overflow-y-auto">
-                  {MANAGEABLE_MODULE_OPTIONS.map(opt => {
-                    const isChecked = formManagedModules.includes(opt.key);
-                    return (
-                      <label 
-                        key={opt.key}
-                        className={`flex items-center gap-2 p-1.5 rounded-lg border cursor-pointer transition-colors text-[11px] ${
-                          isChecked 
-                            ? 'bg-teal-50 border-teal-300 text-teal-900 font-semibold' 
-                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => handleToggleModule(opt.key)}
-                          className="rounded text-teal-800 focus:ring-teal-700"
-                        />
-                        <span className="truncate">{opt.label}</span>
+              {!isEditingProtectedAdmin ? (
+                <div className="space-y-2 pt-2 border-t border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="font-semibold text-slate-800 flex items-center gap-1.5">
+                        <Layers className="w-4 h-4 text-teal-700" />
+                        <span>Phân quyền quản lý theo phân hệ dữ liệu:</span>
                       </label>
-                    );
-                  })}
+                      <p className="text-[11px] text-slate-500">
+                        Chọn các loại cơ sở dữ liệu mà người dùng này được phép thêm, sửa, quản lý
+                      </p>
+                    </div>
+                    <button type="button" onClick={handleSelectAllModules} className="text-xs font-semibold text-teal-800 hover:underline">
+                      {formManagedModules.length === MANAGEABLE_MODULE_OPTIONS.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200 max-h-48 overflow-y-auto">
+                    {MANAGEABLE_MODULE_OPTIONS.map(opt => {
+                      const isChecked = formManagedModules.includes(opt.key);
+                      return (
+                        <label
+                          key={opt.key}
+                          className={`flex items-center gap-2 p-1.5 rounded-lg border cursor-pointer transition-colors text-[11px] ${
+                            isChecked ? 'bg-teal-50 border-teal-300 text-teal-900 font-semibold' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <input type="checkbox" checked={isChecked} onChange={() => handleToggleModule(opt.key)} className="rounded text-teal-800 focus:ring-teal-700" />
+                          <span className="truncate">{opt.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-600">
+                  Tài khoản quản trị được bảo vệ: không thể thay đổi phân quyền theo phân hệ.
+                </div>
+              )}
 
-              {/* Status toggle */}
-              <div className="flex items-center gap-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="userActiveToggle"
-                  checked={formIsActive}
-                  onChange={e => setFormIsActive(e.target.checked)}
-                  className="w-4 h-4 text-teal-800 rounded focus:ring-teal-700"
-                />
-                <label htmlFor="userActiveToggle" className="font-semibold text-slate-700 cursor-pointer">
-                  Tài khoản đang hoạt động (Được phép đăng nhập hệ thống)
-                </label>
-              </div>
+              {!isEditingProtectedAdmin && (
+                <div className="flex items-center gap-2 pt-2">
+                  <input
+                    type="checkbox"
+                    id="userActiveToggle"
+                    checked={formIsActive}
+                    onChange={e => setFormIsActive(e.target.checked)}
+                    className="w-4 h-4 text-teal-800 rounded focus:ring-teal-700"
+                  />
+                  <label htmlFor="userActiveToggle" className="font-semibold text-slate-700 cursor-pointer">
+                    Tài khoản đang hoạt động (Được phép đăng nhập hệ thống)
+                  </label>
+                </div>
+              )}
 
               <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
                 <button
