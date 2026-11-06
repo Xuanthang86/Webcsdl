@@ -17,6 +17,23 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
   const handleDownload = async () => {
     setIsDownloading(true);
     setMessage(null);
+
+    // Safari on iPhone/iPad may discard the user gesture after the authenticated
+    // fetch completes, causing a later synthetic anchor click to do nothing.
+    // Open a blank tab synchronously while the click is still trusted, then
+    // navigate that tab to the authenticated response's Blob URL.
+    const userAgent = window.navigator.userAgent;
+    const isIPadDesktopMode = window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1;
+    const isIOSSafari =
+      ((/iPhone|iPad|iPod/i.test(userAgent) || isIPadDesktopMode) &&
+        /Safari/i.test(userAgent) &&
+        !/(CriOS|FxiOS|EdgiOS|OPiOS)/i.test(userAgent));
+    let safariPreviewWindow: Window | null = null;
+
+    if (isIOSSafari) {
+      safariPreviewWindow = window.open('', '_blank');
+    }
+
     try {
       const blob = await api.downloadBackup();
       if (!blob || blob.size === 0) {
@@ -24,6 +41,25 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
       }
 
       const url = window.URL.createObjectURL(blob);
+
+      if (isIOSSafari) {
+        if (!safariPreviewWindow || safariPreviewWindow.closed) {
+          window.URL.revokeObjectURL(url);
+          throw new Error('Trình duyệt đã chặn tab mở tệp sao lưu. Vui lòng cho phép cửa sổ bật lên (pop-up) cho trang này rồi thử lại.');
+        }
+
+        safariPreviewWindow.location.href = url;
+
+        // Keep the Blob URL available while Safari displays the JSON preview,
+        // so the user can use Share > Save to Files without a broken preview.
+        window.setTimeout(() => window.URL.revokeObjectURL(url), 10 * 60_000);
+        setMessage({
+          type: 'success',
+          text: 'Đã tạo tệp sao lưu và mở trong tab mới. Trên iPhone/iPad, chạm nút Chia sẻ trong Safari, chọn “Lưu vào Tệp” để lưu bản sao lưu.'
+        });
+        return;
+      }
+
       const anchor = document.createElement('a');
       anchor.href = url;
       anchor.download = `portal_database_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
@@ -32,17 +68,18 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
       anchor.click();
       anchor.remove();
 
-      // Keep the object URL alive briefly so mobile browsers (especially Safari)
-      // have time to start consuming the Blob before it is released.
+      // Keep the object URL alive briefly so the browser can consume the Blob.
       window.setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
 
-      // Browsers do not expose a reliable signal that a file was physically
-      // saved, so do not claim that the device has completed the download.
+      // Browsers do not expose a reliable signal that a file was physically saved.
       setMessage({
         type: 'success',
         text: 'Đã tạo tệp sao lưu và gửi yêu cầu tải xuống. Vui lòng kiểm tra mục Tải về (Downloads) của trình duyệt để xác nhận tệp đã được lưu.'
       });
     } catch (error: any) {
+      if (safariPreviewWindow && !safariPreviewWindow.closed) {
+        safariPreviewWindow.close();
+      }
       setMessage({ type: 'error', text: error.message || 'Không thể tạo bản sao lưu dữ liệu.' });
     } finally {
       setIsDownloading(false);
