@@ -518,7 +518,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Đề tài, nhiệm vụ KH&CN */}
               <button
                 onClick={() => handleChooseCategory('science_tasks')}
-                className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
+                className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-100 hover:bg-slate-600 flex items-center justify-between transition-colors border border-transparent hover:border-slate-500 cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 font-medium">
                   <FileText className="w-4 h-4 text-sky-300" />
@@ -530,7 +530,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Sáng kiến có tác dụng, ảnh hưởng đối với thành phố */}
               <button
                 onClick={() => handleChooseCategory('initiatives')}
-                className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
+                className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-100 hover:bg-slate-600 flex items-center justify-between transition-colors border border-transparent hover:border-slate-500 cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 font-medium">
                   <Lightbulb className="w-4 h-4 text-amber-600" />
@@ -542,7 +542,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Sáng chế & Sở hữu trí tuệ */}
               <button
                 onClick={() => handleChooseCategory('patents')}
-                className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
+                className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-100 hover:bg-slate-600 flex items-center justify-between transition-colors border border-transparent hover:border-slate-500 cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 font-medium">
                   <Award className="w-4 h-4 text-purple-600" />
@@ -554,7 +554,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Chuyên gia & Nhà khoa học */}
               <button
                 onClick={() => handleChooseCategory('experts')}
-                className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-800 hover:bg-slate-100 flex items-center justify-between transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
+                className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-100 hover:bg-slate-600 flex items-center justify-between transition-colors border border-transparent hover:border-slate-500 cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 font-medium">
                   <GraduationCap className="w-4 h-4 text-blue-600" />
@@ -672,16 +672,16 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               ) : (
                 <div className="space-y-2">
-                  <div className="p-2.5 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                  <div className="p-2.5 bg-slate-700 rounded-xl border border-slate-600 flex items-center justify-between">
                     <div className="min-w-0 flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-teal-800 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-sky-800 text-white flex items-center justify-center font-bold text-xs shrink-0">
                         <UserIcon className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
-                        <div className="font-bold text-slate-900 text-xs truncate">
+                        <div className="font-bold text-white text-xs truncate">
                           {currentUser?.fullName}
                         </div>
-                        <div className="text-[10px] text-teal-800 font-semibold truncate">
+                        <div className="text-[10px] text-sky-200 font-semibold truncate">
                           {getRoleDisplayName(currentUser)}
                         </div>
                       </div>
@@ -691,7 +691,7 @@ export const Header: React.FC<HeaderProps> = ({
                         setMenuDrawerOpen(false);
                         setShowAccountModal(true);
                       }}
-                      className="px-2 py-1 text-[11px] font-semibold text-teal-800 hover:bg-teal-50 rounded-lg transition-colors border border-teal-200"
+                      className="px-2 py-1 text-[11px] font-semibold text-sky-100 hover:bg-slate-600 rounded-lg transition-colors border border-slate-500"
                     >
                       Hồ sơ
                     </button>
