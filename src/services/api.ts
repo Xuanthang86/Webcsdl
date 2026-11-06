@@ -9,10 +9,33 @@ import {
   ConnectionMessage
 } from '../types';
 
+const TOKEN_KEY = 'portal_session_token';
+
+function getStoredToken(): string {
+  if (typeof window === 'undefined') return '';
+  return window.sessionStorage.getItem(TOKEN_KEY) || window.localStorage.getItem(TOKEN_KEY) || '';
+}
+
+function setStoredToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  window.sessionStorage.setItem(TOKEN_KEY, token);
+  window.localStorage.setItem(TOKEN_KEY, token);
+}
+
+function removeStoredToken(): void {
+  if (typeof window === 'undefined') return;
+  window.sessionStorage.removeItem(TOKEN_KEY);
+  window.localStorage.removeItem(TOKEN_KEY);
+}
+
 function getAuthHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
-  // Authentication is carried only by the HttpOnly session cookie.
-  // Never expose session tokens to JavaScript or persist them in localStorage.
-  return { ...extraHeaders };
+  const token = getStoredToken();
+  const headers: Record<string, string> = { ...extraHeaders };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+    headers['x-session-token'] = token;
+  }
+  return headers;
 }
 
 function authFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
@@ -33,7 +56,13 @@ async function parseJsonResponse<T = any>(res: Response): Promise<T> {
   if (!contentType.includes('application/json')) {
     const text = await res.text();
     if (!res.ok) {
-      throw new Error(`Lỗi máy chủ (${res.status}): ${text.slice(0, 150) || res.statusText}`);
+      if (res.status === 403) {
+        throw new Error('Bạn không có quyền thực hiện thao tác này. Vui lòng đăng nhập bằng tài khoản Quản trị viên hợp lệ.');
+      }
+      if (res.status === 405) {
+        throw new Error('Phương thức yêu cầu không được máy chủ hỗ trợ (405).');
+      }
+      throw new Error(`Lỗi máy chủ (${res.status}): ${text.replace(/<[^>]+>/g, '').trim().slice(0, 150) || res.statusText}`);
     }
     return text as unknown as T;
   }
