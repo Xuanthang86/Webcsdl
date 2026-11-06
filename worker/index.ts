@@ -1737,7 +1737,10 @@ export default {
                 success: true,
                 moduleType: moduleName,
                 total: countResult?.total || 0,
-                data: (results.results || []).map(row => hydrateModuleRow(row, moduleName))
+                data: (results.results || []).map(row => {
+                  const hydrated = hydrateModuleRow(row, moduleName);
+                  return canViewRestrictedRecords ? hydrated : redactPublicDetail(hydrated, moduleName);
+                })
               }, 200, corsHeaders);
             } catch (e: any) {
               return jsonResponse({ success: false, message: 'Lỗi truy vấn D1: ' + e.message }, 500, corsHeaders);
