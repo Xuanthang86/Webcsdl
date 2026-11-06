@@ -147,10 +147,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           <div className="w-8 h-8 rounded-lg bg-white text-sky-900 flex items-center justify-center font-black text-xs transition-colors shrink-0 shadow-xs">
             ĐN
           </div>
-          <div>
+          <div className="min-w-0 max-w-[225px]">
             <div className="font-black text-xs tracking-tight text-white uppercase leading-none">CỔNG DỮ LIỆU</div>
-            <div className="text-[10px] text-sky-200 font-bold truncate max-w-[220px] uppercase mt-0.5 leading-tight">VỀ KHOA HỌC, CÔNG NGHỆ</div>
-            <div className="text-[10px] text-sky-200 font-bold truncate max-w-[220px] uppercase leading-tight">VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO TP ĐÀ NẴNG</div>
+            <div className="text-[9px] text-sky-200 font-bold uppercase mt-0.5 leading-tight tracking-[-0.02em] whitespace-nowrap">VỀ KHOA HỌC, CÔNG NGHỆ</div>
+            <div className="text-[9px] text-sky-200 font-bold uppercase leading-tight tracking-[-0.035em] whitespace-nowrap">VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO TP ĐÀ NẴNG</div>
           </div>
         </div>
         <button
@@ -403,9 +403,22 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-3 border-t border-slate-700 text-xs text-slate-400 flex items-center justify-between">
-          <span className="font-semibold text-slate-300">Cổng Quản trị Dữ liệu KHCN</span>
-          <span className="font-mono text-[10px] bg-slate-700 px-1.5 py-0.5 rounded text-sky-400">v1.0</span>
+        <div className="p-3 border-t border-slate-700 space-y-2">
+          {onLogout && (
+            <button
+              type="button"
+              onClick={() => { setSidebarOpen(false); onLogout(); }}
+              className="lg:hidden w-full min-h-[44px] px-3 py-2 text-xs font-semibold rounded-lg border border-rose-400/40 bg-rose-500/10 hover:bg-rose-500/20 text-rose-200 hover:text-white transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              title="Đăng xuất khỏi tài khoản"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Đăng xuất tài khoản</span>
+            </button>
+          )}
+          <div className="text-xs text-slate-400 flex items-center justify-between">
+            <span className="font-semibold text-slate-300">Cổng Quản trị Dữ liệu KHCN</span>
+            <span className="font-mono text-[10px] bg-slate-700 px-1.5 py-0.5 rounded text-sky-400">v1.0</span>
+          </div>
         </div>
       </aside>
 
