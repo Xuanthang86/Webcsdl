@@ -70,7 +70,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
   const [showAdvancedModal, setShowAdvancedModal] = useState(false);
   const [showFieldsPanel, setShowFieldsPanel] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(15);
+  const [pageSize, setPageSize] = useState(10);
 
   // Specific Sub-Filters
   const [filterYear, setFilterYear] = useState('all');
@@ -299,6 +299,17 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
     }
     return groups;
   }, [results, selectedModule]);
+
+  // Keep public pagination compact when the result set spans many pages.
+  const totalPages = Math.ceil(processedResults.length / pageSize);
+  const paginationItems: Array<number | 'ellipsis-start' | 'ellipsis-end'> = (() => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    if (currentPage <= 4) return [1, 2, 3, 4, 5, 'ellipsis-end', totalPages];
+    if (currentPage >= totalPages - 3) {
+      return [1, 'ellipsis-start', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+    return [1, 'ellipsis-start', currentPage - 1, currentPage, currentPage + 1, 'ellipsis-end', totalPages];
+  })();
 
   const formatModuleTitle = (mod: string) => {
     if (mod === 'all') return 'Tra cứu dữ liệu toàn hệ thống (phân loại từng phân hệ)';
@@ -1559,10 +1570,11 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
                     className="h-8 px-2 border border-slate-300 rounded-lg bg-white text-slate-700"
                   >
-                    <option value={15}>15</option>
-                    <option value={30}>30</option>
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
                     <option value={50}>50</option>
                     <option value={100}>100</option>
+                    <option value={200}>200</option>
                   </select>
                 </label>
               </div>
@@ -1581,12 +1593,21 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   Trang trước
                 </button>
 
-                {Array.from({ length: Math.ceil(processedResults.length / pageSize) }).map((_, idx) => {
-                  const pageNum = idx + 1;
+                {paginationItems.map((item, idx) => {
+                  if (typeof item !== 'number') {
+                    return (
+                      <span key={item} className="px-1 text-slate-400 select-none" aria-hidden="true">
+                        …
+                      </span>
+                    );
+                  }
+                  const pageNum = item;
                   return (
                     <button
                       key={pageNum}
                       type="button"
+                      aria-current={currentPage === pageNum ? 'page' : undefined}
+                      aria-label={`Trang ${pageNum}`}
                       onClick={() => {
                         setCurrentPage(pageNum);
                         window.scrollTo({ top: 180, behavior: 'smooth' });
@@ -1604,9 +1625,9 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                 <button
                   type="button"
-                  disabled={currentPage === Math.ceil(processedResults.length / pageSize)}
+                  disabled={currentPage === totalPages}
                   onClick={() => {
-                    setCurrentPage(prev => Math.min(Math.ceil(processedResults.length / pageSize), prev + 1));
+                    setCurrentPage(prev => Math.min(totalPages, prev + 1));
                     window.scrollTo({ top: 180, behavior: 'smooth' });
                   }}
                   className="px-3 py-1.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed font-medium text-slate-700 cursor-pointer"
