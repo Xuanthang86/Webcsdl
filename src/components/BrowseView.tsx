@@ -70,7 +70,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
   const [showAdvancedModal, setShowAdvancedModal] = useState(false);
   const [showFieldsPanel, setShowFieldsPanel] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 15;
+  const [pageSize, setPageSize] = useState(15);
 
   // Specific Sub-Filters
   const [filterYear, setFilterYear] = useState('all');
@@ -879,7 +879,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   Title spreads evenly across 100% width with no left compression;
                   Metadata and direct 'Xem chi tiết' button without horizontal scrolling */}
               <div className="block md:hidden space-y-3">
-                {processedResults.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item) => (
+                {processedResults.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((item) => (
                   <div
                     key={item.id}
                     className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3"
@@ -1130,8 +1130,8 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   </thead>
 
                   <tbody className="divide-y divide-slate-100">
-                    {processedResults.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item, idx) => {
-                      const stt = (currentPage - 1) * PAGE_SIZE + idx + 1;
+                    {processedResults.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((item, idx) => {
+                      const stt = (currentPage - 1) * pageSize + idx + 1;
                       return (
                         <tr key={item.id} className="hover:bg-teal-50/30 transition-colors">
                           <td className="hidden sm:table-cell py-3 px-3 text-center text-slate-400 font-mono text-[11px]">
@@ -1496,7 +1496,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
           ) : (
             /* Grid View */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {processedResults.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item, idx) => (
+              {processedResults.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((item, idx) => (
                 <div
                   key={item.id}
                   onClick={() => onViewDetail(item)}
@@ -1544,14 +1544,30 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
           )}
 
           {/* Pagination Controls */}
-          {processedResults.length > PAGE_SIZE && (
+          {processedResults.length > 0 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200 text-xs">
-              <div className="text-slate-500">
-                Hiển thị từ <strong className="text-slate-900 font-mono">{(currentPage - 1) * PAGE_SIZE + 1}</strong> đến{' '}
-                <strong className="text-slate-900 font-mono">{Math.min(currentPage * PAGE_SIZE, processedResults.length)}</strong> trên{' '}
-                <strong className="text-slate-900 font-mono">{processedResults.length}</strong> kết quả
+              <div className="flex flex-wrap items-center gap-3 text-slate-500">
+                <span>
+                  Hiển thị từ <strong className="text-slate-900 font-mono">{(currentPage - 1) * pageSize + 1}</strong> đến{' '}
+                  <strong className="text-slate-900 font-mono">{Math.min(currentPage * pageSize, processedResults.length)}</strong> trên{' '}
+                  <strong className="text-slate-900 font-mono">{processedResults.length}</strong> kết quả
+                </span>
+                <label className="flex items-center gap-2 whitespace-nowrap">
+                  Số dòng/trang
+                  <select
+                    value={pageSize}
+                    onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                    className="h-8 px-2 border border-slate-300 rounded-lg bg-white text-slate-700"
+                  >
+                    <option value={15}>15</option>
+                    <option value={30}>30</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </label>
               </div>
 
+              {processedResults.length > pageSize && (
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
@@ -1565,7 +1581,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   Trang trước
                 </button>
 
-                {Array.from({ length: Math.ceil(processedResults.length / PAGE_SIZE) }).map((_, idx) => {
+                {Array.from({ length: Math.ceil(processedResults.length / pageSize) }).map((_, idx) => {
                   const pageNum = idx + 1;
                   return (
                     <button
@@ -1588,9 +1604,9 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                 <button
                   type="button"
-                  disabled={currentPage === Math.ceil(processedResults.length / PAGE_SIZE)}
+                  disabled={currentPage === Math.ceil(processedResults.length / pageSize)}
                   onClick={() => {
-                    setCurrentPage(prev => Math.min(Math.ceil(processedResults.length / PAGE_SIZE), prev + 1));
+                    setCurrentPage(prev => Math.min(Math.ceil(processedResults.length / pageSize), prev + 1));
                     window.scrollTo({ top: 180, behavior: 'smooth' });
                   }}
                   className="px-3 py-1.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed font-medium text-slate-700 cursor-pointer"
@@ -1598,6 +1614,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   Trang sau
                 </button>
               </div>
+              )}
             </div>
           )}
         </div>
