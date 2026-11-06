@@ -113,7 +113,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { mod: 'startup_ideas', label: 'Ý tưởng khởi nghiệp', icon: Lightbulb, color: 'text-yellow-400' },
     { mod: 'wards', label: 'Danh sách xã/phường', icon: MapPin, color: 'text-indigo-400' },
     { mod: 'universities', label: 'Trường Đại học/Cao đẳng trên địa bàn', icon: School, color: 'text-violet-400' },
-    { mod: 'featured_startups', label: 'Doanh nghiệp khởi nghiệp tiêu biểu', icon: Star, color: 'text-amber-300' }
+    { mod: 'featured_startups', label: 'Doanh nghiệp khởi nghiệp tiêu biểu', icon: Star, color: 'text-amber-300' },
+    { mod: 'investors', label: 'Nhà đầu tư', icon: Users, color: 'text-cyan-300' },
+    { mod: 'investment_funds', label: 'Quỹ đầu tư', icon: Building2, color: 'text-indigo-300' }
   ];
 
   const allModulesList = [...topCoreModules, ...ecosystemModules];
@@ -288,7 +290,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             )}
 
               {/* Phân hệ Bổ trợ & Tri thức */}
-              {!isRestrictedOfficer && <div className="pt-2">
+              {!isRestrictedOfficer && <div className="hidden lg:block pt-2">
                 <button
                   onClick={() => setAuxiliaryDropdownOpen(!auxiliaryDropdownOpen)}
                   className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
@@ -303,8 +305,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 {auxiliaryDropdownOpen && (
                   <div className="mt-0.5 ml-4 pl-2 border-l border-slate-700 space-y-0.5">
                     {[
-                      { mod: 'investors' as ModuleType, label: 'Nhà đầu tư' },
-                      { mod: 'investment_funds' as ModuleType, label: 'Quỹ đầu tư' },
                       { mod: 'organizations' as ModuleType, label: 'Tổ chức KH&CN, Viện trường' },
                       { mod: 'publications' as ModuleType, label: 'Bài báo & Công bố khoa học' },
                       { mod: 'technologies' as ModuleType, label: 'Công nghệ & Chuyển giao' },
