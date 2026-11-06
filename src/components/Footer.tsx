@@ -25,7 +25,7 @@ export const Footer: React.FC<FooterProps> = ({ config }) => {
             <p className="text-sm lg:text-[15px] text-slate-300 leading-relaxed max-w-xl">
               Cổng dữ liệu tập trung thống nhất kết nối và quản lý các nhiệm vụ KH&CN, sáng kiến có tác động thành phố, mạng lưới chuyên gia, tổ chức nghiên cứu và hệ sinh thái khởi nghiệp đổi mới sáng tạo.
             </p>
-            <div className="text-xs text-slate-400">
+            <div className="text-sm lg:text-[15px] text-slate-300">
               <span className="font-medium text-slate-200">Cơ quan chủ quản:</span> <span>ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ</span>
             </div>
           </div>
@@ -49,7 +49,7 @@ export const Footer: React.FC<FooterProps> = ({ config }) => {
 
           {/* Col 3: Principles & Compliance */}
           <div className="space-y-1.5 text-xs text-slate-400">
-            <div className="text-xs sm:text-sm font-semibold text-white tracking-tight mb-1">Tiêu chuẩn & Nguyên tắc</div>
+            <div className="text-sm lg:text-base font-semibold text-white tracking-tight mb-1">Tiêu chuẩn & Nguyên tắc</div>
             <div className="flex items-start gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
               <span>Dữ liệu xác thực, bảo mật quyền riêng tư cá nhân theo Nghị định 13/2023/NĐ-CP.</span>
