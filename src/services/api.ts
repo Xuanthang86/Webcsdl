@@ -426,6 +426,18 @@ export const api = {
     return '/api/backup';
   },
 
+  async downloadBackup(): Promise<Blob> {
+    const res = await authFetch('/api/backup', {
+      method: 'GET',
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) {
+      await parseJsonResponse(res);
+      throw new Error('Không thể tải bản sao lưu dữ liệu.');
+    }
+    return res.blob();
+  },
+
   async restoreBackup(snapshot: any): Promise<boolean> {
     const res = await authFetch('/api/restore', {
       method: 'POST',
