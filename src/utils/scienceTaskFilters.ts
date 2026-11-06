@@ -96,7 +96,9 @@ export const getScienceTaskUnits = (record: BaseEntity): string[] =>
     record.ownerName,
     record.proposingOrg,
     record.organization,
-    record.managingAgency
+    record.managingAgency,
+    record.coordinatingOrganization,
+    record.workplace
   ].filter(value => typeof value === 'string' && value.trim().length > 0).map(value => String(value).trim())));
 
 export const getScienceTaskUnit = (record: BaseEntity): string =>
