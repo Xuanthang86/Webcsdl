@@ -1124,8 +1124,9 @@ export default {
             // Some imported legacy datasets do not have a populated acceptance-result field.
             // In that case only, treat an approved + verified workflow record as accepted.
             // Explicit acceptance outcomes (including failed/in-progress outcomes) retain priority.
+            const workflowOnlyAcceptanceValues = `${acceptanceValue} = '' OR ${acceptanceValue} IN ('approved', 'published', 'verified', 'đã duyệt', 'da duyet', 'đã phê duyệt', 'da phe duyet')`;
             const workflowAcceptedFallback = taskColumns.has('status') && taskColumns.has('verification_status')
-              ? `(${acceptanceValue} = '' AND LOWER(TRIM(CAST("status" AS TEXT))) = 'approved' AND LOWER(TRIM(CAST("verification_status" AS TEXT))) = 'verified')`
+              ? `((${workflowOnlyAcceptanceValues}) AND LOWER(TRIM(CAST("status" AS TEXT))) = 'approved' AND LOWER(TRIM(CAST("verification_status" AS TEXT))) = 'verified')`
               : '0';
             const acceptedBudget = taskColumns.has('total_budget_approved')
               ? 'COALESCE(SUM(total_budget_approved), 0)'
