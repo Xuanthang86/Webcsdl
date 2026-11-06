@@ -2007,7 +2007,9 @@ export default {
             const key = normalizeImportKey(rawKey);
             let target = aliases[key] || rawKey.replace(/([A-Z])/g, '_$1').toLowerCase();
             if (['title', 'name', 'projectname'].includes(key) && !tableColumns.has(target)) target = primaryColumn;
-            if (key.startsWith('diachihoatdong')) target = 'address';\n            if (key === 'thoigianthuchien' && moduleName === 'experts') target = 'project_duration';\n            if (key === 'thanhvienthamgia' && moduleName === 'experts') target = 'project_members';
+            if (key.startsWith('diachihoatdong')) target = 'address';
+            if (key === 'thoigianthuchien' && moduleName === 'experts') target = 'project_duration';
+            if (key === 'thanhvienthamgia' && moduleName === 'experts') target = 'project_members';
             if (key.startsWith('website')) target = 'website';
             if (key.startsWith('sanphamgiaiquyetvande')) target = 'problem_solved';
             if (key.startsWith('duanduocuomtaotutochuc')) target = 'incubated_at';
