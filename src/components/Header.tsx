@@ -199,7 +199,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <>
       <header className="sticky top-0 z-50 bg-gradient-to-r from-sky-900 via-sky-800 to-sky-950 text-white shadow-md border-b border-sky-700/60">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 min-h-16 h-auto py-2 md:h-16 md:py-0 flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Zone 1: Mobile Menu Button (bên trái logo) + Logo & Brand Wordmark */}
           <div className="flex items-center gap-2 sm:gap-3 shrink min-w-0">
@@ -228,12 +228,11 @@ export const Header: React.FC<HeaderProps> = ({
                 ĐN
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-xs sm:text-base font-black tracking-tight text-white group-hover:text-sky-200 transition-colors uppercase leading-none truncate">
-                  CƠ SỞ DỮ LIỆU
-                </span>
-                <span className="text-[10px] sm:text-xs lg:text-[10px] xl:text-[11px] 2xl:text-xs font-bold text-sky-200 tracking-tight lg:tracking-[-0.04em] group-hover:text-sky-100 transition-colors whitespace-nowrap mt-0.5 leading-tight uppercase">
-                  VỀ KHOA HỌC, CÔNG NGHỆ VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG
-                </span>
+                <span className="md:hidden text-xs font-black tracking-tight text-white group-hover:text-sky-200 transition-colors uppercase leading-tight">CỔNG DỮ LIỆU</span>
+                <span className="md:hidden text-[9px] font-bold text-sky-200 tracking-tight group-hover:text-sky-100 transition-colors mt-0.5 leading-tight uppercase whitespace-normal">VỀ KHOA HỌC, CÔNG NGHỆ</span>
+                <span className="md:hidden text-[9px] font-bold text-sky-200 tracking-tight group-hover:text-sky-100 transition-colors leading-tight uppercase whitespace-normal">VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO TP ĐÀ NẴNG</span>
+                <span className="hidden md:block text-xs sm:text-base font-black tracking-tight text-white group-hover:text-sky-200 transition-colors uppercase leading-none truncate">CƠ SỞ DỮ LIỆU</span>
+                <span className="hidden md:block text-[10px] sm:text-xs lg:text-[10px] xl:text-[11px] 2xl:text-xs font-bold text-sky-200 tracking-tight lg:tracking-[-0.04em] group-hover:text-sky-100 transition-colors whitespace-nowrap mt-0.5 leading-tight uppercase">VỀ KHOA HỌC, CÔNG NGHỆ VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG</span>
               </div>
             </div>
           </div>
@@ -412,7 +411,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={() => setShowAccountModal(true)}
-                className="flex items-center gap-1.5 bg-sky-800/90 hover:bg-sky-700 text-white border border-sky-600/60 hover:border-sky-400 px-2 sm:px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer shadow-xs max-w-[140px] sm:max-w-[210px] min-h-[40px]"
+                className="hidden md:flex items-center gap-1.5 bg-sky-800/90 hover:bg-sky-700 text-white border border-sky-600/60 hover:border-sky-400 px-2 sm:px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer shadow-xs max-w-[140px] sm:max-w-[210px] min-h-[40px]"
                 title="Xem thông tin tài khoản, đổi mật khẩu & quản trị"
               >
                 <div className="hidden md:flex w-7 h-7 rounded-full bg-sky-950 text-sky-200 items-center justify-center font-bold text-xs shrink-0 border border-sky-600/40">
@@ -479,48 +478,6 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Navigation & Categories List */}
             <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 text-xs">
               
-              {/* Primary Views Section */}
-              <div className="space-y-1 pb-2 border-b border-slate-200">
-                <button
-                  onClick={() => {
-                    setMenuDrawerOpen(false);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    onNavigate('home');
-                  }}
-                  className={`w-full min-h-[46px] text-left px-4 py-3 rounded-xl font-bold flex items-center justify-between transition-all cursor-pointer shadow-sm ${
-                    currentView === 'home'
-                      ? 'bg-gradient-to-r from-teal-800 to-teal-900 text-white ring-2 ring-teal-600/50'
-                      : 'bg-teal-700 text-white hover:bg-teal-800'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Globe className="w-5 h-5 text-teal-300" />
-                    <span className="text-sm">Trang chủ Cổng dữ liệu</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 opacity-90" />
-                </button>
-
-                {isAdminRole && (
-                  <button
-                    onClick={() => {
-                      setMenuDrawerOpen(false);
-                      onNavigate('admin');
-                    }}
-                    className={`w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl font-semibold flex items-center justify-between transition-colors cursor-pointer ${
-                      currentView === 'admin'
-                        ? 'bg-teal-800 text-white shadow-xs'
-                        : 'text-slate-800 hover:bg-slate-100'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <LayoutDashboard className="w-4 h-4 text-teal-600" />
-                      <span>Quản trị hệ thống</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 opacity-70" />
-                  </button>
-                )}
-              </div>
-
               {/* Data Categories Header */}
               <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-2 px-1">
                 Danh mục Cơ sở dữ liệu
