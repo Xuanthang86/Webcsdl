@@ -570,6 +570,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                     <div className="relative min-w-0 flex-1 sm:max-w-[320px]">
                       <input
                         type="search"
+                        list="science-task-unit-options"
                         value={filterUnit === 'all' ? '' : filterUnit}
                         onFocus={() => setShowUnitSuggestions(true)}
                         onChange={(event) => {
@@ -591,6 +592,9 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                         autoComplete="off"
                         className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 font-medium min-w-0"
                       />
+                      <datalist id="science-task-unit-options">
+                        {availableUnits.map(unit => <option key={unit} value={unit} />)}
+                      </datalist>
                       {showUnitSuggestions && (
                         <div id="science-task-unit-suggestions" role="listbox" className="absolute left-0 right-0 top-full z-[100] mt-1 max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
                           {filteredUnitSuggestions.length > 0 ? filteredUnitSuggestions.map(unit => (
