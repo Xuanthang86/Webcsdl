@@ -497,6 +497,10 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     ? Array.from(new Set(records.flatMap(getScienceTaskUnits))).sort((a, b) => a.localeCompare(b, 'vi'))
     : [];
 
+  const unclassifiedTaskCount = moduleType === 'science_tasks'
+    ? records.filter(record => matchesScienceTaskLevel(record, 'Chưa phân loại')).length
+    : 0;
+
   const filteredRecords = records.filter(item => {
     if (statusFilter !== 'all' && item.status !== statusFilter) return false;
     if (searchQuery.trim()) {
@@ -687,6 +691,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                 <option value="Cấp Quốc gia">Cấp Quốc gia</option>
                 <option value="Cấp Thành phố">Cấp Tỉnh/Thành phố</option>
                 <option value="Cấp Cơ sở">Cấp Cơ sở</option>
+                <option value="Chưa phân loại">Chưa phân loại ({unclassifiedTaskCount})</option>
               </select>
               <select
                 aria-label="Lọc năm thực hiện"
