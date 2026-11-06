@@ -1593,7 +1593,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                   Trang trước
                 </button>
 
-                {paginationItems.map((item, idx) => {
+                {paginationItems.map((item) => {
                   if (typeof item !== 'number') {
                     return (
                       <span key={item} className="px-1 text-slate-400 select-none" aria-hidden="true">
