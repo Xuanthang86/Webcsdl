@@ -974,6 +974,8 @@ export default {
           const ideasByYear: Record<string, number> = {};
           const projectsByYear: Record<string, number> = {};
           const patentsByYear: Record<string, number> = {};
+          const tasksByField: Record<string, number> = {};
+          const initiativesByField: Record<string, number> = {};
           const expertsByYear: Record<string, number> = {};
           const supportOrgsByYear: Record<string, number> = {};
           const universitiesByYear: Record<string, number> = {};
@@ -1095,6 +1097,8 @@ export default {
               for (const r of (patYears.results || [])) {
                 if (r.yr) patentsByYear[r.yr] = Number(r.c) || 0;
               }
+            } catch {}
+
             try {
               const tf = await env.DB.prepare(`SELECT COALESCE(NULLIF(field, ''), 'Đa ngành') as f, COUNT(*) as c FROM science_tasks GROUP BY f`).all<any>();
               for (const r of (tf.results || [])) {
@@ -1110,8 +1114,6 @@ export default {
             } catch {}
           }
 
-          const tasksByField: Record<string, number> = {};
-          const initiativesByField: Record<string, number> = {};
           const yearlyStats: Record<string, any> = {};
           yearsList.forEach(yr => {
             yearlyStats[yr] = {
