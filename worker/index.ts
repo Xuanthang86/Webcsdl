@@ -1131,23 +1131,66 @@ export default {
 
           if (env.DB) {
             try {
-              const taskYears = await env.DB.prepare(`
-                SELECT 
-                  COALESCE(
-                    NULLIF(CAST(acceptance_year AS TEXT), ''),
-                    NULLIF(substr(implementation_time, 1, 4), ''),
-                    NULLIF(substr(expected_start_date, 1, 4), ''),
-                    NULLIF(substr(created_at, 1, 4), ''),
-                    '2026'
-                  ) as yr,
-                  COUNT(*) as c
-                FROM science_tasks
-                GROUP BY yr
-              `).all<{ yr: string; c: number }>();
-              for (const r of (taskYears.results || [])) {
-                if (r.yr) tasksByYear[r.yr] = Number(r.c) || 0;
+              // Read only columns that actually exist in this D1 deployment.
+              // Older and newer schemas use different names for task time fields;
+              // one missing column must not silently zero the entire chart.
+              const taskColumnInfo = await env.DB.prepare('PRAGMA table_info(science_tasks)').all<any>();
+              const taskColumns = new Set((taskColumnInfo.results || []).map((column: any) => String(column.name)));
+              const candidateColumns = [
+                'acceptance_year', 'implementation_time', 'execution_time',
+                'expected_start_date', 'start_date', 'start_year', 'created_at', 'data_json'
+              ];
+              const availableTaskColumns = candidateColumns.filter(column => taskColumns.has(column));
+              if (availableTaskColumns.length > 0) {
+                const taskRows = await env.DB.prepare(
+                  `SELECT ${availableTaskColumns.map(column => `"${column}"`).join(', ')} FROM science_tasks`
+                ).all<any>();
+
+                const getTaskValue = (row: any, custom: Record<string, any>, names: string[]) => {
+                  const normalize = (value: string) => value.replace(/[_\\-\\s]/g, '').toLowerCase();
+                  for (const name of names) {
+                    const target = normalize(name);
+                    const physicalKey = Object.keys(row).find(key => normalize(key) === target);
+                    if (physicalKey && row[physicalKey] !== null && row[physicalKey] !== undefined && String(row[physicalKey]).trim() !== '') {
+                      return row[physicalKey];
+                    }
+                    const customKey = Object.keys(custom).find(key => normalize(key) === target);
+                    if (customKey && custom[customKey] !== null && custom[customKey] !== undefined && String(custom[customKey]).trim() !== '') {
+                      return custom[customKey];
+                    }
+                  }
+                  return null;
+                };
+
+                const extractYear = (value: any): string | null => {
+                  if (value === null || value === undefined) return null;
+                  const match = String(value).match(/(?:19|20)\\d{2}/);
+                  if (!match) return null;
+                  const year = Number(match[0]);
+                  return year >= 1900 && year <= new Date().getFullYear() + 1 ? String(year) : null;
+                };
+
+                for (const row of (taskRows.results || [])) {
+                  let custom: Record<string, any> = {};
+                  try {
+                    custom = row.data_json ? JSON.parse(String(row.data_json)) : {};
+                    if (!custom || typeof custom !== 'object' || Array.isArray(custom)) custom = {};
+                  } catch {
+                    custom = {};
+                  }
+
+                  const yearValue =
+                    getTaskValue(row, custom, ['acceptance_year', 'acceptanceYear']) ??
+                    getTaskValue(row, custom, ['implementation_time', 'implementationTime', 'execution_time', 'executionTime']) ??
+                    getTaskValue(row, custom, ['expected_start_date', 'expectedStartDate', 'start_date', 'startDate', 'start_year', 'startYear']) ??
+                    getTaskValue(row, custom, ['created_at', 'createdAt']);
+                  const year = extractYear(yearValue) || '2026';
+                  tasksByYear[year] = (tasksByYear[year] || 0) + 1;
+                }
               }
-            } catch {}
+            } catch (error) {
+              console.error('Không thể tổng hợp số lượng đề tài theo năm:', error);
+            }
 
             try {
               const initYears = await env.DB.prepare(`

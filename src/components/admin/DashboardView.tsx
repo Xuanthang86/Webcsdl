@@ -93,7 +93,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const displaySavings = activeYearData ? activeYearData.savings : stats.totalCostSavings;
 
   const years = ['2021', '2022', '2023', '2024', '2025', '2026'];
-  const maxTasksYear = Math.max(...years.map(y => (stats.tasksByYear?.[y] ?? (stats.tasksByYear as any)?.[Number(y)]) || 0), 1);
+  const taskYears = Object.keys(stats.tasksByYear || {}).filter(year => /^\\d{4}$/.test(year)).sort();
+  const taskChartYears = taskYears.length > 0 ? taskYears : years;
+  const maxTasksYear = Math.max(...taskChartYears.map(y => (stats.tasksByYear?.[y] ?? (stats.tasksByYear as any)?.[Number(y)]) || 0), 1);
   const maxInitiativesYear = Math.max(...years.map(y => (stats.initiativesByYear?.[y] ?? (stats.initiativesByYear as any)?.[Number(y)]) || 0), 1);
   const maxStartupsYear = Math.max(...years.map(y => (stats.startupsByYear?.[y] ?? (stats.startupsByYear as any)?.[Number(y)]) || 0), 1);
   const maxPatentsYear = Math.max(...years.map(y => stats.patentsByYear?.[y] || 0), 1);
@@ -428,11 +430,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {/* By Year */}
             <div className="space-y-3">
               <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
-                <span>Thống kê số lượng Đề tài qua các năm (2021 - 2026):</span>
+                <span>Thống kê số lượng Đề tài qua các năm:</span>
                 <span className="text-[11px] text-blue-700 font-mono font-bold">Xu hướng tăng trưởng</span>
               </div>
               <div className="h-48 flex items-end justify-between gap-3 pt-6 px-4 bg-slate-50 rounded-xl border border-slate-100">
-                {years.map(yr => {
+                {taskChartYears.map(yr => {
                   const count = (stats.tasksByYear?.[yr] ?? (stats.tasksByYear as any)?.[Number(yr)]) || 0;
                   const heightPct = count > 0 ? Math.max(10, Math.round((count / maxTasksYear) * 100)) : 0;
                   return (
