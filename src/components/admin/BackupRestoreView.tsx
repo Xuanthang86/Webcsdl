@@ -11,78 +11,99 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
   const [snapshot, setSnapshot] = useState<any>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [backupFile, setBackupFile] = useState<File | null>(null);
+  const [backupUrl, setBackupUrl] = useState<string | null>(null);
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handleDownload = async () => {
     setIsDownloading(true);
     setMessage(null);
-
-    // Safari on iPhone/iPad may discard the user gesture after the authenticated
-    // fetch completes, causing a later synthetic anchor click to do nothing.
-    // Open a blank tab synchronously while the click is still trusted, then
-    // navigate that tab to the authenticated response's Blob URL.
-    const userAgent = window.navigator.userAgent;
-    const isIPadDesktopMode = window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1;
-    const isIOSSafari =
-      ((/iPhone|iPad|iPod/i.test(userAgent) || isIPadDesktopMode) &&
-        /Safari/i.test(userAgent) &&
-        !/(CriOS|FxiOS|EdgiOS|OPiOS)/i.test(userAgent));
-    let safariPreviewWindow: Window | null = null;
-
-    if (isIOSSafari) {
-      safariPreviewWindow = window.open('', '_blank');
+    setBackupFile(null);
+    if (backupUrl) {
+      window.URL.revokeObjectURL(backupUrl);
+      setBackupUrl(null);
     }
 
     try {
-      const blob = await api.downloadBackup();
-      if (!blob || blob.size === 0) {
+      const responseBlob = await api.downloadBackup();
+      if (!responseBlob || responseBlob.size === 0) {
         throw new Error('Tệp sao lưu được máy chủ trả về đang trống. Vui lòng thử lại.');
       }
 
-      const url = window.URL.createObjectURL(blob);
+      // Read as UTF-8 and add a BOM so iOS previewers and file providers
+      // consistently recognize Vietnamese text in the exported JSON.
+      const responseText = await responseBlob.text();
+      const jsonText = responseText.charCodeAt(0) === 0xFEFF
+        ? responseText
+        : `\uFEFF${responseText}`;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const fileName = `portal_database_backup_${timestamp}.json`;
+      const file = new File([jsonText], fileName, { type: 'application/json;charset=utf-8' });
+      const url = window.URL.createObjectURL(file);
+      setBackupFile(file);
+      setBackupUrl(url);
 
-      if (isIOSSafari) {
-        if (!safariPreviewWindow || safariPreviewWindow.closed) {
-          window.URL.revokeObjectURL(url);
-          throw new Error('Trình duyệt đã chặn tab mở tệp sao lưu. Vui lòng cho phép cửa sổ bật lên (pop-up) cho trang này rồi thử lại.');
-        }
+      // If the response already contains mojibake, do not silently rewrite
+      // database values. Preserve the backup and warn the administrator.
+      const hasMojibake = /(?:Ã.|á»|áº|Â.)/.test(responseText);
+      const isIPadDesktopMode = window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1;
+      const isMobileBrowser = /iPhone|iPad|iPod|Android/i.test(window.navigator.userAgent) || isIPadDesktopMode;
 
-        safariPreviewWindow.location.href = url;
-
-        // Keep the Blob URL available while Safari displays the JSON preview,
-        // so the user can use Share > Save to Files without a broken preview.
-        window.setTimeout(() => window.URL.revokeObjectURL(url), 10 * 60_000);
+      if (hasMojibake) {
+        setMessage({
+          type: 'error',
+          text: 'Tệp đã được tạo nhưng dữ liệu bên trong có dấu hiệu sai mã hóa tiếng Việt từ nguồn dữ liệu. Không sử dụng tệp này để phục hồi cho đến khi kiểm tra và xử lý dữ liệu nguồn.'
+        });
+      } else if (isMobileBrowser) {
         setMessage({
           type: 'success',
-          text: 'Đã tạo tệp sao lưu và mở trong tab mới. Trên iPhone/iPad, chạm nút Chia sẻ trong Safari, chọn “Lưu vào Tệp” để lưu bản sao lưu.'
+          text: 'Đã tạo tệp sao lưu. Hãy chọn “Chia sẻ / Lưu tệp” để mở bảng chia sẻ của thiết bị và chọn “Lưu vào Tệp”. Nếu ứng dụng hiện tại không hỗ trợ, hãy chọn “Tải tệp xuống” hoặc mở trang quản trị bằng Safari.'
         });
-        return;
+      } else {
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = fileName;
+        anchor.style.display = 'none';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setMessage({
+          type: 'success',
+          text: 'Đã tạo tệp sao lưu và gửi yêu cầu tải xuống. Vui lòng kiểm tra mục Tải về (Downloads) của trình duyệt để xác nhận tệp đã được lưu.'
+        });
       }
-
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = `portal_database_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
-      anchor.style.display = 'none';
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-
-      // Keep the object URL alive briefly so the browser can consume the Blob.
-      window.setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
-
-      // Browsers do not expose a reliable signal that a file was physically saved.
-      setMessage({
-        type: 'success',
-        text: 'Đã tạo tệp sao lưu và gửi yêu cầu tải xuống. Vui lòng kiểm tra mục Tải về (Downloads) của trình duyệt để xác nhận tệp đã được lưu.'
-      });
     } catch (error: any) {
-      if (safariPreviewWindow && !safariPreviewWindow.closed) {
-        safariPreviewWindow.close();
-      }
       setMessage({ type: 'error', text: error.message || 'Không thể tạo bản sao lưu dữ liệu.' });
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const handleShareBackup = async () => {
+    if (!backupFile) return;
+    try {
+      const shareData = { files: [backupFile], title: 'Bản sao lưu dữ liệu KHCN' };
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+      } else if (backupUrl) {
+        const anchor = document.createElement('a');
+        anchor.href = backupUrl;
+        anchor.download = backupFile.name;
+        anchor.style.display = 'none';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setMessage({
+          type: 'success',
+          text: 'Trình duyệt chưa hỗ trợ chia sẻ tệp trực tiếp. Đã gửi yêu cầu tải tệp; hãy kiểm tra mục Tải về hoặc mở trang bằng Safari.'
+        });
+      } else {
+        throw new Error('Không thể tạo liên kết tải tệp. Vui lòng thử tạo bản sao lưu lại.');
+      }
+    } catch (error: any) {
+      if (error?.name === 'AbortError') return;
+      setMessage({ type: 'error', text: error.message || 'Không thể chia sẻ tệp sao lưu.' });
     }
   };
 
@@ -169,6 +190,28 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
             <Download className="w-4 h-4" />
             {isDownloading ? 'Đang tạo bản sao lưu...' : 'Tải bản sao lưu dữ liệu'}
           </button>
+          {backupFile && (
+            <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 space-y-2">
+              <p className="text-sm font-semibold text-sky-900 break-all">{backupFile.name}</p>
+              <button
+                type="button"
+                onClick={handleShareBackup}
+                className="min-h-10 w-full px-4 py-2 rounded-lg bg-sky-800 hover:bg-sky-700 text-white text-sm font-semibold flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Chia sẻ / Lưu tệp
+              </button>
+              {backupUrl && (
+                <a
+                  href={backupUrl}
+                  download={backupFile.name}
+                  className="block text-center text-sm font-semibold text-sky-800 underline underline-offset-2"
+                >
+                  Tải tệp xuống
+                </a>
+              )}
+            </div>
+          )}
         </section>
 
         <section className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
