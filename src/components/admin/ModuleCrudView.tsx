@@ -114,6 +114,9 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   const [importRawText, setImportRawText] = useState('');
   const [importConflictAction, setImportConflictAction] = useState<'skip' | 'overwrite'>('overwrite');
   const [isImporting, setIsImporting] = useState(false);
+  const [pendingApprovalIds, setPendingApprovalIds] = useState<string[]>([]);
+  const [isApprovingImported, setIsApprovingImported] = useState(false);
+  const [showImportApprovalModal, setShowImportApprovalModal] = useState(false);
   const [importParsedRows, setImportParsedRows] = useState<any[]>([]);
   const [importPreviewError, setImportPreviewError] = useState<string | null>(null);
 
@@ -195,8 +198,10 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     setImportPreviewError(null);
     try {
       const result = await api.batchImport(moduleType, importParsedRows, importConflictAction);
-      showToast(`Đã nhập thành công ${result.importedCount} bản ghi vào ${MODULE_NAMES[moduleType]}`);
+      showToast(`Đã nhập ${result.importedCount} bản ghi vào trạng thái nháp trong ${MODULE_NAMES[moduleType]}`);
+      setPendingApprovalIds(result.importedIds || []);
       setShowInlineImportModal(false);
+      setShowImportApprovalModal(Boolean(result.importedIds?.length));
       setImportRawText('');
       setImportParsedRows([]);
       await loadData();
@@ -205,6 +210,22 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       showErrorToast(err.message || 'Lỗi nhập dữ liệu');
     } finally {
       setIsImporting(false);
+    }
+  };
+
+  const handleApproveImported = async () => {
+    if (!pendingApprovalIds.length) return;
+    setIsApprovingImported(true);
+    try {
+      const result = await api.approveImportedRecords(moduleType, pendingApprovalIds);
+      showToast(`Đã phê duyệt và công khai ${result.approvedCount} bản ghi.`);
+      setPendingApprovalIds([]);
+      setShowImportApprovalModal(false);
+      await loadData();
+    } catch (err: any) {
+      showErrorToast(err.message || 'Không thể phê duyệt dữ liệu vừa nhập.');
+    } finally {
+      setIsApprovingImported(false);
     }
   };
 
@@ -568,7 +589,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
             placeholder="Tìm theo mã, tên bản ghi, đơn vị chủ trì, lĩnh vực..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-9 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-teal-700 text-xs"
+            className="w-full h-9 pl-9 pr-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-teal-700 text-xs"
           />
         </div>
 
@@ -1973,6 +1994,33 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
               >
                 <Upload className="w-4 h-4" />
                 <span>{isImporting ? 'Đang nhập...' : `Xác nhận nhập ${importParsedRows.length} bản ghi`}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showImportApprovalModal && (
+        <div className="fixed inset-0 z-[70] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white border border-slate-200 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-200">
+                <CheckCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Dữ liệu đã nhập ở trạng thái nháp</h3>
+                <p className="text-xs text-slate-500 mt-0.5">{pendingApprovalIds.length} bản ghi đang chờ bước phê duyệt.</p>
+              </div>
+            </div>
+            <p className="text-sm leading-relaxed text-slate-600">
+              Các bản ghi này chưa được hiển thị công khai. Chỉ khi xác nhận phê duyệt, hệ thống mới chuyển trạng thái sang “Đã phê duyệt” và công khai theo quy trình.
+            </p>
+            <div className="flex flex-wrap justify-end gap-2 pt-2 border-t border-slate-100">
+              <button type="button" onClick={() => setShowImportApprovalModal(false)} className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold">
+                Giữ ở trạng thái nháp
+              </button>
+              <button type="button" disabled={isApprovingImported} onClick={handleApproveImported} className="px-4 py-2 rounded-lg bg-teal-800 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold">
+                {isApprovingImported ? 'Đang phê duyệt...' : `Phê duyệt và công khai ${pendingApprovalIds.length} bản ghi`}
               </button>
             </div>
           </div>
