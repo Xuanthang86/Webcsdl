@@ -25,7 +25,7 @@ export const getScienceTaskLevel = (record: BaseEntity): ScienceTaskLevel => {
     if (!value) return 'unknown';
 
     if (/cap co so|cap truong|co so/.test(value)) return 'local';
-    if (/quoc gia|nha nuoc|cap bo|bo khoa hoc|bo nganh|nafosted/.test(value)) return 'national';
+    if (/quoc gia|nha nuoc|cap bo|bo khoa hoc|bo kh\s*&\s*cn|bo khcn|bo nganh|nafosted/.test(value)) return 'national';
     if (/tinh|thanh pho|cap tinh|cap thanh pho|ubnd tinh|ubnd thanh pho/.test(value)) return 'provincial';
 
     return 'unknown';
@@ -45,7 +45,7 @@ export const getScienceTaskLevel = (record: BaseEntity): ScienceTaskLevel => {
 
   // Check higher-level indicators first to prevent a city/provincial record
   // from also falling through into the local-level bucket.
-  if (/quoc gia|nha nuoc|cap bo|bo khoa hoc|bo nganh|nafosted/.test(managementMetadata)) {
+  if (/quoc gia|nha nuoc|cap bo|bo khoa hoc|bo kh\s*&\s*cn|bo khcn|bo nganh|nafosted/.test(managementMetadata)) {
     return 'national';
   }
   if (/cap tinh|cap thanh pho|tinh thanh pho|ubnd tinh|ubnd thanh pho|thanh pho da nang|so khoa hoc va cong nghe|quy phat trien khoa hoc va cong nghe thanh pho|chuong trinh .*thanh pho|de an .*thanh pho/.test(managementMetadata)) {
