@@ -554,11 +554,11 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Năm sinh:</span>
-                    <span className="sm:col-span-2 font-mono font-semibold text-slate-800">{entity.birthYear || '1978'}</span>
+                    <span className="sm:col-span-2 font-mono font-semibold text-slate-800">{entity.birthYear || 'Chưa cập nhật'}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Chuyên ngành:</span>
-                    <span className="sm:col-span-2 font-semibold text-teal-800">{entity.specialty || entity.primaryField || entity.field}</span>
+                    <span className="sm:col-span-2 font-semibold text-teal-800">{entity.specialty || entity.primaryField || entity.field || 'Chưa cập nhật'}</span>
                   </div>
                 </div>
               </div>
