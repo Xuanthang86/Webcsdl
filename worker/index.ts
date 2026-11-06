@@ -134,6 +134,43 @@ async function ensureModuleDataJson(db: D1Database, moduleName: string): Promise
   return columns;
 }
 
+async function ensureSystemConfigTable(db: D1Database): Promise<void> {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS system_config (
+      id TEXT PRIMARY KEY DEFAULT 'default',
+      portal_name TEXT NOT NULL,
+      governing_agency TEXT NOT NULL,
+      contact_address TEXT,
+      contact_email TEXT,
+      contact_phone TEXT,
+      city_area TEXT DEFAULT 'Thành phố Đà Nẵng',
+      allow_public_submission INTEGER DEFAULT 1,
+      require_approval INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `).run();
+}
+
+async function ensureAuditLogTable(db: D1Database): Promise<Set<string>> {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      user_name TEXT,
+      user_role TEXT,
+      action TEXT NOT NULL,
+      module TEXT,
+      entity_id TEXT,
+      details TEXT,
+      ip_address TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `).run();
+  const info = await db.prepare('PRAGMA table_info(audit_logs)').all<any>();
+  return new Set((info.results || []).map((column: any) => String(column.name)));
+}
+
 // Helper: Origin & CSRF validation
 function isAllowedOrigin(origin: string | null, requestUrl: string): boolean {
   if (!origin) return true;
@@ -440,6 +477,7 @@ export default {
         if (request.method === 'GET') {
           if (!env.DB) return jsonResponse({ success: false, message: 'CSDL D1 chưa kết nối.' }, 500, corsHeaders);
           try {
+            await ensureSystemConfigTable(env.DB);
             const cfg = await env.DB.prepare('SELECT * FROM system_config ORDER BY updated_at DESC LIMIT 1').first<any>();
             if (cfg) {
               return jsonResponse({
@@ -482,6 +520,7 @@ export default {
           const body = await request.json().catch(() => ({})) as any;
           const clean = sanitizeObject(body);
           try {
+            await ensureSystemConfigTable(env.DB);
             const existing = await env.DB.prepare('SELECT id FROM system_config ORDER BY updated_at DESC LIMIT 1').first<any>();
             const values = [
               clean.portalName ?? 'Cổng dữ liệu KHCN & KNĐMST TP Đà Nẵng',
@@ -1678,12 +1717,30 @@ export default {
                 wfValues.push(nextStatus === 'approved' || nextStatus === 'published' ? 'public' : 'private');
               }
               wfValues.push(recordId);
-              await env.DB.prepare(`UPDATE ${moduleName} SET ${wfAssignments.join(', ')} WHERE id = ?`).bind(...wfValues).run();
-              // Log to audit
-              await env.DB.prepare(`
-                INSERT INTO audit_logs (id, user_id, user_name, user_role, action, target_module, target_id, details, timestamp)
-                VALUES (?, ?, ?, ?, 'workflow', ?, ?, ?, datetime('now'))
-              `).bind(`log_${Date.now()}_${crypto.randomUUID().slice(0, 4)}`, currentUser.id, currentUser.fullName, currentUser.role, moduleName, recordId, `Chuyển trạng thái sang [${status}]: ${note || ''}`).run();
+              const auditColumns = await ensureAuditLogTable(env.DB);
+              const updateStatement = env.DB.prepare(`UPDATE ${moduleName} SET ${wfAssignments.join(', ')} WHERE id = ?`).bind(...wfValues);
+              const auditValues: Record<string, any> = {
+                id: `log_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`,
+                user_id: currentUser.id,
+                user_name: currentUser.fullName,
+                user_role: currentUser.role,
+                action: 'workflow',
+                module: moduleName,
+                target_module: moduleName,
+                entity_id: recordId,
+                target_id: recordId,
+                details: `Chuyển trạng thái sang [${nextStatus}]: ${note || ''}`,
+                created_at: new Date().toISOString(),
+                timestamp: new Date().toISOString()
+              };
+              const auditEntries = Object.entries(auditValues).filter(([column]) => auditColumns.has(column));
+              const auditStatement = env.DB.prepare(
+                `INSERT INTO audit_logs (${auditEntries.map(([column]) => column).join(', ')}) VALUES (${auditEntries.map(() => '?').join(', ')})`
+              ).bind(...auditEntries.map(([, value]) => value));
+              const results = await env.DB.batch([updateStatement, auditStatement]);
+              if (Number(results?.[0]?.meta?.changes || 0) < 1) {
+                return jsonResponse({ success: false, message: 'Không tìm thấy bản ghi hoặc bản ghi đã thay đổi trước khi phê duyệt. Vui lòng tải lại danh sách.' }, 404, corsHeaders);
+              }
             } catch (e: any) {
               return jsonResponse({ success: false, message: 'Lỗi cập nhật quy trình D1: ' + e.message }, 500, corsHeaders);
             }
@@ -1904,12 +1961,19 @@ export default {
           const placeholders = ids.map(() => '?').join(', ');
           try {
             const updated = await env.DB.prepare(
-              `UPDATE ${moduleName} SET ${assignments.join(', ')} WHERE id IN (${placeholders}) AND LOWER(COALESCE(status, '')) = 'draft'`
+              `UPDATE ${moduleName} SET ${assignments.join(', ')} WHERE id IN (${placeholders}) AND LOWER(TRIM(COALESCE(status, ''))) = 'draft'`
             ).bind(...ids).run();
+            const approvedCount = Number(updated.meta?.changes || 0);
+            if (approvedCount < 1) {
+              return jsonResponse({
+                success: false,
+                message: 'Không có bản ghi nào được cập nhật. Có thể các bản ghi không còn ở trạng thái Bản nháp, không tồn tại hoặc đã được phê duyệt. Hãy tải lại danh sách và thử lại.'
+              }, 409, corsHeaders);
+            }
             return jsonResponse({
               success: true,
-              approvedCount: Number(updated.meta?.changes || 0),
-              message: 'Đã chuyển các bản ghi nháp được chọn sang trạng thái đã phê duyệt.'
+              approvedCount,
+              message: `Đã chuyển ${approvedCount}/${ids.length} bản ghi nháp sang trạng thái đã phê duyệt.`
             }, 200, corsHeaders);
           } catch (error: any) {
             return jsonResponse({ success: false, message: 'Không thể phê duyệt dữ liệu trong D1: ' + (error?.message || 'Lỗi không xác định') }, 500, corsHeaders);

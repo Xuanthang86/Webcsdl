@@ -360,12 +360,12 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
 
   const showToast = (msg: string) => {
     setActionSuccessToast(msg);
-    setTimeout(() => setActionSuccessToast(null), 3500);
+    setTimeout(() => setActionSuccessToast(null), 8000);
   };
 
   const showErrorToast = (msg: string) => {
     setActionErrorToast(msg);
-    setTimeout(() => setActionErrorToast(null), 5000);
+    setTimeout(() => setActionErrorToast(null), 15000);
   };
 
   const loadData = async () => {
@@ -532,7 +532,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
         </div>
       )}
       {actionErrorToast && (
-        <div className="fixed top-20 right-6 z-50 bg-rose-900 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold flex items-center gap-2 border border-rose-700 animate-in fade-in">
+        <div className="fixed top-20 right-6 z-50 max-w-[min(92vw,560px)] bg-rose-900 text-white px-4 py-3 rounded-xl shadow-xl text-xs font-semibold flex items-start gap-2 border border-rose-700 animate-in fade-in whitespace-pre-wrap break-words">
           <span>⚠</span>
           <span>{actionErrorToast}</span>
         </div>

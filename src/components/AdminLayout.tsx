@@ -138,7 +138,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row font-sans text-slate-800">
       
       {/* Mobile & Tablet Header with Toggle */}
-      <div className="lg:hidden bg-gradient-to-r from-sky-900 via-sky-800 to-sky-950 text-white p-3.5 flex items-center justify-between border-b border-sky-700/60 sticky top-0 z-30 shadow-md">
+      <div className="lg:hidden bg-gradient-to-r from-sky-800 via-sky-700 to-sky-900 text-white p-3.5 flex items-center justify-between border-b border-sky-700/60 sticky top-0 z-30 shadow-md">
         <div 
           onClick={onBackToPublic}
           className="flex items-center gap-2 cursor-pointer group"
@@ -172,13 +172,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
       {/* Admin Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-72 sm:w-80 bg-slate-800 text-slate-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-auto lg:min-h-screen shrink-0 flex flex-col justify-between border-r border-slate-800
+        fixed inset-y-0 left-0 z-50 w-72 sm:w-80 bg-slate-700 text-slate-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-auto lg:min-h-screen shrink-0 flex flex-col justify-between border-r border-slate-700
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="p-4 space-y-4 overflow-y-auto">
           
           {/* Brand & Title */}
-          <div className="pb-3 border-b border-slate-800 flex items-center justify-between">
+          <div className="pb-3 border-b border-slate-700 flex items-center justify-between">
             <div 
               onClick={onBackToPublic}
               className="flex items-center gap-2.5 cursor-pointer group"
@@ -200,7 +200,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             <button
               onClick={() => setSidebarOpen(false)}
               title="Đóng thanh điều hướng"
-              className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -209,7 +209,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           {/* Standalone highlighted button: Truy cập Trang chủ */}
           <button
             onClick={onBackToPublic}
-            className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-sky-950/80 hover:bg-sky-900 text-sky-200 hover:text-white border border-sky-500/60 shadow-sm transition-all cursor-pointer whitespace-nowrap"
+            className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-sky-800/80 hover:bg-sky-700 text-sky-200 hover:text-white border border-sky-500/60 shadow-sm transition-all cursor-pointer whitespace-nowrap"
             title="Truy cập Trang chủ"
           >
             <ArrowLeft className="w-4 h-4 text-sky-400 shrink-0" />
@@ -287,7 +287,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               {!isRestrictedOfficer && <div className="pt-2">
                 <button
                   onClick={() => setAuxiliaryDropdownOpen(!auxiliaryDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                 >
                   <div className="flex items-center gap-2.5 truncate">
                     <Layers className="w-4 h-4 text-amber-400 shrink-0" />
@@ -297,7 +297,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 </button>
 
                 {auxiliaryDropdownOpen && (
-                  <div className="mt-0.5 ml-4 pl-2 border-l border-slate-800 space-y-0.5">
+                  <div className="mt-0.5 ml-4 pl-2 border-l border-slate-700 space-y-0.5">
                     {[
                       { mod: 'investors' as ModuleType, label: 'Nhà đầu tư' },
                       { mod: 'investment_funds' as ModuleType, label: 'Quỹ đầu tư' },
@@ -403,9 +403,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-3 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+        <div className="p-3 border-t border-slate-700 text-xs text-slate-400 flex items-center justify-between">
           <span className="font-semibold text-slate-300">Cổng Quản trị Dữ liệu KHCN</span>
-          <span className="font-mono text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-sky-400">v1.0</span>
+          <span className="font-mono text-[10px] bg-slate-700 px-1.5 py-0.5 rounded text-sky-400">v1.0</span>
         </div>
       </aside>
 
@@ -413,7 +413,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       <div className="flex-1 flex flex-col min-w-0 min-h-screen bg-slate-50">
         
         {/* Desktop Admin Top Header */}
-        <header className="hidden lg:flex items-center justify-between px-8 py-5 bg-gradient-to-r from-sky-900 via-sky-800 to-sky-950 text-white border-b border-sky-700/60 shadow-sm shrink-0">
+        <header className="hidden lg:flex items-center justify-between px-8 py-5 bg-gradient-to-r from-sky-800 via-sky-700 to-sky-900 text-white border-b border-sky-700/60 shadow-sm shrink-0">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase leading-none">
               CỔNG DỮ LIỆU
@@ -434,7 +434,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <button
                 type="button"
                 onClick={onLogout}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-600 bg-slate-700 hover:bg-slate-700 text-slate-200 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
                 title="Đăng xuất khỏi tài khoản"
               >
                 <LogOut className="w-3.5 h-3.5" />

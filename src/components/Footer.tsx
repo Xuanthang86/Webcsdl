@@ -8,7 +8,7 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ config }) => {
   return (
-    <footer className="bg-slate-800 text-slate-200 border-t border-slate-700 text-sm sm:text-base">
+    <footer className="bg-slate-700 text-slate-100 border-t border-slate-600 text-sm sm:text-base">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 mb-4 sm:mb-5">
           
@@ -63,7 +63,7 @@ export const Footer: React.FC<FooterProps> = ({ config }) => {
         </div>
 
         {/* Bottom copyright line: centered, with policy links directly underneath and centered */}
-        <div className="pt-3 border-t border-slate-700 flex flex-col items-center justify-center text-center gap-1.5 text-sm lg:text-[15px]">
+        <div className="pt-3 border-t border-slate-600 flex flex-col items-center justify-center text-center gap-1.5 text-sm lg:text-[15px]">
           <div className="text-slate-300 font-medium leading-relaxed">
             © 2026. Tất cả quyền được bảo lưu.
           </div>
