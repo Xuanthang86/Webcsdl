@@ -73,7 +73,7 @@ export const SearchHero: React.FC<SearchHeroProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 text-white py-6 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
+    <div className="bg-slate-100 text-slate-800 py-6 px-4 sm:px-6 lg:px-8 border-b border-slate-200">
       <div className="max-w-5xl mx-auto space-y-3.5">
         
         {/* Main Search Input & Primary Filters */}
@@ -128,7 +128,7 @@ export const SearchHero: React.FC<SearchHeroProps> = ({
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border cursor-pointer ${
                   selectedField
                     ? 'bg-teal-400 text-slate-950 border-teal-300 font-bold'
-                    : 'bg-slate-800 hover:bg-slate-700 text-teal-200 border-slate-700'
+                    : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
                 }`}
               >
                 <Layers className="w-3.5 h-3.5 text-teal-300" />
@@ -144,7 +144,7 @@ export const SearchHero: React.FC<SearchHeroProps> = ({
                 <button
                   type="button"
                   onClick={() => handleSelectSpecializedField(selectedField)}
-                  className="text-xs text-rose-300 hover:text-white underline cursor-pointer"
+                  className="text-xs text-rose-700 hover:text-rose-900 underline cursor-pointer"
                 >
                   ✕ Bỏ chọn lĩnh vực
                 </button>
@@ -156,7 +156,7 @@ export const SearchHero: React.FC<SearchHeroProps> = ({
               <button
                 type="button"
                 onClick={onOpenAdvancedSearch}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-900/80 hover:bg-teal-800 text-teal-200 hover:text-white border border-teal-700/60 rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-teal-50 text-teal-800 hover:text-teal-900 border border-slate-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
               >
                 <SlidersHorizontal className="w-3.5 h-3.5 text-teal-400" />
                 <span>Tìm kiếm nâng cao</span>
@@ -167,8 +167,8 @@ export const SearchHero: React.FC<SearchHeroProps> = ({
 
         {/* Dropdown panel showing 8 standardized fields when opened */}
         {showFieldsPanel && (
-          <div className="bg-slate-800/95 backdrop-blur-md border border-teal-600/50 rounded-xl p-3 shadow-2xl text-left animate-in fade-in duration-150">
-            <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-700 px-1 text-xs">
+          <div className="bg-white backdrop-blur-md border border-slate-200 rounded-xl p-3 shadow-2xl text-left animate-in fade-in duration-150">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 px-1 text-xs">
               <div className="font-bold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
                 <Database className="w-3.5 h-3.5" />
                 <span>Danh mục 8 Lĩnh vực chuyên ngành chuẩn hóa</span>
@@ -176,7 +176,7 @@ export const SearchHero: React.FC<SearchHeroProps> = ({
               <button
                 type="button"
                 onClick={() => setShowFieldsPanel(false)}
-                className="text-slate-400 hover:text-white p-1 cursor-pointer"
+                className="text-slate-500 hover:text-slate-900 p-1 cursor-pointer"
               >
                 Đóng ✕
               </button>
@@ -196,10 +196,10 @@ export const SearchHero: React.FC<SearchHeroProps> = ({
                     className={`p-2 rounded-lg text-left transition-all border flex items-center justify-between gap-1.5 cursor-pointer ${
                       isSelected
                         ? 'bg-teal-700 text-white border-teal-400 font-bold shadow-xs'
-                        : 'bg-white/5 hover:bg-white/10 text-slate-200 border-white/5 hover:border-teal-500/30'
+                        : 'bg-slate-50 hover:bg-teal-50 text-slate-700 border-slate-200 hover:border-teal-300'
                     }`}
                   >
-                    <span className="font-medium text-slate-100 truncate">{sf.shortName}</span>
+                    <span className="font-medium text-slate-700 truncate">{sf.shortName}</span>
                     {isSelected && <Check className="w-3.5 h-3.5 text-teal-300 shrink-0" />}
                   </button>
                 );
