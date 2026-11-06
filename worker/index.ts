@@ -1460,7 +1460,14 @@ export default {
 
           for (const table of tableResult.results || []) {
             const tableName = String(table.name || '');
-            if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName)) continue;
+            // Cloudflare D1 exposes internal runtime tables (for example _cf_KV)
+            // through sqlite_master, but access to those tables is prohibited.
+            // They are platform-managed and must never be included in app backups.
+            if (
+              !/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName) ||
+              tableName.startsWith('sqlite_') ||
+              tableName.startsWith('_cf_')
+            ) continue;
             schema[tableName] = String(table.sql || '');
             const tableRows: any[] = [];
             let offset = 0;
