@@ -1094,15 +1094,57 @@ export default {
           let totalBudget = 0;
           let totalSavings = 0;
           try {
+            // The acceptance outcome is often stored as a configurable field in data_json,
+            // while the physical "status" column is the publication/approval workflow.
+            // Inspect the live schema so one absent optional column cannot zero the dashboard.
+            const taskInfo = await env.DB.prepare('PRAGMA table_info(science_tasks)').all<any>();
+            const taskColumns = new Set((taskInfo.results || []).map((column: any) => String(column.name)));
+            const acceptanceExpressions: string[] = [];
+            for (const column of ['acceptance_result', 'acceptance_status', 'completion_status', 'result']) {
+              if (taskColumns.has(column)) {
+                acceptanceExpressions.push(`NULLIF(TRIM(CAST("${column}" AS TEXT)), '')`);
+              }
+            }
+            if (taskColumns.has('data_json')) {
+              const jsonPaths = [
+                '$.acceptanceResult', '$.acceptance_result', '$.trangthai',
+                '$.completionStatus', '$.completion_status', '$.taskStatus',
+                '$.task_status', '$.result', '$.__custom__acceptance_result'
+              ];
+              for (const path of jsonPaths) {
+                acceptanceExpressions.push(`CASE WHEN json_valid(data_json) THEN json_extract(data_json, '${path}') END`);
+              }
+            }
+            const acceptanceValue = acceptanceExpressions.length
+              ? `LOWER(TRIM(COALESCE(${acceptanceExpressions.join(', ')}, '')))`
+              : "''";
+            const acceptedBudget = taskColumns.has('total_budget_approved')
+              ? 'COALESCE(SUM(total_budget_approved), 0)'
+              : '0';
             const taskStats = await env.DB.prepare(`
-              SELECT 
-                COUNT(CASE WHEN LOWER(TRIM(COALESCE(status, ''))) IN ('approved', 'accepted', 'completed', 'complete') OR LOWER(TRIM(COALESCE(acceptance_result, ''))) IN ('đạt', 'xuất sắc', 'đã nghiệm thu', 'nghiệm thu', 'đã hoàn thành', 'hoàn thành', 'completed', 'complete') OR LOWER(TRIM(COALESCE(acceptance_result, ''))) LIKE '%nghiệm thu%' OR LOWER(TRIM(COALESCE(acceptance_result, ''))) LIKE '%hoàn thành%' OR LOWER(TRIM(COALESCE(acceptance_result, ''))) LIKE '%xuất sắc%' OR LOWER(TRIM(COALESCE(acceptance_result, ''))) LIKE '%đạt%' OR LOWER(TRIM(COALESCE(status, ''))) LIKE '%đạt%' OR LOWER(TRIM(COALESCE(status, ''))) LIKE '%nghiệm thu%' OR LOWER(TRIM(COALESCE(status, ''))) LIKE '%hoàn thành%' THEN 1 END) as accepted,
-                COALESCE(SUM(total_budget_approved), 0) as budget
+              SELECT
+                COUNT(CASE
+                  WHEN (
+                    ${acceptanceValue} IN ('đạt', 'xuất sắc', 'đã nghiệm thu', 'nghiệm thu', 'đã hoàn thành', 'hoàn thành', 'completed', 'complete', 'đã kết thúc', 'kết thúc')
+                    OR ${acceptanceValue} LIKE '%nghiệm thu%'
+                    OR ${acceptanceValue} LIKE '%hoàn thành%'
+                    OR ${acceptanceValue} LIKE '%xuất sắc%'
+                    OR ${acceptanceValue} LIKE '%đạt%'
+                  )
+                  AND ${acceptanceValue} NOT LIKE '%không đạt%'
+                  AND ${acceptanceValue} NOT LIKE '%khong dat%'
+                  AND ${acceptanceValue} NOT LIKE '%chưa nghiệm thu%'
+                  AND ${acceptanceValue} NOT LIKE '%chua nghiem thu%'
+                  THEN 1
+                END) as accepted,
+                ${acceptedBudget} as budget
               FROM science_tasks
             `).first<{ accepted: number; budget: number }>();
             tasksAccepted = Number(taskStats?.accepted) || 0;
             totalBudget = Number(taskStats?.budget) || 0;
-          } catch {}
+          } catch (error) {
+            console.error('Không thể tổng hợp thống kê nghiệm thu đề tài:', error);
+          }
 
           try {
             const initStats = await env.DB.prepare(`
