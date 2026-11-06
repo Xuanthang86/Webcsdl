@@ -30,6 +30,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
   onImportComplete
 }) => {
   const [selectedModule, setSelectedModule] = useState<ModuleType>(initialModule);
+  const [conflictAction, setConflictAction] = useState<'skip' | 'overwrite'>('skip');
   const [rawText, setRawText] = useState('');
   const [parsedRows, setParsedRows] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -409,7 +410,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
         const batch = parsedRows.slice(i, i + BATCH_SIZE);
         const batchIndex = Math.floor(i / BATCH_SIZE) + 1;
 
-        const res = await api.importRecords(selectedModule, batch);
+        const res = await api.importRecords(selectedModule, batch, conflictAction);
         if (res.importedCount) allImportedCount += res.importedCount;
         if (res.importedIds?.length) allImportedIds.push(...res.importedIds);
         if (res.errors && res.errors.length > 0) allErrors.push(...res.errors);
@@ -740,6 +741,21 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
                   <span>• Cần lưu ý: <strong className="text-rose-600">{invalidRowsCount}</strong> dòng thiếu tiêu đề</span>
                 )}
               </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <label htmlFor="bulk-import-conflict-action" className="font-semibold text-slate-700">
+                Khi dữ liệu đã tồn tại:
+              </label>
+              <select
+                id="bulk-import-conflict-action"
+                value={conflictAction}
+                onChange={e => setConflictAction(e.target.value as 'skip' | 'overwrite')}
+                className="h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-800"
+              >
+                <option value="skip">Bỏ qua bản ghi trùng (an toàn)</option>
+                <option value="overwrite">Cập nhật dữ liệu trùng, giữ trạng thái công khai hiện tại</option>
+              </select>
             </div>
 
             <button
