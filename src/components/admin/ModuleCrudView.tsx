@@ -465,7 +465,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   // Accent-insensitive search across every hydrated field, including imported spreadsheet extras.
   const normalizeSearchText = (value: any): string => String(value ?? '')
     .normalize('NFD')
-    .replace(/[\\u0300-\\u036f]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[đĐ]/g, 'd')
     .toLowerCase();
 
