@@ -101,6 +101,10 @@ export const DetailModal: React.FC<DetailModalProps> = ({
     ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'].includes(currentUser.role) ||
     Boolean(currentUser.managedModules?.includes(entity.moduleType || ''))
   );
+  const canEditLanguages = !!currentUser && (
+    ['super_admin', 'system_admin', 'agency_leader', 'data_officer'].includes(currentUser.role) ||
+    (['partner_officer', 'org_representative'].includes(currentUser.role) && Boolean(currentUser.managedModules?.includes(entity.moduleType || '')))
+  );
 
   const persistLanguages = async (nextLanguages: string[]) => {
     try {
@@ -657,7 +661,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       </button>
                     </div>
 
-                    {isAuthorized && (
+                    {canEditLanguages && (
                       <div className="flex flex-wrap items-center gap-2">
                         <select
                           value={languagePreset}
@@ -687,7 +691,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
 
                     {/* Form thêm ngoại ngữ mới */}
                     {languageError && <p className="text-xs text-rose-700">{languageError}</p>}
-                    {isAddingLanguage && isAuthorized && (
+                    {isAddingLanguage && canEditLanguages && (
                       <form onSubmit={handleAddLanguage} className="pt-2 flex items-center gap-2">
                         <input
                           type="text"
