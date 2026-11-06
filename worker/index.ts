@@ -1672,6 +1672,13 @@ export default {
               if (!item) {
                 return jsonResponse({ success: false, message: 'Không tìm thấy bản ghi.' }, 404, corsHeaders);
               }
+              if (currentUser.role === 'public_user') {
+                const status = String(item.status || '').toLowerCase();
+                const publicity = String(item.publicityLevel || 'public').toLowerCase();
+                if (!['approved', 'published'].includes(status) || publicity !== 'public') {
+                  return jsonResponse({ success: false, message: 'Không tìm thấy bản ghi.' }, 404, corsHeaders);
+                }
+              }
               const rels = await env.DB.prepare(`
                 SELECT * FROM relationships WHERE source_id = ? OR target_id = ?
               `).bind(recordId, recordId).all();
@@ -1687,10 +1694,18 @@ export default {
         if (!recordId && request.method === 'GET') {
           if (env.DB) {
             try {
-              const limit = parseInt(url.searchParams.get('limit') || '200', 10);
-              const offset = parseInt(url.searchParams.get('offset') || '0', 10);
-              const results = await env.DB.prepare(`SELECT * FROM ${moduleName} ORDER BY created_at DESC LIMIT ? OFFSET ?`).bind(limit, offset).all<any>();
-              const countResult = await env.DB.prepare(`SELECT COUNT(*) as total FROM ${moduleName}`).first<{ total: number }>();
+              const limit = Math.min(500, Math.max(1, parseInt(url.searchParams.get('limit') || '200', 10) || 200));
+              const offset = Math.max(0, parseInt(url.searchParams.get('offset') || '0', 10) || 0);
+              const publicOnly = url.searchParams.get('publicOnly') === 'true' || currentUser.role === 'public_user';
+              let visibilityWhere = '';
+              if (publicOnly) {
+                const tableInfo = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
+                const columns = new Set((tableInfo.results || []).map((column: any) => column.name));
+                if (columns.has('status')) visibilityWhere = ` WHERE LOWER(COALESCE(status, '')) IN ('approved', 'published')`;
+                if (columns.has('publicity_level')) visibilityWhere += `${visibilityWhere ? ' AND' : ' WHERE'} LOWER(COALESCE(publicity_level, 'public')) = 'public'`;
+              }
+              const results = await env.DB.prepare(`SELECT * FROM ${moduleName}${visibilityWhere} ORDER BY created_at DESC LIMIT ? OFFSET ?`).bind(limit, offset).all<any>();
+              const countResult = await env.DB.prepare(`SELECT COUNT(*) as total FROM ${moduleName}${visibilityWhere}`).first<{ total: number }>();
               return jsonResponse({
                 success: true,
                 moduleType: moduleName,
@@ -1819,54 +1834,178 @@ export default {
         }
       }
 
-      // Q2. Batch Import Records (`POST /api/import/:moduleName`)
+      // Q2. Batch Import Records and explicit approval of imported drafts.
       if (url.pathname.startsWith('/api/import/') && request.method === 'POST') {
-        const moduleName = url.pathname.replace('/api/import/', '').trim();
+        const routeParts = url.pathname.replace('/api/import/', '').split('/').filter(Boolean);
+        const moduleName = routeParts[0] || '';
+        if (!ALLOWED_MODULES.includes(moduleName)) {
+          return jsonResponse({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' }, 400, corsHeaders);
+        }
+        if (!['super_admin', 'system_admin'].includes(currentUser.role)) {
+          return jsonResponse({ success: false, message: 'Chỉ Quản trị viên mới được nhập và phê duyệt dữ liệu hàng loạt.' }, 403, corsHeaders);
+        }
+        if (!env.DB) {
+          return jsonResponse({ success: false, message: 'CSDL D1 chưa kết nối.' }, 500, corsHeaders);
+        }
+
+        const tableInfo = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
+        const tableColumns = new Set((tableInfo.results || []).map((column: any) => column.name));
+        if (!tableColumns.has('status')) {
+          return jsonResponse({ success: false, message: 'Phân hệ này chưa có trường status để quản lý quy trình nháp và phê duyệt. Chưa nhập dữ liệu để tránh công khai sai quy trình.' }, 409, corsHeaders);
+        }
+
+        // Explicit second step: approve only the exact IDs returned by this import.
+        if (routeParts[1] === 'approve') {
+          const body: any = await request.json().catch(() => ({}));
+          const ids = Array.isArray(body.ids)
+            ? [...new Set(body.ids.map((id: any) => String(id || '').trim()).filter((id: string) => id && id.length <= 128))].slice(0, 500)
+            : [];
+          if (ids.length === 0) {
+            return jsonResponse({ success: false, message: 'Không có bản ghi nào được chọn để phê duyệt.' }, 400, corsHeaders);
+          }
+          const assignments = ["status = 'approved'", "updated_at = datetime('now')"];
+          if (tableColumns.has('verification_status')) assignments.push("verification_status = 'verified'");
+          if (tableColumns.has('publicity_level')) assignments.push("publicity_level = 'public'");
+          const placeholders = ids.map(() => '?').join(', ');
+          try {
+            const updated = await env.DB.prepare(
+              `UPDATE ${moduleName} SET ${assignments.join(', ')} WHERE id IN (${placeholders}) AND LOWER(COALESCE(status, '')) = 'draft'`
+            ).bind(...ids).run();
+            return jsonResponse({
+              success: true,
+              approvedCount: Number(updated.meta?.changes || 0),
+              message: 'Đã chuyển các bản ghi nháp được chọn sang trạng thái đã phê duyệt.'
+            }, 200, corsHeaders);
+          } catch (error: any) {
+            return jsonResponse({ success: false, message: 'Không thể phê duyệt dữ liệu trong D1: ' + (error?.message || 'Lỗi không xác định') }, 500, corsHeaders);
+          }
+        }
+
+        if (routeParts.length !== 1) {
+          return jsonResponse({ success: false, message: 'Đường dẫn nhập dữ liệu không hợp lệ.' }, 404, corsHeaders);
+        }
         const body: any = await request.json().catch(() => ({}));
         const rawItems = Array.isArray(body.items) ? body.items : [];
         if (rawItems.length === 0) {
           return jsonResponse({ success: false, message: 'Dữ liệu tệp không hợp lệ hoặc rỗng.' }, 400, corsHeaders);
         }
+        if (rawItems.length > 500) {
+          return jsonResponse({ success: false, message: 'Mỗi lượt nhập tối đa 500 bản ghi.' }, 413, corsHeaders);
+        }
 
-        let importedCount = 0;
+        const normalizeImportKey = (value: string) => value
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '');
+        const aliases: Record<string, string> = {
+          stt: 'stt', code: 'code', madetai: 'code', madinhdanh: 'code',
+          capquanly: 'management_level', coquanchutri: 'lead_agency', chunhiemdetai: 'principal_investigator',
+          thanhvienthamgia: 'participants', thoigianthuchien: 'implementation_time', linhvuc: 'field',
+          tomtatdetai: 'summary', tailieuminhchung: 'evidence_file', kyhieukho: 'archive_code',
+          namcongnhan: 'recognition_year', tensangkien: 'title', tacgia: 'author', chusohuu: 'owner',
+          diachuchusohuu: 'owner_address', tenchuyengia: 'name', ngaythangnamsinh: 'date_of_birth',
+          namsinh: 'birth_year', gioitinh: 'gender', hocham: 'academic_title', hocvi: 'degree',
+          nambatdaucongtac: 'career_start_year', chucdanhnghiencuu: 'research_title', chucvu: 'position',
+          email: 'email', dienthoai: 'phone', chuyenganh: 'specialization', tendonvicongtac: 'workplace',
+          quatrinhdaotaovahoctap: 'education', quatrinhcongtac: 'work_history', ngoaingu: 'languages',
+          tenbaibao: 'publications', tenvanbang: 'qualifications', tencongtrinh: 'research_outputs',
+          tendetai: 'projects', giaithuong: 'awards', kinhnghiem: 'experience',
+          tendoanhnghiep: 'name', diachihoatdong: 'operating_address', websitedoanhnghiep: 'website',
+          filelogodoanhnghiep: 'logo_file', linhvuckinhdoanh: 'business_field',
+          tomtatvedoanhnghiepvasanpham: 'summary', sanphamgiaiquyetvande: 'problem_solved',
+          soluongsanglapvien: 'founders_count', tongsonhanhientai: 'total_staff',
+          hovatennguoidungdau: 'leader_name', hotennguoidungdau: 'leader_name',
+          sodienthoainguoidungdau: 'leader_phone', emailnguoidungdau: 'leader_email',
+          nambatdaukhoinghiep: 'founding_year', tentochuc: 'name', diachi: 'address',
+          thongtinvetochuc: 'description', tenduan: 'title',
+          linhvuckhoinghiep: 'field', tomtatveduan: 'summary',
+          soluongthanhvienthamgiaduan: 'members_count', duanduocuomtaotutochuc: 'incubated_at',
+          tenytuong: 'title', tenytuongkhoinghiep: 'title', thuocxaphuong: 'ward_or_school',
+          ytuongthuocxaphuongtruonghoc: 'ward_or_school', tomtatveytuong: 'summary',
+          soluongthanhvienthamgiaytuong: 'members_count', nguoidungdaunhomytuong: 'leader_name',
+          tengiaovienhuongdan: 'mentor_name', nhomytuongdanghoctapcongtactaidonvinao: 'affiliated_unit',
+          tenxaphuongdackhu: 'name', tenxaphuong: 'name', tentruong: 'name',
+          tentruongdaihoccaodang: 'name', nguoidaidienduan: 'representative',
+          thongtienlienhe: 'contact_info'
+        };
+
+        const importedIds: string[] = [];
         const errors: string[] = [];
         const duplicates: string[] = [];
+        const primaryColumn = tableColumns.has('title') ? 'title'
+          : tableColumns.has('name') ? 'name'
+          : tableColumns.has('project_name') ? 'project_name'
+          : '';
+        if (!primaryColumn) {
+          return jsonResponse({ success: false, message: 'Không xác định được trường tên/tiêu đề chính của phân hệ.' }, 409, corsHeaders);
+        }
 
         for (let idx = 0; idx < rawItems.length; idx++) {
           const raw = rawItems[idx];
-          const title = raw.title || raw['Tên đề tài'] || raw['Tên sáng kiến'] || raw['Tên Chuyên gia'] || 
-            raw['Tên doanh nghiệp'] || raw['Tên tổ chức'] || raw['Tên dự án khởi nghiệp'] || 
-            raw['Tên ý tưởng khởi nghiệp'] || raw['Tên xã/phường/đặc khu'] || raw['Tên xã/phường'] || 
-            raw['Tên trường'] || raw['Tên trường Đại học/Cao đẳng'] || raw['Tên dự án'] || raw['Tiêu đề / Tên'] || raw['Tên bản ghi'];
-          if (!title) {
-            errors.push(`Dòng ${idx + 1}: Thiếu tên / tiêu đề bắt buộc.`);
+          if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+            errors.push(`Dòng ${idx + 2}: Dữ liệu không đúng định dạng.`);
+            continue;
+          }
+          const mapped: Record<string, any> = {};
+          const unsupported: string[] = [];
+          for (const [rawKey, rawValue] of Object.entries(raw)) {
+            if (rawValue === null || rawValue === undefined || rawValue === '') continue;
+            const key = normalizeImportKey(rawKey);
+            let target = aliases[key] || rawKey.replace(/([A-Z])/g, '_$1').toLowerCase();
+            if (key === 'trangthai' && moduleName === 'science_tasks') target = 'acceptance_result';
+            if (['tendetai', 'tensangkien', 'tenduan', 'tenytuong', 'tendoanhnghiep', 'tentochuc', 'tentruong', 'tenxaphuong', 'tenchuyengia'].includes(key)) {
+              target = primaryColumn;
+            }
+            if (tableColumns.has(target)) mapped[target] = rawValue;
+            else if (tableColumns.has('data_json')) mapped[`__custom__${rawKey}`] = rawValue;
+            else unsupported.push(rawKey);
+          }
+
+          if (!mapped[primaryColumn]) {
+            errors.push(`Dòng ${idx + 2}: Thiếu trường tên/tiêu đề bắt buộc (${primaryColumn}).`);
+            continue;
+          }
+          if (unsupported.length) {
+            errors.push(`Dòng ${idx + 2}: Các cột chưa có trường lưu trữ trong D1 và chưa được nhập: ${unsupported.join(', ')}. Cần bổ sung cấu trúc dữ liệu trước khi nhập để tránh mất thông tin.`);
             continue;
           }
 
-          const id = `${moduleName}_imp_${Date.now()}_${idx}`;
-          const code = raw.code || `${moduleName.slice(0, 3).toUpperCase()}-IMP-${Date.now().toString().slice(-4)}${idx}`;
-          const field = raw.field || raw['Lĩnh vực'] || raw['Lĩnh vực kinh doanh'] || raw['Lĩnh vực khởi nghiệp'] || 'Chung';
-          const ownerName = raw.ownerName || raw['Cơ quan chủ trì'] || raw['Chủ sở hữu'] || raw['Đơn vị / Cá nhân'] || raw['Tên đơn vị công tác'] || '';
-          const description = raw.description || raw['Tóm tắt về doanh nghiệp và sản phẩm'] || raw['Tóm tắt về dự án'] || raw['Tóm tắt về ý tưởng (Khoảng 150-200 từ)'] || raw['Tóm tắt về ý tưởng (150-200 từ)'] || raw['Tóm tắt về ý tưởng'] || raw['Thông tin về tổ chức'] || raw['Tóm tắt đề tài'] || '';
-
-          if (env.DB) {
-            try {
-              await env.DB.prepare(`
-                INSERT INTO ${moduleName} (id, code, title, field, owner_name, description, status, verification_status, publicity_level, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, 'draft', 'unverified', 'public', datetime('now'), datetime('now'))
-              `).bind(id, code, title, field, ownerName, description).run();
-              importedCount++;
-            } catch (err: any) {
-              errors.push(`Dòng ${idx + 1}: ${err.message}`);
+          const id = `${moduleName}_imp_${crypto.randomUUID()}`;
+          const values: Record<string, any> = { ...mapped, id, status: 'draft' };
+          if (tableColumns.has('created_at')) values.created_at = new Date().toISOString();
+          if (tableColumns.has('updated_at')) values.updated_at = new Date().toISOString();
+          if (tableColumns.has('created_by')) values.created_by = currentUser.fullName;
+          if (tableColumns.has('verification_status')) values.verification_status = 'unverified';
+          if (tableColumns.has('publicity_level')) values.publicity_level = 'private';
+          if (tableColumns.has('data_json')) {
+            const customFields: Record<string, any> = {};
+            for (const key of Object.keys(values)) {
+              if (key.startsWith('__custom__')) {
+                customFields[key.slice(10)] = values[key];
+                delete values[key];
+              }
             }
-          } else {
-            importedCount++;
+            if (Object.keys(customFields).length) values.data_json = JSON.stringify(customFields);
+          }
+          try {
+            const columns = Object.keys(values).filter(column => tableColumns.has(column));
+            const placeholders = columns.map(() => '?').join(', ');
+            const params = columns.map(column => {
+              const value = values[column];
+              return typeof value === 'object' && value !== null ? JSON.stringify(value) : value;
+            });
+            await env.DB.prepare(`INSERT INTO ${moduleName} (${columns.join(', ')}) VALUES (${placeholders})`).bind(...params).run();
+            importedIds.push(id);
+          } catch (error: any) {
+            errors.push(`Dòng ${idx + 2}: ${error?.message || 'Không thể ghi dữ liệu vào D1.'}`);
           }
         }
 
         return jsonResponse({
           success: true,
-          result: { importedCount, errors, duplicates }
+          result: { importedCount: importedIds.length, importedIds, errors, duplicates }
         }, 200, corsHeaders);
       }
 
