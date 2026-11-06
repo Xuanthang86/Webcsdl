@@ -47,6 +47,21 @@ interface DetailModalProps {
   onOpenConnectModal: (entity: BaseEntity) => void;
 }
 
+const safeDisplayValue = (value: any, fallback = 'Chưa cập nhật'): string => {
+  if (value === null || value === undefined || value === '') return fallback;
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) {
+    const items = value.map((item) => safeDisplayValue(item, '')).filter(Boolean);
+    return items.length ? items.join(', ') : fallback;
+  }
+  if (typeof value === 'object') {
+    const preferred = value.name ?? value.fullName ?? value.title ?? value.label ?? value.value ?? value.url;
+    if (preferred !== undefined && preferred !== null) return safeDisplayValue(preferred, fallback);
+    try { return JSON.stringify(value); } catch { return fallback; }
+  }
+  return fallback;
+};
+
 export const DetailModal: React.FC<DetailModalProps> = ({
   entity,
   relationships,
@@ -303,9 +318,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <span className="sm:col-span-2">
                       {isAuthorized ? (
                         <span className="text-slate-800 font-medium">
-                          {Array.isArray(entity.members) 
-                            ? entity.members.map((m: any) => typeof m === 'string' ? m : (m?.name || m?.fullName || JSON.stringify(m))).join(', ') 
-                            : (typeof entity.members === 'string' ? entity.members : (typeof entity.projectTeam === 'string' ? entity.projectTeam : 'TS. Lê Thị Mai, ThS. Nguyễn Văn Bình, KS. Trần Quốc Tuấn, CN. Hoàng Anh'))}
+                          {safeDisplayValue(entity.members ?? entity.projectTeam)}
                         </span>
                       ) : (
                         <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
@@ -317,7 +330,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Thời gian thực hiện:</span>
-                    <span className="sm:col-span-2 font-mono text-slate-700">{entity.executionTime || entity.actualDuration || '2023 - 2025 (24 tháng)'}</span>
+                    <span className="sm:col-span-2 font-mono text-slate-700">{safeDisplayValue(entity.executionTime ?? entity.actualDuration)}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Lĩnh vực:</span>
@@ -334,7 +347,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <div className="sm:col-span-2">
                       <div className="space-y-1.5">
                         <div className="text-slate-800 font-medium">
-                          {entity.evidenceDocuments || entity.attachmentSummary || (Array.isArray(entity.attachments) && entity.attachments.length > 0 ? entity.attachments.map((a: any) => typeof a === 'string' ? a : (a.name || a.title || a.url)).filter(Boolean).join('; ') : null) || 'Quyết định phê duyệt số 142/QĐ-SKHCN; Hợp đồng nghiên cứu KH&CN số 18/HĐ-KHCN; Biên bản nghiệm thu chính thức cấp TP.'}
+                          {safeDisplayValue(entity.evidenceDocuments ?? entity.attachmentSummary ?? (Array.isArray(entity.attachments) ? entity.attachments : undefined))}
                         </div>
                         <button
                           type="button"
@@ -354,7 +367,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <div className="sm:col-span-2">
                       {isAuthorized ? (
                         <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2.5 py-1 rounded border border-slate-300">
-                          {entity.storageCode || entity.archiveCode || entity.warehouseCode || 'KHO-KHCN-ĐN-2024/089'}
+                          {safeDisplayValue(entity.storageCode ?? entity.archiveCode ?? entity.warehouseCode)}
                         </span>
                       ) : (
                         <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
