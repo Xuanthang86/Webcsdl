@@ -1928,7 +1928,7 @@ export default {
           tengiaovienhuongdan: 'mentor_name', nhomytuongdanghoctapcongtactaidonvinao: 'affiliated_unit',
           tenxaphuongdackhu: 'name', tenxaphuong: 'name', tentruong: 'name',
           tentruongdaihoccaodang: 'name', nguoidaidienduan: 'representative',
-          thongtienlienhe: 'contact_info'
+          thongtinlienhe: 'contact_info'
         };
 
         const importedIds: string[] = [];
@@ -1955,6 +1955,20 @@ export default {
             const key = normalizeImportKey(rawKey);
             let target = aliases[key] || rawKey.replace(/([A-Z])/g, '_$1').toLowerCase();
             if (['title', 'name', 'projectname'].includes(key) && !tableColumns.has(target)) target = primaryColumn;
+            if (key.startsWith('diachihoatdong')) target = 'operating_address';
+            if (key.startsWith('website')) target = 'website';
+            if (key.startsWith('sanphamgiaiquyetvande')) target = 'problem_solved';
+            if (key.startsWith('duanduocuomtaotutochuc')) target = 'incubated_at';
+            if (key.startsWith('tomtatve') && !tableColumns.has(target)) target = tableColumns.has('summary') ? 'summary' : 'description';
+            if (key.startsWith('tenbaibao')) target = 'publications';
+            if (key.startsWith('tencongtrinh')) target = 'research_outputs';
+            if (key.startsWith('hovatennguoidungdau')) target = 'leader_name';
+            if (key.startsWith('sodienthoainguoidungdau')) target = 'leader_phone';
+            if (key.startsWith('emailnguoidungdau')) target = 'leader_email';
+            if (key.startsWith('tenthaycogiaohuongdan')) target = 'mentor_name';
+            if (key.startsWith('tongsonhansu')) target = 'total_staff';
+            if (key.startsWith('soluongthanhvienthamgia')) target = key.includes('ytuong') ? 'members_count' : 'members_count';
+            if (key.startsWith('nhomytuongdanghoctapcongtactaidonvi')) target = 'affiliated_unit';
             if (key === 'trangthai' && moduleName === 'science_tasks') target = 'acceptance_result';
             if (['tendetai', 'tensangkien', 'tenduan', 'tenytuong', 'tendoanhnghiep', 'tentochuc', 'tentruong', 'tenxaphuong', 'tenchuyengia'].includes(key)) {
               target = primaryColumn;
