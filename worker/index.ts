@@ -1199,38 +1199,46 @@ export default {
         const moduleType = url.searchParams.get('moduleType') || '';
         const field = sanitizeString(url.searchParams.get('field') || '');
         const status = sanitizeString(url.searchParams.get('status') || '');
-
+        const canViewRestrictedRecords = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'].includes(currentUser.role);
         const targetModules = moduleType && ALLOWED_MODULES.includes(moduleType)
           ? [moduleType]
           : ALLOWED_MODULES;
-
         let allResults: any[] = [];
 
         if (env.DB) {
           try {
             for (const mod of targetModules.slice(0, 10)) {
+              const tableInfo = await env.DB.prepare(`PRAGMA table_info(${mod})`).all<any>();
+              const columns = new Set((tableInfo.results || []).map((column: any) => column.name));
               let sql = `SELECT * FROM ${mod} WHERE 1=1`;
               const params: any[] = [];
               if (q) {
-                sql += ` AND (title LIKE ? OR description LIKE ? OR field LIKE ?)`;
-                params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+                const searchableColumns = ['title', 'name', 'project_name', 'description', 'summary', 'profile_summary', 'field']
+                  .filter(column => columns.has(column));
+                if (searchableColumns.length) {
+                  sql += ' AND (' + searchableColumns.map(column => `CAST(${column} AS TEXT) LIKE ?`).join(' OR ') + ')';
+                  searchableColumns.forEach(() => params.push(`%${q}%`));
+                }
               }
-              if (field) {
-                sql += ` AND field = ?`;
+              if (field && columns.has('field')) {
+                sql += ' AND field = ?';
                 params.push(field);
               }
-              if (status && status !== 'all') {
-                sql += ` AND status = ?`;
+              if (status && status !== 'all' && canViewRestrictedRecords && columns.has('status')) {
+                sql += ' AND status = ?';
                 params.push(status);
               }
-              sql += ` LIMIT 30`;
-              const rows = await env.DB.prepare(sql).bind(...params).all();
-              if (rows.results) {
-                allResults = allResults.concat(rows.results);
+              if (!canViewRestrictedRecords) {
+                if (columns.has('status')) sql += ` AND LOWER(COALESCE(status, '')) IN ('approved', 'published')`;
+                if (columns.has('publicity_level')) sql += ` AND LOWER(COALESCE(publicity_level, 'public')) = 'public'`;
               }
+              sql += ' LIMIT 30';
+              const rows = await env.DB.prepare(sql).bind(...params).all();
+              if (rows.results) allResults = allResults.concat(rows.results);
             }
           } catch (e: any) {
             console.warn('Lỗi tìm kiếm D1:', e);
+            return jsonResponse({ success: false, message: 'Không thể hoàn thành tìm kiếm do lỗi truy vấn dữ liệu.' }, 500, corsHeaders);
           }
         }
 
@@ -1241,39 +1249,37 @@ export default {
         }, 200, corsHeaders);
       }
 
-      // L. Module CSV Export / Import (D1-backed)
-      const exportMatch = url.pathname.match(/^\/api\/export\/([a-z_]+)$/);
-      const importMatch = url.pathname.match(/^\/api\/import\/([a-z_]+)$/);
-      if (exportMatch || importMatch) {
-        const moduleName = (exportMatch || importMatch)![1];
+      // L. Module CSV Export (D1-backed). Imports are handled by Q2 below.
+      const exportMatch = url.pathname.match(/^\\/api\\/export\\/([a-z_]+)$/);
+      if (exportMatch) {
+        const moduleName = exportMatch[1];
         if (!ALLOWED_MODULES.includes(moduleName)) {
           return jsonResponse({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' }, 400, corsHeaders);
         }
         if (!['super_admin', 'system_admin', 'data_officer'].includes(currentUser.role)) {
-          return jsonResponse({ success: false, message: 'Bạn không có quyền nhập hoặc xuất dữ liệu.' }, 403, corsHeaders);
+          return jsonResponse({ success: false, message: 'Bạn không có quyền xuất dữ liệu.' }, 403, corsHeaders);
         }
         if (!env.DB) {
           return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
         }
-
-        if (exportMatch && request.method === 'GET') {
+        if (request.method === 'GET') {
           try {
             const info = await env.DB.prepare('PRAGMA table_info(' + moduleName + ')').all<any>();
             const columns = (info.results || [])
               .map((column: any) => String(column.name))
-              .filter((column: string) => !['password_hash', 'password_salt'].includes(column));
+              .filter((column: string) => !['password_hash', 'password_salt', 'salt'].includes(column));
             const rows = await env.DB.prepare('SELECT * FROM ' + moduleName + ' ORDER BY created_at DESC LIMIT 10000').all<any>();
             const escapeCsv = (value: any) => {
               const raw = value === null || value === undefined
                 ? ''
                 : typeof value === 'object' ? JSON.stringify(value) : String(value);
-              return /[",\r\n]/.test(raw) ? '"' + raw.replace(/"/g, '""') + '"' : raw;
+              return /[",\\r\\n]/.test(raw) ? '"' + raw.replace(/"/g, '""') + '"' : raw;
             };
             const csv = [
               columns.map(escapeCsv).join(','),
               ...(rows.results || []).map((row: any) => columns.map(column => escapeCsv(row[column])).join(','))
-            ].join('\r\n');
-            return new Response('\uFEFF' + csv, {
+            ].join('\\r\\n');
+            return new Response('\\uFEFF' + csv, {
               status: 200,
               headers: {
                 'Content-Type': 'text/csv; charset=utf-8',
@@ -1285,88 +1291,6 @@ export default {
             return jsonResponse({ success: false, message: 'Lỗi xuất dữ liệu D1: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
           }
         }
-
-        if (importMatch && request.method === 'POST') {
-          const body = await request.json().catch(() => ({})) as any;
-          const items = Array.isArray(body.items) ? body.items : [];
-          if (!items.length) {
-            return jsonResponse({ success: false, message: 'Không có bản ghi hợp lệ để nhập.' }, 400, corsHeaders);
-          }
-          if (items.length > 1000) {
-            return jsonResponse({ success: false, message: 'Mỗi lần chỉ được nhập tối đa 1.000 bản ghi.' }, 400, corsHeaders);
-          }
-
-          try {
-            const info = await env.DB.prepare('PRAGMA table_info(' + moduleName + ')').all<any>();
-            const physicalColumns = new Set((info.results || []).map((column: any) => String(column.name)));
-            if (!physicalColumns.has('id')) {
-              return jsonResponse({ success: false, message: 'Cấu trúc phân hệ không hợp lệ: thiếu cột ID.' }, 500, corsHeaders);
-            }
-            let importedCount = 0;
-            const errors: string[] = [];
-            const duplicates: string[] = [];
-            const seenCodes = new Set<string>();
-
-            for (let index = 0; index < items.length; index++) {
-              try {
-                const clean = sanitizeObject(items[index]);
-                if (!clean || typeof clean !== 'object' || Array.isArray(clean)) {
-                  errors.push('Dòng ' + (index + 2) + ': dữ liệu không phải đối tượng hợp lệ.');
-                  continue;
-                }
-                const code = sanitizeString(clean.code || '').trim();
-                if (code && physicalColumns.has('code')) {
-                  if (seenCodes.has(code)) {
-                    duplicates.push(code);
-                    continue;
-                  }
-                  seenCodes.add(code);
-                  const existing = await env.DB.prepare('SELECT id FROM ' + moduleName + ' WHERE code = ? LIMIT 1').bind(code).first<any>();
-                  if (existing) {
-                    duplicates.push(code);
-                    continue;
-                  }
-                }
-
-                const now = new Date().toISOString();
-                clean.id = clean.id || moduleName.slice(0, 4) + '_' + crypto.randomUUID();
-                clean.created_at = clean.created_at || now;
-                clean.updated_at = now;
-                clean.status = clean.status || 'draft';
-                clean.created_by = clean.created_by || currentUser.fullName;
-
-                const customFields: Record<string, any> = {};
-                const entries: Array<[string, any]> = [];
-                for (const key of Object.keys(clean)) {
-                  const column = toSqlColumn(key);
-                  if (column === 'data_json') continue;
-                  if (physicalColumns.has(column)) entries.push([column, clean[key]]);
-                  else customFields[key] = clean[key];
-                }
-                if (physicalColumns.has('data_json')) {
-                  entries.push(['data_json', JSON.stringify(customFields)]);
-                }
-                const cols = entries.map(([column]) => column).join(', ');
-                const placeholders = entries.map(() => '?').join(', ');
-                const values = entries.map(([, value]) =>
-                  typeof value === 'object' && value !== null ? JSON.stringify(value) : value
-                );
-                await env.DB.prepare('INSERT INTO ' + moduleName + ' (' + cols + ') VALUES (' + placeholders + ')').bind(...values).run();
-                importedCount++;
-              } catch (e: any) {
-                errors.push('Dòng ' + (index + 2) + ': ' + (e?.message || 'Không thể ghi dữ liệu.'));
-              }
-            }
-
-            return jsonResponse({
-              success: true,
-              result: { importedCount, errors, duplicates }
-            }, 200, corsHeaders);
-          } catch (e: any) {
-            return jsonResponse({ success: false, message: 'Lỗi nhập dữ liệu vào D1: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
-          }
-        }
-
         return jsonResponse({ success: false, message: 'Phương thức yêu cầu không được hỗ trợ.' }, 405, corsHeaders);
       }
 
