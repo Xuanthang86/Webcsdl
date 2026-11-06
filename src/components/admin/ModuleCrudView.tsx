@@ -530,6 +530,16 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
             </span>
           )}
 
+          {pendingApprovalIds.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowImportApprovalModal(true)}
+              className="px-3 py-1.5 bg-amber-50 border border-amber-300 hover:bg-amber-100 text-amber-900 text-xs font-semibold rounded-lg"
+            >
+              Phê duyệt {pendingApprovalIds.length} bản ghi vừa nhập
+            </button>
+          )}
+
           <button
             type="button"
             onClick={handleExportExcel}
