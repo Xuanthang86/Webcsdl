@@ -25,7 +25,7 @@ export const getScienceTaskLevel = (record: BaseEntity): ScienceTaskLevel => {
     if (!value) return 'unknown';
 
     if (/cap co so|cap truong|co so/.test(value)) return 'local';
-    if (/quoc gia|nha nuoc|cap bo|bo khoa hoc|bo kh\s*&\s*cn|bo khcn|bo nganh|nafosted/.test(value)) return 'national';
+    if (/(^| )bo($| )|quoc gia|nha nuoc|cap bo|bo khoa hoc|bo kh\s*&\s*cn|bo khcn|bo nganh|nafosted/.test(value)) return 'national';
     if (/tinh|thanh pho|cap tinh|cap thanh pho|ubnd tinh|ubnd thanh pho/.test(value)) return 'provincial';
 
     return 'unknown';
