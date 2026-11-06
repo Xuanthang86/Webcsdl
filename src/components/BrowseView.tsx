@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { BaseEntity, ModuleType } from '../types';
 import { getScienceTaskUnits, matchesScienceTaskLevel, normalizeScienceTaskText } from '../utils/scienceTaskFilters';
 import { api } from '../services/api';
@@ -111,6 +111,16 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
   const [filterYear, setFilterYear] = useState('all');
   const [filterUnit, setFilterUnit] = useState('all');
   const [showUnitSuggestions, setShowUnitSuggestions] = useState(false);
+  const unitFilterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showUnitSuggestions) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!unitFilterRef.current?.contains(event.target as Node)) setShowUnitSuggestions(false);
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [showUnitSuggestions]);
   const [filterLevel, setFilterLevel] = useState('all');
   const [filterSpecialty, setFilterSpecialty] = useState('all');
   const [filterAcademicRank, setFilterAcademicRank] = useState('all');
@@ -567,7 +577,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                   <div className="flex items-center gap-1 min-w-0 w-full sm:w-auto sm:flex-1">
                     <span className="text-slate-500 whitespace-nowrap">Đơn vị chủ trì:</span>
-                    <div className="relative min-w-0 flex-1 sm:max-w-[320px]">
+                    <div ref={unitFilterRef} className="relative min-w-0 flex-1 sm:max-w-[320px]">
                       <input
                         type="search"
                         list="science-task-unit-options"
@@ -597,6 +607,10 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                       </datalist>
                       {showUnitSuggestions && (
                         <div id="science-task-unit-suggestions" role="listbox" className="absolute left-0 right-0 top-full z-[100] mt-1 max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+                          <div className="flex items-center justify-between px-2 py-1 border-b border-slate-100">
+                            <span className="text-[10px] font-semibold text-slate-500">Gợi ý đơn vị chủ trì</span>
+                            <button type="button" onClick={() => setShowUnitSuggestions(false)} className="text-[10px] font-semibold text-teal-700 px-2 py-1">Đóng ✕</button>
+                          </div>
                           {filteredUnitSuggestions.length > 0 ? filteredUnitSuggestions.map(unit => (
                             <button
                               key={unit}
