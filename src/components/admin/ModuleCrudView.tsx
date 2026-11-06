@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { AttachmentManagerModal } from '../AttachmentManagerModal';
-import { getScienceTaskUnit, getScienceTaskYear, matchesScienceTaskLevel, normalizeScienceTaskText } from '../../utils/scienceTaskFilters';
+import { getScienceTaskUnits, getScienceTaskYears, matchesScienceTaskLevel, normalizeScienceTaskText } from '../../utils/scienceTaskFilters';
 
 interface ModuleCrudViewProps {
   moduleType: ModuleType;
@@ -491,10 +491,10 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     .toLowerCase();
 
   const availableTaskYears = moduleType === 'science_tasks'
-    ? Array.from(new Set(records.map(getScienceTaskYear).filter(Boolean))).sort().reverse()
+    ? Array.from(new Set(records.flatMap(getScienceTaskYears))).sort().reverse()
     : [];
   const availableTaskUnits = moduleType === 'science_tasks'
-    ? Array.from(new Set(records.map(getScienceTaskUnit).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'vi'))
+    ? Array.from(new Set(records.flatMap(getScienceTaskUnits))).sort((a, b) => a.localeCompare(b, 'vi'))
     : [];
 
   const filteredRecords = records.filter(item => {
@@ -509,7 +509,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
 
     if (moduleType === 'science_tasks') {
       if (taskLevelFilter !== 'all' && !matchesScienceTaskLevel(item, taskLevelFilter)) return false;
-      if (taskYearFilter !== 'all' && getScienceTaskYear(item) !== taskYearFilter) return false;
+      if (taskYearFilter !== 'all' && !getScienceTaskYears(item).includes(taskYearFilter)) return false;
       if (taskUnitFilter !== 'all') {
         const unitQuery = normalizeScienceTaskText(taskUnitFilter);
         const unitValues = [
@@ -723,6 +723,9 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
             <option value="approved">Đã phê duyệt</option>
             <option value="under_review">Đang thẩm định</option>
             <option value="needs_revision">Yêu cầu bổ sung</option>
+            <option value="submitted">Đã gửi</option>
+            <option value="rejected">Từ chối</option>
+            <option value="archived">Lưu trữ</option>
             <option value="draft">Bản nháp</option>
           </select>
 
