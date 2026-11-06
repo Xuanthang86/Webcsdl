@@ -95,6 +95,8 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [actionSuccessToast, setActionSuccessToast] = useState<string | null>(null);
   const [actionErrorToast, setActionErrorToast] = useState<string | null>(null);
@@ -372,6 +374,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   useEffect(() => {
     loadData();
     setSelectedIds([]);
+    setCurrentPage(1);
   }, [moduleType]);
 
   const handleOpenCreate = () => {
@@ -459,16 +462,26 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     }
   };
 
-  // Filtered records
+  // Accent-insensitive search across every hydrated field, including imported spreadsheet extras.
+  const normalizeSearchText = (value: any): string => String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\\u0300-\\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .toLowerCase();
+
   const filteredRecords = records.filter(item => {
     if (statusFilter !== 'all' && item.status !== statusFilter) return false;
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const text = `${item.code} ${item.title} ${item.ownerName} ${item.field}`.toLowerCase();
-      if (!text.includes(q)) return false;
+      const q = normalizeSearchText(searchQuery.trim());
+      const searchableText = Object.values(item as any)
+        .map(value => Array.isArray(value) ? value.join(' ') : (value && typeof value === 'object' ? JSON.stringify(value) : String(value ?? '')))
+        .join(' ');
+      if (!normalizeSearchText(searchableText).includes(q)) return false;
     }
     return true;
   });
+  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pageSize));
+  const visibleRecords = filteredRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   if (isModuleRestricted) {
     return (
@@ -519,7 +532,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
             {getModuleListTitle(moduleType)}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Tổng cộng: <span className="font-semibold text-slate-800 font-mono">{records.length}</span> bản ghi tích hợp
+            Tổng cộng: <span className="font-semibold text-slate-800 font-mono">{records.length}</span> bản ghi · Đang hiển thị {filteredRecords.length} kết quả phù hợp
           </p>
         </div>
 
@@ -598,7 +611,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
             type="text"
             placeholder="Tìm theo mã, tên bản ghi, đơn vị chủ trì, lĩnh vực..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
             className="w-full h-9 pl-9 pr-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-teal-700 text-xs"
           />
         </div>
@@ -607,7 +620,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
           <span className="text-slate-400 whitespace-nowrap">Trạng thái:</span>
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
             className="h-9 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none text-xs font-medium"
           >
             <option value="all">Tất cả trạng thái</option>
@@ -657,10 +670,10 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                   </td>
                 </tr>
               ) : (
-                filteredRecords.map((item, idx) => (
+                visibleRecords.map((item, idx) => (
                   <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3 px-4 text-center text-slate-400 font-mono text-[11px]">
-                      {idx + 1}
+                      {(currentPage - 1) * pageSize + idx + 1}
                     </td>
                     <td className="py-3 px-4 font-mono font-medium text-teal-800">
                       {item.code}
@@ -847,6 +860,42 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
               )}
             </tbody>
           </table>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-white text-xs">
+          <div className="text-slate-500">
+            Hiển thị {filteredRecords.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredRecords.length)} / {filteredRecords.length} bản ghi
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-slate-500 whitespace-nowrap" htmlFor="module-page-size">Số dòng/trang</label>
+            <select
+              id="module-page-size"
+              value={pageSize}
+              onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+              className="h-8 px-2 border border-slate-300 rounded-lg bg-white text-slate-700"
+            >
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={200}>200</option>
+            </select>
+            <button
+              type="button"
+              disabled={currentPage <= 1}
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              className="px-3 py-1.5 border border-slate-300 rounded-lg disabled:opacity-40 hover:bg-slate-50"
+            >
+              Trước
+            </button>
+            <span className="text-slate-600 tabular-nums">Trang {currentPage}/{totalPages}</span>
+            <button
+              type="button"
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              className="px-3 py-1.5 border border-slate-300 rounded-lg disabled:opacity-40 hover:bg-slate-50"
+            >
+              Sau
+            </button>
+          </div>
         </div>
       </div>
 
