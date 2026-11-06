@@ -2091,12 +2091,12 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                 <CheckCircle className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">Dữ liệu đã nhập ở trạng thái nháp</h3>
-                <p className="text-xs text-slate-500 mt-0.5">{pendingApprovalIds.length} bản ghi đang chờ bước phê duyệt.</p>
+                <h3 className="text-base font-bold text-slate-900">Các bản ghi đang ở trạng thái nháp</h3>
+                <p className="text-xs text-slate-500 mt-0.5">{pendingApprovalIds.length} bản ghi chưa được công khai và đang chờ bước phê duyệt.</p>
               </div>
             </div>
             <p className="text-sm leading-relaxed text-slate-600">
-              Các bản ghi này chưa được hiển thị công khai. Chỉ khi xác nhận phê duyệt, hệ thống mới chuyển trạng thái sang “Đã phê duyệt” và công khai theo quy trình.
+              Các bản ghi nháp này chưa được hiển thị công khai. Chỉ khi xác nhận phê duyệt, hệ thống mới chuyển trạng thái sang “Đã phê duyệt” và công khai theo quy trình.
             </p>
             <div className="flex flex-wrap justify-end gap-2 pt-2 border-t border-slate-100">
               <button type="button" onClick={() => setShowImportApprovalModal(false)} className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold">
