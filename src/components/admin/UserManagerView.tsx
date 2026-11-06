@@ -233,7 +233,7 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
         }
         await api.createUser({
           username: formUsername.trim(),
-          password: formPassword.trim() || 'admin123',
+          password: formPassword.trim(),
           fullName: formFullName.trim(),
           email: formEmail.trim(),
           phone: formPhone.trim(),
