@@ -1955,7 +1955,7 @@ export default {
           hovatennguoidungdau: 'leader_name', hotennguoidungdau: 'leader_name',
           sodienthoainguoidungdau: 'leader_phone', emailnguoidungdau: 'leader_email',
           nambatdaukhoinghiep: 'founded_year', tentochuc: 'name', diachi: 'address',
-          thongtinvetochuc: 'description', tenduan: 'title',
+          thongtinvetochuc: 'information', tenduan: 'title',
           linhvuckhoinghiep: 'field', tomtatveduan: 'summary',
           soluongthanhvienthamgiaduan: 'team_size', duanduocuomtaotutochuc: 'incubator',
           tenytuong: 'title', tenytuongkhoinghiep: 'title', thuocxaphuong: 'ward_school',
@@ -2006,7 +2006,9 @@ export default {
             if (key.startsWith('tongsonhansu')) target = 'current_staff_count';
             if (key.startsWith('soluongthanhvienthamgia')) target = 'team_size';
             if (key.startsWith('nhomytuongdanghoctapcongtactaidonvi')) target = 'organization';
+            if (key.startsWith('thuocxaphuong') && ['universities', 'featured_startups'].includes(moduleName)) target = 'ward';
             if (key.startsWith('tenduan') && moduleName === 'startup_projects') target = primaryColumn;
+            if (key.startsWith('tenduan') && moduleName === 'featured_startups') target = 'project_name';
             if (key.startsWith('tendetaiduan')) target = 'projects';
             if (key === 'trangthai' && moduleName === 'science_tasks') target = 'acceptance_result';
             if (['tendetai', 'tensangkien', 'tenduan', 'tenytuong', 'tendoanhnghiep', 'tentochuc', 'tentruong', 'tenxaphuong', 'tenchuyengia'].includes(key)) {
