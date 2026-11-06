@@ -2008,6 +2008,7 @@ export default {
             let target = aliases[key] || rawKey.replace(/([A-Z])/g, '_$1').toLowerCase();
             if (['title', 'name', 'projectname'].includes(key) && !tableColumns.has(target)) target = primaryColumn;
             if (key.startsWith('diachihoatdong')) target = 'address';
+            if (key === 'nambatdaukhoinghiep' && moduleName === 'startup_projects') target = 'start_year';
             if (key === 'thoigianthuchien' && moduleName === 'experts') target = 'project_duration';
             if (key === 'thanhvienthamgia' && moduleName === 'experts') target = 'project_members';
             if (key.startsWith('website')) target = 'website';
