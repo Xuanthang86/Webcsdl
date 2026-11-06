@@ -1875,7 +1875,7 @@ export default {
           return jsonResponse({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' }, 400, corsHeaders);
         }
         const isBulkApproval = routeParts[1] === 'approve';
-        const canImportBulk = ['super_admin', 'system_admin', 'data_officer'].includes(currentUser.role);
+        const canImportBulk = ['super_admin', 'system_admin', 'data_officer', 'partner_officer'].includes(currentUser.role);
         const canApproveBulk = ['super_admin', 'system_admin', 'agency_leader'].includes(currentUser.role);
         if (isBulkApproval ? !canApproveBulk : !canImportBulk) {
           return jsonResponse({ success: false, message: isBulkApproval ? 'Bạn không có quyền phê duyệt dữ liệu hàng loạt.' : 'Bạn không có quyền nhập dữ liệu hàng loạt.' }, 403, corsHeaders);
@@ -2070,8 +2070,8 @@ export default {
             if (tableColumns.has('created_at')) values.created_at = duplicate?.created_at || new Date().toISOString();
             if (tableColumns.has('updated_at')) values.updated_at = new Date().toISOString();
             if (tableColumns.has('created_by')) values.created_by = duplicate?.created_by || currentUser.fullName;
-            if (tableColumns.has('verification_status')) values.verification_status = duplicate?.verification_status || 'unverified';
-            if (tableColumns.has('publicity_level')) values.publicity_level = duplicate?.publicity_level || 'private';
+            if (tableColumns.has('verification_status')) values.verification_status = duplicate?.verification_status || (duplicate && ['approved', 'published'].includes(String(duplicate.status || '').toLowerCase()) ? 'verified' : 'unverified');
+            if (tableColumns.has('publicity_level')) values.publicity_level = duplicate?.publicity_level || (duplicate && ['approved', 'published'].includes(String(duplicate.status || '').toLowerCase()) ? 'public' : 'private');
             if (tableColumns.has('data_json')) {
               let customFields: Record<string, any> = {};
               try {
