@@ -2029,7 +2029,7 @@ export default {
             if (key.startsWith('tenduan') && moduleName === 'featured_startups') target = 'project_name';
             if (key.startsWith('tendetaiduan')) target = 'projects';
             if (key === 'trangthai' && moduleName === 'science_tasks') target = 'acceptance_result';
-            if (['tendetai', 'tensangkien', 'tenduan', 'tenytuong', 'tendoanhnghiep', 'tentochuc', 'tentruong', 'tenxaphuong', 'tenchuyengia'].includes(key)) {
+            if (['tendetai', 'tensangkien', 'tenduan', 'tenytuong', 'tenytuongkhoinghiep', 'tendoanhnghiep', 'tentochuc', 'tentruong', 'tentruongdaihoccaodang', 'tenxaphuong', 'tenxaphuongdackhu', 'tenchuyengia'].includes(key)) {
               target = primaryColumn;
             }
             if (tableColumns.has(target)) mapped[target] = rawValue;
