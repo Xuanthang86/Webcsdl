@@ -293,23 +293,23 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Mã / STT:</span>
-                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{entity.code || entity.id}</span>
+                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{safeDisplayValue(entity.code ?? entity.id)}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tên đề tài:</span>
-                    <span className="sm:col-span-2 font-bold text-slate-900 text-sm">{entity.title}</span>
+                    <span className="sm:col-span-2 font-bold text-slate-900 text-sm">{safeDisplayValue(entity.title)}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Cấp quản lý:</span>
-                    <span className="sm:col-span-2 font-semibold text-teal-800">{entity.managementLevel || entity.managingAgency || 'Cấp Thành phố'}</span>
+                    <span className="sm:col-span-2 font-semibold text-teal-800">{safeDisplayValue(entity.managementLevel ?? entity.managingAgency)}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Cơ quan chủ trì:</span>
-                    <span className="sm:col-span-2 font-medium text-slate-800">{entity.leadOrganization || entity.ownerName || '—'}</span>
+                    <span className="sm:col-span-2 font-medium text-slate-800">{safeDisplayValue(entity.leadOrganization ?? entity.ownerName)}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Chủ nhiệm đề tài:</span>
-                    <span className="sm:col-span-2 font-semibold text-slate-900">{entity.principalInvestigator || '—'}</span>
+                    <span className="sm:col-span-2 font-semibold text-slate-900">{safeDisplayValue(entity.principalInvestigator)}</span>
                   </div>
 
                   {/* RESTRICTED FIELD: Thành viên tham gia */}
@@ -334,11 +334,11 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Lĩnh vực:</span>
-                    <span className="sm:col-span-2 font-medium text-slate-800">{entity.field || 'Đa ngành'}</span>
+                    <span className="sm:col-span-2 font-medium text-slate-800">{safeDisplayValue(entity.field, 'Chưa cập nhật')}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tóm tắt đề tài:</span>
-                    <p className="sm:col-span-2 text-slate-700 leading-relaxed">{entity.description || entity.summary || 'Chưa cập nhật tóm tắt nội dung nghiên cứu.'}</p>
+                    <p className="sm:col-span-2 text-slate-700 leading-relaxed">{safeDisplayValue(entity.description ?? entity.summary)}</p>
                   </div>
 
                   {/* RESTRICTED FIELD: Tài liệu minh chứng */}
