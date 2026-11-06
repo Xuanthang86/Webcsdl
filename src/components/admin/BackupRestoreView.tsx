@@ -9,99 +9,9 @@ interface BackupRestoreViewProps {
 export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [snapshot, setSnapshot] = useState<any>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
-  const [backupFile, setBackupFile] = useState<File | null>(null);
-  const [backupUrl, setBackupUrl] = useState<string | null>(null);
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
-  const handleDownload = async () => {
-    setIsDownloading(true);
-    setMessage(null);
-    setBackupFile(null);
-    if (backupUrl) {
-      window.URL.revokeObjectURL(backupUrl);
-      setBackupUrl(null);
-    }
-
-    try {
-      const responseBlob = await api.downloadBackup();
-      if (!responseBlob || responseBlob.size === 0) {
-        throw new Error('Tệp sao lưu được máy chủ trả về đang trống. Vui lòng thử lại.');
-      }
-
-      // Read as UTF-8 and add a BOM so iOS previewers and file providers
-      // consistently recognize Vietnamese text in the exported JSON.
-      const responseText = await responseBlob.text();
-      const jsonText = responseText.charCodeAt(0) === 0xFEFF
-        ? responseText
-        : `\uFEFF${responseText}`;
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const fileName = `portal_database_backup_${timestamp}.json`;
-      const file = new File([jsonText], fileName, { type: 'application/json;charset=utf-8' });
-      const url = window.URL.createObjectURL(file);
-      setBackupFile(file);
-      setBackupUrl(url);
-
-      // If the response already contains mojibake, do not silently rewrite
-      // database values. Preserve the backup and warn the administrator.
-      const hasMojibake = /(?:Ã.|á»|áº|Â.)/.test(responseText);
-      const isIPadDesktopMode = window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1;
-      const isMobileBrowser = /iPhone|iPad|iPod|Android/i.test(window.navigator.userAgent) || isIPadDesktopMode;
-
-      if (hasMojibake) {
-        setMessage({
-          type: 'error',
-          text: 'Tệp đã được tạo nhưng dữ liệu bên trong có dấu hiệu sai mã hóa tiếng Việt từ nguồn dữ liệu. Không sử dụng tệp này để phục hồi cho đến khi kiểm tra và xử lý dữ liệu nguồn.'
-        });
-      } else if (isMobileBrowser) {
-        setMessage({
-          type: 'success',
-          text: 'Đã tạo tệp sao lưu. Hãy chọn “Chia sẻ / Lưu tệp” để mở bảng chia sẻ của thiết bị và chọn “Lưu vào Tệp”. Nếu ứng dụng hiện tại không hỗ trợ, hãy chọn “Tải tệp xuống” hoặc mở trang quản trị bằng Safari.'
-        });
-      } else {
-        // Do not open a new tab or trigger a download automatically after the
-        // asynchronous fetch. In-app browsers may block that action; expose a
-        // normal, user-initiated download link below instead.
-        setMessage({
-          type: 'success',
-          text: 'Đã tạo tệp sao lưu. Nhấn “Tải tệp xuống” để lưu tệp vào thiết bị.'
-        });
-      }
-    } catch (error: any) {
-      setMessage({ type: 'error', text: error.message || 'Không thể tạo bản sao lưu dữ liệu.' });
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  const handleShareBackup = async () => {
-    if (!backupFile) return;
-    try {
-      const shareData = { files: [backupFile], title: 'Bản sao lưu dữ liệu KHCN' };
-      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-        await navigator.share(shareData);
-      } else if (backupUrl) {
-        const anchor = document.createElement('a');
-        anchor.href = backupUrl;
-        anchor.download = backupFile.name;
-        anchor.style.display = 'none';
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
-        setMessage({
-          type: 'success',
-          text: 'Trình duyệt chưa hỗ trợ chia sẻ tệp trực tiếp. Đã gửi yêu cầu tải tệp; hãy kiểm tra mục Tải về hoặc mở trang bằng Safari.'
-        });
-      } else {
-        throw new Error('Không thể tạo liên kết tải tệp. Vui lòng thử tạo bản sao lưu lại.');
-      }
-    } catch (error: any) {
-      if (error?.name === 'AbortError') return;
-      setMessage({ type: 'error', text: error.message || 'Không thể chia sẻ tệp sao lưu.' });
-    }
-  };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -181,37 +91,17 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
           <p className="text-xs text-amber-700">
             Lưu ý: Tệp ảnh và media lưu bên ngoài trên ImageKit không được đóng gói vào JSON; các đường dẫn liên kết trong cơ sở dữ liệu vẫn được sao lưu.
           </p>
-          <button
-            type="button"
-            onClick={handleDownload}
-            disabled={isDownloading}
-            className="min-h-10 w-full sm:w-auto px-4 py-2 rounded-lg bg-sky-800 hover:bg-sky-700 disabled:opacity-60 text-white text-sm font-semibold flex items-center justify-center gap-2"
+          {/* Navigate directly to the authenticated endpoint so the browser receives
+              Content-Disposition: attachment. A Blob URL would discard that header
+              and may be previewed inline by Safari or in-app browsers. */}
+          <a
+            href="/api/backup"
+            download
+            className="min-h-10 w-full sm:w-auto px-4 py-2 rounded-lg bg-sky-800 hover:bg-sky-700 text-white text-sm font-semibold flex items-center justify-center gap-2"
           >
             <Download className="w-4 h-4" />
-            {isDownloading ? 'Đang tạo bản sao lưu...' : 'Tải bản sao lưu dữ liệu'}
-          </button>
-          {backupFile && (
-            <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 space-y-2">
-              <p className="text-sm font-semibold text-sky-900 break-all">{backupFile.name}</p>
-              <button
-                type="button"
-                onClick={handleShareBackup}
-                className="min-h-10 w-full px-4 py-2 rounded-lg bg-sky-800 hover:bg-sky-700 text-white text-sm font-semibold flex items-center justify-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Chia sẻ / Lưu tệp
-              </button>
-              {backupUrl && (
-                <a
-                  href={backupUrl}
-                  download={backupFile.name}
-                  className="block text-center text-sm font-semibold text-sky-800 underline underline-offset-2"
-                >
-                  Tải tệp xuống
-                </a>
-              )}
-            </div>
-          )}
+            Tải bản sao lưu dữ liệu
+          </a>
         </section>
 
         <section className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
