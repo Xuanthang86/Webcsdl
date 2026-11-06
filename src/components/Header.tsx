@@ -231,8 +231,8 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="text-xs sm:text-base font-black tracking-tight text-white group-hover:text-sky-200 transition-colors uppercase leading-none truncate">
                   CƠ SỞ DỮ LIỆU
                 </span>
-                <span className="text-[10px] sm:text-xs font-bold text-sky-200 tracking-tight group-hover:text-sky-100 transition-colors truncate mt-0.5 leading-tight uppercase">
-                  VỀ KHCN VÀ KNĐMST THÀNH PHỐ ĐÀ NẴNG
+                <span className="text-[10px] sm:text-xs lg:text-[9px] xl:text-[10px] font-bold text-sky-200 tracking-tight lg:tracking-[-0.04em] group-hover:text-sky-100 transition-colors whitespace-nowrap mt-0.5 leading-tight uppercase">
+                  VỀ KHOA HỌC, CÔNG NGHỆ VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG
                 </span>
               </div>
             </div>
