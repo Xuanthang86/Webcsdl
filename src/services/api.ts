@@ -325,7 +325,7 @@ export const api = {
   },
 
   // Import / Export
-  async importRecords(moduleType: ModuleType, items: any[]): Promise<{ importedCount: number; errors: string[]; duplicates: string[] }> {
+  async importRecords(moduleType: ModuleType, items: any[]): Promise<{ importedCount: number; importedIds: string[]; errors: string[]; duplicates: string[] }> {
     const res = await authFetch(`/api/import/${moduleType}`, {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
@@ -335,8 +335,17 @@ export const api = {
     return json.result;
   },
 
-  async batchImport(moduleType: ModuleType, items: any[], conflictAction?: 'skip' | 'overwrite'): Promise<{ importedCount: number; errors: string[]; duplicates: string[] }> {
+  async batchImport(moduleType: ModuleType, items: any[], conflictAction?: 'skip' | 'overwrite'): Promise<{ importedCount: number; importedIds: string[]; errors: string[]; duplicates: string[] }> {
     return this.importRecords(moduleType, items);
+  },
+
+  async approveImportedRecords(moduleType: ModuleType, ids: string[]): Promise<{ success: boolean; approvedCount: number; message?: string }> {
+    const res = await authFetch(`/api/import/${moduleType}/approve`, {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ ids })
+    });
+    return parseJsonResponse(res);
   },
 
   getExportUrl(moduleType: ModuleType): string {
