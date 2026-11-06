@@ -1986,7 +1986,7 @@ export default {
           experts: ['__primary__', 'birth_date', 'gender', 'start_work_year', 'research_title', 'job_title', 'email', 'phone', 'field', 'specialty', 'workplace', 'training_process', 'work_experience', 'foreign_languages', 'experience_notes'],
           startups: ['__primary__', 'field', 'summary', 'problem_solved', 'founder_count', 'current_staff_count', 'leader_name', 'leader_phone', 'leader_email', 'founded_year'],
           support_organizations: ['__primary__', 'address', 'information'],
-          startup_projects: ['__primary__', 'address', 'field', 'summary', 'problem_solved', 'team_size', 'leader_name', 'leader_phone', 'leader_email', 'incubator', 'founded_year'],
+          startup_projects: ['__primary__', 'address', 'field', 'summary', 'problem_solved', 'team_size', 'leader_name', 'leader_phone', 'leader_email', 'incubator', 'start_year'],
           startup_ideas: ['__primary__', 'ward_school', 'summary', 'problem_solved', 'team_size', 'leader_name', 'leader_phone', 'leader_email', 'mentor_teacher', 'organization'],
           wards: ['__primary__', 'address', 'contact_info'],
           universities: ['__primary__', 'ward', 'address', 'contact_info'],
