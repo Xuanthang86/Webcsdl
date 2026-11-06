@@ -60,7 +60,7 @@ export const getScienceTaskLevel = (record: BaseEntity): ScienceTaskLevel => {
 
 export const matchesScienceTaskLevel = (record: BaseEntity, selectedLevel: string): boolean => {
   const level = getScienceTaskLevel(record);
-  if (selectedLevel === 'Cấp Quốc gia') return level === 'national';
+  if (selectedLevel === 'Cấp Bộ' || selectedLevel === 'Cấp Quốc gia') return level === 'national';
   if (selectedLevel === 'Cấp Thành phố') return level === 'provincial';
   if (selectedLevel === 'Cấp Cơ sở') return level === 'local';
   if (selectedLevel === 'Chưa phân loại' || selectedLevel === 'Chưa xác định') return level === 'unknown';
