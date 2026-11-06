@@ -1266,7 +1266,8 @@ export default {
 
       // K. Global Search across all D1 modules.
       if (url.pathname === '/api/search') {
-        const q = sanitizeString(url.searchParams.get('q') || '').trim().toLowerCase();
+        const rawQuery = sanitizeString(url.searchParams.get('q') || '').trim();
+        const q = rawQuery.toLowerCase();
         const moduleType = url.searchParams.get('moduleType') || '';
         const field = sanitizeString(url.searchParams.get('field') || '');
         const status = sanitizeString(url.searchParams.get('status') || '');
@@ -1283,9 +1284,11 @@ export default {
             const where: string[] = [];
             const params: any[] = [];
             if (q && searchable.length) {
-              const upperQ = q.toUpperCase();
-              where.push('(' + searchable.map(column => `(CAST("${column}" AS TEXT) LIKE ? OR CAST("${column}" AS TEXT) LIKE ?)`).join(' OR ') + ')');
-              searchable.forEach(() => params.push(`%${q}%`, `%${upperQ}%`));
+              const upperQ = rawQuery.toUpperCase();
+              const titleCaseQ = rawQuery.replace(/(^|\\s)([^\\s])/g, (_match: string, prefix: string, letter: string) => prefix + letter.toUpperCase());
+              const queryVariants = [...new Set([rawQuery, q, upperQ, titleCaseQ])];
+              where.push('(' + searchable.map(column => '(' + queryVariants.map(() => `CAST("${column}" AS TEXT) LIKE ?`).join(' OR ') + ')').join(' OR ') + ')');
+              searchable.forEach(() => queryVariants.forEach(variant => params.push(`%${variant}%`)));
             }
             if (field && columns.has('field')) {
               where.push('LOWER(CAST(field AS TEXT)) = LOWER(?)');
