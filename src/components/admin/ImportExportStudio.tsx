@@ -122,7 +122,8 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
             'Năm bắt đầu công tác', 'Chức danh nghiên cứu', 'Chức vụ', 'Email', 'Điện thoại',
             'Lĩnh vực', 'Chuyên ngành', 'Tên đơn vị công tác', 'Quá trình đào tạo và học tập',
             'Quá trình công tác', 'Ngoại ngữ', 'Tên bài báo/Tạp chí/Quốc gia', 'Tên văn bằng',
-            'Tên công trình/Kết quả nghiên cứu', 'Tên đề tài/Dự án', 'Giải thưởng', 'Kinh nghiệm'
+            'Tên công trình/Kết quả nghiên cứu', 'Tên đề tài/Dự án', 'Cấp đề tài', 'Thời gian thực hiện',
+            'Thành viên tham gia', 'Chủ trì/Tham gia', 'Tình trạng', 'Giải thưởng', 'Kinh nghiệm'
           ],
           rows: [
             [
@@ -134,8 +135,8 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
               '2004-2012: Giảng viên; 2013-nay: Trưởng phòng nghiên cứu',
               'Tiếng Anh (C1); Tiếng Nhật (N2)', 'Bài báo AI và Robot y tế, IEEE, Hoa Kỳ',
               'Bằng Tiến sĩ Khoa học máy tính', 'Hệ thống robot hỗ trợ chẩn đoán hình ảnh',
-              'Đề tài AI y tế cấp thành phố (2024-2026), Chủ trì', 'Giải thưởng KH&CN thành phố 2025',
-              '20 năm nghiên cứu và triển khai ứng dụng AI'
+              'Đề tài AI y tế cấp thành phố', 'Cấp Thành phố', '2024-2026', '8 thành viên', 'Chủ trì', 'Đã nghiệm thu',
+              'Giải thưởng KH&CN thành phố 2025', '20 năm nghiên cứu và triển khai ứng dụng AI'
             ]
           ]
         };
