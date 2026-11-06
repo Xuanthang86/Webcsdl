@@ -92,8 +92,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const displayBudget = activeYearData ? activeYearData.budget : stats.totalBudgetApproved;
   const displaySavings = activeYearData ? activeYearData.savings : stats.totalCostSavings;
 
-  const years = ['2021', '2022', '2023', '2024', '2025', '2026'];
-  const taskYears = Object.keys(stats.tasksByYear || {}).filter(year => /^\\d{4}$/.test(year)).sort();
+  const defaultYears = Array.from(
+    { length: Math.max(6, currentYear - 2021 + 1) },
+    (_, index) => String(2021 + index)
+  );
+  const yearMaps = [
+    stats.tasksByYear,
+    stats.initiativesByYear,
+    stats.startupsByYear,
+    stats.patentsByYear,
+    stats.expertsByYear,
+    stats.projectsByYear,
+    stats.ideasByYear,
+    stats.supportOrgsByYear,
+    stats.universitiesByYear,
+    stats.wardsByYear
+  ];
+  const years = Array.from(new Set([
+    ...defaultYears,
+    ...yearMaps.flatMap(yearMap => Object.keys(yearMap || {}))
+  ])).filter(year => /^\d{4}$/.test(year)).sort();
+  const taskYears = Object.keys(stats.tasksByYear || {}).filter(year => /^\d{4}$/.test(year)).sort();
   const taskChartYears = taskYears.length > 0 ? taskYears : years;
   const maxTasksYear = Math.max(...taskChartYears.map(y => (stats.tasksByYear?.[y] ?? (stats.tasksByYear as any)?.[Number(y)]) || 0), 1);
   const maxInitiativesYear = Math.max(...years.map(y => (stats.initiativesByYear?.[y] ?? (stats.initiativesByYear as any)?.[Number(y)]) || 0), 1);
