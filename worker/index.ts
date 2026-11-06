@@ -87,6 +87,21 @@ function hydrateModuleRow(row: any, moduleName?: string): any {
   return { moduleType: moduleName || row.module_type || row.moduleType, ...normalized, ...custom };
 }
 
+
+// Ensure each approved data module can retain additional fields without discarding
+// spreadsheet columns that are not yet represented in the physical D1 schema.
+async function ensureModuleDataJson(db: D1Database, moduleName: string): Promise<Set<string>> {
+  if (!ALLOWED_MODULES.includes(moduleName)) throw new Error('Invalid module');
+  let info = await db.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
+  let columns = new Set((info.results || []).map((column: any) => String(column.name)));
+  if (!columns.has('data_json')) {
+    await db.prepare(`ALTER TABLE ${moduleName} ADD COLUMN data_json TEXT`).run();
+    info = await db.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
+    columns = new Set((info.results || []).map((column: any) => String(column.name)));
+  }
+  return columns;
+}
+
 // Helper: Origin & CSRF validation
 function isAllowedOrigin(origin: string | null, requestUrl: string): boolean {
   if (!origin) return true;
@@ -391,64 +406,91 @@ export default {
       // B. System Configuration
       if (url.pathname === '/api/config') {
         if (request.method === 'GET') {
-          if (env.DB) {
-            try {
-              const cfg = await env.DB.prepare('SELECT * FROM system_config LIMIT 1').first<any>();
-              if (cfg) {
-                return jsonResponse({
-                  success: true,
-                  config: {
-                    portalName: cfg.portal_name,
-                    governingAgency: cfg.governing_agency,
-                    contactAddress: cfg.contact_address,
-                    cityArea: cfg.city_area || 'Thành phố Đà Nẵng',
-                    contactEmail: cfg.contact_email,
-                    contactPhone: cfg.contact_phone,
-                    enablePublicSubmissions: Boolean(cfg.allow_public_submission ?? 1),
-                    requireApproval: Boolean(cfg.require_approval ?? 1)
-                  }
-                }, 200, corsHeaders);
-              }
-            } catch {}
-          }
-          return jsonResponse({
-            success: true,
-            config: {
-              portalName: 'Cổng dữ liệu KHCN & KNĐMST TP Đà Nẵng',
-              governingAgency: 'ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ',
-              contactAddress: 'Trung tâm Đổi mới sáng tạo Đà Nẵng, 24 Trần Phú, Hải Châu, Đà Nẵng',
-              cityArea: 'Thành phố Đà Nẵng',
-              contactEmail: 'sokhcn@danang.gov.vn',
-              contactPhone: '(0236) 3822 851',
-              enablePublicSubmissions: true,
-              requireApproval: true
+          if (!env.DB) return jsonResponse({ success: false, message: 'CSDL D1 chưa kết nối.' }, 500, corsHeaders);
+          try {
+            const cfg = await env.DB.prepare('SELECT * FROM system_config ORDER BY updated_at DESC LIMIT 1').first<any>();
+            if (cfg) {
+              return jsonResponse({
+                success: true,
+                config: {
+                  portalName: cfg.portal_name,
+                  governingAgency: cfg.governing_agency,
+                  contactAddress: cfg.contact_address,
+                  cityArea: cfg.city_area || 'Thành phố Đà Nẵng',
+                  contactEmail: cfg.contact_email,
+                  contactPhone: cfg.contact_phone,
+                  enablePublicSubmissions: Boolean(cfg.allow_public_submission ?? 1),
+                  requireApproval: Boolean(cfg.require_approval ?? 1)
+                }
+              }, 200, corsHeaders);
             }
-          }, 200, corsHeaders);
+            return jsonResponse({
+              success: true,
+              config: {
+                portalName: 'Cổng dữ liệu KHCN & KNĐMST TP Đà Nẵng',
+                governingAgency: 'ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ',
+                contactAddress: 'Trung tâm Đổi mới sáng tạo Đà Nẵng, 24 Trần Phú, Hải Châu, Đà Nẵng',
+                cityArea: 'Thành phố Đà Nẵng',
+                contactEmail: 'sokhcn@danang.gov.vn',
+                contactPhone: '(0236) 3822 851',
+                enablePublicSubmissions: true,
+                requireApproval: true
+              }
+            }, 200, corsHeaders);
+          } catch (error: any) {
+            return jsonResponse({ success: false, message: 'Không thể đọc cấu hình D1: ' + (error?.message || 'Lỗi không xác định') }, 500, corsHeaders);
+          }
         }
 
         if (request.method === 'PUT') {
           if (!['super_admin', 'system_admin'].includes(currentUser.role)) {
             return jsonResponse({ success: false, message: 'Chỉ Quản trị viên mới có quyền cập nhật cấu hình hệ thống.' }, 403, corsHeaders);
           }
+          if (!env.DB) return jsonResponse({ success: false, message: 'CSDL D1 chưa kết nối.' }, 500, corsHeaders);
           const body = await request.json().catch(() => ({})) as any;
           const clean = sanitizeObject(body);
-          if (env.DB) {
-            try {
-              await env.DB.prepare(`
-                UPDATE system_config 
+          try {
+            const existing = await env.DB.prepare('SELECT id FROM system_config ORDER BY updated_at DESC LIMIT 1').first<any>();
+            const values = [
+              clean.portalName ?? 'Cổng dữ liệu KHCN & KNĐMST TP Đà Nẵng',
+              clean.governingAgency ?? 'SỞ KHOA HỌC VÀ CÔNG NGHỆ ĐÀ NẴNG',
+              clean.contactAddress ?? '',
+              clean.contactEmail ?? '',
+              clean.contactPhone ?? '',
+              clean.cityArea ?? 'Thành phố Đà Nẵng'
+            ];
+            let result: any;
+            if (existing?.id) {
+              result = await env.DB.prepare(`
+                UPDATE system_config
                 SET portal_name = ?, governing_agency = ?, contact_address = ?, contact_email = ?, contact_phone = ?, city_area = ?, updated_at = datetime('now')
-                WHERE id = 'default'
-              `).bind(
-                clean.portalName || 'Cổng dữ liệu KHCN & KNĐMST TP Đà Nẵng',
-                clean.governingAgency || 'SỞ KHOA HỌC VÀ CÔNG NGHỆ ĐÀ NẴNG',
-                clean.contactAddress || '',
-                clean.contactEmail || '',
-                clean.contactPhone || '',
-                clean.cityArea || 'Thành phố Đà Nẵng'
-              ).run();
-            } catch {}
+                WHERE id = ?
+              `).bind(...values, existing.id).run();
+            } else {
+              result = await env.DB.prepare(`
+                INSERT INTO system_config (id, portal_name, governing_agency, contact_address, contact_email, contact_phone, city_area, created_at, updated_at)
+                VALUES ('default', ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+              `).bind(...values).run();
+            }
+            if (Number(result.meta?.changes || 0) < 1) {
+              throw new Error('D1 không xác nhận có bản ghi cấu hình được cập nhật.');
+            }
+            const saved = await env.DB.prepare('SELECT * FROM system_config WHERE id = ?').bind(existing?.id || 'default').first<any>();
+            if (!saved) throw new Error('Không đọc lại được cấu hình sau khi lưu.');
+            const savedConfig = {
+              portalName: saved.portal_name,
+              governingAgency: saved.governing_agency,
+              contactAddress: saved.contact_address,
+              cityArea: saved.city_area || 'Thành phố Đà Nẵng',
+              contactEmail: saved.contact_email,
+              contactPhone: saved.contact_phone,
+              enablePublicSubmissions: Boolean(saved.allow_public_submission ?? 1),
+              requireApproval: Boolean(saved.require_approval ?? 1)
+            };
+            return jsonResponse({ success: true, config: savedConfig, message: 'Đã lưu cấu hình hệ thống vào D1.' }, 200, corsHeaders);
+          } catch (error: any) {
+            return jsonResponse({ success: false, message: 'Không thể lưu cấu hình vào D1: ' + (error?.message || 'Lỗi không xác định') }, 500, corsHeaders);
           }
-          return jsonResponse({ success: true, config: clean }, 200, corsHeaders);
         }
       }
 
@@ -778,6 +820,13 @@ export default {
           const managedModules = Array.isArray(body.managedModules) ? body.managedModules : [];
           const departmentJson = JSON.stringify(managedModules);
 
+          const allowedRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert', 'partner_officer', 'org_representative', 'expert_user', 'investor_user', 'public_user'];
+          if (!allowedRoles.includes(role)) {
+            return jsonResponse({ success: false, message: 'Vai trò tài khoản không hợp lệ.' }, 400, corsHeaders);
+          }
+          if (currentUser.role === 'system_admin' && role === 'super_admin') {
+            return jsonResponse({ success: false, message: 'Quản trị viên hệ thống chỉ được tạo tài khoản có quyền ngang bằng hoặc thấp hơn; không được tạo Super Admin.' }, 403, corsHeaders);
+          }
           if (role === 'super_admin' && currentUser.role !== 'super_admin') {
             return jsonResponse({ success: false, message: 'Chỉ Super Admin mới có quyền tạo tài khoản Super Admin.' }, 403, corsHeaders);
           }
@@ -919,8 +968,8 @@ export default {
             return jsonResponse({ success: false, message: 'CSDL chưa kết nối.' }, 500, corsHeaders);
           }
           const target = await env.DB.prepare('SELECT role FROM users WHERE id = ?').bind(userId).first<any>();
-          if (target && target.role === 'super_admin' && currentUser.role !== 'super_admin') {
-            return jsonResponse({ success: false, message: 'Chỉ Super Admin mới có quyền xóa tài khoản Super Admin.' }, 403, corsHeaders);
+          if (target && target.role === 'super_admin') {
+            return jsonResponse({ success: false, message: 'Tài khoản Super Admin được bảo vệ cố định, không thể xóa.' }, 403, corsHeaders);
           }
           await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
           return jsonResponse({ success: true, message: 'Đã xóa tài khoản người dùng thành công.' }, 200, corsHeaders);
@@ -1193,60 +1242,52 @@ export default {
         }
       }
 
-      // K. Global Search across D1 (`/api/search`)
+      // K. Global Search across all D1 modules.
       if (url.pathname === '/api/search') {
-        const q = sanitizeString(url.searchParams.get('q') || '').toLowerCase();
+        const q = sanitizeString(url.searchParams.get('q') || '').trim().toLowerCase();
         const moduleType = url.searchParams.get('moduleType') || '';
         const field = sanitizeString(url.searchParams.get('field') || '');
         const status = sanitizeString(url.searchParams.get('status') || '');
         const canViewRestrictedRecords = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'].includes(currentUser.role);
-        const targetModules = moduleType && ALLOWED_MODULES.includes(moduleType)
-          ? [moduleType]
-          : ALLOWED_MODULES;
-        let allResults: any[] = [];
-
-        if (env.DB) {
-          try {
-            for (const mod of targetModules.slice(0, 10)) {
-              const tableInfo = await env.DB.prepare(`PRAGMA table_info(${mod})`).all<any>();
-              const columns = new Set((tableInfo.results || []).map((column: any) => column.name));
-              let sql = `SELECT * FROM ${mod} WHERE 1=1`;
-              const params: any[] = [];
-              if (q) {
-                const searchableColumns = ['title', 'name', 'project_name', 'description', 'summary', 'profile_summary', 'field']
-                  .filter(column => columns.has(column));
-                if (searchableColumns.length) {
-                  sql += ' AND (' + searchableColumns.map(column => `CAST(${column} AS TEXT) LIKE ?`).join(' OR ') + ')';
-                  searchableColumns.forEach(() => params.push(`%${q}%`));
-                }
-              }
-              if (field && columns.has('field')) {
-                sql += ' AND field = ?';
-                params.push(field);
-              }
-              if (status && status !== 'all' && canViewRestrictedRecords && columns.has('status')) {
-                sql += ' AND status = ?';
-                params.push(status);
-              }
-              if (!canViewRestrictedRecords) {
-                if (columns.has('status')) sql += ` AND LOWER(COALESCE(status, '')) IN ('approved', 'published')`;
-                if (columns.has('publicity_level')) sql += ` AND LOWER(COALESCE(publicity_level, 'public')) = 'public'`;
-              }
-              sql += ' LIMIT 30';
-              const rows = await env.DB.prepare(sql).bind(...params).all();
-              if (rows.results) allResults = allResults.concat(rows.results);
+        const targetModules = moduleType && ALLOWED_MODULES.includes(moduleType) ? [moduleType] : ALLOWED_MODULES;
+        const allResults: any[] = [];
+        if (!env.DB) return jsonResponse({ success: false, message: 'CSDL D1 chưa kết nối.' }, 500, corsHeaders);
+        try {
+          for (const mod of targetModules) {
+            const tableInfo = await env.DB.prepare(`PRAGMA table_info(${mod})`).all<any>();
+            const columnNames = (tableInfo.results || []).map((column: any) => String(column.name));
+            const columns = new Set(columnNames);
+            const searchable = columnNames.filter(column => !['id', 'created_by', 'updated_at', 'created_at', 'stt'].includes(column));
+            const where: string[] = [];
+            const params: any[] = [];
+            if (q && searchable.length) {
+              where.push('(' + searchable.map(column => `LOWER(CAST("${column}" AS TEXT)) LIKE ?`).join(' OR ') + ')');
+              searchable.forEach(() => params.push(`%${q}%`));
             }
-          } catch (e: any) {
-            console.warn('Lỗi tìm kiếm D1:', e);
-            return jsonResponse({ success: false, message: 'Không thể hoàn thành tìm kiếm do lỗi truy vấn dữ liệu.' }, 500, corsHeaders);
+            if (field && columns.has('field')) {
+              where.push('LOWER(CAST(field AS TEXT)) = LOWER(?)');
+              params.push(field);
+            }
+            if (status && status !== 'all' && canViewRestrictedRecords && columns.has('status')) {
+              where.push('status = ?');
+              params.push(status);
+            }
+            if (!canViewRestrictedRecords) {
+              if (columns.has('status')) where.push("LOWER(COALESCE(status, '')) IN ('approved', 'published')");
+              if (columns.has('publicity_level')) where.push("LOWER(COALESCE(publicity_level, 'public')) = 'public'");
+            }
+            const sql = `SELECT * FROM ${mod}${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY created_at DESC LIMIT 100`;
+            const rows = await env.DB.prepare(sql).bind(...params).all<any>();
+            for (const row of rows.results || []) {
+              allResults.push(hydrateModuleRow(row, mod));
+              if (allResults.length >= 1000) break;
+            }
+            if (allResults.length >= 1000) break;
           }
+        } catch (error: any) {
+          return jsonResponse({ success: false, message: 'Không thể hoàn thành tìm kiếm D1: ' + (error?.message || 'Lỗi không xác định') }, 500, corsHeaders);
         }
-
-        return jsonResponse({
-          success: true,
-          total: allResults.length,
-          results: allResults
-        }, 200, corsHeaders);
+        return jsonResponse({ success: true, total: allResults.length, results: allResults }, 200, corsHeaders);
       }
 
       // L. Module CSV Export (D1-backed). Imports are handled by Q2 below.
@@ -1575,7 +1616,17 @@ export default {
           const { status, note } = body;
           if (env.DB) {
             try {
-              await env.DB.prepare(`UPDATE ${moduleName} SET status = ?, updated_at = datetime('now') WHERE id = ?`).bind(status || 'approved', recordId).run();
+              const nextStatus = String(status || 'approved');
+              const wfInfo = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
+              const wfColumns = new Set((wfInfo.results || []).map((column: any) => column.name));
+              const wfAssignments = ['status = ?', "updated_at = datetime('now')"];
+              const wfValues: any[] = [nextStatus];
+              if (wfColumns.has('publicity_level')) {
+                wfAssignments.push('publicity_level = ?');
+                wfValues.push(nextStatus === 'approved' || nextStatus === 'published' ? 'public' : 'private');
+              }
+              wfValues.push(recordId);
+              await env.DB.prepare(`UPDATE ${moduleName} SET ${wfAssignments.join(', ')} WHERE id = ?`).bind(...wfValues).run();
               // Log to audit
               await env.DB.prepare(`
                 INSERT INTO audit_logs (id, user_id, user_name, user_role, action, target_module, target_id, details, timestamp)
@@ -1637,7 +1688,7 @@ export default {
                 success: true,
                 moduleType: moduleName,
                 total: countResult?.total || 0,
-                data: (results.results || []).map(hydrateModuleRow)
+                data: (results.results || []).map(row => hydrateModuleRow(row, moduleName))
               }, 200, corsHeaders);
             } catch (e: any) {
               return jsonResponse({ success: false, message: 'Lỗi truy vấn D1: ' + e.message }, 500, corsHeaders);
@@ -1659,8 +1710,7 @@ export default {
 
           if (env.DB) {
             try {
-              const info = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
-              const physicalColumns = new Set((info.results || []).map((column: any) => column.name));
+              const physicalColumns = await ensureModuleDataJson(env.DB, moduleName);
               const customFields: Record<string, any> = {};
               const entries: Array<[string, any]> = [];
               for (const key of Object.keys(clean)) {
@@ -1778,8 +1828,7 @@ export default {
           return jsonResponse({ success: false, message: 'CSDL D1 chưa kết nối.' }, 500, corsHeaders);
         }
 
-        const tableInfo = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
-        const tableColumns = new Set((tableInfo.results || []).map((column: any) => column.name));
+        const tableColumns = await ensureModuleDataJson(env.DB, moduleName);
         if (!tableColumns.has('status')) {
           return jsonResponse({ success: false, message: 'Phân hệ này chưa có trường status để quản lý quy trình nháp và phê duyệt. Chưa nhập dữ liệu để tránh công khai sai quy trình.' }, 409, corsHeaders);
         }
@@ -1788,7 +1837,7 @@ export default {
         if (routeParts[1] === 'approve') {
           const body: any = await request.json().catch(() => ({}));
           const ids = Array.isArray(body.ids)
-            ? [...new Set(body.ids.map((id: any) => String(id || '').trim()).filter((id: string) => id && id.length <= 128))].slice(0, 500)
+            ? [...new Set(body.ids.map((id: any) => String(id || '').trim()).filter((id: string) => id && id.length <= 128))] .slice(0, 5000)
             : [];
           if (ids.length === 0) {
             return jsonResponse({ success: false, message: 'Không có bản ghi nào được chọn để phê duyệt.' }, 400, corsHeaders);
@@ -1906,7 +1955,7 @@ export default {
               target = primaryColumn;
             }
             if (tableColumns.has(target)) mapped[target] = rawValue;
-            else if (tableColumns.has('data_json')) mapped[`__custom__${rawKey}`] = rawValue;
+            else if (tableColumns.has('data_json')) mapped[`__custom__${target}`] = rawValue;
             else unsupported.push(rawKey);
           }
 
@@ -1930,7 +1979,7 @@ export default {
             const customFields: Record<string, any> = {};
             for (const key of Object.keys(values)) {
               if (key.startsWith('__custom__')) {
-                customFields[key.slice(10)] = values[key];
+                customFields[ key.slice(10).replace(/_([a-z])/g, (_match: string, letter: string) => letter.toUpperCase()) ] = values[key];
                 delete values[key];
               }
             }
