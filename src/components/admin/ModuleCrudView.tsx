@@ -201,7 +201,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       showToast(`Đã nhập ${result.importedCount} bản ghi vào trạng thái nháp trong ${MODULE_NAMES[moduleType]}`);
       setPendingApprovalIds(result.importedIds || []);
       setShowInlineImportModal(false);
-      setShowImportApprovalModal(Boolean(result.importedIds?.length));
+      setShowImportApprovalModal(Boolean(result.importedIds?.length && ['super_admin', 'system_admin'].includes(currentUser?.role || '')));
       setImportRawText('');
       setImportParsedRows([]);
       await loadData();
@@ -530,7 +530,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
             </span>
           )}
 
-          {pendingApprovalIds.length > 0 && (
+          {pendingApprovalIds.length > 0 && ['super_admin', 'system_admin'].includes(currentUser?.role || '') && (
             <button
               type="button"
               onClick={() => setShowImportApprovalModal(true)}
