@@ -483,6 +483,10 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pageSize));
   const visibleRecords = filteredRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  useEffect(() => {
+    setCurrentPage(page => Math.min(page, totalPages));
+  }, [totalPages]);
+
   if (isModuleRestricted) {
     return (
       <div className="bg-white rounded-2xl border border-amber-200 p-8 shadow-xs text-center space-y-4">
