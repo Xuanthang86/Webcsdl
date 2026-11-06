@@ -1096,7 +1096,7 @@ export default {
           try {
             const taskStats = await env.DB.prepare(`
               SELECT 
-                COUNT(CASE WHEN LOWER(TRIM(COALESCE(status, ''))) IN ('approved', 'accepted', 'completed', 'complete') OR LOWER(TRIM(COALESCE(acceptance_result, ''))) IN ('đạt', 'xuất sắc', 'đã nghiệm thu', 'nghiệm thu', 'đã hoàn thành', 'hoàn thành', 'completed', 'complete') OR LOWER(TRIM(COALESCE(acceptance_result, ''))) LIKE '%nghiệm thu%' OR LOWER(TRIM(COALESCE(acceptance_result, ''))) LIKE '%hoàn thành%' OR LOWER(TRIM(COALESCE(acceptance_result, ''))) LIKE '%xuất sắc%' OR LOWER(TRIM(COALESCE(status, ''))) LIKE '%nghiệm thu%' OR LOWER(TRIM(COALESCE(status, ''))) LIKE '%hoàn thành%' THEN 1 END) as accepted,
+                COUNT(CASE WHEN LOWER(TRIM(COALESCE(status, ''))) IN ('approved', 'accepted', 'completed', 'complete') OR LOWER(TRIM(COALESCE(acceptance_result, ''))) IN ('đạt', 'xuất sắc', 'đã nghiệm thu', 'nghiệm thu', 'đã hoàn thành', 'hoàn thành', 'completed', 'complete') OR LOWER(TRIM(COALESCE(acceptance_result, ''))) LIKE '%nghiệm thu%' OR LOWER(TRIM(COALESCE(acceptance_result, ''))) LIKE '%hoàn thành%' OR LOWER(TRIM(COALESCE(acceptance_result, ''))) LIKE '%xuất sắc%' OR LOWER(TRIM(COALESCE(acceptance_result, ''))) LIKE '%đạt%' OR LOWER(TRIM(COALESCE(status, ''))) LIKE '%đạt%' OR LOWER(TRIM(COALESCE(status, ''))) LIKE '%nghiệm thu%' OR LOWER(TRIM(COALESCE(status, ''))) LIKE '%hoàn thành%' THEN 1 END) as accepted,
                 COALESCE(SUM(total_budget_approved), 0) as budget
               FROM science_tasks
             `).first<{ accepted: number; budget: number }>();
