@@ -61,16 +61,12 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
           text: 'Đã tạo tệp sao lưu. Hãy chọn “Chia sẻ / Lưu tệp” để mở bảng chia sẻ của thiết bị và chọn “Lưu vào Tệp”. Nếu ứng dụng hiện tại không hỗ trợ, hãy chọn “Tải tệp xuống” hoặc mở trang quản trị bằng Safari.'
         });
       } else {
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = fileName;
-        anchor.style.display = 'none';
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
+        // Do not open a new tab or trigger a download automatically after the
+        // asynchronous fetch. In-app browsers may block that action; expose a
+        // normal, user-initiated download link below instead.
         setMessage({
           type: 'success',
-          text: 'Đã tạo tệp sao lưu và gửi yêu cầu tải xuống. Vui lòng kiểm tra mục Tải về (Downloads) của trình duyệt để xác nhận tệp đã được lưu.'
+          text: 'Đã tạo tệp sao lưu. Nhấn “Tải tệp xuống” để lưu tệp vào thiết bị.'
         });
       }
     } catch (error: any) {
@@ -120,7 +116,11 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
     }
 
     try {
-      const parsed = JSON.parse(await file.text());
+      // The exported UTF-8 JSON includes a BOM for compatibility with
+      // iOS file providers. Strip it before JSON.parse so backups created
+      // by this screen can always be restored by the same screen.
+      const fileText = (await file.text()).replace(/^\uFEFF/, '');
+      const parsed = JSON.parse(fileText);
       if (!parsed || typeof parsed !== 'object' || !parsed.systemConfig || !Array.isArray(parsed.science_tasks)) {
         throw new Error('Tệp không có cấu trúc bản sao lưu dữ liệu hợp lệ.');
       }
