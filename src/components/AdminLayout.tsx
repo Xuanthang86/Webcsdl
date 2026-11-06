@@ -7,6 +7,7 @@ import { ImportExportStudio } from './admin/ImportExportStudio';
 import { AuditLogView } from './admin/AuditLogView';
 import { SystemConfigView } from './admin/SystemConfigView';
 import { TestSuiteView } from './admin/TestSuiteView';
+import { BackupRestoreView } from './admin/BackupRestoreView';
 import { FormConfigView } from './admin/FormConfigView';
 import { UserManagerView } from './admin/UserManagerView';
 import { Footer } from './Footer';
@@ -58,7 +59,8 @@ export type AdminTab =
   | 'users'
   | 'audit_logs'
   | 'system_config'
-  | 'test_suite';
+  | 'test_suite'
+  | 'backup_restore';
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({
   currentUser,
@@ -78,6 +80,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   const isWardOfficer = currentUser?.role === 'partner_officer';
   const canManageUsers = currentUser?.role === 'super_admin' || currentUser?.role === 'system_admin';
+  const canManageBackups = ['super_admin', 'system_admin'].includes(currentUser?.role || '');
+  const canRestoreBackup = currentUser?.role === 'super_admin';
 
   const handleSelectModule = (mod: ModuleType) => {
     setActiveModule(mod);
@@ -388,6 +392,17 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 <span className="whitespace-normal text-left leading-snug">Cấu hình nhận diện thương hiệu & cơ quan chủ quản</span>
               </button>
 
+              {canManageBackups && (
+                <button
+                  onClick={() => { setActiveTab('backup_restore'); setSidebarOpen(false); }}
+                  className={`w-full flex items-start text-left justify-start gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === 'backup_restore' ? 'bg-sky-700/80 text-white font-bold shadow-xs' : 'hover:bg-slate-700 text-slate-100'
+                  }`}
+                >
+                  <Database className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                  <span className="whitespace-normal text-left leading-snug">Sao lưu và phục hồi dữ liệu</span>
+                </button>
+              )}
               <button
                 onClick={() => { setActiveTab('test_suite'); setSidebarOpen(false); }}
                 className={`w-full flex items-start text-left justify-start gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -517,6 +532,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
             {activeTab === 'test_suite' && (
               <TestSuiteView />
+            )}
+
+            {activeTab === 'backup_restore' && canManageBackups && (
+              <BackupRestoreView canRestore={canRestoreBackup} />
             )}
           </div>
         </main>
