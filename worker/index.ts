@@ -95,7 +95,14 @@ async function ensureModuleDataJson(db: D1Database, moduleName: string): Promise
   let info = await db.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
   let columns = new Set((info.results || []).map((column: any) => String(column.name)));
   if (!columns.has('data_json')) {
-    await db.prepare(`ALTER TABLE ${moduleName} ADD COLUMN data_json TEXT`).run();
+    try {
+      await db.prepare(`ALTER TABLE ${moduleName} ADD COLUMN data_json TEXT`).run();
+    } catch (error) {
+      // A concurrent request may have added the column first; re-check before failing.
+      info = await db.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
+      columns = new Set((info.results || []).map((column: any) => String(column.name)));
+      if (!columns.has('data_json')) throw error;
+    }
     info = await db.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
     columns = new Set((info.results || []).map((column: any) => String(column.name)));
   }
@@ -888,6 +895,14 @@ export default {
           if (existing.role === 'super_admin' && currentUser.role !== 'super_admin') {
             return jsonResponse({ success: false, message: 'Chỉ Super Admin mới có quyền quản lý tài khoản Super Admin.' }, 403, corsHeaders);
           }
+          const requestedRole = body.role !== undefined ? sanitizeString(body.role) : existing.role;
+          const allowedRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert', 'partner_officer', 'org_representative', 'expert_user', 'investor_user', 'public_user'];
+          if (!allowedRoles.includes(requestedRole)) {
+            return jsonResponse({ success: false, message: 'Vai trò tài khoản không hợp lệ.' }, 400, corsHeaders);
+          }
+          if (currentUser.role === 'system_admin' && requestedRole === 'super_admin') {
+            return jsonResponse({ success: false, message: 'Quản trị viên hệ thống không được nâng quyền tài khoản lên Super Admin.' }, 403, corsHeaders);
+          }
 
           const isAdminAccount = ['super_admin', 'system_admin'].includes(existing.role);
 
@@ -1276,7 +1291,7 @@ export default {
               if (columns.has('status')) where.push("LOWER(COALESCE(status, '')) IN ('approved', 'published')");
               if (columns.has('publicity_level')) where.push("LOWER(COALESCE(publicity_level, 'public')) = 'public'");
             }
-            const sql = `SELECT * FROM ${mod}${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY created_at DESC LIMIT 100`;
+            const sql = `SELECT * FROM ${mod}${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY created_at DESC LIMIT 500`;
             const rows = await env.DB.prepare(sql).bind(...params).all<any>();
             for (const row of rows.results || []) {
               allResults.push(hydrateModuleRow(row, mod));
