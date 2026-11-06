@@ -239,15 +239,28 @@ export const api = {
 
   // Module records
   async getModuleRecords(moduleType: ModuleType, sortBy?: string, order?: 'asc' | 'desc', publicOnly?: boolean): Promise<BaseEntity[]> {
-    const searchParams = new URLSearchParams();
-    if (sortBy) searchParams.set('sortBy', sortBy);
-    if (order) searchParams.set('order', order);
-    if (publicOnly) searchParams.set('publicOnly', 'true');
-    const res = await authFetch(`/api/modules/${moduleType}?${searchParams.toString()}`, {
-      headers: getAuthHeaders()
-    });
-    const json = await parseJsonResponse(res);
-    return json.data || [];
+    const pageSize = 500;
+    const allRecords: BaseEntity[] = [];
+    let offset = 0;
+    let total = Number.POSITIVE_INFINITY;
+    while (offset < total) {
+      const searchParams = new URLSearchParams();
+      if (sortBy) searchParams.set('sortBy', sortBy);
+      if (order) searchParams.set('order', order);
+      if (publicOnly) searchParams.set('publicOnly', 'true');
+      searchParams.set('limit', String(pageSize));
+      searchParams.set('offset', String(offset));
+      const res = await authFetch(`/api/modules/${moduleType}?${searchParams.toString()}`, {
+        headers: getAuthHeaders()
+      });
+      const json = await parseJsonResponse(res);
+      const page: BaseEntity[] = Array.isArray(json.data) ? json.data : [];
+      allRecords.push(...page);
+      total = Number.isFinite(Number(json.total)) ? Number(json.total) : allRecords.length;
+      if (page.length === 0 || page.length < pageSize) break;
+      offset += page.length;
+    }
+    return allRecords;
   },
 
   async getRecordById(moduleType: ModuleType, id: string): Promise<{ data: BaseEntity; relationships: EntityRelationship[] }> {
