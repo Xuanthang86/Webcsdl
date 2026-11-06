@@ -1292,7 +1292,6 @@ export default {
         const moduleType = url.searchParams.get('moduleType') || '';
         const field = sanitizeString(url.searchParams.get('field') || '');
         const status = sanitizeString(url.searchParams.get('status') || '');
-        const canViewRestrictedRecords = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'].includes(currentUser.role);
         const targetModules = moduleType && ALLOWED_MODULES.includes(moduleType) ? [moduleType] : ALLOWED_MODULES;
         const allResults: any[] = [];
         if (!env.DB) return jsonResponse({ success: false, message: 'CSDL D1 chưa kết nối.' }, 500, corsHeaders);
@@ -1327,7 +1326,8 @@ export default {
             const sql = `SELECT * FROM ${mod}${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY created_at DESC LIMIT 2000`;
             const rows = await env.DB.prepare(sql).bind(...params).all<any>();
             for (const row of rows.results || []) {
-              allResults.push(hydrateModuleRow(row, mod));
+              const hydrated = hydrateModuleRow(row, mod);
+              allResults.push(canViewRestrictedRecords ? hydrated : redactPublicDetail(hydrated, mod));
               if (allResults.length >= 5000) break;
             }
             if (allResults.length >= 5000) break;
