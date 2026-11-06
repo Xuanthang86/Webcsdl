@@ -84,7 +84,11 @@ function hydrateModuleRow(row: any, moduleName?: string): any {
     const camelKey = key.replace(/_([a-z])/g, (_match, letter) => letter.toUpperCase());
     normalized[camelKey] = value;
   }
-  return { moduleType: moduleName || row.module_type || row.moduleType, ...normalized, ...custom };
+  const merged: Record<string, any> = { moduleType: moduleName || row.module_type || row.moduleType, ...normalized, ...custom };
+  if (!merged.title) merged.title = merged.name || merged.companyName || merged.projectName || merged.fullName || '';
+  if (moduleName === 'startups' && !merged.companyName) merged.companyName = merged.name || merged.title;
+  if (moduleName === 'startup_projects' && !merged.projectName) merged.projectName = merged.title || merged.name;
+  return merged;
 }
 
 
@@ -1933,31 +1937,31 @@ export default {
           .replace(/[^a-z0-9]+/g, '');
         const aliases: Record<string, string> = {
           stt: 'stt', code: 'code', madetai: 'code', madinhdanh: 'code',
-          capquanly: 'management_level', coquanchutri: 'lead_agency', chunhiemdetai: 'principal_investigator',
-          thanhvienthamgia: 'participants', thoigianthuchien: 'implementation_time', linhvuc: 'field',
-          tomtatdetai: 'summary', tailieuminhchung: 'evidence_file', kyhieukho: 'archive_code',
-          namcongnhan: 'recognition_year', tensangkien: 'title', tacgia: 'author', chusohuu: 'owner',
-          diachuchusohuu: 'owner_address', tenchuyengia: 'name', ngaythangnamsinh: 'date_of_birth',
-          namsinh: 'birth_year', gioitinh: 'gender', hocham: 'academic_title', hocvi: 'degree',
-          nambatdaucongtac: 'career_start_year', chucdanhnghiencuu: 'research_title', chucvu: 'position',
-          email: 'email', dienthoai: 'phone', chuyenganh: 'specialization', tendonvicongtac: 'workplace',
-          quatrinhdaotaovahoctap: 'education', quatrinhcongtac: 'work_history', ngoaingu: 'languages',
+          capquanly: 'management_level', coquanchutri: 'lead_organization', chunhiemdetai: 'principal_investigator',
+          thanhvienthamgia: 'members', thoigianthuchien: 'execution_time', linhvuc: 'field',
+          tomtatdetai: 'summary', tailieuminhchung: 'evidence_documents', kyhieukho: 'storage_code',
+          namcongnhan: 'recognition_year', tensangkien: 'title', tacgia: 'authors', chusohuu: 'owner_name',
+          diachuchusohuu: 'owner_address', tenchuyengia: 'name', ngaythangnamsinh: 'birth_date',
+          namsinh: 'birth_year', gioitinh: 'gender', hocham: 'academic_rank', hocvi: 'degree',
+          nambatdaucongtac: 'start_work_year', chucdanhnghiencuu: 'research_title', chucvu: 'job_title',
+          email: 'email', dienthoai: 'phone', chuyenganh: 'specialty', tendonvicongtac: 'workplace',
+          quatrinhdaotaovahoctap: 'training_process', quatrinhcongtac: 'work_experience', ngoaingu: 'foreign_languages',
           tenbaibao: 'publications', tenvanbang: 'qualifications', tencongtrinh: 'research_outputs',
-          tendetai: 'projects', giaithuong: 'awards', kinhnghiem: 'experience',
-          tendoanhnghiep: 'name', diachihoatdong: 'operating_address', websitedoanhnghiep: 'website',
-          filelogodoanhnghiep: 'logo_file', linhvuckinhdoanh: 'business_field',
+          tendetai: 'projects', giaithuong: 'awards', kinhnghiem: 'experience_notes',
+          tendoanhnghiep: 'name', diachihoatdong: 'address', websitedoanhnghiep: 'website',
+          filelogodoanhnghiep: 'logo_url', linhvuckinhdoanh: 'field',
           tomtatvedoanhnghiepvasanpham: 'summary', sanphamgiaiquyetvande: 'problem_solved',
-          soluongsanglapvien: 'founders_count', tongsonhanhientai: 'total_staff',
+          soluongsanglapvien: 'founder_count', tongsonhanhientai: 'current_staff_count',
           hovatennguoidungdau: 'leader_name', hotennguoidungdau: 'leader_name',
           sodienthoainguoidungdau: 'leader_phone', emailnguoidungdau: 'leader_email',
-          nambatdaukhoinghiep: 'founding_year', tentochuc: 'name', diachi: 'address',
+          nambatdaukhoinghiep: 'founded_year', tentochuc: 'name', diachi: 'address',
           thongtinvetochuc: 'description', tenduan: 'title',
           linhvuckhoinghiep: 'field', tomtatveduan: 'summary',
-          soluongthanhvienthamgiaduan: 'members_count', duanduocuomtaotutochuc: 'incubated_at',
-          tenytuong: 'title', tenytuongkhoinghiep: 'title', thuocxaphuong: 'ward_or_school',
-          ytuongthuocxaphuongtruonghoc: 'ward_or_school', tomtatveytuong: 'summary',
-          soluongthanhvienthamgiaytuong: 'members_count', nguoidungdaunhomytuong: 'leader_name',
-          tengiaovienhuongdan: 'mentor_name', nhomytuongdanghoctapcongtactaidonvinao: 'affiliated_unit',
+          soluongthanhvienthamgiaduan: 'team_size', duanduocuomtaotutochuc: 'incubator',
+          tenytuong: 'title', tenytuongkhoinghiep: 'title', thuocxaphuong: 'ward_school',
+          ytuongthuocxaphuongtruonghoc: 'ward_school', tomtatveytuong: 'summary',
+          soluongthanhvienthamgiaytuong: 'team_size', nguoidungdaunhomytuong: 'leader_name',
+          tengiaovienhuongdan: 'mentor_teacher', nhomytuongdanghoctapcongtactaidonvinao: 'organization',
           tenxaphuongdackhu: 'name', tenxaphuong: 'name', tentruong: 'name',
           tentruongdaihoccaodang: 'name', nguoidaidienduan: 'representative',
           thongtinlienhe: 'contact_info'
@@ -1988,7 +1992,7 @@ export default {
             const key = normalizeImportKey(rawKey);
             let target = aliases[key] || rawKey.replace(/([A-Z])/g, '_$1').toLowerCase();
             if (['title', 'name', 'projectname'].includes(key) && !tableColumns.has(target)) target = primaryColumn;
-            if (key.startsWith('diachihoatdong')) target = 'operating_address';
+            if (key.startsWith('diachihoatdong')) target = 'address';
             if (key.startsWith('website')) target = 'website';
             if (key.startsWith('sanphamgiaiquyetvande')) target = 'problem_solved';
             if (key.startsWith('duanduocuomtaotutochuc')) target = 'incubated_at';
@@ -1998,10 +2002,10 @@ export default {
             if (key.startsWith('hovatennguoidungdau')) target = 'leader_name';
             if (key.startsWith('sodienthoainguoidungdau')) target = 'leader_phone';
             if (key.startsWith('emailnguoidungdau')) target = 'leader_email';
-            if (key.startsWith('tenthaycogiaohuongdan')) target = 'mentor_name';
-            if (key.startsWith('tongsonhansu')) target = 'total_staff';
-            if (key.startsWith('soluongthanhvienthamgia')) target = key.includes('ytuong') ? 'members_count' : 'members_count';
-            if (key.startsWith('nhomytuongdanghoctapcongtactaidonvi')) target = 'affiliated_unit';
+            if (key.startsWith('tenthaycogiaohuongdan')) target = 'mentor_teacher';
+            if (key.startsWith('tongsonhansu')) target = 'current_staff_count';
+            if (key.startsWith('soluongthanhvienthamgia')) target = 'team_size';
+            if (key.startsWith('nhomytuongdanghoctapcongtactaidonvi')) target = 'organization';
             if (key.startsWith('tenduan') && moduleName === 'startup_projects') target = primaryColumn;
             if (key.startsWith('tendetaiduan')) target = 'projects';
             if (key === 'trangthai' && moduleName === 'science_tasks') target = 'acceptance_result';
