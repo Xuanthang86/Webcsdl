@@ -31,7 +31,7 @@ export const Footer: React.FC<FooterProps> = ({ config }) => {
           </div>
 
           {/* Col 2: Contact Info */}
-          <div className="space-y-1.5 text-xs text-slate-400">
+          <div className="space-y-1.5 text-sm lg:text-[15px] text-slate-300">
             <div className="text-sm lg:text-base font-semibold text-white tracking-tight mb-1">Thông tin liên hệ</div>
             <div className="flex items-start gap-2">
               <MapPin className="w-3.5 h-3.5 text-teal-400 shrink-0 mt-0.5" />
