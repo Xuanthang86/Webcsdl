@@ -1200,14 +1200,14 @@ export default {
               candidateFields: string[]
             ) => {
               try {
-                const info = await env.DB.prepare(\`PRAGMA table_info("\${table}")\`).all<any>();
+                const info = await env.DB.prepare('PRAGMA table_info("' + table + '")').all<any>();
                 const columns = new Set((info.results || []).map((column: any) => String(column.name)));
                 const availableFields = candidateFields.filter(field => columns.has(field));
                 const selectedFields = [...new Set([...availableFields, ...(columns.has('data_json') ? ['data_json'] : [])])];
                 if (selectedFields.length === 0) return;
 
                 const rows = await env.DB.prepare(
-                  \`SELECT \${selectedFields.map(field => \`"\${field}"\`).join(', ')} FROM "\${table}"\`
+                  'SELECT ' + selectedFields.map(field => '"' + field.replace(/"/g, '""') + '"').join(', ') + ' FROM "' + table + '"'
                 ).all<any>();
                 const normalizeKey = (value: string) => value.replace(/[_\s-]/g, '').toLowerCase();
                 const extractYearValue = (value: any): string | null => {
@@ -1244,7 +1244,7 @@ export default {
                   target[bucket] = (target[bucket] || 0) + 1;
                 }
               } catch (error) {
-                console.error(\`Không thể tổng hợp số lượng \${table} theo năm:\`, error);
+                console.error('Không thể tổng hợp số lượng ' + table + ' theo năm:', error);
               }
             };
 
