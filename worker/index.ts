@@ -1880,6 +1880,7 @@ export default {
           return jsonResponse({ success: false, message: 'Đường dẫn nhập dữ liệu không hợp lệ.' }, 404, corsHeaders);
         }
         const body: any = await request.json().catch(() => ({}));
+        const conflictAction = body.conflictAction === 'overwrite' ? 'overwrite' : 'skip';
         const rawItems = Array.isArray(body.items) ? body.items : [];
         if (rawItems.length === 0) {
           return jsonResponse({ success: false, message: 'Dữ liệu tệp không hợp lệ hoặc rỗng.' }, 400, corsHeaders);
@@ -1927,6 +1928,7 @@ export default {
         };
 
         const importedIds: string[] = [];
+        let importedCount = 0;
         const errors: string[] = [];
         const duplicates: string[] = [];
         const primaryColumn = tableColumns.has('title') ? 'title'
@@ -1984,32 +1986,64 @@ export default {
             continue;
           }
 
+          const duplicateColumn = tableColumns.has('code') && mapped.code ? 'code' : primaryColumn;
+          const duplicateValue = mapped[duplicateColumn];
           const id = `${moduleName}_imp_${crypto.randomUUID()}`;
-          const values: Record<string, any> = { ...mapped, id, status: 'draft' };
-          if (tableColumns.has('created_at')) values.created_at = new Date().toISOString();
-          if (tableColumns.has('updated_at')) values.updated_at = new Date().toISOString();
-          if (tableColumns.has('created_by')) values.created_by = currentUser.fullName;
-          if (tableColumns.has('verification_status')) values.verification_status = 'unverified';
-          if (tableColumns.has('publicity_level')) values.publicity_level = 'private';
-          if (tableColumns.has('data_json')) {
-            const customFields: Record<string, any> = {};
-            for (const key of Object.keys(values)) {
-              if (key.startsWith('__custom__')) {
-                customFields[ key.slice(10).replace(/_([a-z])/g, (_match: string, letter: string) => letter.toUpperCase()) ] = values[key];
-                delete values[key];
-              }
-            }
-            if (Object.keys(customFields).length) values.data_json = JSON.stringify(customFields);
-          }
           try {
-            const columns = Object.keys(values).filter(column => tableColumns.has(column));
-            const placeholders = columns.map(() => '?').join(', ');
-            const params = columns.map(column => {
-              const value = values[column];
-              return typeof value === 'object' && value !== null ? JSON.stringify(value) : value;
-            });
-            await env.DB.prepare(`INSERT INTO ${moduleName} (${columns.join(', ')}) VALUES (${placeholders})`).bind(...params).run();
-            importedIds.push(id);
+            const duplicate = duplicateValue !== undefined && duplicateValue !== null && String(duplicateValue).trim()
+              ? await env.DB.prepare(`SELECT * FROM ${moduleName} WHERE LOWER(TRIM(CAST("${duplicateColumn}" AS TEXT))) = LOWER(TRIM(?)) LIMIT 1`).bind(String(duplicateValue)).first<any>()
+              : null;
+            if (duplicate && conflictAction === 'skip') {
+              duplicates.push(`Dòng ${idx + 2}: Đã tồn tại bản ghi [${String(duplicate[primaryColumn] || duplicate.id)}], bỏ qua theo lựa chọn.`);
+              continue;
+            }
+
+            const values: Record<string, any> = {
+              ...mapped,
+              id: duplicate?.id || id,
+              status: duplicate ? (duplicate.status || 'draft') : 'draft'
+            };
+            if (tableColumns.has('created_at')) values.created_at = duplicate?.created_at || new Date().toISOString();
+            if (tableColumns.has('updated_at')) values.updated_at = new Date().toISOString();
+            if (tableColumns.has('created_by')) values.created_by = duplicate?.created_by || currentUser.fullName;
+            if (tableColumns.has('verification_status')) values.verification_status = duplicate?.verification_status || 'unverified';
+            if (tableColumns.has('publicity_level')) values.publicity_level = duplicate?.publicity_level || 'private';
+            if (tableColumns.has('data_json')) {
+              let customFields: Record<string, any> = {};
+              try {
+                customFields = duplicate?.data_json ? JSON.parse(duplicate.data_json) : {};
+              } catch { customFields = {}; }
+              for (const key of Object.keys(values)) {
+                if (key.startsWith('__custom__')) {
+                  customFields[key.slice(10).replace(/_([a-z])/g, (_match: string, letter: string) => letter.toUpperCase())] = values[key];
+                  delete values[key];
+                }
+              }
+              if (Object.keys(customFields).length) values.data_json = JSON.stringify(customFields);
+            }
+
+            if (duplicate) {
+              const updateColumns = Object.keys(values).filter(column =>
+                tableColumns.has(column) && !['id', 'created_at'].includes(column)
+              );
+              const assignments = updateColumns.map(column => `"${column}" = ?`).join(', ');
+              const params = updateColumns.map(column => {
+                const value = values[column];
+                return typeof value === 'object' && value !== null ? JSON.stringify(value) : value;
+              });
+              await env.DB.prepare(`UPDATE ${moduleName} SET ${assignments} WHERE id = ?`).bind(...params, duplicate.id).run();
+              if (String(duplicate.status || '').toLowerCase() === 'draft') importedIds.push(String(duplicate.id));
+            } else {
+              const columns = Object.keys(values).filter(column => tableColumns.has(column));
+              const placeholders = columns.map(() => '?').join(', ');
+              const params = columns.map(column => {
+                const value = values[column];
+                return typeof value === 'object' && value !== null ? JSON.stringify(value) : value;
+              });
+              await env.DB.prepare(`INSERT INTO ${moduleName} (${columns.map(column => `"${column}"`).join(', ')}) VALUES (${placeholders})`).bind(...params).run();
+              importedIds.push(id);
+            }
+            importedCount += 1;
           } catch (error: any) {
             errors.push(`Dòng ${idx + 2}: ${error?.message || 'Không thể ghi dữ liệu vào D1.'}`);
           }
@@ -2017,7 +2051,7 @@ export default {
 
         return jsonResponse({
           success: true,
-          result: { importedCount: importedIds.length, importedIds, errors, duplicates }
+          result: { importedCount, importedIds: [...new Set(importedIds)], errors, duplicates }
         }, 200, corsHeaders);
       }
 
