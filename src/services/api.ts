@@ -338,18 +338,18 @@ export const api = {
   },
 
   // Import / Export
-  async importRecords(moduleType: ModuleType, items: any[]): Promise<{ importedCount: number; importedIds: string[]; errors: string[]; duplicates: string[] }> {
+  async importRecords(moduleType: ModuleType, items: any[], conflictAction: 'skip' | 'overwrite' = 'skip'): Promise<{ importedCount: number; importedIds: string[]; errors: string[]; duplicates: string[] }> {
     const res = await authFetch(`/api/import/${moduleType}`, {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ items })
+      body: JSON.stringify({ items, conflictAction })
     });
     const json = await parseJsonResponse(res);
     return json.result;
   },
 
   async batchImport(moduleType: ModuleType, items: any[], conflictAction?: 'skip' | 'overwrite'): Promise<{ importedCount: number; importedIds: string[]; errors: string[]; duplicates: string[] }> {
-    return this.importRecords(moduleType, items);
+    return this.importRecords(moduleType, items, conflictAction || 'skip');
   },
 
   async approveImportedRecords(moduleType: ModuleType, ids: string[]): Promise<{ success: boolean; approvedCount: number; message?: string }> {
