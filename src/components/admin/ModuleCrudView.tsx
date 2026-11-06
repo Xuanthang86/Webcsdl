@@ -710,7 +710,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                 <input
                   aria-label="Tìm đơn vị chủ trì"
                   type="search"
-                  list="admin-task-unit-suggestions"
+                  list="admin-task-unit-options"
                   value={taskUnitFilter === 'all' ? '' : taskUnitFilter}
                   onFocus={() => setShowTaskUnitSuggestions(true)}
                   onChange={(e) => { setTaskUnitFilter(e.target.value.trim() ? e.target.value : 'all'); setCurrentPage(1); setShowTaskUnitSuggestions(true); }}
@@ -721,7 +721,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                   aria-controls="admin-task-unit-suggestions"
                   className="h-9 w-full min-w-0 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs"
                 />
-                <datalist id="admin-task-unit-suggestions">
+                <datalist id="admin-task-unit-options">
                   {availableTaskUnits.map(unit => <option key={unit} value={unit} />)}
                 </datalist>
                 {showTaskUnitSuggestions && (
