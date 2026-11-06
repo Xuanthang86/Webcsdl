@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { BaseEntity, EntityRelationship, User } from '../types';
+import { BaseEntity, EntityRelationship, User, ModuleType } from '../types';
+import { api } from '../services/api';
 import { 
   X, 
   ExternalLink, 
@@ -89,6 +90,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({
     return [];
   });
   const [newLanguageInput, setNewLanguageInput] = useState('');
+  const [languagePreset, setLanguagePreset] = useState('');
+  const [languageError, setLanguageError] = useState<string | null>(null);
   const [isAddingLanguage, setIsAddingLanguage] = useState(false);
 
   if (!entity) return null;
@@ -99,14 +102,30 @@ export const DetailModal: React.FC<DetailModalProps> = ({
     Boolean(currentUser.managedModules?.includes(entity.moduleType || ''))
   );
 
-  const handleAddLanguage = (e: React.FormEvent) => {
+  const persistLanguages = async (nextLanguages: string[]) => {
+    try {
+      await api.updateRecord(entity.moduleType as ModuleType, entity.id, { foreignLanguages: nextLanguages });
+      setLanguages(nextLanguages);
+      setLanguageError(null);
+    } catch (error: any) {
+      setLanguageError(error?.message || 'Không thể lưu danh sách ngoại ngữ.');
+    }
+  };
+
+  const handleAddLanguage = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = newLanguageInput.trim();
     if (trimmed && !languages.includes(trimmed)) {
-      setLanguages(prev => [...prev, trimmed]);
+      await persistLanguages([...languages, trimmed]);
       setNewLanguageInput('');
       setIsAddingLanguage(false);
     }
+  };
+
+  const handleAddPresetLanguage = async (value: string) => {
+    if (!value) return;
+    if (!languages.includes(value)) await persistLanguages([...languages, value]);
+    setLanguagePreset('');
   };
 
   const formatDateSafe = (dateVal?: any) => {
@@ -589,7 +608,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       </div>
                       <div className="sm:col-span-2">
                         <span className="text-slate-400 block mb-0.5">Lĩnh vực nghiên cứu:</span>
-                        <span className="font-semibold text-slate-800">{entity.field || 'Khoa học Kỹ thuật và Công nghệ'}</span>
+                        <span className="font-semibold text-slate-800">{entity.field || 'Chưa cập nhật'}</span>
                       </div>
                       <div className="sm:col-span-2 lg:col-span-3">
                         <span className="text-slate-400 block mb-0.5">Tên đơn vị công tác:</span>
@@ -638,6 +657,24 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       </button>
                     </div>
 
+                    {isAuthorized && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <select
+                          value={languagePreset}
+                          onChange={e => handleAddPresetLanguage(e.target.value)}
+                          className="h-8 px-2 border border-slate-300 rounded-lg bg-white text-xs text-slate-700"
+                        >
+                          <option value="">Thêm nhanh ngoại ngữ có sẵn...</option>
+                          <option value="Tiếng Anh">Tiếng Anh</option>
+                          <option value="Tiếng Nhật">Tiếng Nhật</option>
+                          <option value="Tiếng Hàn">Tiếng Hàn</option>
+                          <option value="Tiếng Trung">Tiếng Trung</option>
+                          <option value="Tiếng Pháp">Tiếng Pháp</option>
+                          <option value="Tiếng Đức">Tiếng Đức</option>
+                        </select>
+                      </div>
+                    )}
+
                     {/* Pre-integrated & Added languages */}
                     <div className="flex flex-wrap gap-2 text-xs">
                       {languages.length > 0 ? languages.map((lang, idx) => (
@@ -649,7 +686,8 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     </div>
 
                     {/* Form thêm ngoại ngữ mới */}
-                    {isAddingLanguage && (
+                    {languageError && <p className="text-xs text-rose-700">{languageError}</p>}
+                    {isAddingLanguage && isAuthorized && (
                       <form onSubmit={handleAddLanguage} className="pt-2 flex items-center gap-2">
                         <input
                           type="text"
