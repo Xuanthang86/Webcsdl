@@ -131,13 +131,13 @@ export const SearchHero: React.FC<SearchHeroProps> = ({
                     : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
                 }`}
               >
-                <Layers className="w-3.5 h-3.5 text-teal-300" />
+                <Layers className="w-3.5 h-3.5 text-teal-700" />
                 <span>
                   {selectedField 
                     ? `Lĩnh vực: ${SPECIALIZED_FIELDS.find(f => f.name === selectedField)?.shortName || selectedField}` 
                     : 'Lĩnh vực chuyên ngành'}
                 </span>
-                <ChevronDown className={`w-3 h-3 transition-transform ${showFieldsPanel ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 text-slate-500 transition-transform ${showFieldsPanel ? 'rotate-180' : ''}`} />
               </button>
 
               {selectedField && (
@@ -169,7 +169,7 @@ export const SearchHero: React.FC<SearchHeroProps> = ({
         {showFieldsPanel && (
           <div className="bg-white backdrop-blur-md border border-slate-200 rounded-xl p-3 shadow-2xl text-left animate-in fade-in duration-150">
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 px-1 text-xs">
-              <div className="font-bold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
+              <div className="font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
                 <Database className="w-3.5 h-3.5" />
                 <span>Danh mục 8 Lĩnh vực chuyên ngành chuẩn hóa</span>
               </div>
