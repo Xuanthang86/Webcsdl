@@ -86,7 +86,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
         return entity.foreignLanguages.split(',').map((s: string) => s.trim()).filter(Boolean);
       }
     }
-    return ['Tiếng Anh (Thành thạo)', 'Tiếng Nhật (N2)', 'Tiếng Hàn (Giao tiếp)'];
+    return [];
   });
   const [newLanguageInput, setNewLanguageInput] = useState('');
   const [isAddingLanguage, setIsAddingLanguage] = useState(false);
@@ -485,7 +485,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Lĩnh vực công nghệ:</span>
-                    <span className="sm:col-span-2 font-semibold text-teal-800">{entity.field || 'Khoa học Kỹ thuật và Công nghệ'}</span>
+                    <span className="sm:col-span-2 font-semibold text-teal-800">{entity.field || 'Chưa cập nhật'}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tóm tắt sáng chế:</span>
@@ -553,39 +553,39 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
                       <div>
                         <span className="text-slate-400 block mb-0.5">Ngày tháng năm sinh:</span>
-                        <span className="font-mono font-medium text-slate-800">{entity.birthDate || (entity.birthYear ? `15/08/${entity.birthYear}` : '15/08/1978')}</span>
+                        <span className="font-mono font-medium text-slate-800">{entity.birthDate || (entity.birthYear ? `Năm ${entity.birthYear}` : 'Chưa cập nhật')}</span>
                       </div>
                       <div>
                         <span className="text-slate-400 block mb-0.5">Giới tính:</span>
-                        <span className="font-medium text-slate-800">{entity.gender || 'Nam'}</span>
+                        <span className="font-medium text-slate-800">{entity.gender || 'Chưa cập nhật'}</span>
                       </div>
                       <div>
                         <span className="text-slate-400 block mb-0.5">Học hàm:</span>
-                        <span className="font-semibold text-teal-900">{entity.academicRank || 'Phó Giáo sư (PGS)'}</span>
+                        <span className="font-semibold text-teal-900">{entity.academicRank || 'Chưa cập nhật'}</span>
                       </div>
                       <div>
                         <span className="text-slate-400 block mb-0.5">Học vị:</span>
-                        <span className="font-semibold text-teal-900">{entity.degree || 'Tiến sĩ (TS)'}</span>
+                        <span className="font-semibold text-teal-900">{entity.degree || 'Chưa cập nhật'}</span>
                       </div>
                       <div>
                         <span className="text-slate-400 block mb-0.5">Năm bắt đầu công tác:</span>
-                        <span className="font-mono font-semibold text-slate-800">{entity.startWorkYear || entity.startYear || '2004'}</span>
+                        <span className="font-mono font-semibold text-slate-800">{entity.startWorkYear || entity.startYear || 'Chưa cập nhật'}</span>
                       </div>
                       <div>
                         <span className="text-slate-400 block mb-0.5">Chức danh nghiên cứu:</span>
-                        <span className="font-medium text-slate-800">{entity.researchTitle || 'Nghiên cứu viên Cao cấp'}</span>
+                        <span className="font-medium text-slate-800">{entity.researchTitle || 'Chưa cập nhật'}</span>
                       </div>
                       <div>
                         <span className="text-slate-400 block mb-0.5">Chức vụ:</span>
-                        <span className="font-medium text-slate-800">{entity.jobTitle || entity.position || 'Trưởng phòng NCKH & Hợp tác Quốc tế'}</span>
+                        <span className="font-medium text-slate-800">{entity.jobTitle || entity.position || 'Chưa cập nhật'}</span>
                       </div>
                       <div>
                         <span className="text-slate-400 block mb-0.5">Email liên hệ:</span>
-                        <span className="font-mono text-teal-800 font-medium">{entity.email || entity.publicEmail || 'expert@danang.gov.vn'}</span>
+                        <span className="font-mono text-teal-800 font-medium">{entity.email || entity.publicEmail || 'Chưa cập nhật'}</span>
                       </div>
                       <div>
                         <span className="text-slate-400 block mb-0.5">Điện thoại liên hệ:</span>
-                        <span className="font-mono font-semibold text-slate-800">{entity.phone || entity.publicPhone || '0905.123.456'}</span>
+                        <span className="font-mono font-semibold text-slate-800">{entity.phone || entity.publicPhone || 'Chưa cập nhật'}</span>
                       </div>
                       <div className="sm:col-span-2">
                         <span className="text-slate-400 block mb-0.5">Lĩnh vực nghiên cứu:</span>
@@ -593,7 +593,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       </div>
                       <div className="sm:col-span-2 lg:col-span-3">
                         <span className="text-slate-400 block mb-0.5">Tên đơn vị công tác:</span>
-                        <span className="font-semibold text-slate-900">{entity.workplace || entity.leadOrganization || entity.organization || 'Trường Đại học Bách Khoa - Đại học Đà Nẵng'}</span>
+                        <span className="font-semibold text-slate-900">{entity.workplace || entity.leadOrganization || entity.organization || 'Chưa cập nhật'}</span>
                       </div>
                     </div>
                   </div>
@@ -606,7 +606,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                         Quá trình đào tạo và học tập:
                       </span>
                       <p className="text-slate-700 leading-relaxed whitespace-pre-line">
-                        {entity.trainingProcess || `• 1996 - 2001: Kỹ sư Công nghệ Thông tin, Đại học Bách Khoa Đà Nẵng\n• 2002 - 2005: Thạc sĩ Khoa học Máy tính, Đại học Quốc gia\n• 2007 - 2011: Tiến sĩ Kỹ thuật Điện toán, Tokyo Institute of Technology (Nhật Bản)`}
+                        {entity.trainingProcess || 'Chưa cập nhật'}
                       </p>
                     </div>
 
@@ -616,7 +616,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                         Quá trình công tác:
                       </span>
                       <p className="text-slate-700 leading-relaxed whitespace-pre-line">
-                        {entity.workExperience || `• 2004 - 2011: Giảng viên, Nghiên cứu viên Bộ môn Hệ thống Thông tin\n• 2012 - 2018: Phó Trưởng Khoa, Giám đốc Phòng Thí nghiệm Trọng điểm\n• 2019 - nay: Trưởng Bộ môn, Thành viên Hội đồng Khoa học & Công nghệ TP Đà Nẵng`}
+                        {entity.workExperience || 'Chưa cập nhật'}
                       </p>
                     </div>
                   </div>
@@ -640,12 +640,12 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
 
                     {/* Pre-integrated & Added languages */}
                     <div className="flex flex-wrap gap-2 text-xs">
-                      {languages.map((lang, idx) => (
+                      {languages.length > 0 ? languages.map((lang, idx) => (
                         <span key={idx} className="bg-teal-50 text-teal-900 border border-teal-200 px-3 py-1 rounded-lg font-medium flex items-center gap-1.5">
                           <Check className="w-3 h-3 text-teal-700" />
                           <span>{lang}</span>
                         </span>
-                      ))}
+                      )) : <span className="text-xs text-slate-400">Chưa cập nhật ngoại ngữ</span>}
                     </div>
 
                     {/* Form thêm ngoại ngữ mới */}
@@ -684,26 +684,17 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <div className="space-y-2 text-xs">
                       <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                         <span className="font-semibold text-slate-900 block mb-1">Tên bài báo / Tạp chí / Quốc gia:</span>
-                        <ul className="list-disc pl-5 space-y-1 text-slate-700">
-                          <li>Advanced Machine Learning Architecture for Real-time Water Monitoring Systems - IEEE Internet of Things Journal (Hoa Kỳ, ISI Q1, 2024)</li>
-                          <li>Nghiên cứu mô hình tối ưu hóa mạng lưới viễn thông trong thành phố thông minh - Tạp chí KH&CN Đại học Đà Nẵng (Việt Nam, 2023)</li>
-                          <li>Deep Residual Learning for Automated Medical Imaging Classification - Springer LNCS (Quốc tế, 2022)</li>
-                        </ul>
+                        <p className="text-slate-700 leading-relaxed whitespace-pre-line">{safeDisplayValue(entity.publications)}</p>
                       </div>
 
                       <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                         <span className="font-semibold text-slate-900 block mb-1">Tên văn bằng bảo hộ sở hữu trí tuệ:</span>
-                        <ul className="list-disc pl-5 space-y-1 text-slate-700">
-                          <li>Bằng Độc quyền Sáng chế số 28492/SHTT: Phương pháp cảnh báo sớm ngập úng đô thị dựa trên mạng cảm biến không dây</li>
-                          <li>Bằng Độc quyền Giải pháp hữu ích số 3105/GPHI: Thiết bị thu thập và mã hóa dữ liệu cảm biến đa chỉ tiêu</li>
-                        </ul>
+                        <p className="text-slate-700 leading-relaxed whitespace-pre-line">{safeDisplayValue(entity.qualifications)}</p>
                       </div>
 
                       <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                         <span className="font-semibold text-slate-900 block mb-1">Tên công trình / Kết quả nghiên cứu ứng dụng:</span>
-                        <p className="text-slate-700 leading-relaxed">
-                          Hệ thống Giám sát và Cảnh báo Thiên tai Đô thị Thông minh (đã triển khai thử nghiệm tại Trung tâm Điều hành Đô thị Thông minh TP Đà Nẵng); Nền tảng chia sẻ dữ liệu nghiên cứu mở cấp trường đại học.
-                        </p>
+                        <p className="text-slate-700 leading-relaxed whitespace-pre-line">{safeDisplayValue(entity.researchOutputs)}</p>
                       </div>
                     </div>
                   </div>
@@ -726,30 +717,18 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-slate-700">
-                          <tr className="hover:bg-slate-50">
-                            <td className="py-2.5 px-3 font-medium text-slate-900">Nghiên cứu ứng dụng thị giác máy tính và IoT trong giao thông đô thị</td>
-                            <td className="py-2.5 px-3 font-semibold text-teal-800">Cấp Quốc gia</td>
-                            <td className="py-2.5 px-3 font-mono">2022 - 2024</td>
-                            <td className="py-2.5 px-3">8 thành viên</td>
-                            <td className="py-2.5 px-3 font-semibold text-slate-900">Chủ nhiệm đề tài</td>
-                            <td className="py-2.5 px-3 text-emerald-700 font-medium">Đã nghiệm thu</td>
-                          </tr>
-                          <tr className="hover:bg-slate-50">
-                            <td className="py-2.5 px-3 font-medium text-slate-900">Xây dựng bản đồ số tài nguyên du lịch thông minh trên nền tảng GIS</td>
-                            <td className="py-2.5 px-3 font-semibold text-teal-800">Cấp Thành phố</td>
-                            <td className="py-2.5 px-3 font-mono">2021 - 2023</td>
-                            <td className="py-2.5 px-3">5 thành viên</td>
-                            <td className="py-2.5 px-3 font-semibold text-slate-900">Chủ trì kỹ thuật</td>
-                            <td className="py-2.5 px-3 text-emerald-700 font-medium">Đã chuyển giao</td>
-                          </tr>
-                          <tr className="hover:bg-slate-50">
-                            <td className="py-2.5 px-3 font-medium text-slate-900">Phát triển thuật toán nhận dạng dị thường trong mạng cảm biến công nghiệp</td>
-                            <td className="py-2.5 px-3 font-semibold text-teal-800">Cấp Cơ sở</td>
-                            <td className="py-2.5 px-3 font-mono">2023 - 2024</td>
-                            <td className="py-2.5 px-3">4 thành viên</td>
-                            <td className="py-2.5 px-3">Tham gia nghiên cứu</td>
-                            <td className="py-2.5 px-3 text-amber-700 font-medium">Đang triển khai</td>
-                          </tr>
+                          {entity.projects ? (
+                            <tr className="hover:bg-slate-50">
+                              <td className="py-2.5 px-3 font-medium text-slate-900">{safeDisplayValue(entity.projects)}</td>
+                              <td className="py-2.5 px-3">{safeDisplayValue(entity.projectLevel)}</td>
+                              <td className="py-2.5 px-3 font-mono">{safeDisplayValue(entity.projectDuration)}</td>
+                              <td className="py-2.5 px-3">{safeDisplayValue(entity.projectMembers)}</td>
+                              <td className="py-2.5 px-3 font-semibold text-slate-900">{safeDisplayValue(entity.projectRole)}</td>
+                              <td className="py-2.5 px-3">{safeDisplayValue(entity.projectStatus)}</td>
+                            </tr>
+                          ) : (
+                            <tr><td colSpan={6} className="py-3 px-3 text-center text-slate-400">Chưa cập nhật</td></tr>
+                          )}
                         </tbody>
                       </table>
                     </div>
@@ -763,7 +742,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                         Giải thưởng Khoa học & Công nghệ:
                       </span>
                       <p className="text-slate-800 leading-relaxed whitespace-pre-line">
-                        {entity.awards || `• Giải Nhất Sáng tạo Khoa học và Công nghệ Việt Nam (VIFOTEC) năm 2023\n• Bằng khen của Chủ tịch UBND Thành phố Đà Nẵng về thành tích nghiên cứu khoa học xuất sắc năm 2024\n• Giải thưởng Nhà khoa học trẻ tiêu biểu khu vực miền Trung`}
+                        {safeDisplayValue(entity.awards)}
                       </p>
                     </div>
 
@@ -773,7 +752,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                         Kinh nghiệm & Năng lực tư vấn:
                       </span>
                       <p className="text-slate-700 leading-relaxed whitespace-pre-line">
-                        {entity.experienceNotes || `Hơn 20 năm chủ trì và phản biện các đề tài KH&CN cấp Nhà nước và Thành phố. Thành viên Hội đồng Giám khảo cuộc thi Khởi nghiệp Đổi mới sáng tạo TP Đà Nẵng (SURF). Cố vấn chiến lược công nghệ cho 6 doanh nghiệp khởi nghiệp đổi mới sáng tạo.`}
+                        {safeDisplayValue(entity.experienceNotes)}
                       </p>
                     </div>
                   </div>
