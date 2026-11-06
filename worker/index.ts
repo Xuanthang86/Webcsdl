@@ -1250,9 +1250,9 @@ export default {
       }
 
       // L. Module CSV Export (D1-backed). Imports are handled by Q2 below.
-      const exportMatch = url.pathname.match(/^\\/api\\/export\\/([a-z_]+)$/);
-      if (exportMatch) {
-        const moduleName = exportMatch[1];
+      const exportPrefix = '/api/export/';
+      if (url.pathname.startsWith(exportPrefix)) {
+        const moduleName = url.pathname.slice(exportPrefix.length);
         if (!ALLOWED_MODULES.includes(moduleName)) {
           return jsonResponse({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' }, 400, corsHeaders);
         }
@@ -1273,13 +1273,14 @@ export default {
               const raw = value === null || value === undefined
                 ? ''
                 : typeof value === 'object' ? JSON.stringify(value) : String(value);
-              return /[",\\r\\n]/.test(raw) ? '"' + raw.replace(/"/g, '""') + '"' : raw;
+              const needsQuotes = raw.includes(',') || raw.includes('"') || raw.includes(String.fromCharCode(13)) || raw.includes(String.fromCharCode(10));
+              return needsQuotes ? '"' + raw.replace(/"/g, '""') + '"' : raw;
             };
             const csv = [
               columns.map(escapeCsv).join(','),
               ...(rows.results || []).map((row: any) => columns.map(column => escapeCsv(row[column])).join(','))
-            ].join('\\r\\n');
-            return new Response('\\uFEFF' + csv, {
+            ].join(String.fromCharCode(13, 10));
+            return new Response(String.fromCharCode(0xFEFF) + csv, {
               status: 200,
               headers: {
                 'Content-Type': 'text/csv; charset=utf-8',
