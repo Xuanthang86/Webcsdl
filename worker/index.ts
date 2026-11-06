@@ -1192,90 +1192,93 @@ export default {
               console.error('Không thể tổng hợp số lượng đề tài theo năm:', error);
             }
 
-            try {
-              const initYears = await env.DB.prepare(`
-                SELECT 
-                  COALESCE(
-                    NULLIF(CAST(recognition_year AS TEXT), ''),
-                    NULLIF(substr(conception_date, 1, 4), ''),
-                    NULLIF(substr(created_at, 1, 4), ''),
-                    '2026'
-                  ) as yr,
-                  COUNT(*) as c
-                FROM initiatives
-                GROUP BY yr
-              `).all<{ yr: string; c: number }>();
-              for (const r of (initYears.results || [])) {
-                if (r.yr) initiativesByYear[r.yr] = Number(r.c) || 0;
-              }
-            } catch {}
+            // Aggregate yearly counts for every charted module using the columns
+            // actually present in the deployed D1 schema, with data_json fallback.
+            const aggregateModuleYears = async (
+              table: string,
+              target: Record<string, number>,
+              candidateFields: string[]
+            ) => {
+              try {
+                const info = await env.DB.prepare(\`PRAGMA table_info("\${table}")\`).all<any>();
+                const columns = new Set((info.results || []).map((column: any) => String(column.name)));
+                const availableFields = candidateFields.filter(field => columns.has(field));
+                const selectedFields = [...new Set([...availableFields, ...(columns.has('data_json') ? ['data_json'] : [])])];
+                if (selectedFields.length === 0) return;
 
-            try {
-              const stpYears = await env.DB.prepare(`
-                SELECT 
-                  COALESCE(
-                    NULLIF(substr(founded_date, 1, 4), ''),
-                    NULLIF(substr(created_at, 1, 4), ''),
-                    '2026'
-                  ) as yr,
-                  COUNT(*) as c
-                FROM startups
-                GROUP BY yr
-              `).all<{ yr: string; c: number }>();
-              for (const r of (stpYears.results || [])) {
-                if (r.yr) startupsByYear[r.yr] = Number(r.c) || 0;
-              }
-            } catch {}
+                const rows = await env.DB.prepare(
+                  \`SELECT \${selectedFields.map(field => \`"\${field}"\`).join(', ')} FROM "\${table}"\`
+                ).all<any>();
+                const normalizeKey = (value: string) => value.replace(/[_\s-]/g, '').toLowerCase();
+                const extractYearValue = (value: any): string | null => {
+                  if (value === null || value === undefined || String(value).trim() === '') return null;
+                  const match = String(value).match(/(?:19|20)\d{2}/);
+                  if (!match) return null;
+                  const year = Number(match[0]);
+                  return year >= 1900 && year <= new Date().getFullYear() + 1 ? String(year) : null;
+                };
 
-            try {
-              const prjYears = await env.DB.prepare(`
-                SELECT 
-                  COALESCE(
-                    NULLIF(substr(start_year, 1, 4), ''),
-                    NULLIF(substr(created_at, 1, 4), ''),
-                    '2026'
-                  ) as yr,
-                  COUNT(*) as c
-                FROM startup_projects
-                GROUP BY yr
-              `).all<{ yr: string; c: number }>();
-              for (const r of (prjYears.results || [])) {
-                if (r.yr) projectsByYear[r.yr] = Number(r.c) || 0;
-              }
-            } catch {}
+                for (const row of rows.results || []) {
+                  let custom: Record<string, any> = {};
+                  try {
+                    custom = row.data_json ? JSON.parse(String(row.data_json)) : {};
+                    if (!custom || typeof custom !== 'object' || Array.isArray(custom)) custom = {};
+                  } catch {
+                    custom = {};
+                  }
 
-            try {
-              const ideaYears = await env.DB.prepare(`
-                SELECT 
-                  COALESCE(
-                    NULLIF(substr(created_at, 1, 4), ''),
-                    '2026'
-                  ) as yr,
-                  COUNT(*) as c
-                FROM startup_ideas
-                GROUP BY yr
-              `).all<{ yr: string; c: number }>();
-              for (const r of (ideaYears.results || [])) {
-                if (r.yr) ideasByYear[r.yr] = Number(r.c) || 0;
-              }
-            } catch {}
+                  let year: string | null = null;
+                  for (const field of candidateFields) {
+                    const key = normalizeKey(field);
+                    const physicalKey = Object.keys(row).find(name => normalizeKey(name) === key);
+                    const customKey = Object.keys(custom).find(name => normalizeKey(name) === key);
+                    year = extractYearValue(
+                      physicalKey && row[physicalKey] !== null && row[physicalKey] !== undefined && String(row[physicalKey]).trim() !== ''
+                        ? row[physicalKey]
+                        : customKey ? custom[customKey] : null
+                    );
+                    if (year) break;
+                  }
 
-            try {
-              const patYears = await env.DB.prepare(`
-                SELECT 
-                  COALESCE(
-                    NULLIF(substr(filing_date, 1, 4), ''),
-                    NULLIF(substr(created_at, 1, 4), ''),
-                    '2026'
-                  ) as yr,
-                  COUNT(*) as c
-                FROM patents
-                GROUP BY yr
-              `).all<{ yr: string; c: number }>();
-              for (const r of (patYears.results || [])) {
-                if (r.yr) patentsByYear[r.yr] = Number(r.c) || 0;
+                  const bucket = year || currentYr;
+                  target[bucket] = (target[bucket] || 0) + 1;
+                }
+              } catch (error) {
+                console.error(\`Không thể tổng hợp số lượng \${table} theo năm:\`, error);
               }
-            } catch {}
+            };
+
+            await Promise.all([
+              aggregateModuleYears('initiatives', initiativesByYear, [
+                'recognition_year', 'approval_year', 'acceptance_year',
+                'conception_date', 'start_date', 'created_at'
+              ]),
+              aggregateModuleYears('startups', startupsByYear, [
+                'founded_date', 'founded_year', 'establishment_date',
+                'established_year', 'start_year', 'created_at'
+              ]),
+              aggregateModuleYears('startup_projects', projectsByYear, [
+                'start_year', 'start_date', 'implementation_time', 'created_at'
+              ]),
+              aggregateModuleYears('startup_ideas', ideasByYear, [
+                'submitted_at', 'submission_date', 'idea_date', 'created_at'
+              ]),
+              aggregateModuleYears('patents', patentsByYear, [
+                'filing_date', 'application_date', 'grant_date', 'issue_date', 'created_at'
+              ]),
+              aggregateModuleYears('experts', expertsByYear, [
+                'joined_at', 'join_date', 'registration_date', 'created_at'
+              ]),
+              aggregateModuleYears('support_organizations', supportOrgsByYear, [
+                'established_date', 'founded_date', 'establishment_year', 'created_at'
+              ]),
+              aggregateModuleYears('universities', universitiesByYear, [
+                'established_date', 'founded_year', 'establishment_year', 'created_at'
+              ]),
+              aggregateModuleYears('wards', wardsByYear, [
+                'effective_date', 'formed_date', 'created_at'
+              ])
+            ]);
 
             try {
               const tf = await env.DB.prepare(`SELECT COALESCE(NULLIF(field, ''), 'Đa ngành') as f, COUNT(*) as c FROM science_tasks GROUP BY f`).all<any>();
