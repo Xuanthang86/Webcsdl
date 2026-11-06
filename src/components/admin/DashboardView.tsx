@@ -489,17 +489,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
               <div className="space-y-2.5">
                 {Object.entries(stats.tasksByField || stats.fieldBreakdown || {}).map(([f, count], idx) => {
-                  const pct = Math.round((count / (stats.totalScienceTasks || 1)) * 100);
+                  const numericCount = Number(count) || 0;
+                  const totalTasks = Number(stats.totalScienceTasks) || 0;
+                  const pct = totalTasks > 0 ? (numericCount / totalTasks) * 100 : 0;
                   return (
                     <div key={idx} className="space-y-1">
                       <div className="flex justify-between text-xs text-slate-700">
                         <span className="truncate max-w-[240px] font-medium">{f}</span>
-                        <span className="font-mono font-semibold">{count} đề tài ({pct}%)</span>
+                        <span className="font-mono font-semibold">{count} đề tài ({pct.toFixed(1)}%)</span>
                       </div>
                       <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-teal-700 rounded-full transition-all duration-500"
-                          style={{ width: `${count > 0 ? Math.max(pct, 4) : 0}%` }}
+                          style={{ width: `${numericCount > 0 ? Math.max(pct, 4) : 0}%` }}
                         />
                       </div>
                     </div>
