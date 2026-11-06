@@ -1285,7 +1285,7 @@ export default {
             const params: any[] = [];
             if (q && searchable.length) {
               const upperQ = rawQuery.toUpperCase();
-              const titleCaseQ = rawQuery.replace(/(^|\\s)([^\\s])/g, (_match: string, prefix: string, letter: string) => prefix + letter.toUpperCase());
+              const titleCaseQ = rawQuery.replace(/(^|\s)([^\s])/g, (_match: string, prefix: string, letter: string) => prefix + letter.toUpperCase());
               const queryVariants = [...new Set([rawQuery, q, upperQ, titleCaseQ])];
               where.push('(' + searchable.map(column => '(' + queryVariants.map(() => `CAST("${column}" AS TEXT) LIKE ?`).join(' OR ') + ')').join(' OR ') + ')');
               searchable.forEach(() => queryVariants.forEach(variant => params.push(`%${variant}%`)));
@@ -1302,13 +1302,13 @@ export default {
               if (columns.has('status')) where.push("LOWER(COALESCE(status, '')) IN ('approved', 'published')");
               if (columns.has('publicity_level')) where.push("LOWER(COALESCE(publicity_level, 'public')) = 'public'");
             }
-            const sql = `SELECT * FROM ${mod}${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY created_at DESC LIMIT 500`;
+            const sql = `SELECT * FROM ${mod}${where.length ? ' WHERE ' + where.join(' AND ') : ''} ORDER BY created_at DESC LIMIT 2000`;
             const rows = await env.DB.prepare(sql).bind(...params).all<any>();
             for (const row of rows.results || []) {
               allResults.push(hydrateModuleRow(row, mod));
-              if (allResults.length >= 1000) break;
+              if (allResults.length >= 5000) break;
             }
-            if (allResults.length >= 1000) break;
+            if (allResults.length >= 5000) break;
           }
         } catch (error: any) {
           return jsonResponse({ success: false, message: 'Không thể hoàn thành tìm kiếm D1: ' + (error?.message || 'Lỗi không xác định') }, 500, corsHeaders);
