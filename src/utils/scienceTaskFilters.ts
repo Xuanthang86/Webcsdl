@@ -66,30 +66,37 @@ export const matchesScienceTaskLevel = (record: BaseEntity, selectedLevel: strin
   return true;
 };
 
-export const getScienceTaskYear = (record: BaseEntity): string => {
-  const candidates = [
+export const getScienceTaskYears = (record: BaseEntity): string[] => {
+  const values = [
     record.year,
     record.startYear,
     record.executionYear,
     record.approvalYear,
-    record.createdYear
+    record.createdYear,
+    record.executionTime,
+    record.startDate,
+    record.approvalDate
   ];
-  for (const candidate of candidates) {
-    const match = String(candidate ?? '').match(/\b(19|20)\d{2}\b/);
-    if (match) return match[0];
-  }
-
-  const timeText = String(record.executionTime || record.startDate || record.approvalDate || '');
-  const years = timeText.match(/\b(?:19|20)\d{2}\b/g);
-  return years?.[0] || '';
+  const years = new Set<string>();
+  values.forEach(value => {
+    const matches = String(value ?? '').match(/\b(?:19|20)\d{2}\b/g) || [];
+    matches.forEach(year => years.add(year));
+  });
+  return Array.from(years);
 };
 
+export const getScienceTaskYear = (record: BaseEntity): string =>
+  getScienceTaskYears(record)[0] || '';
+
+export const getScienceTaskUnits = (record: BaseEntity): string[] =>
+  Array.from(new Set([
+    record.leadOrganization,
+    record.hostOrganization,
+    record.ownerName,
+    record.proposingOrg,
+    record.organization,
+    record.managingAgency
+  ].filter(value => typeof value === 'string' && value.trim().length > 0).map(value => String(value).trim())));
+
 export const getScienceTaskUnit = (record: BaseEntity): string =>
-  String(
-    record.leadOrganization ||
-    record.hostOrganization ||
-    record.ownerName ||
-    record.proposingOrg ||
-    record.organization ||
-    ''
-  ).trim();
+  getScienceTaskUnits(record)[0] || '';
