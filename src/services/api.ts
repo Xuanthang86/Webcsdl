@@ -353,12 +353,19 @@ export const api = {
   },
 
   async approveImportedRecords(moduleType: ModuleType, ids: string[]): Promise<{ success: boolean; approvedCount: number; message?: string }> {
-    const res = await authFetch(`/api/import/${moduleType}/approve`, {
-      method: 'POST',
-      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ ids })
-    });
-    return parseJsonResponse(res);
+    let approvedCount = 0;
+    const batchSize = 200;
+    for (let i = 0; i < ids.length; i += batchSize) {
+      const batch = ids.slice(i, i + batchSize);
+      const res = await authFetch(`/api/import/${moduleType}/approve`, {
+        method: 'POST',
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ ids: batch })
+      });
+      const result = await parseJsonResponse(res);
+      approvedCount += Number(result.approvedCount) || 0;
+    }
+    return { success: true, approvedCount };
   },
 
   getExportUrl(moduleType: ModuleType): string {
