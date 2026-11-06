@@ -1179,12 +1179,12 @@ export default {
                     custom = {};
                   }
 
-                  const yearValue =
-                    getTaskValue(row, custom, ['acceptance_year', 'acceptanceYear']) ??
-                    getTaskValue(row, custom, ['implementation_time', 'implementationTime', 'execution_time', 'executionTime']) ??
-                    getTaskValue(row, custom, ['expected_start_date', 'expectedStartDate', 'start_date', 'startDate', 'start_year', 'startYear']) ??
-                    getTaskValue(row, custom, ['created_at', 'createdAt']);
-                  const year = extractYear(yearValue) || '2026';
+                  const year =
+                    extractYear(getTaskValue(row, custom, ['acceptance_year', 'acceptanceYear'])) ||
+                    extractYear(getTaskValue(row, custom, ['implementation_time', 'implementationTime', 'execution_time', 'executionTime'])) ||
+                    extractYear(getTaskValue(row, custom, ['expected_start_date', 'expectedStartDate', 'start_date', 'startDate', 'start_year', 'startYear'])) ||
+                    extractYear(getTaskValue(row, custom, ['created_at', 'createdAt'])) ||
+                    '2026';
                   tasksByYear[year] = (tasksByYear[year] || 0) + 1;
                 }
               }
