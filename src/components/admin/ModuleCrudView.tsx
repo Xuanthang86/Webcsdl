@@ -897,6 +897,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
               onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
               className="h-8 px-2 border border-slate-300 rounded-lg bg-white text-slate-700"
             >
+              <option value={10}>10</option>
               <option value={25}>25</option>
               <option value={50}>50</option>
               <option value={100}>100</option>

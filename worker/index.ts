@@ -1958,12 +1958,19 @@ export default {
           const assignments = ["status = 'approved'", "updated_at = datetime('now')"];
           if (tableColumns.has('verification_status')) assignments.push("verification_status = 'verified'");
           if (tableColumns.has('publicity_level')) assignments.push("publicity_level = 'public'");
-          const placeholders = ids.map(() => '?').join(', ');
+          // D1 giới hạn số biến SQL trên mỗi câu lệnh. Chia danh sách ID thành
+          // các lô nhỏ để phê duyệt hàng nghìn bản ghi mà không vượt giới hạn.
+          const approvalBatchSize = 80;
+          let approvedCount = 0;
           try {
-            const updated = await env.DB.prepare(
-              `UPDATE ${moduleName} SET ${assignments.join(', ')} WHERE id IN (${placeholders}) AND LOWER(TRIM(COALESCE(status, ''))) = 'draft'`
-            ).bind(...ids).run();
-            const approvedCount = Number(updated.meta?.changes || 0);
+            for (let offset = 0; offset < ids.length; offset += approvalBatchSize) {
+              const idBatch = ids.slice(offset, offset + approvalBatchSize);
+              const placeholders = idBatch.map(() => '?').join(', ');
+              const updated = await env.DB.prepare(
+                `UPDATE ${moduleName} SET ${assignments.join(', ')} WHERE id IN (${placeholders}) AND LOWER(TRIM(COALESCE(status, ''))) = 'draft'`
+              ).bind(...idBatch).run();
+              approvedCount += Number(updated.meta?.changes || 0);
+            }
             if (approvedCount < 1) {
               return jsonResponse({
                 success: false,
@@ -1976,7 +1983,10 @@ export default {
               message: `Đã chuyển ${approvedCount}/${ids.length} bản ghi nháp sang trạng thái đã phê duyệt.`
             }, 200, corsHeaders);
           } catch (error: any) {
-            return jsonResponse({ success: false, message: 'Không thể phê duyệt dữ liệu trong D1: ' + (error?.message || 'Lỗi không xác định') }, 500, corsHeaders);
+            const partialMessage = approvedCount > 0
+              ? ` Đã phê duyệt thành công ${approvedCount}/${ids.length} bản ghi trước khi phát sinh lỗi; vui lòng tải lại danh sách để kiểm tra trạng thái.`
+              : '';
+            return jsonResponse({ success: false, approvedCount, message: 'Không thể phê duyệt dữ liệu trong D1: ' + (error?.message || 'Lỗi không xác định') + partialMessage }, 500, corsHeaders);
           }
         }
 
