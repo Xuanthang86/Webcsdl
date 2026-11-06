@@ -1768,8 +1768,11 @@ export default {
         if (!ALLOWED_MODULES.includes(moduleName)) {
           return jsonResponse({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' }, 400, corsHeaders);
         }
-        if (!['super_admin', 'system_admin'].includes(currentUser.role)) {
-          return jsonResponse({ success: false, message: 'Chỉ Quản trị viên mới được nhập và phê duyệt dữ liệu hàng loạt.' }, 403, corsHeaders);
+        const isBulkApproval = routeParts[1] === 'approve';
+        const canImportBulk = ['super_admin', 'system_admin', 'data_officer'].includes(currentUser.role);
+        const canApproveBulk = ['super_admin', 'system_admin', 'agency_leader'].includes(currentUser.role);
+        if (isBulkApproval ? !canApproveBulk : !canImportBulk) {
+          return jsonResponse({ success: false, message: isBulkApproval ? 'Bạn không có quyền phê duyệt dữ liệu hàng loạt.' : 'Bạn không có quyền nhập dữ liệu hàng loạt.' }, 403, corsHeaders);
         }
         if (!env.DB) {
           return jsonResponse({ success: false, message: 'CSDL D1 chưa kết nối.' }, 500, corsHeaders);
