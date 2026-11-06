@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BaseEntity, ModuleType } from '../types';
-import { matchesScienceTaskLevel } from '../utils/scienceTaskFilters';
+import { matchesScienceTaskLevel, normalizeScienceTaskText } from '../utils/scienceTaskFilters';
 import { api } from '../services/api';
 import { MODULE_OPTIONS, SPECIALIZED_FIELDS } from './SearchHero';
 import { MODULE_NAMES } from './admin/ModuleCrudView';
@@ -54,6 +54,39 @@ export const MODULE_LIST_TITLES: Record<string, string> = {
   featured_startups: 'DANH SÁCH CÁC DOANH NGHIỆP KHỞI NGHIỆP TIÊU BIỂU'
 };
 
+const SPECIALIZED_FIELD_KEYWORDS: Record<string, string[]> = {
+  cntt_ai: ['cong nghe thong tin', 'tri tue nhan tao', 'ban dan', 'vi mach', 'chip', 'semiconductor'],
+  y_duoc: ['y duoc', 'y hoc', 'duoc hoc', 'cham soc suc khoe', 'suc khoe cong dong'],
+  nong_nghiep: ['nong nghiep', 'cong nghe sinh hoc', 'thuy san', 'lam nghiep', 'nong san'],
+  moi_truong: ['moi truong', 'nang luong tai tao', 'kinh te tuan hoan', 'bien doi khi hau', 'tai nguyen nuoc'],
+  vat_lieu: ['vat lieu moi', 'cong nghe vat lieu', 'ky thuat hoa hoc', 'polymer', 'nano'],
+  co_khi: ['co khi', 'tu dong hoa', 'robot', 'che tao may', 'ky thuat co khi'],
+  chinh_quyen_so: ['cai cach hanh chinh', 'quan tri do thi', 'chinh quyen so', 'do thi thong minh'],
+  dmst_khoinghiep: ['doi moi sang tao', 'khoi nghiep', 'startup', 'he sinh thai khoi nghiep']
+};
+
+const matchesSpecializedField = (record: BaseEntity, selectedField: string): boolean => {
+  const definition = SPECIALIZED_FIELDS.find(field => field.name === selectedField);
+  if (!definition) return true;
+
+  const searchableValues = [
+    record.field, record.specialty, record.primaryField, record.researchField,
+    record.scientificField, record.researchArea, record.sector, record.topic,
+    record.keywords, record.category, record.technology, record.title, record.summary
+  ];
+  const recordText = normalizeScienceTaskText(searchableValues
+    .filter(value => typeof value === 'string' && value.trim())
+    .join(' '));
+  const terms = [
+    definition.name,
+    definition.shortName,
+    definition.category,
+    ...(SPECIALIZED_FIELD_KEYWORDS[definition.id] || [])
+  ].map(normalizeScienceTaskText).filter(term => term.length > 2);
+
+  return terms.some(term => recordText.includes(term));
+};
+
 export const BrowseView: React.FC<BrowseViewProps> = ({
   initialSearchQuery = '',
   initialModule = 'all',
@@ -76,6 +109,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
   // Specific Sub-Filters
   const [filterYear, setFilterYear] = useState('all');
   const [filterUnit, setFilterUnit] = useState('all');
+  const [showUnitSuggestions, setShowUnitSuggestions] = useState(false);
   const [filterLevel, setFilterLevel] = useState('all');
   const [filterSpecialty, setFilterSpecialty] = useState('all');
   const [filterAcademicRank, setFilterAcademicRank] = useState('all');
@@ -88,7 +122,6 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
       const data = await api.searchGlobal({
         q: query,
         moduleType: selectedModule === 'all' ? undefined : selectedModule,
-        field: selectedField || undefined,
         status: statusFilter === 'all' ? undefined : statusFilter
       });
       if (!isCurrentCheck || isCurrentCheck()) {
@@ -178,6 +211,13 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'vi'));
   }, [results]);
 
+  const filteredUnitSuggestions = useMemo(() => {
+    const unitQuery = normalizeScienceTaskText(filterUnit === 'all' ? '' : filterUnit);
+    return availableUnits
+      .filter(unit => !unitQuery || normalizeScienceTaskText(unit).includes(unitQuery))
+      .slice(0, 30);
+  }, [availableUnits, filterUnit]);
+
   const availableSpecialties = useMemo(() => {
     const set = new Set<string>();
     results.forEach(r => {
@@ -186,6 +226,11 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
     });
     return Array.from(set).sort();
   }, [results]);
+
+  const unclassifiedScienceTaskCount = useMemo(
+    () => results.filter(record => matchesScienceTaskLevel(record, 'Chưa phân loại')).length,
+    [results]
+  );
 
   // Filtered & Sorted items
   const processedResults = useMemo(() => {
@@ -200,20 +245,24 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
     }
 
     if (filterUnit !== 'all' && filterUnit.trim()) {
-      const unitQuery = normalizeFilterText(filterUnit);
+      const unitQuery = normalizeScienceTaskText(filterUnit);
       list = list.filter(r => {
         const unitValues = [
           r.leadOrganization, r.ownerName, r.proposingOrg, r.workplace,
           r.organization, r.managingAgency, r.hostOrganization, r.coordinatingOrganization
         ];
         return unitValues.some(value =>
-          typeof value === 'string' && normalizeFilterText(value).includes(unitQuery)
+          typeof value === 'string' && normalizeScienceTaskText(value).includes(unitQuery)
         );
       });
     }
 
     if (filterLevel !== 'all') {
       list = list.filter(r => matchesScienceTaskLevel(r, filterLevel));
+    }
+
+    if (selectedField) {
+      list = list.filter(record => matchesSpecializedField(record, selectedField));
     }
 
     if (filterSpecialty !== 'all') {
@@ -287,6 +336,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
   }, [
     results,
     selectedModule,
+    selectedField,
     filterYear,
     filterUnit,
     filterLevel,
@@ -519,33 +569,70 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                       <option value="Cấp Quốc gia">Cấp Quốc gia</option>
                       <option value="Cấp Thành phố">Cấp Thành phố</option>
                       <option value="Cấp Cơ sở">Cấp Cơ sở</option>
+                      <option value="Chưa phân loại">Chưa phân loại ({unclassifiedScienceTaskCount})</option>
                     </select>
                   </div>
 
-                  <div className="flex items-center gap-1">
-                    <span className="text-slate-500">Đơn vị chủ trì:</span>
-                    <input
-                      type="search"
-                      list="science-task-unit-suggestions"
-                      value={filterUnit === 'all' ? '' : filterUnit}
-                      onChange={(e) => setFilterUnit(e.target.value.trim() ? e.target.value : 'all')}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Escape') setFilterUnit('all');
+                  <div className="flex items-center gap-1 min-w-0 w-full sm:w-auto sm:flex-1">
+                    <span className="text-slate-500 whitespace-nowrap">Đơn vị chủ trì:</span>
+                    <div
+                      className="relative min-w-0 flex-1 sm:max-w-[320px]"
+                      onBlur={(event) => {
+                        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                          setShowUnitSuggestions(false);
+                        }
                       }}
-                      placeholder="Tất cả đơn vị / nhập để tìm..."
-                      aria-label="Tìm theo đơn vị chủ trì"
-                      autoComplete="off"
-                      className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 font-medium w-full sm:max-w-[260px] min-w-0"
-                    />
-                    <datalist id="science-task-unit-suggestions">
-                      {availableUnits.map(u => (
-                        <option key={u} value={u} />
-                      ))}
-                    </datalist>
+                    >
+                      <input
+                        type="search"
+                        value={filterUnit === 'all' ? '' : filterUnit}
+                        onFocus={() => setShowUnitSuggestions(true)}
+                        onChange={(event) => {
+                          setFilterUnit(event.target.value.trim() ? event.target.value : 'all');
+                          setCurrentPage(1);
+                          setShowUnitSuggestions(true);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Escape') {
+                            setFilterUnit('all');
+                            setShowUnitSuggestions(false);
+                          }
+                        }}
+                        placeholder="Gõ để tìm đơn vị chủ trì..."
+                        aria-label="Tìm và lọc theo đơn vị chủ trì"
+                        aria-expanded={showUnitSuggestions}
+                        autoComplete="off"
+                        className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 font-medium min-w-0"
+                      />
+                      {showUnitSuggestions && (
+                        <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+                          {filteredUnitSuggestions.length > 0 ? filteredUnitSuggestions.map(unit => (
+                            <button
+                              key={unit}
+                              type="button"
+                              onClick={() => {
+                                setFilterUnit(unit);
+                                setCurrentPage(1);
+                                setShowUnitSuggestions(false);
+                              }}
+                              className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-700 hover:bg-teal-50 hover:text-teal-900"
+                            >
+                              {unit}
+                            </button>
+                          )) : (
+                            <div className="px-3 py-2 text-xs text-slate-500">Không có đơn vị phù hợp.</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                     {filterUnit !== 'all' && (
                       <button
                         type="button"
-                        onClick={() => setFilterUnit('all')}
+                        onClick={() => {
+                          setFilterUnit('all');
+                          setCurrentPage(1);
+                          setShowUnitSuggestions(false);
+                        }}
                         className="text-teal-800 hover:text-teal-950 font-semibold whitespace-nowrap"
                         aria-label="Xóa bộ lọc đơn vị"
                       >
