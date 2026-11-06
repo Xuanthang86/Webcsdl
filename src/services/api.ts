@@ -49,6 +49,7 @@ function authFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Re
 
 async function parseJsonResponse<T = any>(res: Response): Promise<T> {
   if (res.status === 401 && typeof window !== 'undefined') {
+    removeStoredToken();
     window.dispatchEvent(new CustomEvent('portal:auth-expired'));
   }
 
@@ -100,6 +101,10 @@ export const api = {
       body: JSON.stringify({ username, password })
     });
     const data = await parseJsonResponse(res);
+    if (!data.token || typeof data.token !== 'string') {
+      throw new Error('Đăng nhập không nhận được mã phiên hợp lệ từ máy chủ. Vui lòng thử lại.');
+    }
+    setStoredToken(data.token);
     return data.user;
   },
 
@@ -121,6 +126,7 @@ export const api = {
       });
       await parseJsonResponse(res).catch(() => {});
     } finally {
+      removeStoredToken();
     }
   },
 
