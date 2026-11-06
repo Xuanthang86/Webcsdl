@@ -103,10 +103,10 @@ function canViewRestrictedModule(user: any, moduleName: string): boolean {
 function redactPublicDetail(item: any, moduleName: string): any {
   if (!item) return item;
   const restrictedByModule: Record<string, string[]> = {
-    science_tasks: ['members', 'projectTeam', 'evidenceFile', 'archiveCode', 'archiveSymbol', 'storageCode'],
-    experts: ['dateOfBirth', 'birthDate', 'gender', 'academicRank', 'degree', 'startYear', 'researchTitle', 'position', 'email', 'phone', 'field', 'workplace', 'education', 'educationHistory', 'workHistory', 'languages', 'publications', 'degreeName', 'researchOutputs', 'projects', 'awards', 'experience'],
-    startup_projects: ['operatingAddress', 'summary', 'membersCount', 'leaderPhone', 'leaderEmail'],
-    startup_ideas: ['operatingAddress', 'wardOrSchool', 'summary', 'problemSolved', 'membersCount', 'leaderPhone', 'leaderEmail', 'affiliatedUnit']
+    science_tasks: ['members', 'projectTeam', 'participants', 'evidenceFile', 'evidenceDocuments', 'attachmentSummary', 'attachments', 'archiveCode', 'archiveSymbol', 'storageCode', 'warehouseCode'],
+    experts: ['dateOfBirth', 'birthDate', 'gender', 'academicRank', 'degree', 'startYear', 'startWorkYear', 'researchTitle', 'position', 'jobTitle', 'email', 'publicEmail', 'phone', 'publicPhone', 'field', 'workplace', 'organization', 'currentAffiliation', 'trainingProcess', 'workExperience', 'foreignLanguages', 'education', 'educationHistory', 'workHistory', 'languages', 'publications', 'qualifications', 'researchOutputs', 'projects', 'projectLevel', 'projectDuration', 'projectMembers', 'projectRole', 'projectStatus', 'awards', 'experienceNotes'],
+    startup_projects: ['operatingAddress', 'address', 'summary', 'teamSize', 'memberCount', 'leaderPhone', 'leaderEmail'],
+    startup_ideas: ['operatingAddress', 'address', 'wardOrSchool', 'wardSchool', 'summary', 'problemSolved', 'teamSize', 'memberCount', 'leaderPhone', 'leaderEmail', 'affiliatedUnit', 'organization']
   };
   const safe = { ...item };
   for (const key of restrictedByModule[moduleName] || []) delete safe[key];
