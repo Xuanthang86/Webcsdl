@@ -799,7 +799,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       {item.field || item.primaryField || '—'}
                     </td>
                     <td className="py-3 px-4 text-slate-600 truncate max-w-[170px]">
-                      {item.ownerName || item.proposingOrg || item.leadOrganization || '—'}
+                      {item.ownerName || item.proposingOrg || item.leadOrganization || item.leaderName || item.representative || item.workplace || item.mentorTeacher || '—'}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${
@@ -812,8 +812,8 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       </span>
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <span className={`text-[11px] font-medium ${item.publicityLevel === 'public' ? 'text-emerald-700' : 'text-slate-400'}`}>
-                        {item.publicityLevel === 'public' ? 'Công khai' : 'Nội bộ'}
+                      <span className={`text-[11px] font-medium ${(['approved', 'published'].includes(String(item.status || '').toLowerCase()) && item.publicityLevel === 'public') ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {(['approved', 'published'].includes(String(item.status || '').toLowerCase()) && item.publicityLevel === 'public') ? 'Công khai' : 'Nội bộ'}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right">
