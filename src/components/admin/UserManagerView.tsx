@@ -214,10 +214,12 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
           email: formEmail,
           phone: formPhone,
           organization: formOrganization,
-          role: isAdminEditing ? editingUser.role : formRole,
-          isActive: isAdminEditing ? true : formIsActive,
-          managedModules: isAdminEditing ? MANAGEABLE_MODULE_OPTIONS.map(m => m.key) : formManagedModules,
-          organizationScope: formOrgScope
+          organizationScope: formOrgScope,
+          ...(!isAdminEditing ? {
+            role: formRole,
+            isActive: formIsActive,
+            managedModules: formManagedModules
+          } : {})
         };
         if (formPassword.trim()) {
           updates.password = formPassword.trim();
