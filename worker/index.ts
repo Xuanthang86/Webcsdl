@@ -1147,7 +1147,7 @@ export default {
                 ).all<any>();
 
                 const getTaskValue = (row: any, custom: Record<string, any>, names: string[]) => {
-                  const normalize = (value: string) => value.replace(/[_\\-\\s]/g, '').toLowerCase();
+                  const normalize = (value: string) => value.replace(/[_\s-]/g, '').toLowerCase();
                   for (const name of names) {
                     const target = normalize(name);
                     const physicalKey = Object.keys(row).find(key => normalize(key) === target);
@@ -1164,7 +1164,7 @@ export default {
 
                 const extractYear = (value: any): string | null => {
                   if (value === null || value === undefined) return null;
-                  const match = String(value).match(/(?:19|20)\\d{2}/);
+                  const match = String(value).match(/(?:19|20)\d{2}/);
                   if (!match) return null;
                   const year = Number(match[0]);
                   return year >= 1900 && year <= new Date().getFullYear() + 1 ? String(year) : null;
