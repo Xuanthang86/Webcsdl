@@ -74,7 +74,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
             'Lĩnh vực',
             'Tóm tắt đề tài',
             'Tài liệu minh chứng',
-            'Ký hiệu Kho'
+            'Ký hiệu Kho', 'Trạng thái'
           ],
           rows: [
             [
@@ -88,7 +88,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
               'Công nghệ thông tin',
               'Ứng dụng học sâu và cảm biến địa chấn không dây để cảnh báo nguy cơ sạt lở ven sông Vu Gia - Thu Bồn và chuyển giao cho Ban Chỉ huy PCTT thành phố.',
               'Thuyết minh đề tài; Quyết định phê duyệt số 142/QĐ-SKHCN',
-              'KHO-CNTT-2024-01'
+              'KHO-CNTT-2024-01', 'Đã nghiệm thu'
             ],
             [
               '2',
@@ -101,7 +101,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
               'Công nghệ Sinh học',
               'Quy trình tách chiết nano tăng sinh khả dụng và chuyển giao cho hợp tác xã dược liệu Hòa Vang tạo sản phẩm OCOP đạt chuẩn.',
               'Hợp đồng nghiên cứu; Biên bản nghiệm thu chính thức',
-              'KHO-SH-2023-04'
+              'KHO-SH-2023-04', 'Đang thực hiện'
             ]
           ]
         };
