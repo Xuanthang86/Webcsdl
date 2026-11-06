@@ -475,7 +475,12 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
 
                       {/* Status */}
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                        {u.isActive ? (
+                        {isSuperAdminRole ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-emerald-50 text-emerald-800 border-emerald-200">
+                            <CheckCircle className="w-3 h-3 text-emerald-600" />
+                            <span>Hoạt động · Được bảo vệ</span>
+                          </span>
+                        ) : u.isActive ? (
                           <button
                             onClick={() => handleToggleStatus(u)}
                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer"
