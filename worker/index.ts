@@ -1946,7 +1946,7 @@ export default {
           nambatdaucongtac: 'start_work_year', chucdanhnghiencuu: 'research_title', chucvu: 'job_title',
           email: 'email', dienthoai: 'phone', chuyenganh: 'specialty', tendonvicongtac: 'workplace',
           quatrinhdaotaovahoctap: 'training_process', quatrinhcongtac: 'work_experience', ngoaingu: 'foreign_languages',
-          tenbaibao: 'publications', tenvanbang: 'qualifications', tencongtrinh: 'research_outputs',
+          tenbaibao: 'publications', tenvanbang: 'qualifications', tencongtrinh: 'research_outputs',\n          capdetai: 'project_level', chutrihoacthamgia: 'project_role', tinhtrang: 'project_status',
           tendetai: 'projects', giaithuong: 'awards', kinhnghiem: 'experience_notes',
           tendoanhnghiep: 'name', diachihoatdong: 'address', websitedoanhnghiep: 'website',
           filelogodoanhnghiep: 'logo_url', linhvuckinhdoanh: 'field',
@@ -2006,7 +2006,7 @@ export default {
             const key = normalizeImportKey(rawKey);
             let target = aliases[key] || rawKey.replace(/([A-Z])/g, '_$1').toLowerCase();
             if (['title', 'name', 'projectname'].includes(key) && !tableColumns.has(target)) target = primaryColumn;
-            if (key.startsWith('diachihoatdong')) target = 'address';
+            if (key.startsWith('diachihoatdong')) target = 'address';\n            if (key === 'thoigianthuchien' && moduleName === 'experts') target = 'project_duration';\n            if (key === 'thanhvienthamgia' && moduleName === 'experts') target = 'project_members';
             if (key.startsWith('website')) target = 'website';
             if (key.startsWith('sanphamgiaiquyetvande')) target = 'problem_solved';
             if (key.startsWith('duanduocuomtaotutochuc')) target = 'incubated_at';
