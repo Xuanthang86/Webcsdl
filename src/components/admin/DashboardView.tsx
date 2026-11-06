@@ -165,7 +165,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               onChange={(e) => setSelectedYear(e.target.value)}
               className="bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold px-2 py-0.5 text-xs focus:ring-1 focus:ring-teal-700 cursor-pointer"
             >
-              <option value="all">Tất cả các năm (2021 - 2026)</option>
+              <option value="all">Tất cả các năm</option>
               {years.slice().reverse().map(yr => (
                 <option key={yr} value={yr}>Năm {yr}</option>
               ))}
@@ -570,7 +570,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {/* By Year */}
             <div className="space-y-3">
               <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
-                <span>Thống kê Sáng kiến công nhận theo Năm (2021 - 2026):</span>
+                <span>Thống kê Sáng kiến được công nhận theo năm:</span>
                 <span className="text-[11px] text-amber-800 font-mono font-bold">Hiệu quả lan tỏa</span>
               </div>
               <div className="h-48 flex items-end justify-between gap-3 pt-6 px-4 bg-slate-50 rounded-xl border border-slate-100">
@@ -600,7 +600,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {chartTab === 'startups' && (
           <div className="space-y-3 pt-2">
             <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
-              <span>Thống kê số lượng Doanh nghiệp Khởi nghiệp ĐMST thành lập & ươm tạo theo Năm (2021 - 2026):</span>
+              <span>Thống kê số lượng Doanh nghiệp Khởi nghiệp ĐMST thành lập và ươm tạo theo năm:</span>
               <span className="text-[11px] text-purple-700 font-mono font-bold">Tổng: {stats.totalStartups}</span>
             </div>
             <div className="h-48 flex items-end justify-between gap-2 sm:gap-4 pt-6 px-2 sm:px-8 min-w-0 w-full overflow-hidden bg-slate-50 rounded-xl border border-slate-100">
@@ -629,7 +629,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {chartTab === 'patents' && (
           <div className="space-y-3 pt-2">
             <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
-              <span>Thống kê số lượng Sáng chế & Văn bằng SHTT nộp đơn/cấp bằng theo Năm (2021 - 2026):</span>
+              <span>Thống kê số lượng Sáng chế và Văn bằng SHTT nộp đơn/cấp bằng theo năm:</span>
               <span className="text-[11px] text-indigo-700 font-mono font-bold">Tổng: {stats.totalPatents || 0}</span>
             </div>
             <div className="h-48 flex items-end justify-between gap-2 sm:gap-4 pt-6 px-2 sm:px-8 min-w-0 w-full overflow-hidden bg-slate-50 rounded-xl border border-slate-100">
@@ -687,7 +687,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {chartTab === 'projects' && (
           <div className="space-y-3 pt-2">
             <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
-              <span>Thống kê số lượng Dự án khởi nghiệp ĐMST được tiếp nhận & ươm tạo (2021 - 2026):</span>
+              <span>Thống kê số lượng Dự án khởi nghiệp ĐMST được tiếp nhận và ươm tạo theo năm:</span>
               <span className="text-[11px] text-emerald-700 font-mono font-bold">Tổng: {stats.totalProjects || 0}</span>
             </div>
             <div className="h-48 flex items-end justify-between gap-2 sm:gap-4 pt-6 px-2 sm:px-8 min-w-0 w-full overflow-hidden bg-slate-50 rounded-xl border border-slate-100">
