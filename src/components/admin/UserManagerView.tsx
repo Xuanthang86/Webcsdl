@@ -453,7 +453,7 @@ export const UserManagerView: React.FC<UserManagerViewProps> = ({ currentUser })
                       {/* Managed Modules */}
                       <td className="py-3.5 px-4 max-w-xs">
                         {isSuperAdminRole ? (
-                          <span className="text-slate-600 font-medium text-[11px]">Toàn quyền 17 phân hệ</span>
+                          <span className="text-slate-600 font-medium text-[11px]">Toàn quyền hệ thống · Không giới hạn phân hệ</span>
                         ) : u.managedModules && u.managedModules.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {u.managedModules.slice(0, 3).map(mKey => {
