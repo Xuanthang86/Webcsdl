@@ -514,7 +514,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <span>Thống kê số lượng Đề tài qua các năm:</span>
                 <span className="text-[11px] text-blue-700 font-mono font-bold">Xu hướng tăng trưởng</span>
               </div>
-              <div className="h-48 flex items-end justify-between gap-3 pt-6 px-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="h-48 flex items-end justify-between gap-2 sm:gap-4 pt-6 px-2 sm:px-4 min-w-0 w-full overflow-hidden bg-slate-50 rounded-xl border border-slate-100">
                 {displayYears.map(yr => {
                   const count = (stats.tasksByYear?.[yr] ?? (stats.tasksByYear as any)?.[Number(yr)]) || 0;
                   const heightPct = count > 0 ? Math.max(10, Math.round((count / maxTasksYear) * 100)) : 0;
@@ -573,7 +573,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <span>Thống kê Sáng kiến được công nhận theo năm:</span>
                 <span className="text-[11px] text-amber-800 font-mono font-bold">Hiệu quả lan tỏa</span>
               </div>
-              <div className="h-48 flex items-end justify-between gap-3 pt-6 px-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="h-48 flex items-end justify-between gap-2 sm:gap-4 pt-6 px-2 sm:px-4 min-w-0 w-full overflow-hidden bg-slate-50 rounded-xl border border-slate-100">
                 {displayYears.map(yr => {
                   const count = (stats.initiativesByYear?.[yr] ?? (stats.initiativesByYear as any)?.[Number(yr)]) || 0;
                   const heightPct = count > 0 ? Math.max(10, Math.round((count / maxInitiativesYear) * 100)) : 0;
