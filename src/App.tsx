@@ -23,6 +23,45 @@ import { ConnectionModal } from './components/ConnectionModal';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdvancedSearchModal } from './components/AdvancedSearchModal';
 
+class DetailModalErrorBoundary extends React.Component<
+  { children: React.ReactNode; onClose: () => void },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('[DetailModal] Render failure isolated:', error, info.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4">
+          <div role="alert" className="w-full max-w-lg rounded-2xl border border-amber-200 bg-white p-6 shadow-2xl">
+            <h2 className="text-lg font-bold text-slate-900">Không thể hiển thị hồ sơ</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              Dữ liệu của hồ sơ có trường chưa tương thích với giao diện. Lỗi đã được ghi nhận; vui lòng thử lại hoặc liên hệ quản trị viên.
+            </p>
+            <div className="mt-5 flex justify-end gap-3">
+              <button type="button" onClick={() => this.setState({ hasError: false })} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                Thử hiển thị lại
+              </button>
+              <button type="button" onClick={this.props.onClose} className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800">
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   const [currentView, setCurrentView] = useState<'home' | 'browse' | 'admin'>(() => {
     if (typeof window !== 'undefined') {
@@ -290,13 +329,18 @@ export default function App() {
   };
 
   const handleOpenDetail = async (entity: BaseEntity) => {
-    if (!entity) return;
+    if (!entity || !entity.id) return;
     const modType = entity.moduleType || 'science_tasks';
     try {
       const full = await api.getRecordById(modType as any, entity.id);
-      setActiveDetailEntity({ ...(full.data || entity), moduleType: modType });
-      setActiveRelationships(full.relationships || []);
+      const record = full?.data && typeof full.data === 'object' && !Array.isArray(full.data)
+        ? full.data
+        : entity;
+      setActiveDetailEntity({ ...record, moduleType: modType });
+      setActiveRelationships(Array.isArray(full?.relationships) ? full.relationships : []);
     } catch (err) {
+      console.error('[Dashboard] Không tải được hồ sơ chi tiết:', { moduleType: modType, recordId: entity.id, error: err });
+      // Keep the selected list record visible as a safe fallback instead of crashing or opening a blank page.
       setActiveDetailEntity({ ...entity, moduleType: modType });
       setActiveRelationships([]);
     }
@@ -460,15 +504,20 @@ export default function App() {
 
       {/* Detail Modal */}
       {activeDetailEntity && (
-        <DetailModal
-          entity={activeDetailEntity}
-          relationships={activeRelationships}
-          currentUser={currentUser}
-          onOpenAdminLogin={() => setShowAdminLoginModal(true)}
+        <DetailModalErrorBoundary
+          key={`${activeDetailEntity.moduleType || 'science_tasks'}:${activeDetailEntity.id || 'record'}`}
           onClose={() => setActiveDetailEntity(null)}
-          onOpenEntity={handleOpenRelatedEntity}
-          onOpenConnectModal={handleOpenConnectModal}
-        />
+        >
+          <DetailModal
+            entity={activeDetailEntity}
+            relationships={activeRelationships}
+            currentUser={currentUser}
+            onOpenAdminLogin={() => setShowAdminLoginModal(true)}
+            onClose={() => setActiveDetailEntity(null)}
+            onOpenEntity={handleOpenRelatedEntity}
+            onOpenConnectModal={handleOpenConnectModal}
+          />
+        </DetailModalErrorBoundary>
       )}
 
       {/* Public Submission Modal */}
