@@ -533,7 +533,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-100 hover:bg-slate-600 flex items-center justify-between transition-colors border border-transparent hover:border-slate-500 cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 font-medium">
-                  <Lightbulb className="w-4 h-4 text-amber-600" />
+                  <Lightbulb className="w-4 h-4 text-amber-300" />
                   <span>Sáng kiến có tác dụng, ảnh hưởng đối với thành phố</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
@@ -545,7 +545,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-100 hover:bg-slate-600 flex items-center justify-between transition-colors border border-transparent hover:border-slate-500 cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 font-medium">
-                  <Award className="w-4 h-4 text-purple-600" />
+                  <Award className="w-4 h-4 text-purple-300" />
                   <span>Sáng chế & Sở hữu trí tuệ</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
@@ -557,7 +557,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-100 hover:bg-slate-600 flex items-center justify-between transition-colors border border-transparent hover:border-slate-500 cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 font-medium">
-                  <GraduationCap className="w-4 h-4 text-blue-600" />
+                  <GraduationCap className="w-4 h-4 text-blue-300" />
                   <span>Chuyên gia & Nhà khoa học</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
@@ -570,7 +570,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className="w-full min-h-[44px] text-left px-3.5 py-2.5 text-slate-100 hover:bg-slate-600 flex items-center justify-between transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5 font-semibold">
-                    <Rocket className="w-4 h-4 text-rose-600" />
+                    <Rocket className="w-4 h-4 text-rose-300" />
                     <span>Dữ liệu Hệ sinh thái Khởi nghiệp đổi mới sáng tạo</span>
                   </div>
                   <ChevronDown className={`w-4 h-4 text-slate-300 transition-transform ${ecosystemSubmenuOpen ? 'rotate-180' : ''}`} />
@@ -638,7 +638,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-200 hover:bg-slate-600 flex items-center justify-between transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5 font-medium">
-                    <Database className="w-4 h-4 text-emerald-600" />
+                    <Database className="w-4 h-4 text-emerald-300" />
                     <span>Nhu cầu kết nối & Hợp tác</span>
                   </div>
                   <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
@@ -648,7 +648,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className="w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl text-slate-200 hover:bg-slate-600 flex items-center justify-between transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5 font-medium">
-                    <Database className="w-4 h-4 text-indigo-600" />
+                    <Database className="w-4 h-4 text-indigo-300" />
                     <span>Chính sách & Văn bản quy định</span>
                   </div>
                   <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
