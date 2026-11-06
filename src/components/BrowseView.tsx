@@ -250,7 +250,8 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
       list = list.filter(r => {
         const unitValues = [
           r.leadOrganization, r.ownerName, r.proposingOrg, r.workplace,
-          r.organization, r.managingAgency, r.hostOrganization, r.coordinatingOrganization
+          r.organization, r.managingAgency, r.hostOrganization, r.coordinatingOrganization,
+          r.workplace
         ];
         return unitValues.some(value =>
           typeof value === 'string' && normalizeScienceTaskText(value).includes(unitQuery)
