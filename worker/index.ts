@@ -1875,7 +1875,7 @@ export default {
           return jsonResponse({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' }, 400, corsHeaders);
         }
         const isBulkApproval = routeParts[1] === 'approve';
-        const canImportBulk = ['super_admin', 'system_admin', 'data_officer'].includes(currentUser.role) || (currentUser.role === 'partner_officer' && Array.isArray(currentUser.managedModules) && currentUser.managedModules.includes(moduleName));
+        const canImportBulk = ['super_admin', 'system_admin', 'data_officer'].includes(currentUser.role);
         const canApproveBulk = ['super_admin', 'system_admin', 'agency_leader'].includes(currentUser.role);
         if (isBulkApproval ? !canApproveBulk : !canImportBulk) {
           return jsonResponse({ success: false, message: isBulkApproval ? 'Bạn không có quyền phê duyệt dữ liệu hàng loạt.' : 'Bạn không có quyền nhập dữ liệu hàng loạt.' }, 403, corsHeaders);
