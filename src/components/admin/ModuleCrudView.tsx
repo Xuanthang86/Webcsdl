@@ -203,7 +203,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       showToast(`Đã nhập ${result.importedCount} bản ghi vào trạng thái nháp trong ${MODULE_NAMES[moduleType]}`);
       setPendingApprovalIds(result.importedIds || []);
       setShowInlineImportModal(false);
-      setShowImportApprovalModal(Boolean(result.importedIds?.length && ['super_admin', 'system_admin'].includes(currentUser?.role || '')));
+      setShowImportApprovalModal(Boolean(result.importedIds?.length && canApprove));
       setImportRawText('');
       setImportParsedRows([]);
       await loadData();
@@ -213,6 +213,15 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     } finally {
       setIsImporting(false);
     }
+  };
+
+  const handleOpenApproveAllDrafts = () => {
+    const draftIds = records
+      .filter(record => String(record.status || '').toLowerCase() === 'draft')
+      .map(record => record.id);
+    if (!draftIds.length) return;
+    setPendingApprovalIds(draftIds);
+    setShowImportApprovalModal(true);
   };
 
   const handleApproveImported = async () => {
@@ -547,13 +556,24 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
             </span>
           )}
 
-          {pendingApprovalIds.length > 0 && ['super_admin', 'system_admin'].includes(currentUser?.role || '') && (
+          {pendingApprovalIds.length > 0 && canApprove && (
             <button
               type="button"
               onClick={() => setShowImportApprovalModal(true)}
               className="px-3 py-1.5 bg-amber-50 border border-amber-300 hover:bg-amber-100 text-amber-900 text-xs font-semibold rounded-lg"
             >
               Phê duyệt {pendingApprovalIds.length} bản ghi vừa nhập
+            </button>
+          )}
+
+          {canApprove && records.some(record => String(record.status || '').toLowerCase() === 'draft') && (
+            <button
+              type="button"
+              onClick={handleOpenApproveAllDrafts}
+              className="px-3 py-1.5 bg-amber-50 border border-amber-300 hover:bg-amber-100 text-amber-900 text-xs font-semibold rounded-lg"
+              title="Chọn toàn bộ bản ghi đang ở trạng thái nháp để phê duyệt công khai"
+            >
+              Phê duyệt toàn bộ bản nháp ({records.filter(record => String(record.status || '').toLowerCase() === 'draft').length})
             </button>
           )}
 
