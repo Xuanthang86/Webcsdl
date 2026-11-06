@@ -418,11 +418,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase leading-none">
               CỔNG DỮ LIỆU
             </h1>
-            <p className="text-sm sm:text-base font-bold text-sky-200 tracking-wide mt-1.5 uppercase leading-snug">
-              VỀ KHOA HỌC, CÔNG NGHỆ
-            </p>
-            <p className="text-sm sm:text-base font-bold text-sky-200 tracking-wide uppercase leading-snug">
-              VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG
+            <p className="mt-1.5 text-[11px] xl:text-xs 2xl:text-sm font-bold text-sky-200 tracking-tight uppercase leading-tight whitespace-nowrap">
+              VỀ KHOA HỌC, CÔNG NGHỆ VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG
             </p>
           </div>
           
