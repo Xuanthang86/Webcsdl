@@ -651,14 +651,16 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                         <Globe className="w-4 h-4 text-teal-700" />
                         <span>Ngoại ngữ sử dụng trong nghiên cứu:</span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setIsAddingLanguage(!isAddingLanguage)}
-                        className="text-[11px] font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 transition-colors cursor-pointer"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span>Thêm ngoại ngữ mới</span>
-                      </button>
+                      {canEditLanguages && (
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingLanguage(!isAddingLanguage)}
+                          className="text-[11px] font-semibold text-teal-800 hover:text-teal-900 flex items-center gap-1 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 transition-colors cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Thêm ngoại ngữ mới</span>
+                        </button>
+                      )}
                     </div>
 
                     {canEditLanguages && (
