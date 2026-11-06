@@ -1979,6 +1979,20 @@ export default {
           return jsonResponse({ success: false, message: 'Không xác định được trường tên/tiêu đề chính của phân hệ.' }, 409, corsHeaders);
         }
 
+        const requiredFieldsByModule: Record<string, string[]> = {
+          science_tasks: ['__primary__', 'management_level', 'lead_organization', 'principal_investigator', 'execution_time', 'field', 'summary', 'evidence_documents', 'storage_code'],
+          initiatives: ['__primary__', 'recognition_year', 'authors', 'owner_name', 'owner_address', 'field'],
+          experts: ['__primary__', 'birth_date', 'gender', 'start_work_year', 'research_title', 'job_title', 'email', 'phone', 'field', 'specialty', 'workplace', 'training_process', 'work_experience', 'foreign_languages', 'experience_notes'],
+          startups: ['__primary__', 'field', 'summary', 'problem_solved', 'founder_count', 'current_staff_count', 'leader_name', 'leader_phone', 'leader_email', 'founded_year'],
+          support_organizations: ['__primary__', 'address', 'information'],
+          startup_projects: ['__primary__', 'address', 'field', 'summary', 'problem_solved', 'team_size', 'leader_name', 'leader_phone', 'leader_email', 'incubator', 'founded_year'],
+          startup_ideas: ['__primary__', 'ward_school', 'summary', 'problem_solved', 'team_size', 'leader_name', 'leader_phone', 'leader_email', 'mentor_teacher', 'organization'],
+          wards: ['__primary__', 'address', 'contact_info'],
+          universities: ['__primary__', 'ward', 'address', 'contact_info'],
+          featured_startups: ['__primary__', 'project_name', 'representative', 'address', 'contact_info', 'ward']
+        };
+        const requiredFields = requiredFieldsByModule[moduleName] || ['__primary__'];
+
         for (let idx = 0; idx < rawItems.length; idx++) {
           const raw = rawItems[idx];
           if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
@@ -2019,8 +2033,12 @@ export default {
             else unsupported.push(rawKey);
           }
 
-          if (!mapped[primaryColumn]) {
-            errors.push(`Dòng ${idx + 2}: Thiếu trường tên/tiêu đề bắt buộc (${primaryColumn}).`);
+          const missingRequiredFields = requiredFields.filter(field => {
+            const value = field === '__primary__' ? mapped[primaryColumn] : (mapped[field] ?? mapped[`__custom__${field}`]);
+            return value === undefined || value === null || String(value).trim() === '';
+          });
+          if (missingRequiredFields.length) {
+            errors.push(`Dòng ${idx + 2}: Thiếu trường bắt buộc: ${missingRequiredFields.join(', ')}.`);
             continue;
           }
           if (unsupported.length) {
