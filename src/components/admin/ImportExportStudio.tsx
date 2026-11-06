@@ -596,6 +596,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
               onChange={(e) => {
                 setSelectedModule(e.target.value as ModuleType);
                 setImportResult(null);
+                setPendingApprovalIds([]);
                 setParsedRows([]);
                 setWorkbook(null);
                 setSheetNames([]);
