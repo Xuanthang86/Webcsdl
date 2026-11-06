@@ -1121,6 +1121,12 @@ export default {
             const acceptanceValue = acceptanceExpressions.length
               ? `LOWER(TRIM(COALESCE(${acceptanceExpressions.join(', ')}, '')))`
               : "''";
+            // Some imported legacy datasets do not have a populated acceptance-result field.
+            // In that case only, treat an approved + verified workflow record as accepted.
+            // Explicit acceptance outcomes (including failed/in-progress outcomes) retain priority.
+            const workflowAcceptedFallback = taskColumns.has('status') && taskColumns.has('verification_status')
+              ? `(${acceptanceValue} = '' AND LOWER(TRIM(CAST("status" AS TEXT))) = 'approved' AND LOWER(TRIM(CAST("verification_status" AS TEXT))) = 'verified')`
+              : '0';
             const acceptedBudget = taskColumns.has('total_budget_approved')
               ? 'COALESCE(SUM(total_budget_approved), 0)'
               : '0';
@@ -1133,6 +1139,7 @@ export default {
                     OR ${acceptanceValue} LIKE '%hoàn thành%'
                     OR ${acceptanceValue} LIKE '%xuất sắc%'
                     OR ${acceptanceValue} LIKE '%đạt%'
+                    OR ${workflowAcceptedFallback}
                   )
                   AND ${acceptanceValue} NOT LIKE '%không đạt%'
                   AND ${acceptanceValue} NOT LIKE '%khong dat%'
