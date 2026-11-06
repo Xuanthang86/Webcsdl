@@ -627,6 +627,20 @@ export const Header: React.FC<HeaderProps> = ({
                       <span>• Doanh nghiệp khởi nghiệp tiêu biểu</span>
                       <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
                     </button>
+                    <button
+                      onClick={() => handleChooseCategory('investors')}
+                      className="w-full min-h-[44px] text-left px-3 py-2 rounded-lg text-sm text-slate-200 hover:text-white hover:bg-slate-600 flex items-center justify-between transition-colors cursor-pointer"
+                    >
+                      <span>• Nhà đầu tư</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                    </button>
+                    <button
+                      onClick={() => handleChooseCategory('investment_funds')}
+                      className="w-full min-h-[44px] text-left px-3 py-2 rounded-lg text-sm text-slate-200 hover:text-white hover:bg-slate-600 flex items-center justify-between transition-colors cursor-pointer"
+                    >
+                      <span>• Quỹ đầu tư</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                    </button>
                   </div>
                 )}
               </div>
