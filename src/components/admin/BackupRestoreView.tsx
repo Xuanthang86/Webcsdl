@@ -19,15 +19,29 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
     setMessage(null);
     try {
       const blob = await api.downloadBackup();
+      if (!blob || blob.size === 0) {
+        throw new Error('Tệp sao lưu được máy chủ trả về đang trống. Vui lòng thử lại.');
+      }
+
       const url = window.URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
       anchor.download = `portal_database_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      anchor.style.display = 'none';
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      window.URL.revokeObjectURL(url);
-      setMessage({ type: 'success', text: 'Đã tải bản sao lưu dữ liệu thành công.' });
+
+      // Keep the object URL alive briefly so mobile browsers (especially Safari)
+      // have time to start consuming the Blob before it is released.
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
+
+      // Browsers do not expose a reliable signal that a file was physically
+      // saved, so do not claim that the device has completed the download.
+      setMessage({
+        type: 'success',
+        text: 'Đã tạo tệp sao lưu và gửi yêu cầu tải xuống. Vui lòng kiểm tra mục Tải về (Downloads) của trình duyệt để xác nhận tệp đã được lưu.'
+      });
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message || 'Không thể tạo bản sao lưu dữ liệu.' });
     } finally {
