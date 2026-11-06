@@ -48,7 +48,7 @@ export const Footer: React.FC<FooterProps> = ({ config }) => {
           </div>
 
           {/* Col 3: Principles & Compliance */}
-          <div className="space-y-1.5 text-xs text-slate-400">
+          <div className="space-y-1.5 text-sm lg:text-[15px] text-slate-300">
             <div className="text-sm lg:text-base font-semibold text-white tracking-tight mb-1">Tiêu chuẩn & Nguyên tắc</div>
             <div className="flex items-start gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
@@ -63,7 +63,7 @@ export const Footer: React.FC<FooterProps> = ({ config }) => {
         </div>
 
         {/* Bottom copyright line: centered, with policy links directly underneath and centered */}
-        <div className="pt-3 border-t border-slate-700 flex flex-col items-center justify-center text-center gap-1.5 text-xs">
+        <div className="pt-3 border-t border-slate-700 flex flex-col items-center justify-center text-center gap-1.5 text-sm lg:text-[15px]">
           <div className="text-slate-300 font-medium leading-relaxed">
             © 2026. Tất cả quyền được bảo lưu.
           </div>
