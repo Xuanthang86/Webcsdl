@@ -1276,8 +1276,9 @@ export default {
             const where: string[] = [];
             const params: any[] = [];
             if (q && searchable.length) {
-              where.push('(' + searchable.map(column => `LOWER(CAST("${column}" AS TEXT)) LIKE ?`).join(' OR ') + ')');
-              searchable.forEach(() => params.push(`%${q}%`));
+              const upperQ = q.toUpperCase();
+              where.push('(' + searchable.map(column => `(CAST("${column}" AS TEXT) LIKE ? OR CAST("${column}" AS TEXT) LIKE ?)`).join(' OR ') + ')');
+              searchable.forEach(() => params.push(`%${q}%`, `%${upperQ}%`));
             }
             if (field && columns.has('field')) {
               where.push('LOWER(CAST(field AS TEXT)) = LOWER(?)');
