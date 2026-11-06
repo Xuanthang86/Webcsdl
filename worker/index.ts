@@ -376,6 +376,17 @@ export default {
       });
     }
 
+    // Serve the public SPA and its static files before API security checks.
+    // A missing SESSION_SECRET must not prevent the browser from loading the UI.
+    // API endpoints and /health continue through the protected Worker flow below.
+    const isApiRequest = url.pathname.startsWith('/api') || url.pathname === '/health';
+    if (!isApiRequest) {
+      if (env.ASSETS) {
+        return env.ASSETS.fetch(request);
+      }
+      return new Response('Not Found', { status: 404 });
+    }
+
     try {
       // 2. Secret Configuration Check
       const isProduction = env.ENVIRONMENT === 'production';
