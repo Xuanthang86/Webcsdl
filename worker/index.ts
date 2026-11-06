@@ -1385,6 +1385,88 @@ export default {
         }
       }
 
+      // Database backup: export every application table from the live Cloudflare D1 database.
+      // Password hashes are included so an authorized full-system recovery can preserve user accounts.
+      if (url.pathname === '/api/backup' && request.method === 'GET') {
+        if (!['super_admin', 'system_admin'].includes(currentUser.role)) {
+          return jsonResponse({ success: false, message: 'Bạn không có quyền tạo bản sao lưu hệ thống.' }, 403, corsHeaders);
+        }
+        if (!env.DB) {
+          return jsonResponse({ success: false, message: 'Cơ sở dữ liệu D1 chưa kết nối.' }, 500, corsHeaders);
+        }
+        try {
+          const tableResult = await env.DB.prepare(
+            "SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+          ).all<any>();
+          const tables: Record<string, any[]> = {};
+          const schema: Record<string, string> = {};
+
+          for (const table of tableResult.results || []) {
+            const tableName = String(table.name || '');
+            if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName)) continue;
+            schema[tableName] = String(table.sql || '');
+            const tableRows: any[] = [];
+            let offset = 0;
+            const pageSize = 500;
+            while (true) {
+              const page = await env.DB.prepare(
+                'SELECT * FROM "' + tableName + '" LIMIT ? OFFSET ?'
+              ).bind(pageSize, offset).all<any>();
+              const rows = page.results || [];
+              tableRows.push(...rows);
+              if (rows.length < pageSize) break;
+              offset += rows.length;
+            }
+            tables[tableName] = tableRows;
+          }
+
+          const configRow = (tables.system_config || [])[0] || {};
+          const systemConfig = {
+            portalName: configRow.portal_name || 'Cổng dữ liệu KHCN & KNĐMST TP Đà Nẵng',
+            governingAgency: configRow.governing_agency || 'SỞ KHOA HỌC VÀ CÔNG NGHỆ ĐÀ NẴNG',
+            contactAddress: configRow.contact_address || '',
+            contactEmail: configRow.contact_email || '',
+            contactPhone: configRow.contact_phone || '',
+            cityArea: configRow.city_area || 'Thành phố Đà Nẵng',
+            enablePublicSubmissions: Boolean(configRow.allow_public_submission ?? 1),
+            requireApproval: Boolean(configRow.require_approval ?? 1)
+          };
+
+          const snapshot: Record<string, any> = {
+            backupFormat: 'khcn-d1-full-backup-v1',
+            generatedAt: new Date().toISOString(),
+            source: 'Cloudflare D1',
+            systemConfig,
+            tables,
+            schema
+          };
+          for (const moduleName of ALLOWED_MODULES) {
+            snapshot[moduleName] = tables[moduleName] || [];
+          }
+          snapshot.users = tables.users || [];
+          snapshot.relationships = tables.relationships || [];
+          snapshot.auditLogs = tables.audit_logs || [];
+          snapshot.connectionMessages = tables.connection_messages || [];
+          snapshot.formConfigs = tables.form_configs || [];
+
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          return new Response(JSON.stringify(snapshot, null, 2), {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json; charset=utf-8',
+              'Content-Disposition': 'attachment; filename="khcn_full_database_backup_' + timestamp + '.json"',
+              'Cache-Control': 'no-store, no-cache, must-revalidate',
+              'Pragma': 'no-cache'
+            }
+          });
+        } catch (error: any) {
+          return jsonResponse({
+            success: false,
+            message: 'Không thể tạo bản sao lưu D1: ' + (error?.message || 'Lỗi không xác định')
+          }, 500, corsHeaders);
+        }
+      }
+
       // K. Global Search across all D1 modules.
       if (url.pathname === '/api/search') {
         const rawQuery = sanitizeString(url.searchParams.get('q') || '').trim();
