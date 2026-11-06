@@ -31,6 +31,8 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
   const [rawText, setRawText] = useState('');
   const [parsedRows, setParsedRows] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [pendingApprovalIds, setPendingApprovalIds] = useState<string[]>([]);
+  const [isApprovingImported, setIsApprovingImported] = useState(false);
   const [importResult, setImportResult] = useState<{
     importedCount: number;
     errors: string[];
@@ -388,6 +390,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
     const total = parsedRows.length;
     const totalBatches = Math.ceil(total / BATCH_SIZE);
     let allImportedCount = 0;
+    const allImportedIds: string[] = [];
     const allErrors: string[] = [];
     const allDuplicates: string[] = [];
 
@@ -406,6 +409,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
 
         const res = await api.importRecords(selectedModule, batch);
         if (res.importedCount) allImportedCount += res.importedCount;
+        if (res.importedIds?.length) allImportedIds.push(...res.importedIds);
         if (res.errors && res.errors.length > 0) allErrors.push(...res.errors);
         if (res.duplicates && res.duplicates.length > 0) allDuplicates.push(...res.duplicates);
 
@@ -425,12 +429,28 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
         errors: allErrors,
         duplicates: allDuplicates
       });
+      setPendingApprovalIds(allImportedIds);
       onImportComplete();
     } catch (err: any) {
       setImportError(err.message || 'Lỗi nhập dữ liệu.');
     } finally {
       setIsProcessing(false);
       setImportProgress(null);
+    }
+  };
+
+  const handleApproveImported = async () => {
+    if (!pendingApprovalIds.length) return;
+    setIsApprovingImported(true);
+    try {
+      const result = await api.approveImportedRecords(selectedModule, pendingApprovalIds);
+      setPendingApprovalIds([]);
+      setImportError(null);
+      setImportResult(prev => prev ? { ...prev, importedCount: result.approvedCount } : prev);
+    } catch (err: any) {
+      setImportError(err.message || 'Không thể phê duyệt dữ liệu vừa nhập.');
+    } finally {
+      setIsApprovingImported(false);
     }
   };
 
@@ -840,6 +860,25 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
               <span className="text-xl font-bold font-mono">{importResult.errors.length}</span>
             </div>
           </div>
+
+          {pendingApprovalIds.length > 0 && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
+              <div className="font-semibold text-amber-950 text-xs">
+                {pendingApprovalIds.length} bản ghi đã được nhập ở trạng thái nháp và chưa hiển thị công khai.
+              </div>
+              <div className="text-[11px] text-amber-900">
+                Chỉ thực hiện bước tiếp theo sau khi đã kiểm tra nội dung và xác nhận đủ điều kiện công khai.
+              </div>
+              <button
+                type="button"
+                disabled={isApprovingImported}
+                onClick={handleApproveImported}
+                className="px-3 py-2 rounded-lg bg-teal-800 hover:bg-teal-700 disabled:opacity-50 text-white text-xs font-semibold"
+              >
+                {isApprovingImported ? 'Đang phê duyệt...' : `Phê duyệt và công khai ${pendingApprovalIds.length} bản ghi`}
+              </button>
+            </div>
+          )}
 
           {(importResult.duplicates.length > 0 || importResult.errors.length > 0) && (
             <div className="pt-2 space-y-1 text-[11px] text-slate-600 max-h-48 overflow-y-auto border-t border-slate-200">
