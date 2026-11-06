@@ -53,6 +53,55 @@ export const MODULE_LIST_TITLES: Record<string, string> = {
   featured_startups: 'DANH SÁCH CÁC DOANH NGHIỆP KHỞI NGHIỆP TIÊU BIỂU'
 };
 
+// Normalize Vietnamese text so filters work with or without diacritics.
+const normalizeFilterText = (value: unknown): string =>
+  String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const getScienceTaskManagementText = (record: BaseEntity): string =>
+  [
+    record.managementLevel,
+    record.management_level,
+    record.level,
+    record.managingAgency,
+    record.source,
+    record.fundingProgram,
+    record.programName,
+    record.program,
+    record.projectType
+  ].filter(value => typeof value === 'string' && value.trim()).join(' ');
+
+const matchesScienceTaskLevel = (record: BaseEntity, selectedLevel: string): boolean => {
+  const explicitLevel = normalizeFilterText(
+    record.managementLevel || record.management_level || record.level || ''
+  );
+  const managementText = normalizeFilterText(getScienceTaskManagementText(record));
+
+  if (selectedLevel === 'Cấp Quốc gia') {
+    return /cap (quoc gia|nha nuoc)|chuong trinh (khoa hoc va cong nghe )?quoc gia|bo khoa hoc|bo nganh|nafosted|quy phat trien khoa hoc va cong nghe quoc gia/.test(managementText);
+  }
+  if (selectedLevel === 'Cấp Thành phố') {
+    return /cap thanh pho|cap tinh|thanh pho da nang|ubnd thanh pho|so khoa hoc va cong nghe|quy phat trien khoa hoc va cong nghe thanh pho|chuong trinh .*thanh pho|de an .*thanh pho/.test(managementText);
+  }
+  if (selectedLevel === 'Cấp Cơ sở') {
+    if (/cap co so|cap truong|co so/.test(explicitLevel)) return true;
+    const hasHigherLevel = /cap (quoc gia|nha nuoc|thanh pho|tinh)|bo khoa hoc|bo nganh|ubnd thanh pho|so khoa hoc va cong nghe|quoc gia|thanh pho da nang/.test(managementText);
+    const organizationText = normalizeFilterText([
+      record.leadOrganization,
+      record.hostOrganization,
+      record.coordinatingOrganization,
+      record.ownerName
+    ].filter(value => typeof value === 'string').join(' '));
+    return !hasHigherLevel && /cap co so|cap truong|truong dai hoc|truong cao dang|vien nghien cuu|don vi chu tri/.test(managementText + ' ' + organizationText);
+  }
+  return true;
+};
+
 export const BrowseView: React.FC<BrowseViewProps> = ({
   initialSearchQuery = '',
   initialModule = 'all',
@@ -167,10 +216,14 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
   const availableUnits = useMemo(() => {
     const set = new Set<string>();
     results.forEach(r => {
-      const u = r.leadOrganization || r.ownerName || r.proposingOrg || r.workplace || r.organization;
-      if (u && typeof u === 'string' && u.length > 2) set.add(u);
+      [
+        r.leadOrganization, r.ownerName, r.proposingOrg, r.workplace,
+        r.organization, r.managingAgency, r.hostOrganization, r.coordinatingOrganization
+      ].forEach(value => {
+        if (typeof value === 'string' && value.trim().length > 2) set.add(value.trim());
+      });
     });
-    return Array.from(set).sort();
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'vi'));
   }, [results]);
 
   const availableSpecialties = useMemo(() => {
@@ -194,18 +247,21 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
       );
     }
 
-    if (filterUnit !== 'all') {
+    if (filterUnit !== 'all' && filterUnit.trim()) {
+      const unitQuery = normalizeFilterText(filterUnit);
       list = list.filter(r => {
-        const u = (r.leadOrganization || r.ownerName || r.proposingOrg || r.workplace || r.organization || '').toLowerCase();
-        return u.includes(filterUnit.toLowerCase());
+        const unitValues = [
+          r.leadOrganization, r.ownerName, r.proposingOrg, r.workplace,
+          r.organization, r.managingAgency, r.hostOrganization, r.coordinatingOrganization
+        ];
+        return unitValues.some(value =>
+          typeof value === 'string' && normalizeFilterText(value).includes(unitQuery)
+        );
       });
     }
 
     if (filterLevel !== 'all') {
-      list = list.filter(r => {
-        const lvl = (r.managementLevel || r.managingAgency || '').toLowerCase();
-        return lvl.includes(filterLevel.toLowerCase());
-      });
+      list = list.filter(r => matchesScienceTaskLevel(r, filterLevel));
     }
 
     if (filterSpecialty !== 'all') {
@@ -516,16 +572,34 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
                   <div className="flex items-center gap-1">
                     <span className="text-slate-500">Đơn vị chủ trì:</span>
-                    <select
-                      value={filterUnit}
-                      onChange={(e) => setFilterUnit(e.target.value)}
-                      className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 font-medium max-w-[200px] truncate cursor-pointer"
-                    >
-                      <option value="all">Tất cả đơn vị</option>
+                    <input
+                      type="search"
+                      list="science-task-unit-suggestions"
+                      value={filterUnit === 'all' ? '' : filterUnit}
+                      onChange={(e) => setFilterUnit(e.target.value.trim() ? e.target.value : 'all')}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') setFilterUnit('all');
+                      }}
+                      placeholder="Tất cả đơn vị / nhập để tìm..."
+                      aria-label="Tìm theo đơn vị chủ trì"
+                      autoComplete="off"
+                      className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 font-medium w-full sm:max-w-[260px] min-w-0"
+                    />
+                    <datalist id="science-task-unit-suggestions">
                       {availableUnits.map(u => (
-                        <option key={u} value={u}>{u}</option>
+                        <option key={u} value={u} />
                       ))}
-                    </select>
+                    </datalist>
+                    {filterUnit !== 'all' && (
+                      <button
+                        type="button"
+                        onClick={() => setFilterUnit('all')}
+                        className="text-teal-800 hover:text-teal-950 font-semibold whitespace-nowrap"
+                        aria-label="Xóa bộ lọc đơn vị"
+                      >
+                        Xóa
+                      </button>
+                    )}
                   </div>
                 </>
               )}
