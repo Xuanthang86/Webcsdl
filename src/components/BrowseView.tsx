@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BaseEntity, ModuleType } from '../types';
+import { matchesScienceTaskLevel } from '../utils/scienceTaskFilters';
 import { api } from '../services/api';
 import { MODULE_OPTIONS, SPECIALIZED_FIELDS } from './SearchHero';
 import { MODULE_NAMES } from './admin/ModuleCrudView';
@@ -51,55 +52,6 @@ export const MODULE_LIST_TITLES: Record<string, string> = {
   wards: 'DANH SÁCH CÁC XÃ, PHƯỜNG, ĐẶC KHU TRÊN ĐỊA BÀN',
   universities: 'DANH SÁCH CÁC TRƯỜNG ĐẠI HỌC, CAO ĐẲNG TRÊN ĐỊA BÀN',
   featured_startups: 'DANH SÁCH CÁC DOANH NGHIỆP KHỞI NGHIỆP TIÊU BIỂU'
-};
-
-// Normalize Vietnamese text so filters work with or without diacritics.
-const normalizeFilterText = (value: unknown): string =>
-  String(value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[đĐ]/g, 'd')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
-
-const getScienceTaskManagementText = (record: BaseEntity): string =>
-  [
-    record.managementLevel,
-    record.management_level,
-    record.level,
-    record.managingAgency,
-    record.source,
-    record.fundingProgram,
-    record.programName,
-    record.program,
-    record.projectType
-  ].filter(value => typeof value === 'string' && value.trim()).join(' ');
-
-const matchesScienceTaskLevel = (record: BaseEntity, selectedLevel: string): boolean => {
-  const explicitLevel = normalizeFilterText(
-    record.managementLevel || record.management_level || record.level || ''
-  );
-  const managementText = normalizeFilterText(getScienceTaskManagementText(record));
-
-  if (selectedLevel === 'Cấp Quốc gia') {
-    return /cap (quoc gia|nha nuoc)|chuong trinh (khoa hoc va cong nghe )?quoc gia|bo khoa hoc|bo nganh|nafosted|quy phat trien khoa hoc va cong nghe quoc gia/.test(managementText);
-  }
-  if (selectedLevel === 'Cấp Thành phố') {
-    return /cap thanh pho|cap tinh|thanh pho da nang|ubnd thanh pho|so khoa hoc va cong nghe|quy phat trien khoa hoc va cong nghe thanh pho|chuong trinh .*thanh pho|de an .*thanh pho/.test(managementText);
-  }
-  if (selectedLevel === 'Cấp Cơ sở') {
-    if (/cap co so|cap truong|co so/.test(explicitLevel)) return true;
-    const hasHigherLevel = /cap (quoc gia|nha nuoc|thanh pho|tinh)|bo khoa hoc|bo nganh|ubnd thanh pho|so khoa hoc va cong nghe|quoc gia|thanh pho da nang/.test(managementText);
-    const organizationText = normalizeFilterText([
-      record.leadOrganization,
-      record.hostOrganization,
-      record.coordinatingOrganization,
-      record.ownerName
-    ].filter(value => typeof value === 'string').join(' '));
-    return !hasHigherLevel && /cap co so|cap truong|truong dai hoc|truong cao dang|vien nghien cuu|don vi chu tri/.test(managementText + ' ' + organizationText);
-  }
-  return true;
 };
 
 export const BrowseView: React.FC<BrowseViewProps> = ({
