@@ -478,6 +478,26 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Navigation & Categories List */}
             <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 text-xs">
               
+              {isAdminRole && (
+                <button
+                  onClick={() => {
+                    setMenuDrawerOpen(false);
+                    onNavigate('admin');
+                  }}
+                  className={`w-full min-h-[44px] text-left px-3.5 py-2.5 rounded-xl font-semibold flex items-center justify-between transition-colors cursor-pointer ${
+                    currentView === 'admin'
+                      ? 'bg-teal-800 text-white shadow-xs'
+                      : 'text-slate-800 hover:bg-slate-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <LayoutDashboard className="w-4 h-4 text-teal-700" />
+                    <span>Truy cập trang quản trị</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+              )}
+
               {/* Data Categories Header */}
               <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-2 px-1">
                 Danh mục Cơ sở dữ liệu
