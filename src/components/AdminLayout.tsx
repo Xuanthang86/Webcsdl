@@ -479,6 +479,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             {activeTab === 'import_export' && (
               <ImportExportStudio
                 initialModule={activeModule}
+                currentUser={currentUser}
                 onImportComplete={() => {}}
               />
             )}
