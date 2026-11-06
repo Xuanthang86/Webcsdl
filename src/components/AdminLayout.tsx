@@ -140,9 +140,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       {/* Mobile & Tablet Header with Toggle */}
       <div className="lg:hidden bg-gradient-to-r from-sky-800 via-sky-700 to-sky-900 text-white p-3.5 flex items-center justify-between border-b border-sky-700/60 sticky top-0 z-30 shadow-md">
         <div 
-          onClick={onBackToPublic}
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className="flex items-center gap-2 cursor-pointer group"
-          title="Truy cập Trang chủ"
+          title="Về đầu trang quản trị"
         >
           <div className="w-8 h-8 rounded-lg bg-white text-sky-900 flex items-center justify-center font-black text-xs transition-colors shrink-0 shadow-xs">
             ĐN
@@ -427,13 +427,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         
         {/* Desktop Admin Top Header */}
         <header className="hidden lg:flex items-center justify-between px-8 py-5 bg-gradient-to-r from-sky-800 via-sky-700 to-sky-900 text-white border-b border-sky-700/60 shadow-sm shrink-0">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase leading-none">
-              CỔNG DỮ LIỆU
-            </h1>
-            <p className="mt-1.5 text-[11px] xl:text-xs 2xl:text-sm font-bold text-sky-200 tracking-tight uppercase leading-tight whitespace-nowrap">
-              VỀ KHOA HỌC, CÔNG NGHỆ VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG
-            </p>
+          <div onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="cursor-pointer" title="Về đầu trang quản trị">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase leading-none">CỔNG DỮ LIỆU</h1>
+            <p className="mt-1.5 text-[11px] xl:text-xs 2xl:text-sm font-bold text-sky-200 tracking-tight uppercase leading-tight whitespace-nowrap">VỀ KHOA HỌC, CÔNG NGHỆ VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG</p>
           </div>
           
           <div className="flex items-center gap-4">
