@@ -1672,7 +1672,8 @@ export default {
               if (!item) {
                 return jsonResponse({ success: false, message: 'Không tìm thấy bản ghi.' }, 404, corsHeaders);
               }
-              if (currentUser.role === 'public_user') {
+              const canViewRestrictedRecord = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'].includes(currentUser.role);
+              if (!canViewRestrictedRecord) {
                 const status = String(item.status || '').toLowerCase();
                 const publicity = String(item.publicityLevel || 'public').toLowerCase();
                 if (!['approved', 'published'].includes(status) || publicity !== 'public') {
@@ -1696,7 +1697,8 @@ export default {
             try {
               const limit = Math.min(500, Math.max(1, parseInt(url.searchParams.get('limit') || '200', 10) || 200));
               const offset = Math.max(0, parseInt(url.searchParams.get('offset') || '0', 10) || 0);
-              const publicOnly = url.searchParams.get('publicOnly') === 'true' || currentUser.role === 'public_user';
+              const canViewRestrictedRecords = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'].includes(currentUser.role);
+              const publicOnly = url.searchParams.get('publicOnly') === 'true' || !canViewRestrictedRecords;
               let visibilityWhere = '';
               if (publicOnly) {
                 const tableInfo = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
@@ -1969,6 +1971,8 @@ export default {
             if (key.startsWith('tongsonhansu')) target = 'total_staff';
             if (key.startsWith('soluongthanhvienthamgia')) target = key.includes('ytuong') ? 'members_count' : 'members_count';
             if (key.startsWith('nhomytuongdanghoctapcongtactaidonvi')) target = 'affiliated_unit';
+            if (key.startsWith('tenduan') && moduleName === 'startup_projects') target = primaryColumn;
+            if (key.startsWith('tendetaiduan')) target = 'projects';
             if (key === 'trangthai' && moduleName === 'science_tasks') target = 'acceptance_result';
             if (['tendetai', 'tensangkien', 'tenduan', 'tenytuong', 'tendoanhnghiep', 'tentochuc', 'tentruong', 'tenxaphuong', 'tenchuyengia'].includes(key)) {
               target = primaryColumn;
