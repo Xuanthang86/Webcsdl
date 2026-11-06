@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BaseEntity, ModuleType } from '../types';
-import { matchesScienceTaskLevel, normalizeScienceTaskText } from '../utils/scienceTaskFilters';
+import { getScienceTaskUnits, matchesScienceTaskLevel, normalizeScienceTaskText } from '../utils/scienceTaskFilters';
 import { api } from '../services/api';
 import { MODULE_OPTIONS, SPECIALIZED_FIELDS } from './SearchHero';
 import { MODULE_NAMES } from './admin/ModuleCrudView';
@@ -201,14 +201,9 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
 
   const availableUnits = useMemo(() => {
     const set = new Set<string>();
-    results.forEach(r => {
-      [
-        r.leadOrganization, r.ownerName, r.proposingOrg, r.workplace,
-        r.organization, r.managingAgency, r.hostOrganization, r.coordinatingOrganization
-      ].forEach(value => {
-        if (typeof value === 'string' && value.trim().length > 2) set.add(value.trim());
-      });
-    });
+    results.forEach(record => getScienceTaskUnits(record).forEach(unit => {
+      if (unit.length > 2) set.add(unit);
+    }));
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'vi'));
   }, [results]);
 
@@ -227,11 +222,6 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
     });
     return Array.from(set).sort();
   }, [results]);
-
-  const unclassifiedScienceTaskCount = useMemo(
-    () => results.filter(record => matchesScienceTaskLevel(record, 'Chưa phân loại')).length,
-    [results]
-  );
 
   // Filtered & Sorted items
   const processedResults = useMemo(() => {
@@ -568,23 +558,16 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                       className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-900 font-medium cursor-pointer"
                     >
                       <option value="all">Tất cả cấp</option>
-                      <option value="Cấp Quốc gia">Cấp Quốc gia</option>
+                      <option value="Cấp Bộ">Cấp Bộ</option>
                       <option value="Cấp Thành phố">Cấp Thành phố</option>
                       <option value="Cấp Cơ sở">Cấp Cơ sở</option>
-                      <option value="Chưa phân loại">Chưa phân loại ({unclassifiedScienceTaskCount})</option>
+                      <option value="Chưa phân loại">Chưa phân loại</option>
                     </select>
                   </div>
 
                   <div className="flex items-center gap-1 min-w-0 w-full sm:w-auto sm:flex-1">
                     <span className="text-slate-500 whitespace-nowrap">Đơn vị chủ trì:</span>
-                    <div
-                      className="relative min-w-0 flex-1 sm:max-w-[320px]"
-                      onBlur={(event) => {
-                        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-                          setShowUnitSuggestions(false);
-                        }
-                      }}
-                    >
+                    <div className="relative min-w-0 flex-1 sm:max-w-[320px]">
                       <input
                         type="search"
                         value={filterUnit === 'all' ? '' : filterUnit}
@@ -603,11 +586,13 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                         placeholder="Gõ để tìm đơn vị chủ trì..."
                         aria-label="Tìm và lọc theo đơn vị chủ trì"
                         aria-expanded={showUnitSuggestions}
+                        role="combobox"
+                        aria-controls="science-task-unit-suggestions"
                         autoComplete="off"
                         className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 font-medium min-w-0"
                       />
                       {showUnitSuggestions && (
-                        <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+                        <div id="science-task-unit-suggestions" role="listbox" className="absolute left-0 right-0 top-full z-[100] mt-1 max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
                           {filteredUnitSuggestions.length > 0 ? filteredUnitSuggestions.map(unit => (
                             <button
                               key={unit}
