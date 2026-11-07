@@ -111,6 +111,25 @@ function canCreateModuleRecords(user: any, moduleName: string): boolean {
 function isPrivilegedMessageReader(user: any): boolean {
   return ['super_admin', 'system_admin', 'agency_leader', 'data_officer'].includes(String(user?.role || ''));
 }
+function normalizeRelationshipRow(row: any): any {
+  if (!row) return row;
+  return {
+    id: row.id,
+    sourceModule: row.source_type || row.source_module || '',
+    sourceId: row.source_id || '',
+    sourceTitle: row.source_title || '',
+    targetModule: row.target_type || row.target_module || '',
+    targetId: row.target_id || '',
+    targetTitle: row.target_title || '',
+    relationType: row.relation_type || row.relationship_type || 'relates_to',
+    validFrom: row.valid_from || undefined,
+    validTo: row.valid_to || undefined,
+    verificationSource: row.verification_source || row.description || undefined,
+    status: row.status || 'active',
+    createdAt: row.created_at || ''
+  };
+}
+
 
 function redactPublicDetail(item: any, moduleName: string): any {
   if (!item) return item;
@@ -1899,78 +1918,79 @@ export default {
         }
       }
 
-      // N. Relationships
+      // N. Relationships: support both current and legacy D1 table names with strict RBAC.
       if (url.pathname === '/api/relationships' || url.pathname.startsWith('/api/relationships/')) {
-        if (currentUser.role === 'partner_officer') {
-          return jsonResponse({ success: false, message: 'Tài khoản đơn vị không có quyền quản lý quan hệ liên kết toàn hệ thống.' }, 403, corsHeaders);
-        }
         const relId = url.pathname.replace('/api/relationships', '').replace(/^\//, '');
+        const canReadRelationships = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'].includes(currentUser.role);
+        const canWriteRelationships = ['super_admin', 'system_admin', 'data_officer'].includes(currentUser.role);
+        if (request.method === 'GET' && !canReadRelationships) return jsonResponse({ success: false, message: 'Bạn không có quyền xem dữ liệu liên kết nội bộ.' }, currentUser.role === 'public_user' ? 401 : 403, corsHeaders);
+        if (['POST', 'DELETE'].includes(request.method) && !canWriteRelationships) return jsonResponse({ success: false, message: 'Bạn không có quyền thay đổi dữ liệu liên kết.' }, currentUser.role === 'public_user' ? 401 : 403, corsHeaders);
+        if (!env.DB) return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
+        try {
+          const tableRows = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('relationships', 'entity_relationships')").all<any>();
+          const available = new Set((tableRows.results || []).map((row: any) => String(row.name)));
+          const tableName = available.has('relationships') ? 'relationships' : available.has('entity_relationships') ? 'entity_relationships' : '';
+          if (!tableName) return jsonResponse({ success: false, message: 'D1 chưa có bảng liên kết relationships/entity_relationships.' }, 409, corsHeaders);
+          const info = await env.DB.prepare(`PRAGMA table_info("${tableName}")`).all<any>();
+          const columns = new Set((info.results || []).map((column: any) => String(column.name)));
 
-        if (request.method === 'GET') {
-          const entityId = url.searchParams.get('entityId');
-          if (!env.DB) {
-            return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
-          }
-          try {
-            let sql = 'SELECT * FROM relationships WHERE 1=1';
+          if (request.method === 'GET') {
+            const entityId = url.searchParams.get('entityId');
+            let sql = `SELECT * FROM "${tableName}"`;
             const params: any[] = [];
-            if (entityId) {
-              sql += ' AND (source_id = ? OR target_id = ?)';
-              params.push(entityId, entityId);
+            if (entityId) { sql += ' WHERE source_id = ? OR target_id = ?'; params.push(entityId, entityId); }
+            const rows = await env.DB.prepare(sql).bind(...params).all<any>();
+            return jsonResponse({ success: true, data: (rows.results || []).map(normalizeRelationshipRow) }, 200, corsHeaders);
+          }
+
+          if (request.method === 'POST') {
+            const body = await request.json().catch(() => ({})) as any;
+            const sourceId = String(body.sourceId || '').trim();
+            const sourceModule = String(body.sourceModule || body.sourceType || '').trim();
+            const targetId = String(body.targetId || '').trim();
+            const targetModule = String(body.targetModule || body.targetType || '').trim();
+            if (!sourceId || !targetId || !ALLOWED_MODULES.includes(sourceModule) || !ALLOWED_MODULES.includes(targetModule)) {
+              return jsonResponse({ success: false, message: 'Thông tin hai hồ sơ liên kết không hợp lệ.' }, 400, corsHeaders);
             }
-            const rows = await env.DB.prepare(sql).bind(...params).all();
-            return jsonResponse({ success: true, data: rows.results || [] }, 200, corsHeaders);
-          } catch (e: any) {
-            return jsonResponse({ success: false, message: 'Lỗi truy vấn liên kết: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
+            const id = `rel_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
+            const createdAt = new Date().toISOString();
+            const values: Record<string, any> = {
+              id, source_id: sourceId, source_type: sourceModule, source_module: sourceModule,
+              source_title: sanitizeString(body.sourceTitle || ''),
+              target_id: targetId, target_type: targetModule, target_module: targetModule,
+              target_title: sanitizeString(body.targetTitle || ''),
+              relation_type: sanitizeString(body.relationType || 'relates_to'),
+              relationship_type: sanitizeString(body.relationType || 'relates_to'),
+              notes: sanitizeString(body.notes || body.verificationSource || ''),
+              description: sanitizeString(body.verificationSource || body.notes || ''),
+              verification_source: sanitizeString(body.verificationSource || ''),
+              status: ['active', 'pending', 'ended'].includes(String(body.status || '')) ? String(body.status) : 'active',
+              valid_from: body.validFrom || null, valid_to: body.validTo || null,
+              created_by: currentUser.id, created_at: createdAt
+            };
+            const required = (info.results || []).filter((column: any) => Number(column.notnull) === 1 && column.dflt_value === null && String(column.name) !== 'id');
+            for (const column of required) {
+              const value = values[String(column.name)];
+              if (value === undefined || value === null || value === '') return jsonResponse({ success: false, message: `Thiếu trường bắt buộc của bảng liên kết: ${column.name}.` }, 409, corsHeaders);
+            }
+            const entries = Object.entries(values).filter(([column]) => columns.has(column));
+            const result = await env.DB.prepare(`INSERT INTO "${tableName}" (${entries.map(([column]) => `"${column}"`).join(', ')}) VALUES (${entries.map(() => '?').join(', ')})`).bind(...entries.map(([, value]) => value)).run();
+            if (!result.success || Number(result.meta?.changes || 0) !== 1) throw new Error('D1 không xác nhận đã tạo liên kết.');
+            return jsonResponse({ success: true, data: normalizeRelationshipRow(values) }, 201, corsHeaders);
           }
-        }
 
-        if (request.method === 'POST') {
-          if (currentUser.role === 'public_user') {
-            return jsonResponse({ success: false, message: 'Chưa đăng nhập.' }, 401, corsHeaders);
-          }
-          if (!env.DB) {
-            return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
-          }
-          const body = await request.json().catch(() => ({})) as any;
-          const newRel = {
-            id: `rel_${Date.now()}_${crypto.randomUUID().slice(0, 4)}`,
-            sourceId: body.sourceId,
-            sourceType: body.sourceType,
-            targetId: body.targetId,
-            targetType: body.targetType,
-            relationType: body.relationType || 'relates_to',
-            notes: body.notes || '',
-            createdAt: new Date().toISOString()
-          };
-          try {
-            await env.DB.prepare(`
-              INSERT INTO relationships (id, source_id, source_type, target_id, target_type, relation_type, notes, created_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            `).bind(newRel.id, newRel.sourceId, newRel.sourceType, newRel.targetId, newRel.targetType, newRel.relationType, newRel.notes, newRel.createdAt).run();
-            return jsonResponse({ success: true, data: newRel }, 201, corsHeaders);
-          } catch (e: any) {
-            return jsonResponse({ success: false, message: 'Lỗi tạo liên kết: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
-          }
-        }
-
-        if (relId && request.method === 'DELETE') {
-          if (currentUser.role === 'public_user') {
-            return jsonResponse({ success: false, message: 'Chưa đăng nhập.' }, 401, corsHeaders);
-          }
-          if (!env.DB) {
-            return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
-          }
-          try {
-            await env.DB.prepare('DELETE FROM relationships WHERE id = ?').bind(relId).run();
+          if (relId && request.method === 'DELETE') {
+            const result = await env.DB.prepare(`DELETE FROM "${tableName}" WHERE id = ?`).bind(relId).run();
+            if (!result.success || Number(result.meta?.changes || 0) !== 1) return jsonResponse({ success: false, message: 'Không tìm thấy liên kết hoặc D1 không xác nhận xóa.' }, 404, corsHeaders);
             return jsonResponse({ success: true }, 200, corsHeaders);
-          } catch (e: any) {
-            return jsonResponse({ success: false, message: 'Lỗi xóa liên kết: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
           }
+          return jsonResponse({ success: false, message: 'Phương thức yêu cầu không được hỗ trợ.' }, 405, corsHeaders);
+        } catch (e: any) {
+          return jsonResponse({ success: false, message: 'Lỗi xử lý liên kết D1: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
         }
       }
 
-      // O. Audit Logs
+            // O. Audit Logs
       if (url.pathname === '/api/audit-logs') {
         if (!['super_admin', 'system_admin', 'agency_leader', 'data_officer'].includes(currentUser.role)) {
           return jsonResponse({ success: false, message: 'Bạn không có quyền xem nhật ký hệ thống.' }, 403, corsHeaders);
@@ -2227,11 +2247,16 @@ export default {
                   return jsonResponse({ success: false, message: 'Không tìm thấy bản ghi.' }, 404, corsHeaders);
                 }
               }
-              const rels = await env.DB.prepare(`
-                SELECT * FROM relationships WHERE source_id = ? OR target_id = ?
-              `).bind(recordId, recordId).all();
+              const relTables = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('relationships', 'entity_relationships')").all<any>();
+              const relNames = new Set((relTables.results || []).map((row: any) => String(row.name)));
+              const relTable = relNames.has('relationships') ? 'relationships' : relNames.has('entity_relationships') ? 'entity_relationships' : '';
+              let rels: any[] = [];
+              if (relTable) {
+                const relResult = await env.DB.prepare(`SELECT * FROM "${relTable}" WHERE source_id = ? OR target_id = ?`).bind(recordId, recordId).all<any>();
+                rels = (relResult.results || []).map(normalizeRelationshipRow);
+              }
               const responseItem = canViewRestrictedRecord ? item : redactPublicDetail(item, moduleName);
-              return jsonResponse({ success: true, data: responseItem, relationships: rels.results || [] }, 200, corsHeaders);
+              return jsonResponse({ success: true, data: responseItem, relationships: rels }, 200, corsHeaders);
             } catch (e: any) {
               return jsonResponse({ success: false, message: e.message }, 500, corsHeaders);
             }
