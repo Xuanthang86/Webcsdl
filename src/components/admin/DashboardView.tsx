@@ -191,7 +191,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-teal-400 cursor-pointer transition-all flex flex-col justify-between"
         >
           <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-            <span className="font-medium">1. Nhiệm vụ KH&CN</span>
+            <span className="font-medium">1. Đề tài, Nhiệm vụ KH&CN</span>
             <FlaskConical className="w-4 h-4 text-blue-600" />
           </div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
