@@ -224,11 +224,56 @@ async function ensureAuditLogTable(db: D1Database): Promise<Set<string>> {
       entity_id TEXT,
       details TEXT,
       ip_address TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      timestamp TEXT DEFAULT (datetime('now'))
+    )
+  `).run();
+  // Upgrade legacy audit tables in place; never drop or rewrite existing log rows.
+  let info = await db.prepare('PRAGMA table_info(audit_logs)').all<any>();
+  let columns = new Set((info.results || []).map((column: any) => String(column.name)));
+  const additions: Array<[string, string]> = [
+    ['user_id', 'TEXT'], ['user_name', 'TEXT'], ['user_role', 'TEXT'],
+    ['action', "TEXT NOT NULL DEFAULT 'system'"], ['module', 'TEXT'],
+    ['entity_id', 'TEXT'], ['details', 'TEXT'], ['ip_address', 'TEXT'],
+    ['created_at', "TEXT DEFAULT (datetime('now'))"], ['timestamp', "TEXT DEFAULT (datetime('now'))"]
+  ];
+  for (const [name, definition] of additions) {
+    if (columns.has(name)) continue;
+    try { await db.prepare(`ALTER TABLE audit_logs ADD COLUMN "${name}" ${definition}`).run(); }
+    catch { /* Another request may have applied the same additive migration. */ }
+  }
+  info = await db.prepare('PRAGMA table_info(audit_logs)').all<any>();
+  columns = new Set((info.results || []).map((column: any) => String(column.name)));
+  return columns;
+}
+
+async function ensureRelationshipsTable(db: D1Database): Promise<string> {
+  const existing = await db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('relationships', 'entity_relationships')").all<any>();
+  const names = new Set((existing.results || []).map((row: any) => String(row.name)));
+  if (names.has('relationships')) return 'relationships';
+  if (names.has('entity_relationships')) return 'entity_relationships';
+  // Create only when neither supported table exists; existing records are untouched.
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS relationships (
+      id TEXT PRIMARY KEY,
+      source_id TEXT NOT NULL,
+      source_type TEXT NOT NULL,
+      source_title TEXT,
+      target_id TEXT NOT NULL,
+      target_type TEXT NOT NULL,
+      target_title TEXT,
+      relation_type TEXT DEFAULT 'relates_to',
+      notes TEXT,
+      description TEXT,
+      verification_source TEXT,
+      status TEXT DEFAULT 'active',
+      valid_from TEXT,
+      valid_to TEXT,
+      created_by TEXT,
       created_at TEXT DEFAULT (datetime('now'))
     )
   `).run();
-  const info = await db.prepare('PRAGMA table_info(audit_logs)').all<any>();
-  return new Set((info.results || []).map((column: any) => String(column.name)));
+  return 'relationships';
 }
 
 async function buildAuditLogStatement(db: D1Database, actor: any, action: string, moduleName: string, entityId: string, details: string, onlyIfPreviousWriteChanged = false): Promise<D1PreparedStatement> {
@@ -831,6 +876,7 @@ export default {
 
         // Audit log
         try {
+          await ensureAuditLogTable(env.DB);
           await env.DB.prepare(`
             INSERT INTO audit_logs (id, user_id, user_name, user_role, action, details, timestamp)
             VALUES (?, ?, ?, ?, 'login', ?, datetime('now'))
@@ -908,6 +954,7 @@ export default {
         `).bind(newHash, newSalt, currentUser.id).run();
 
         try {
+          await ensureAuditLogTable(env.DB);
           await env.DB.prepare(`
             INSERT INTO audit_logs (id, user_id, user_name, user_role, action, details, timestamp)
             VALUES (?, ?, ?, ?, 'update', 'Người dùng tự đổi mật khẩu tài khoản thành công', datetime('now'))
@@ -2034,10 +2081,7 @@ export default {
         if (['POST', 'DELETE'].includes(request.method) && !canWriteRelationships) return jsonResponse({ success: false, message: 'Bạn không có quyền thay đổi dữ liệu liên kết.' }, currentUser.role === 'public_user' ? 401 : 403, corsHeaders);
         if (!env.DB) return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
         try {
-          const tableRows = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('relationships', 'entity_relationships')").all<any>();
-          const available = new Set((tableRows.results || []).map((row: any) => String(row.name)));
-          const tableName = available.has('relationships') ? 'relationships' : available.has('entity_relationships') ? 'entity_relationships' : '';
-          if (!tableName) return jsonResponse({ success: false, message: 'D1 chưa có bảng liên kết relationships/entity_relationships.' }, 409, corsHeaders);
+          const tableName = await ensureRelationshipsTable(env.DB);
           const info = await env.DB.prepare(`PRAGMA table_info("${tableName}")`).all<any>();
           const columns = new Set((info.results || []).map((column: any) => String(column.name)));
 
@@ -2106,8 +2150,11 @@ export default {
           return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
         }
         try {
-          const limit = parseInt(url.searchParams.get('limit') || '100', 10);
-          const rows = await env.DB.prepare('SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT ?').bind(limit).all();
+          const auditColumns = await ensureAuditLogTable(env.DB);
+          const sortColumn = auditColumns.has('timestamp') ? 'timestamp' : 'created_at';
+          const requestedLimit = Number.parseInt(url.searchParams.get('limit') || '100', 10);
+          const limit = Number.isFinite(requestedLimit) ? Math.min(500, Math.max(1, requestedLimit)) : 100;
+          const rows = await env.DB.prepare(`SELECT * FROM audit_logs ORDER BY "${sortColumn}" DESC LIMIT ?`).bind(limit).all();
           return jsonResponse({ success: true, logs: rows.results || [] }, 200, corsHeaders);
         } catch (e: any) {
           return jsonResponse({ success: false, message: 'Lỗi truy vấn nhật ký hệ thống: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
