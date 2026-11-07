@@ -209,9 +209,6 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
           <Lock className="w-4 h-4 text-amber-700 shrink-0" />
           <span>Yêu cầu có tài khoản được cấp quyền xem các trường chi tiết chuyên sâu</span>
         </div>
-        <p className="text-xs text-amber-800 leading-relaxed max-w-2xl">
-          Thông tin chi tiết chuyên sâu của {moduleName} được bảo mật theo quy định quản lý cơ sở dữ liệu KH&CN thành phố. Vui lòng đăng nhập với tài khoản cán bộ quản lý, chuyên gia thẩm định hoặc lãnh đạo đơn vị để truy cập toàn bộ dữ liệu.
-        </p>
       </div>
       {onOpenAdminLogin && (
         <button
