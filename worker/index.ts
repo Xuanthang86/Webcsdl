@@ -1377,6 +1377,81 @@ export default {
             } catch {}
           }
 
+          // Expert composition is aggregated from live D1 rows, including
+          // configurable fields stored in data_json by the import workflow.
+          const expertsByField: Record<string, number> = {};
+          const expertsByWorkplace: Record<string, number> = {};
+          const expertsByDegree: Record<string, number> = {};
+          const expertsBySpecialty: Record<string, number> = {};
+          const expertsByTitle: Record<string, number> = {};
+          try {
+            const expertInfo = await env.DB.prepare('PRAGMA table_info(experts)').all<any>();
+            const expertColumns = new Set((expertInfo.results || []).map((column: any) => String(column.name)));
+            const expertFieldsToRead = [
+              'field', 'specialization', 'workplace', 'degree', 'academic_rank',
+              'research_title', 'job_title', 'position', 'organization',
+              'current_affiliation', 'expertise', 'specialty'
+            ];
+            const selectedExpertFields = [
+              ...expertFieldsToRead.filter(field => expertColumns.has(field)),
+              ...(expertColumns.has('data_json') ? ['data_json'] : [])
+            ];
+            if (selectedExpertFields.length > 0) {
+              const expertRows = await env.DB.prepare(
+                'SELECT ' + [...new Set(selectedExpertFields)].map(field => '"' + field + '"').join(', ') + ' FROM experts'
+              ).all<any>();
+              const normalizeExpertKey = (value: string) => value.replace(/[_\\s-]/g, '').toLowerCase();
+              const getExpertValue = (row: any, custom: Record<string, any>, candidates: string[]) => {
+                for (const candidate of candidates) {
+                  const target = normalizeExpertKey(candidate);
+                  const physicalKey = Object.keys(row).find(key => normalizeExpertKey(key) === target);
+                  if (physicalKey && row[physicalKey] !== null && row[physicalKey] !== undefined && String(row[physicalKey]).trim()) return row[physicalKey];
+                  const customKey = Object.keys(custom).find(key => normalizeExpertKey(key) === target);
+                  if (customKey && custom[customKey] !== null && custom[customKey] !== undefined && String(custom[customKey]).trim()) return custom[customKey];
+                }
+                return null;
+              };
+              const addExpertGroup = (target: Record<string, number>, value: any, prefix = '') => {
+                if (value === null || value === undefined) return;
+                const labels = Array.isArray(value) ? value : String(value).split(/[;|\\n]+/);
+                const seen = new Set<string>();
+                for (const rawLabel of labels) {
+                  const label = String(rawLabel ?? '').trim();
+                  if (!label) continue;
+                  const displayLabel = prefix ? prefix + label : label;
+                  const key = displayLabel.toLocaleLowerCase('vi');
+                  if (seen.has(key)) continue;
+                  seen.add(key);
+                  target[displayLabel] = (target[displayLabel] || 0) + 1;
+                }
+              };
+              for (const row of expertRows.results || []) {
+                let custom: Record<string, any> = {};
+                try {
+                  custom = row.data_json ? JSON.parse(String(row.data_json)) : {};
+                  if (!custom || typeof custom !== 'object' || Array.isArray(custom)) custom = {};
+                } catch { custom = {}; }
+
+                const fieldValue = getExpertValue(row, custom, ['field', 'specialization', 'specialty', 'expertise']);
+                const specialtyValue = getExpertValue(row, custom, ['specialization', 'specialty', 'expertise']);
+                const workplaceValue = getExpertValue(row, custom, ['workplace', 'organization', 'current_affiliation', 'affiliation', 'agency', 'institution']);
+                addExpertGroup(expertsByField, fieldValue);
+                addExpertGroup(expertsBySpecialty, specialtyValue);
+                addExpertGroup(expertsByWorkplace, workplaceValue);
+
+                const rankValue = getExpertValue(row, custom, ['academic_rank', 'academicRank', 'rank']);
+                const degreeValue = getExpertValue(row, custom, ['degree', 'qualification', 'academic_degree']);
+                const researchTitleValue = getExpertValue(row, custom, ['research_title', 'job_title', 'position']);
+                addExpertGroup(expertsByDegree, degreeValue);
+                addExpertGroup(expertsByTitle, rankValue, rankValue ? 'Học hàm: ' : '');
+                addExpertGroup(expertsByTitle, degreeValue, degreeValue ? 'Học vị: ' : '');
+                if (!rankValue && !degreeValue) addExpertGroup(expertsByTitle, researchTitleValue);
+              }
+            }
+          } catch (error) {
+            console.error('Không thể tổng hợp cơ cấu chuyên gia:', error);
+          }
+
           const yearlyStats: Record<string, any> = {};
           yearsList.forEach(yr => {
             yearlyStats[yr] = {
@@ -1440,6 +1515,11 @@ export default {
               projectsByYear,
               patentsByYear,
               expertsByYear,
+              expertsByField,
+              expertsByWorkplace,
+              expertsByDegree,
+              expertsBySpecialty,
+              expertsByTitle,
               supportOrgsByYear,
               universitiesByYear,
               wardsByYear,
@@ -2260,10 +2340,12 @@ export default {
           tenbaibao: 'publications', tenvanbang: 'qualifications', tencongtrinh: 'research_outputs',
           capdetai: 'project_level', chutrihoacthamgia: 'project_role', tinhtrang: 'project_status',
           tendetai: 'projects', giaithuong: 'awards', kinhnghiem: 'experience_notes',
-          tendoanhnghiep: 'name', diachihoatdong: 'operating_address', websitedoanhnghiep: 'website',
+          tendoanhnghiep: 'name', tencongty: 'name', tencongtykhoinghiep: 'name',
+          diachihoatdong: 'operating_address', websitedoanhnghiep: 'website', website: 'website',
           filelogodoanhnghiep: 'logo_file', linhvuckinhdoanh: 'business_field',
           tomtatvedoanhnghiepvasanpham: 'summary', sanphamgiaiquyetvande: 'problem_solved',
           soluongsanglapvien: 'founders_count', tongsonhanhientai: 'total_staff',
+          tongsonhansuo thoidiemhientai: 'total_staff', soluongnhansu: 'total_staff',
           hovatennguoidungdau: 'leader_name', hotennguoidungdau: 'leader_name',
           sodienthoainguoidungdau: 'leader_phone', emailnguoidungdau: 'leader_email',
           nambatdaukhoinghiep: 'founding_year', tentochuc: 'name', diachi: 'address',
@@ -2284,11 +2366,11 @@ export default {
           initiatives: ['tensangkien', 'tengiaphap', 'initiativename'],
           patents: ['tensangche', 'tenphatminh', 'tenbangsangche', 'patentname'],
           experts: ['tenchuyengia', 'hovaten', 'hoten', 'tencanhan', 'hotenchuyengia', 'expertname', 'fullname'],
-          startups: ['tendoanhnghiep', 'tendoanhnghiepkhoinghiep', 'tendoanhnghiepkhoinghiepsangtao', 'startupname', 'companyname'],
+          startups: ['tendoanhnghiep', 'tendoanhnghiepkhoinghiep', 'tendoanhnghiepkhoinghiepsangtao', 'tencongty', 'tencongtykhoinghiep', 'tenstartup', 'startupname', 'companyname'],
           support_organizations: ['tentochuc', 'tentochuctrunggian', 'organizationname'],
-          startup_projects: ['tenduan', 'tenduankhoinghiep', 'tendukhoinghiep', 'tenproject', 'projectname', 'projecttitle'],
+          startup_projects: ['tenduan', 'tenduankhoinghiep', 'tendukhoinghiep', 'tenduanstartup', 'tenduan khoinghiep sangtao', 'tenproject', 'projectname', 'projecttitle'],
           startup_ideas: ['tenytuong', 'tenytuongkhoinghiep', 'tenytuongkhoinghiepsangtao', 'ideaname', 'ideatitle'],
-          wards: ['tenxaphuong', 'tenxaphuongdackhu', 'wardname'],
+          wards: ['tenxaphuong', 'tenxaphuongdackhu', 'tenxa', 'tenphuong', 'tendackhu', 'wardname'],
           universities: ['tentruong', 'tentruongdaihoccaodang', 'tentruongdaihoc', 'universityname', 'schoolname'],
           featured_startups: ['tenduan', 'tendoanhnghiep', 'projectname', 'projecttitle'],
           organizations: ['tentochuc', 'tenvien', 'tentochuckhcn', 'tentochuckhoahoccongnghe', 'organizationname'],
@@ -2306,7 +2388,18 @@ export default {
         let importedCount = 0;
         const errors: string[] = [];
         const duplicates: string[] = [];
-        const primaryColumn = tableColumns.has('title') ? 'title'
+        // Prefer the canonical primary field for these modules. Some deployed
+        // D1 schemas may contain both "title" and "name"; a generic title-first
+        // choice can leave a NOT NULL name column empty during imports.
+        const preferredPrimaryColumns: Record<string, string> = {
+          startups: 'name',
+          startup_projects: 'title',
+          wards: 'name'
+        };
+        const preferredPrimaryColumn = preferredPrimaryColumns[moduleName];
+        const primaryColumn = preferredPrimaryColumn && tableColumns.has(preferredPrimaryColumn)
+          ? preferredPrimaryColumn
+          : tableColumns.has('title') ? 'title'
           : tableColumns.has('name') ? 'name'
           : tableColumns.has('project_name') ? 'project_name'
           : '';
@@ -2345,7 +2438,9 @@ export default {
             if (key.startsWith('sodienthoainguoidungdau')) target = 'leader_phone';
             if (key.startsWith('emailnguoidungdau')) target = 'leader_email';
             if (key.startsWith('tenthaycogiaohuongdan') || key.startsWith('tengiaovienhuongdan')) target = 'mentor_name';
-            if (key.startsWith('tongsonhansu')) target = 'current_staff_count';
+            if (key.startsWith('tongsonhansu') || key.startsWith('soluongnhansu')) {
+              target = moduleName === 'startups' ? 'total_staff' : 'current_staff_count';
+            }
             if (key.startsWith('soluongthanhvienthamgia') && ['startup_projects', 'startup_ideas'].includes(moduleName)) target = 'members_count';
             else if (key.startsWith('soluongthanhvienthamgia')) target = 'team_size';
             if (key.startsWith('nhomytuongdanghoctapcongtactaidonvi')) target = 'affiliated_unit';
@@ -2362,6 +2457,17 @@ export default {
             if (tableColumns.has(target)) mapped[target] = rawValue;
             else if (tableColumns.has('data_json')) mapped[`__custom__${target}`] = rawValue;
             else unsupported.push(rawKey);
+          }
+
+          // Keep both common name/title columns populated when an older or
+          // extended deployment contains both columns with NOT NULL constraints.
+          if (['startups', 'wards', 'startup_projects'].includes(moduleName)) {
+            const primaryValue = mapped[primaryColumn];
+            if (primaryValue !== undefined && primaryValue !== null && String(primaryValue).trim() !== '') {
+              if (tableColumns.has('name') && !mapped.name) mapped.name = primaryValue;
+              if (tableColumns.has('title') && !mapped.title) mapped.title = primaryValue;
+              if (tableColumns.has('project_name') && !mapped.project_name) mapped.project_name = primaryValue;
+            }
           }
 
           const missingRequiredFields = requiredFields.filter(field => {
