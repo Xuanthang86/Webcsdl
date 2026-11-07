@@ -164,6 +164,17 @@ async function ensureSystemConfigTable(db: D1Database): Promise<void> {
   `).run();
 }
 
+async function ensureFormConfigsTable(db: D1Database): Promise<void> {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS form_configs (
+      module_type TEXT PRIMARY KEY,
+      config_json TEXT NOT NULL DEFAULT '{"customFields":[]}',
+      updated_by TEXT,
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `).run();
+}
+
 async function ensureAuditLogTable(db: D1Database): Promise<Set<string>> {
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS audit_logs (
@@ -2057,6 +2068,76 @@ export default {
             if (!result.success || Number(result.meta?.changes || 0) !== 1) return jsonResponse({ success: false, message: 'Không tìm thấy tin nhắn hoặc không cập nhật được trạng thái.' }, 404, corsHeaders);
             return jsonResponse({ success: true, message: 'Đã cập nhật trạng thái tin nhắn.' }, 200, corsHeaders);
           } catch (e: any) { return jsonResponse({ success: false, message: 'Lỗi cập nhật tin nhắn: ' + (e?.message || 'Lỗi D1') }, 500, corsHeaders); }
+        }
+      }
+
+      // Admin form configuration. Keep configuration writes separate from record workflow state.
+      if (url.pathname.startsWith('/api/forms/')) {
+        const moduleName = url.pathname.replace('/api/forms/', '').trim();
+        if (!ALLOWED_MODULES.includes(moduleName)) return jsonResponse({ success: false, message: 'Phân hệ biểu mẫu không hợp lệ.' }, 400, corsHeaders);
+        if (!['super_admin', 'system_admin', 'data_officer'].includes(currentUser.role)) return jsonResponse({ success: false, message: 'Bạn không có quyền truy cập cấu hình biểu mẫu.' }, currentUser.role === 'public_user' ? 401 : 403, corsHeaders);
+        if (!env.DB) return jsonResponse({ success: false, message: 'Cơ sở dữ liệu D1 chưa kết nối.' }, 500, corsHeaders);
+        try {
+          await ensureFormConfigsTable(env.DB);
+          if (request.method === 'GET') {
+            const row = await env.DB.prepare('SELECT config_json FROM form_configs WHERE module_type = ?').bind(moduleName).first<any>();
+            let config: any = { customFields: [], hiddenSystemFields: [], fieldOverrides: {} };
+            if (row?.config_json) {
+              try { config = JSON.parse(String(row.config_json)); } catch { throw new Error('Cấu hình biểu mẫu trong D1 không phải JSON hợp lệ.'); }
+            }
+            return jsonResponse({ success: true, config }, 200, corsHeaders);
+          }
+          if (request.method === 'PUT') {
+            if (!['super_admin', 'system_admin'].includes(currentUser.role)) return jsonResponse({ success: false, message: 'Chỉ Quản trị viên mới được thay đổi cấu hình biểu mẫu.' }, 403, corsHeaders);
+            const body = await request.json().catch(() => null);
+            if (!body || typeof body !== 'object' || Array.isArray(body)) return jsonResponse({ success: false, message: 'Cấu hình biểu mẫu không hợp lệ.' }, 400, corsHeaders);
+            const config = sanitizeObject(body);
+            const result = await env.DB.prepare(`
+              INSERT INTO form_configs (module_type, config_json, updated_by, updated_at)
+              VALUES (?, ?, ?, datetime('now'))
+              ON CONFLICT(module_type) DO UPDATE SET
+                config_json = excluded.config_json,
+                updated_by = excluded.updated_by,
+                updated_at = datetime('now')
+            `).bind(moduleName, JSON.stringify(config), currentUser.id).run();
+            if (!result.success || Number(result.meta?.changes || 0) < 1) throw new Error('D1 không xác nhận đã lưu cấu hình biểu mẫu.');
+            const saved = await env.DB.prepare('SELECT config_json FROM form_configs WHERE module_type = ?').bind(moduleName).first<any>();
+            if (!saved?.config_json) throw new Error('Không đọc lại được cấu hình sau khi lưu.');
+            return jsonResponse({ success: true, config: JSON.parse(String(saved.config_json)) }, 200, corsHeaders);
+          }
+          return jsonResponse({ success: false, message: 'Phương thức yêu cầu không được hỗ trợ.' }, 405, corsHeaders);
+        } catch (e: any) {
+          return jsonResponse({ success: false, message: 'Lỗi cấu hình biểu mẫu D1: ' + (e?.message || 'Không xác định') }, 500, corsHeaders);
+        }
+      }
+
+      // Read-only D1 schema diagnostics and SQL schema export.
+      if (url.pathname === '/api/d1/reconcile') {
+        if (!['super_admin', 'system_admin'].includes(currentUser.role)) return jsonResponse({ success: false, message: 'Chỉ Quản trị viên mới được đối soát cấu trúc D1.' }, currentUser.role === 'public_user' ? 401 : 403, corsHeaders);
+        if (!env.DB) return jsonResponse({ success: false, message: 'Cơ sở dữ liệu D1 chưa kết nối.' }, 500, corsHeaders);
+        try {
+          const result = await env.DB.prepare("SELECT name, type FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' ORDER BY type, name").all<any>();
+          const objects = (result.results || []).map((row: any) => ({ name: String(row.name), type: String(row.type) }));
+          const names = new Set(objects.filter((row: any) => row.type === 'table').map((row: any) => row.name));
+          const requiredTables = [...ALLOWED_MODULES, 'users', 'system_config', 'audit_logs', 'attachments', 'connection_messages', 'form_configs'];
+          const relationshipAvailable = names.has('relationships') || names.has('entity_relationships');
+          const missingTables = requiredTables.filter(name => !names.has(name));
+          if (!relationshipAvailable) missingTables.push('relationships (hoặc entity_relationships)');
+          return jsonResponse({ success: true, data: { checkedAt: new Date().toISOString(), objects, missingTables, healthy: missingTables.length === 0 } }, 200, corsHeaders);
+        } catch (e: any) {
+          return jsonResponse({ success: false, message: 'Không thể đối soát cấu trúc D1: ' + (e?.message || 'Lỗi không xác định') }, 500, corsHeaders);
+        }
+      }
+
+      if (url.pathname === '/api/d1/export-sql') {
+        if (!['super_admin', 'system_admin'].includes(currentUser.role)) return jsonResponse({ success: false, message: 'Chỉ Quản trị viên mới được xuất cấu trúc SQL D1.' }, currentUser.role === 'public_user' ? 401 : 403, corsHeaders);
+        if (!env.DB) return jsonResponse({ success: false, message: 'Cơ sở dữ liệu D1 chưa kết nối.' }, 500, corsHeaders);
+        try {
+          const rows = await env.DB.prepare("SELECT type, name, sql FROM sqlite_master WHERE sql IS NOT NULL AND type IN ('table', 'index', 'view', 'trigger') AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' ORDER BY CASE type WHEN 'table' THEN 1 WHEN 'index' THEN 2 WHEN 'view' THEN 3 ELSE 4 END, name").all<any>();
+          const sql = (rows.results || []).map((row: any) => String(row.sql).trim().replace(/;?$/, ';')).join('\\n\\n') + '\\n';
+          return new Response(sql, { status: 200, headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8', 'Content-Disposition': url.searchParams.get('download') === '1' ? 'attachment; filename="khcn_d1_schema.sql"' : 'inline; filename="khcn_d1_schema.sql"', 'Cache-Control': 'no-store' } });
+        } catch (e: any) {
+          return jsonResponse({ success: false, message: 'Không thể xuất cấu trúc SQL D1: ' + (e?.message || 'Lỗi không xác định') }, 500, corsHeaders);
         }
       }
 
