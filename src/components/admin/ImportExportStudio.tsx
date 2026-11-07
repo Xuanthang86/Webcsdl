@@ -301,50 +301,72 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
   };
 
   const parseCsvText = (text: string) => {
-    const lines = text.trim().split('\n');
-    if (lines.length < 2) return [];
+    const input = String(text || '').replace(/^\\uFEFF/, '');
+    if (!input.trim()) return [];
 
-    const parseLine = (line: string): string[] => {
-      const result: string[] = [];
-      let cur = '';
+    // Detect the delimiter from the first logical CSV record, ignoring
+    // delimiters inside quoted cells.
+    const delimiters = [',', ';', '\\t'];
+    const delimiterCounts = delimiters.map(delimiter => {
+      let count = 0;
       let insideQuote = false;
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
+      for (let i = 0; i < input.length; i++) {
+        const char = input[i];
         if (char === '"') {
-          if (insideQuote && line[i + 1] === '"') {
-            cur += '"';
-            i++;
-          } else {
-            insideQuote = !insideQuote;
-          }
-        } else if ((char === ',' || char === ';' || char === '\t') && !insideQuote) {
-          result.push(cur.trim().replace(/^"|"$/g, ''));
-          cur = '';
-        } else {
-          cur += char;
+          if (insideQuote && input[i + 1] === '"') i++;
+          else insideQuote = !insideQuote;
+        } else if ((char === '\\n' || char === '\\r') && !insideQuote) {
+          break;
+        } else if (char === delimiter && !insideQuote) {
+          count++;
         }
       }
-      result.push(cur.trim().replace(/^"|"$/g, ''));
-      return result;
-    };
+      return count;
+    });
+    const maxDelimiterCount = Math.max(...delimiterCounts);
+    if (maxDelimiterCount === 0) return [];
+    const delimiter = delimiters[delimiterCounts.indexOf(maxDelimiterCount)];
 
-    const headers = parseLine(lines[0]);
-    const rows = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-      const values = parseLine(line);
-      const obj: any = {};
-      headers.forEach((h, idx) => {
-        obj[h] = values[idx] || '';
-      });
-      // Check if at least one value is non-empty
-      if (Object.values(obj).some(v => String(v).trim().length > 0)) {
-        rows.push(obj);
+    // Parse the complete CSV stream so quoted cells containing line breaks
+    // do not shift columns or turn one record into several malformed rows.
+    const matrix: string[][] = [];
+    let row: string[] = [];
+    let cell = '';
+    let insideQuote = false;
+    for (let i = 0; i < input.length; i++) {
+      const char = input[i];
+      if (char === '"') {
+        if (insideQuote && input[i + 1] === '"') {
+          cell += '"';
+          i++;
+        } else {
+          insideQuote = !insideQuote;
+        }
+      } else if (char === delimiter && !insideQuote) {
+        row.push(cell.trim());
+        cell = '';
+      } else if ((char === '\\n' || char === '\\r') && !insideQuote) {
+        if (char === '\\r' && input[i + 1] === '\\n') i++;
+        row.push(cell.trim());
+        if (row.some(value => value.length > 0)) matrix.push(row);
+        row = [];
+        cell = '';
+      } else {
+        cell += char;
       }
     }
-    return rows;
+    row.push(cell.trim());
+    if (row.some(value => value.length > 0)) matrix.push(row);
+    if (matrix.length < 2) return [];
+
+    const headers = matrix[0].map(header => header.replace(/^\\uFEFF/, '').trim());
+    return matrix.slice(1).map(values => {
+      const record: Record<string, any> = {};
+      headers.forEach((header, index) => {
+        if (header) record[header] = values[index] ?? '';
+      });
+      return record;
+    }).filter(record => Object.values(record).some(value => String(value ?? '').trim() !== ''));
   };
 
   const loadSheetData = (wb: XLSX.WorkBook, sheetName: string) => {
