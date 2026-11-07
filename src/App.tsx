@@ -65,22 +65,22 @@ class DetailModalErrorBoundary extends React.Component<
 export default function App() {
   const [currentView, setCurrentView] = useState<'home' | 'browse' | 'admin'>(() => {
     if (typeof window !== 'undefined') {
+      const hasActiveTabSession = window.sessionStorage.getItem('portal_tab_active') === 'true';
       const hash = window.location.hash.replace('#', '');
-      if (hash === 'admin' || hash === 'browse' || hash === 'home') {
-        return hash as any;
-      }
-      const saved = localStorage.getItem('portal_current_view');
-      if (saved === 'admin' || saved === 'browse' || saved === 'home') {
-        return saved as any;
-      }
+      if (hash === 'admin' && hasActiveTabSession) return 'admin';
+      if (hash === 'browse' || hash === 'home') return hash;
+      const saved = window.sessionStorage.getItem('portal_current_view');
+      if (saved === 'admin' && hasActiveTabSession) return 'admin';
+      if (saved === 'browse' || saved === 'home') return saved;
     }
     return 'home';
   });
 
-  // Keep localStorage and URL hash in sync with view
+  // Keep the view only for this browser tab session; never persist an admin route across restarts.
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('portal_current_view', currentView);
+      window.sessionStorage.setItem('portal_current_view', currentView);
+      window.localStorage.removeItem('portal_current_view');
       if (currentView === 'home') {
         if (window.location.hash) {
           history.replaceState(null, '', window.location.pathname + window.location.search);
@@ -92,23 +92,9 @@ export default function App() {
   }, [currentView]);
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
   const [showAdvancedSearchModal, setShowAdvancedSearchModal] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | undefined>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem('portal_cached_user');
-        if (cached) return JSON.parse(cached);
-      } catch {}
-    }
-    return undefined;
-  });
-
-  useEffect(() => {
-    if (currentUser && currentUser.role !== 'public_user') {
-      localStorage.setItem('portal_cached_user', JSON.stringify(currentUser));
-    } else if (currentUser && currentUser.role === 'public_user') {
-      localStorage.removeItem('portal_cached_user');
-    }
-  }, [currentUser]);
+  // The server's HttpOnly session cookie is the sole source of authentication.
+  // Do not restore an authenticated user from persistent browser storage.
+  const [currentUser, setCurrentUser] = useState<User | undefined>(undefined);
   const [availableRoles, setAvailableRoles] = useState<Array<{ role: string; label: string }>>([]);
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({
     portalName: 'Cổng dữ liệu Tổng hợp khoa học, công nghệ & khởi nghiệp đổi mới sáng tạo',
