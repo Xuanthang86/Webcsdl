@@ -2286,7 +2286,7 @@ export default {
           experts: ['tenchuyengia', 'hovaten', 'hoten', 'tencanhan'],
           startups: ['tendoanhnghiep'],
           support_organizations: ['tentochuc'],
-          startup_projects: ['tenduan'],
+          startup_projects: ['tenduan', 'tenduankhoinghiep'],
           startup_ideas: ['tenytuong', 'tenytuongkhoinghiep'],
           wards: ['tenxaphuong', 'tenxaphuongdackhu'],
           universities: ['tentruong', 'tentruongdaihoccaodang'],
