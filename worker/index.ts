@@ -99,6 +99,18 @@ function canViewRestrictedModule(user: any, moduleName: string): boolean {
   if (privilegedRoles.includes(String(user?.role || ''))) return true;
   return Array.isArray(user?.managedModules) && user.managedModules.includes(moduleName);
 }
+function canManageModuleRecords(user: any, moduleName: string): boolean {
+  const role = String(user?.role || '');
+  if (['super_admin', 'system_admin', 'data_officer', 'agency_leader'].includes(role)) return true;
+  return role === 'partner_officer' && ['startup_projects', 'startup_ideas'].includes(moduleName);
+}
+function canCreateModuleRecords(user: any, moduleName: string): boolean {
+  if (canManageModuleRecords(user, moduleName)) return true;
+  return String(user?.role || '') === 'public_user' && ['science_tasks', 'initiatives', 'startups', 'startup_projects', 'startup_ideas', 'experts', 'collaboration_needs'].includes(moduleName);
+}
+function isPrivilegedMessageReader(user: any): boolean {
+  return ['super_admin', 'system_admin', 'agency_leader', 'data_officer'].includes(String(user?.role || ''));
+}
 
 function redactPublicDetail(item: any, moduleName: string): any {
   if (!item) return item;
@@ -774,8 +786,7 @@ export default {
 
         return jsonResponse({
           success: true,
-          user: safeUser,
-          token: sessionToken
+          user: safeUser
         }, 200, {
           ...corsHeaders,
           'Set-Cookie': cookieHeader
@@ -1756,7 +1767,7 @@ export default {
 
       // L. ImageKit CDN Auth & Upload
       if (url.pathname === '/api/imagekit/auth') {
-        if (currentUser.role === 'public_user') {
+        if (!['super_admin', 'system_admin', 'agency_leader', 'data_officer'].includes(currentUser.role)) {
           return jsonResponse({ success: false, message: 'Yêu cầu đăng nhập để nhận chữ ký xác thực tải tệp.' }, 401, corsHeaders);
         }
         if (!env.IMAGEKIT_PRIVATE_KEY) {
@@ -1789,12 +1800,13 @@ export default {
       }
 
       if (url.pathname === '/api/imagekit/upload' && request.method === 'POST') {
-        if (currentUser.role === 'public_user') {
+        if (!['super_admin', 'system_admin', 'data_officer', 'agency_leader'].includes(currentUser.role)) {
           return jsonResponse({ success: false, message: 'Yêu cầu đăng nhập để đính kèm tệp.' }, 401, corsHeaders);
         }
+        if (!env.DB) return jsonResponse({ success: false, message: 'Cơ sở dữ liệu D1 chưa kết nối.' }, 500, corsHeaders);
         const body = await request.json().catch(() => ({})) as any;
         const { fileName, fileSize, mimeType, cdnUrl, entityId, moduleType, title } = body;
-        if (!fileName || !cdnUrl) {
+        if (!fileName || !cdnUrl || !moduleType || !ALLOWED_MODULES.includes(String(moduleType))) {
           return jsonResponse({ success: false, message: 'Thiếu thông tin tệp hoặc đường dẫn CDN.' }, 400, corsHeaders);
         }
 
@@ -1813,19 +1825,21 @@ export default {
           createdAt: new Date().toISOString()
         };
 
-        if (env.DB) {
-          try {
-            await env.DB.prepare(`
-              INSERT INTO attachments (id, file_name, file_size, mime_type, cdn_url, thumbnail_url, entity_id, module_type, title, uploaded_by, created_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `).bind(
-              attachment.id, attachment.fileName, attachment.fileSize, attachment.mimeType,
-              attachment.cdnUrl, attachment.thumbnailUrl, attachment.entityId,
-              attachment.moduleType, attachment.title, attachment.uploadedBy, attachment.createdAt
-            ).run();
-          } catch (e: any) {
-            console.warn('Lỗi ghi bản ghi tệp đính kèm vào D1:', e);
-          }
+        try {
+          const info = await env.DB.prepare('PRAGMA table_info(attachments)').all<any>();
+          const columns = new Set((info.results || []).map((column: any) => String(column.name)));
+          const values: Record<string, any> = {
+            id: attachment.id, file_name: attachment.fileName, file_size: attachment.fileSize,
+            mime_type: attachment.mimeType, file_type: attachment.mimeType, cdn_url: attachment.cdnUrl,
+            thumbnail_url: attachment.thumbnailUrl, entity_id: attachment.entityId,
+            module_type: attachment.moduleType, title: attachment.title, uploaded_by: attachment.uploadedBy,
+            created_at: attachment.createdAt
+          };
+          const entries = Object.entries(values).filter(([column]) => columns.has(column));
+          const result = await env.DB.prepare(`INSERT INTO attachments (${entries.map(([column]) => `"${column}"`).join(', ')}) VALUES (${entries.map(() => '?').join(', ')})`).bind(...entries.map(([, value]) => value)).run();
+          if (!result.success || Number(result.meta?.changes || 0) !== 1) throw new Error('D1 không xác nhận đã lưu thông tin tệp.');
+        } catch (e: any) {
+          return jsonResponse({ success: false, message: 'Không thể lưu thông tin tệp đính kèm: ' + (e?.message || 'Lỗi D1') }, 500, corsHeaders);
         }
 
         return jsonResponse({ success: true, data: attachment }, 201, corsHeaders);
@@ -1838,6 +1852,7 @@ export default {
         if (request.method === 'GET') {
           const entityId = url.searchParams.get('entityId');
           const moduleType = url.searchParams.get('moduleType');
+          if (!moduleType || !canViewRestrictedModule(currentUser, moduleType)) return jsonResponse({ success: false, message: 'Bạn không có quyền xem thông tin tệp đính kèm của phân hệ này.' }, 403, corsHeaders);
           if (!env.DB) {
             return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
           }
@@ -1860,9 +1875,7 @@ export default {
         }
 
         if (attId && request.method === 'DELETE') {
-          if (currentUser.role === 'public_user') {
-            return jsonResponse({ success: false, message: 'Chưa đăng nhập.' }, 401, corsHeaders);
-          }
+          if (!['super_admin', 'system_admin', 'data_officer'].includes(currentUser.role)) return jsonResponse({ success: false, message: 'Bạn không có quyền xóa tệp đính kèm.' }, currentUser.role === 'public_user' ? 401 : 403, corsHeaders);
           if (!env.DB) {
             return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
           }
@@ -1964,19 +1977,21 @@ export default {
       }
 
       // P. Connections / Collaboration Messages
-      if (url.pathname === '/api/connections') {
+      if (url.pathname === '/api/connections' || url.pathname.startsWith('/api/connections/')) {
+        const connectionId = url.pathname.replace('/api/connections', '').replace(/^\//, '');
         if (request.method === 'GET') {
+          if (!isPrivilegedMessageReader(currentUser)) return jsonResponse({ success: false, message: 'Bạn không có quyền xem nội dung tin nhắn kết nối.' }, currentUser.role === 'public_user' ? 401 : 403, corsHeaders);
           const needId = url.searchParams.get('needId');
           if (!env.DB) {
             return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
           }
           try {
+            const info = await env.DB.prepare('PRAGMA table_info(connection_messages)').all<any>();
+            const columns = new Set((info.results || []).map((column: any) => String(column.name)));
+            const linkColumn = columns.has('need_id') ? 'need_id' : columns.has('target_entity_id') ? 'target_entity_id' : '';
             let sql = 'SELECT * FROM connection_messages WHERE 1=1';
             const params: any[] = [];
-            if (needId) {
-              sql += ' AND need_id = ?';
-              params.push(needId);
-            }
+            if (needId && linkColumn) { sql += ` AND ${linkColumn} = ?`; params.push(needId); }
             const rows = await env.DB.prepare(sql).bind(...params).all();
             return jsonResponse({ success: true, data: rows.results || [] }, 200, corsHeaders);
           } catch (e: any) {
@@ -1986,27 +2001,62 @@ export default {
 
         if (request.method === 'POST') {
           const body = await request.json().catch(() => ({})) as any;
+          if (!env.DB) return jsonResponse({ success: false, message: 'Cơ sở dữ liệu D1 chưa kết nối.' }, 500, corsHeaders);
+          const needId = String(body.needId || body.targetEntityId || '').trim();
+          const senderName = sanitizeString(body.senderName || '');
+          const senderEmail = sanitizeString(body.senderEmail || '').toLowerCase();
+          const messageText = sanitizeString(body.message || '');
+          if (!needId || !senderName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderEmail) || !messageText) return jsonResponse({ success: false, message: 'Vui lòng cung cấp hồ sơ kết nối, họ tên, email hợp lệ và nội dung tin nhắn.' }, 400, corsHeaders);
+          const target = await env.DB.prepare('SELECT * FROM collaboration_needs WHERE id = ?').bind(needId).first<any>();
+          if (!target) return jsonResponse({ success: false, message: 'Không tìm thấy nhu cầu kết nối được chọn.' }, 404, corsHeaders);
+          const targetTitle = String(target.title || target.name || target.need_title || needId);
           const msg = {
             id: `msg_${Date.now()}_${crypto.randomUUID().slice(0, 4)}`,
-            needId: body.needId,
-            senderName: sanitizeString(body.senderName || ''),
-            senderEmail: sanitizeString(body.senderEmail || ''),
+            needId,
+            senderName,
+            senderEmail,
             senderPhone: sanitizeString(body.senderPhone || ''),
             senderOrg: sanitizeString(body.senderOrg || ''),
-            message: sanitizeString(body.message || ''),
+            message: messageText,
             proposedCapability: sanitizeString(body.proposedCapability || ''),
             status: 'pending',
             createdAt: new Date().toISOString()
           };
-          if (env.DB) {
-            try {
-              await env.DB.prepare(`
-                INSERT INTO connection_messages (id, need_id, sender_name, sender_email, sender_phone, sender_org, message, proposed_capability, status, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-              `).bind(msg.id, msg.needId, msg.senderName, msg.senderEmail, msg.senderPhone, msg.senderOrg, msg.message, msg.proposedCapability, msg.status, msg.createdAt).run();
-            } catch {}
+          try {
+            const info = await env.DB.prepare('PRAGMA table_info(connection_messages)').all<any>();
+            const columns = new Set((info.results || []).map((column: any) => String(column.name)));
+            const values: Record<string, any> = {
+              id: msg.id, need_id: needId, target_entity_id: needId,
+              target_entity_type: 'collaboration_needs', target_entity_title: targetTitle,
+              sender_name: msg.senderName, sender_email: msg.senderEmail, sender_phone: msg.senderPhone,
+              sender_org: msg.senderOrg, message: msg.message, proposed_capability: msg.proposedCapability,
+              status: msg.status, created_at: msg.createdAt
+            };
+            const required = (info.results || []).filter((column: any) => Number(column.notnull) === 1 && column.dflt_value === null && String(column.name) !== 'id');
+            for (const column of required) {
+              const value = values[String(column.name)];
+              if (value === undefined || value === null || value === '') return jsonResponse({ success: false, message: `Thiếu trường bắt buộc của bảng tin nhắn: ${column.name}.` }, 409, corsHeaders);
+            }
+            const entries = Object.entries(values).filter(([column]) => columns.has(column));
+            const result = await env.DB.prepare(`INSERT INTO connection_messages (${entries.map(([column]) => `"${column}"`).join(', ')}) VALUES (${entries.map(() => '?').join(', ')})`).bind(...entries.map(([, value]) => value)).run();
+            if (!result.success || Number(result.meta?.changes || 0) !== 1) throw new Error('D1 không xác nhận đã lưu tin nhắn.');
+            return jsonResponse({ success: true, data: { ...msg, targetEntityTitle: targetTitle } }, 201, corsHeaders);
+          } catch (e: any) {
+            return jsonResponse({ success: false, message: 'Không thể lưu tin nhắn kết nối: ' + (e?.message || 'Lỗi D1') }, 500, corsHeaders);
           }
-          return jsonResponse({ success: true, data: msg }, 201, corsHeaders);
+        }
+
+        if (connectionId && request.method === 'PATCH') {
+          if (!isPrivilegedMessageReader(currentUser)) return jsonResponse({ success: false, message: 'Bạn không có quyền cập nhật trạng thái tin nhắn.' }, 403, corsHeaders);
+          if (!env.DB) return jsonResponse({ success: false, message: 'Cơ sở dữ liệu D1 chưa kết nối.' }, 500, corsHeaders);
+          const body = await request.json().catch(() => ({})) as any;
+          const nextStatus = String(body.status || '');
+          if (!['accepted', 'declined'].includes(nextStatus)) return jsonResponse({ success: false, message: 'Trạng thái tin nhắn không hợp lệ.' }, 400, corsHeaders);
+          try {
+            const result = await env.DB.prepare('UPDATE connection_messages SET status = ? WHERE id = ?').bind(nextStatus, connectionId).run();
+            if (!result.success || Number(result.meta?.changes || 0) !== 1) return jsonResponse({ success: false, message: 'Không tìm thấy tin nhắn hoặc không cập nhật được trạng thái.' }, 404, corsHeaders);
+            return jsonResponse({ success: true, message: 'Đã cập nhật trạng thái tin nhắn.' }, 200, corsHeaders);
+          } catch (e: any) { return jsonResponse({ success: false, message: 'Lỗi cập nhật tin nhắn: ' + (e?.message || 'Lỗi D1') }, 500, corsHeaders); }
         }
       }
 
@@ -2032,13 +2082,16 @@ export default {
           }
           const body = await request.json().catch(() => ({})) as any;
           const { status, note } = body;
+          const nextStatus = String(status || '');
+          if (!['under_review', 'needs_revision', 'rejected', 'approved', 'published'].includes(nextStatus)) return jsonResponse({ success: false, message: 'Trạng thái quy trình không hợp lệ.' }, 400, corsHeaders);
+          if (!env.DB) return jsonResponse({ success: false, message: 'Cơ sở dữ liệu D1 chưa kết nối.' }, 500, corsHeaders);
           if (env.DB) {
             try {
-              const nextStatus = String(status || 'approved');
               const wfInfo = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
               const wfColumns = new Set((wfInfo.results || []).map((column: any) => column.name));
               const wfAssignments = ['status = ?', "updated_at = datetime('now')"];
               const wfValues: any[] = [nextStatus];
+              if (wfColumns.has('verification_status')) { wfAssignments.push('verification_status = ?'); wfValues.push(nextStatus === 'approved' || nextStatus === 'published' ? 'verified' : 'unverified'); }
               if (wfColumns.has('publicity_level')) {
                 wfAssignments.push('publicity_level = ?');
                 wfValues.push(nextStatus === 'approved' || nextStatus === 'published' ? 'public' : 'private');
@@ -2065,6 +2118,7 @@ export default {
                 `INSERT INTO audit_logs (${auditEntries.map(([column]) => column).join(', ')}) VALUES (${auditEntries.map(() => '?').join(', ')})`
               ).bind(...auditEntries.map(([, value]) => value));
               const results = await env.DB.batch([updateStatement, auditStatement]);
+              if (!results?.[0]?.success || !results?.[1]?.success) throw new Error('D1 không xác nhận đầy đủ thao tác quy trình và nhật ký.');
               if (Number(results?.[0]?.meta?.changes || 0) < 1) {
                 return jsonResponse({ success: false, message: 'Không tìm thấy bản ghi hoặc bản ghi đã thay đổi trước khi phê duyệt. Vui lòng tải lại danh sách.' }, 404, corsHeaders);
               }
@@ -2139,13 +2193,22 @@ export default {
 
         // 4. CREATE Record: POST /api/modules/:moduleName
         if (!recordId && request.method === 'POST') {
+          if (!canCreateModuleRecords(currentUser, moduleName)) return jsonResponse({ success: false, message: 'Bạn không có quyền tạo hồ sơ trong phân hệ này.' }, 403, corsHeaders);
+          if (!env.DB) return jsonResponse({ success: false, message: 'Cơ sở dữ liệu D1 chưa kết nối.' }, 500, corsHeaders);
+          if (currentUser.role === 'public_user') {
+            const cfg = await env.DB.prepare('SELECT allow_public_submission FROM system_config ORDER BY updated_at DESC LIMIT 1').first<any>();
+            if (Number(cfg?.allow_public_submission ?? 1) !== 1) return jsonResponse({ success: false, message: 'Hệ thống hiện không tiếp nhận hồ sơ trực tuyến.' }, 403, corsHeaders);
+          }
           const body = await request.json().catch(() => ({})) as any;
           const clean = sanitizeObject(body);
+          for (const protectedField of ['status', 'verificationStatus', 'verification_status', 'publicityLevel', 'publicity_level', 'approvedBy', 'approved_by', 'verifiedBy', 'verified_by', 'createdBy', 'created_by', 'id', 'history']) delete clean[protectedField];
           const newId = `${moduleName.slice(0, 4)}_${Date.now()}`;
           clean.id = newId;
           clean.created_at = new Date().toISOString();
           clean.updated_at = new Date().toISOString();
-          clean.status = clean.status || (currentUser.role === 'public_user' ? 'submitted' : 'draft');
+          clean.status = currentUser.role === 'public_user' ? 'submitted' : 'draft';
+          clean.verification_status = 'unverified';
+          clean.publicity_level = 'private';
           clean.created_by = currentUser.fullName;
 
           if (env.DB) {
@@ -2165,7 +2228,8 @@ export default {
               const cols = entries.map(([column]) => column).join(', ');
               const placeholders = entries.map(() => '?').join(', ');
               const values = entries.map(([, value]) => typeof value === 'object' && value !== null ? JSON.stringify(value) : value);
-              await env.DB.prepare(`INSERT INTO ${moduleName} (${cols}) VALUES (${placeholders})`).bind(...values).run();
+              const inserted = await env.DB.prepare(`INSERT INTO ${moduleName} (${cols}) VALUES (${placeholders})`).bind(...values).run();
+              if (!inserted.success || Number(inserted.meta?.changes || 0) !== 1) throw new Error('D1 không xác nhận đã tạo bản ghi.');
 
               // Audit log
               await env.DB.prepare(`
@@ -2181,14 +2245,14 @@ export default {
 
         // 5. UPDATE Record: PUT /api/modules/:moduleName/:id
         if (recordId && request.method === 'PUT') {
-          if (currentUser.role === 'public_user') {
-            return jsonResponse({ success: false, message: 'Chưa đăng nhập.' }, 401, corsHeaders);
-          }
+          if (!canManageModuleRecords(currentUser, moduleName)) return jsonResponse({ success: false, message: 'Bạn không có quyền chỉnh sửa hồ sơ trong phân hệ này.' }, currentUser.role === 'public_user' ? 401 : 403, corsHeaders);
+          if (!env.DB) return jsonResponse({ success: false, message: 'Cơ sở dữ liệu D1 chưa kết nối.' }, 500, corsHeaders);
           const body = await request.json().catch(() => ({})) as any;
           const clean = sanitizeObject(body);
+          for (const protectedField of ['status', 'verificationStatus', 'verification_status', 'publicityLevel', 'publicity_level', 'approvedBy', 'approved_by', 'verifiedBy', 'verified_by', 'createdBy', 'created_by', 'createdAt', 'created_at', 'id', 'history']) delete clean[protectedField];
           clean.updated_at = new Date().toISOString();
 
-          if (env.DB) {
+          {
             try {
               const info = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
               const physicalColumns = new Set((info.results || []).map((column: any) => column.name));
@@ -2196,7 +2260,9 @@ export default {
               if (physicalColumns.has('data_json')) {
                 try {
                   const current = await env.DB.prepare(`SELECT data_json FROM ${moduleName} WHERE id = ?`).bind(recordId).first<any>();
+                  if (!current) return jsonResponse({ success: false, message: 'Không tìm thấy bản ghi cần cập nhật.' }, 404, corsHeaders);
                   customFields = current?.data_json ? JSON.parse(current.data_json) : {};
+                  for (const protectedField of ['status', 'verificationStatus', 'verification_status', 'publicityLevel', 'publicity_level', 'approvedBy', 'approved_by', 'verifiedBy', 'verified_by', 'createdBy', 'created_by', 'history']) delete customFields[protectedField];
                 } catch {
                   customFields = {};
                 }
@@ -2214,7 +2280,8 @@ export default {
               const setClause = entries.map(([column]) => `${column} = ?`).join(', ');
               const values = entries.map(([, value]) => typeof value === 'object' && value !== null ? JSON.stringify(value) : value);
               values.push(recordId);
-              await env.DB.prepare(`UPDATE ${moduleName} SET ${setClause} WHERE id = ?`).bind(...values).run();
+              const updated = await env.DB.prepare(`UPDATE ${moduleName} SET ${setClause} WHERE id = ?`).bind(...values).run();
+              if (!updated.success || Number(updated.meta?.changes || 0) !== 1) return jsonResponse({ success: false, message: 'Không tìm thấy bản ghi hoặc D1 không xác nhận cập nhật.' }, 404, corsHeaders);
 
               // Audit log
               await env.DB.prepare(`
@@ -2390,7 +2457,10 @@ export default {
           tengiaovienhuongdan: 'mentor_name', nhomytuongdanghoctapcongtactaidonvinao: 'affiliated_unit',
           tenxaphuongdackhu: 'name', tenxaphuong: 'name', tentruong: 'name',
           tentruongdaihoccaodang: 'name', nguoidaidienduan: 'representative',
-          thongtinlienhe: 'contact_info'
+          thongtinlienhe: 'contact_info',
+          thuocxaphuong: 'ward', xaphuong: 'ward', phuongxa: 'ward', donvixaphuong: 'ward',
+          tentruongdaihoc: 'name', tentruongcaodang: 'name', tentruongdaihoccaodang: 'name',
+          dienthoai: 'contact_phone', sodienthoai: 'contact_phone', emailtruong: 'contact_email'
         };
 
         const primaryHeaderAliases: Record<string, string[]> = {
@@ -2403,7 +2473,7 @@ export default {
           startup_projects: ['tenduan', 'tenduankhoinghiep', 'tendukhoinghiep', 'tenduanstartup', 'tenduankhoinghiepsangtao', 'tenproject', 'projectname', 'projecttitle'],
           startup_ideas: ['tenytuong', 'tenytuongkhoinghiep', 'tenytuongkhoinghiepsangtao', 'ideaname', 'ideatitle'],
           wards: ['tenxaphuong', 'tenxaphuongdackhu', 'tenxa', 'tenphuong', 'tendackhu', 'wardname'],
-          universities: ['tentruong', 'tentruongdaihoccaodang', 'tentruongdaihoc', 'universityname', 'schoolname'],
+          universities: ['tentruong', 'tentruongdaihoccaodang', 'tentruongdaihoc', 'tentruongcaodang', 'tentrungcap', 'universityname', 'schoolname', 'collegename'],
           featured_startups: ['tenduan', 'tendoanhnghiep', 'projectname', 'projecttitle'],
           organizations: ['tentochuc', 'tenvien', 'tentochuckhcn', 'tentochuckhoahoccongnghe', 'organizationname'],
           investors: ['tennhadautu', 'hovaten', 'hoten', 'tennhadautucanhan', 'investorname', 'fullname'],
@@ -2426,7 +2496,8 @@ export default {
         const preferredPrimaryColumns: Record<string, string> = {
           startups: 'name',
           startup_projects: 'title',
-          wards: 'name'
+          wards: 'name',
+          universities: 'name'
         };
         const preferredPrimaryColumn = preferredPrimaryColumns[moduleName];
         const primaryColumn = preferredPrimaryColumn && tableColumns.has(preferredPrimaryColumn)

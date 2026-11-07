@@ -64,7 +64,7 @@ async function runAll() {
 
   // Kịch bản 1: Đăng nhập đúng/sai mật khẩu & khóa tạm thời
   await runScenario(1, 'Đăng nhập đúng/sai mật khẩu, khóa tạm thời khi thử sai nhiều lần', async () => {
-    const ok = db.authenticateUser('superadmin', 'admin123');
+    const ok = db.authenticateUser('superadmin', process.env.TEST_ADMIN_PASSWORD || '');
     if (!ok) throw new Error('Đăng nhập với mật khẩu đúng thất bại');
     const wrong = db.authenticateUser('superadmin', 'wrong_password_999');
     if (wrong) throw new Error('Mật khẩu sai nhưng vẫn cho đăng nhập');

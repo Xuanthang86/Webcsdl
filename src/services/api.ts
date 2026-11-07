@@ -86,9 +86,10 @@ export const api = {
       body: JSON.stringify({ username, password })
     });
     const data = await parseJsonResponse(res);
-    if (!data.token || typeof data.token !== 'string') {
-      throw new Error('Đăng nhập không nhận được mã phiên hợp lệ từ máy chủ. Vui lòng thử lại.');
+    if (!data.user || typeof data.user !== 'object') {
+      throw new Error('Đăng nhập không nhận được thông tin tài khoản hợp lệ từ máy chủ. Vui lòng thử lại.');
     }
+    // The session is held only in an HttpOnly cookie, never in JavaScript storage.
     return data.user;
   },
 

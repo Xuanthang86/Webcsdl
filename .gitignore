@@ -6,3 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Local development database may contain account hashes and personal data
+/data/db.json
+/data/db.json.corrupt.*
