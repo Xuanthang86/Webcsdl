@@ -145,7 +145,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
 
   const handleDownloadFile = (fileName?: string) => {
     const safeTitle = (entity.title || 'ban_ghi').slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_');
-    const docName = fileName || `Ho_so_${entity.code || entity.id}_${safeTitle}.txt`;
+    const docName = fileName || `Ho_so_${entity.code || (entity.moduleType === 'experts' ? 'Mã chuyên gia chưa cập nhật' : entity.id)}_${safeTitle}.txt`;
     const content = `================================================================================
 ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ
 CỔNG DỮ LIỆU TỔNG HỢP KH&CN, ĐỔI MỚI SÁNG TẠO VÀ KHỞI NGHIỆP CẤP THÀNH PHỐ
@@ -250,7 +250,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
               )}
             </div>
             <h2 className="w-full min-w-0 text-lg sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug break-words [overflow-wrap:anywhere]">
-              {entity.title || 'Không có tiêu đề'}
+              {(entity.moduleType === 'experts' ? (entity.fullName || entity.expertName || entity.name || (entity.title && entity.title !== entity.id ? entity.title : 'Hồ sơ chuyên gia')) : entity.title) || 'Không có tiêu đề'}
             </h2>
           </div>
 
