@@ -2368,7 +2368,7 @@ export default {
           experts: ['tenchuyengia', 'hovaten', 'hoten', 'tencanhan', 'hotenchuyengia', 'expertname', 'fullname'],
           startups: ['tendoanhnghiep', 'tendoanhnghiepkhoinghiep', 'tendoanhnghiepkhoinghiepsangtao', 'tencongty', 'tencongtykhoinghiep', 'tenstartup', 'startupname', 'companyname'],
           support_organizations: ['tentochuc', 'tentochuctrunggian', 'organizationname'],
-          startup_projects: ['tenduan', 'tenduankhoinghiep', 'tendukhoinghiep', 'tenduanstartup', 'tenduan khoinghiep sangtao', 'tenproject', 'projectname', 'projecttitle'],
+          startup_projects: ['tenduan', 'tenduankhoinghiep', 'tendukhoinghiep', 'tenduanstartup', 'tenduankhoinghiepsangtao', 'tenproject', 'projectname', 'projecttitle'],
           startup_ideas: ['tenytuong', 'tenytuongkhoinghiep', 'tenytuongkhoinghiepsangtao', 'ideaname', 'ideatitle'],
           wards: ['tenxaphuong', 'tenxaphuongdackhu', 'tenxa', 'tenphuong', 'tendackhu', 'wardname'],
           universities: ['tentruong', 'tentruongdaihoccaodang', 'tentruongdaihoc', 'universityname', 'schoolname'],
