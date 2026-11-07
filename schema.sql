@@ -336,3 +336,12 @@ CREATE TABLE IF NOT EXISTS attachments (
 );
 
 CREATE INDEX IF NOT EXISTS idx_attachments_entity ON attachments(entity_id, module_type);
+
+
+-- 18. CẤU HÌNH BIỂU MẪU QUẢN TRỊ
+CREATE TABLE IF NOT EXISTS form_configs (
+    module_type TEXT PRIMARY KEY,
+    config_json TEXT NOT NULL DEFAULT '{"customFields":[]}',
+    updated_by TEXT,
+    updated_at TEXT DEFAULT (datetime('now'))
+);
