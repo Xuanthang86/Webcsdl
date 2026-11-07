@@ -1400,7 +1400,7 @@ export default {
               const expertRows = await env.DB.prepare(
                 'SELECT ' + [...new Set(selectedExpertFields)].map(field => '"' + field + '"').join(', ') + ' FROM experts'
               ).all<any>();
-              const normalizeExpertKey = (value: string) => value.replace(/[_\\s-]/g, '').toLowerCase();
+              const normalizeExpertKey = (value: string) => value.replace(/[_\s-]/g, '').toLowerCase();
               const getExpertValue = (row: any, custom: Record<string, any>, candidates: string[]) => {
                 for (const candidate of candidates) {
                   const target = normalizeExpertKey(candidate);
@@ -1413,7 +1413,7 @@ export default {
               };
               const addExpertGroup = (target: Record<string, number>, value: any, prefix = '') => {
                 if (value === null || value === undefined) return;
-                const labels = Array.isArray(value) ? value : String(value).split(/[;|\\n]+/);
+                const labels = Array.isArray(value) ? value : String(value).split(/[;|\n]+/);
                 const seen = new Set<string>();
                 for (const rawLabel of labels) {
                   const label = String(rawLabel ?? '').trim();
@@ -2345,7 +2345,7 @@ export default {
           filelogodoanhnghiep: 'logo_file', linhvuckinhdoanh: 'business_field',
           tomtatvedoanhnghiepvasanpham: 'summary', sanphamgiaiquyetvande: 'problem_solved',
           soluongsanglapvien: 'founders_count', tongsonhanhientai: 'total_staff',
-          tongsonhansuo thoidiemhientai: 'total_staff', soluongnhansu: 'total_staff',
+          tongsonhansuothoidiemhientai: 'total_staff', soluongnhansu: 'total_staff',
           hovatennguoidungdau: 'leader_name', hotennguoidungdau: 'leader_name',
           sodienthoainguoidungdau: 'leader_phone', emailnguoidungdau: 'leader_email',
           nambatdaukhoinghiep: 'founding_year', tentochuc: 'name', diachi: 'address',
