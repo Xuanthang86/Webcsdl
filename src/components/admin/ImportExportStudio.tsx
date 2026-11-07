@@ -324,8 +324,9 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
       return count;
     });
     const maxDelimiterCount = Math.max(...delimiterCounts);
-    if (maxDelimiterCount === 0) return [];
-    const delimiter = delimiters[delimiterCounts.indexOf(maxDelimiterCount)];
+    const delimiter = maxDelimiterCount > 0
+      ? delimiters[delimiterCounts.indexOf(maxDelimiterCount)]
+      : ',';
 
     // Parse the complete CSV stream so quoted cells containing line breaks
     // do not shift columns or turn one record into several malformed rows.
