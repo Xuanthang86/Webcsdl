@@ -2280,26 +2280,26 @@ export default {
         };
 
         const primaryHeaderAliases: Record<string, string[]> = {
-          science_tasks: ['tendetai'],
-          initiatives: ['tensangkien'],
-          patents: ['tensangche', 'tenphatminh'],
-          experts: ['tenchuyengia', 'hovaten', 'hoten', 'tencanhan'],
-          startups: ['tendoanhnghiep'],
-          support_organizations: ['tentochuc'],
-          startup_projects: ['tenduan', 'tenduankhoinghiep'],
-          startup_ideas: ['tenytuong', 'tenytuongkhoinghiep'],
-          wards: ['tenxaphuong', 'tenxaphuongdackhu'],
-          universities: ['tentruong', 'tentruongdaihoccaodang'],
-          featured_startups: ['tenduan'],
-          organizations: ['tentochuc', 'tenvien', 'tentochuckhcn'],
-          investors: ['tennhadautu', 'hovaten', 'hoten'],
-          investment_funds: ['tenquydautu', 'tenquy', 'tenquydautu'],
-          technologies: ['tencongnghe'],
-          programs: ['tenchuongtrinh', 'tencohoi'],
-          collaboration_needs: ['tennhucau', 'tendexuat'],
-          publications: ['tenbaibao', 'tencongbo'],
-          lab_equipments: ['tenthietbi', 'tenphongthinghiem'],
-          policies: ['tenvanban', 'tentrichyeu', 'tenchinhsach']
+          science_tasks: ['tendetai', 'tentennhiemvu', 'tasktitle'],
+          initiatives: ['tensangkien', 'tengiaphap', 'initiativename'],
+          patents: ['tensangche', 'tenphatminh', 'tenbangsangche', 'patentname'],
+          experts: ['tenchuyengia', 'hovaten', 'hoten', 'tencanhan', 'hotenchuyengia', 'expertname', 'fullname'],
+          startups: ['tendoanhnghiep', 'tendoanhnghiepkhoinghiep', 'tendoanhnghiepkhoinghiepsangtao', 'startupname', 'companyname'],
+          support_organizations: ['tentochuc', 'tentochuctrunggian', 'organizationname'],
+          startup_projects: ['tenduan', 'tenduankhoinghiep', 'tendukhoinghiep', 'tenproject', 'projectname', 'projecttitle'],
+          startup_ideas: ['tenytuong', 'tenytuongkhoinghiep', 'tenytuongkhoinghiepsangtao', 'ideaname', 'ideatitle'],
+          wards: ['tenxaphuong', 'tenxaphuongdackhu', 'wardname'],
+          universities: ['tentruong', 'tentruongdaihoccaodang', 'tentruongdaihoc', 'universityname', 'schoolname'],
+          featured_startups: ['tenduan', 'tendoanhnghiep', 'projectname', 'projecttitle'],
+          organizations: ['tentochuc', 'tenvien', 'tentochuckhcn', 'tentochuckhoahoccongnghe', 'organizationname'],
+          investors: ['tennhadautu', 'hovaten', 'hoten', 'tennhadautucanhan', 'investorname', 'fullname'],
+          investment_funds: ['tenquydautu', 'tenquy', 'fundname'],
+          technologies: ['tencongnghe', 'tenketquanghiencuu', 'technologyname'],
+          programs: ['tenchuongtrinh', 'tencohoi', 'tenchuongtrinhhotro', 'programname'],
+          collaboration_needs: ['tennhucau', 'tendexuat', 'tennhucauketnoi', 'needtitle'],
+          publications: ['tenbaibao', 'tencongbo', 'publicationtitle'],
+          lab_equipments: ['tenthietbi', 'tenphongthinghiem', 'tenthietbithinghiem', 'equipmentname'],
+          policies: ['tenvanban', 'tentrichyeu', 'tenchinhsach', 'policytitle', 'documenttitle']
         };
 
         const importedIds: string[] = [];
@@ -2329,7 +2329,7 @@ export default {
             if (rawValue === null || rawValue === undefined || rawValue === '') continue;
             const key = normalizeImportKey(rawKey);
             let target = aliases[key] || rawKey.replace(/([A-Z])/g, '_$1').toLowerCase();
-            if (['title', 'name', 'projectname'].includes(target) && !tableColumns.has(target)) target = primaryColumn;
+            if (['title', 'name', 'projectname', 'project_name', 'expert_name', 'initiative_name', 'patent_name', 'idea_name', 'organization_name', 'fund_name', 'investor_name'].includes(target) && !tableColumns.has(target)) target = primaryColumn;
             if ((primaryHeaderAliases[moduleName] || []).includes(key)) target = primaryColumn;
             if (key.startsWith('diachihoatdong')) target = 'address';
             if (key === 'nambatdaukhoinghiep' && moduleName === 'startup_projects') target = 'start_year';

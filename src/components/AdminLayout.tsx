@@ -442,7 +442,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         </header>
 
         <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
-          <div className="max-w-7xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
+          <div className="min-h-full flex flex-col">
+            <div className="max-w-7xl mx-auto w-full flex-1 space-y-6 p-4 sm:p-6 lg:p-8">
             {activeTab === 'dashboard' && (
               <DashboardView
                 stats={stats}
@@ -510,9 +511,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             {activeTab === 'backup_restore' && canManageBackups && (
               <BackupRestoreView canRestore={canRestoreBackup} />
             )}
-          </div>
-          <div className="hidden lg:block">
-            <Footer config={systemConfig} />
+
+            </div>
+            <div className="hidden lg:block mt-auto">
+              <Footer config={systemConfig} />
+            </div>
           </div>
         </main>
         <div className="lg:hidden">

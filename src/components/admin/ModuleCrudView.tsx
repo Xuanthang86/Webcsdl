@@ -21,7 +21,8 @@ import {
   AlertTriangle,
   X,
   Paperclip,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Loader2
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { AttachmentManagerModal } from '../AttachmentManagerModal';
@@ -127,41 +128,63 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   const [showImportApprovalModal, setShowImportApprovalModal] = useState(false);
   const [importParsedRows, setImportParsedRows] = useState<any[]>([]);
   const [importPreviewError, setImportPreviewError] = useState<string | null>(null);
+  const [importProgress, setImportProgress] = useState<{
+    current: number; total: number; percent: number; batchIndex: number; totalBatches: number;
+  } | null>(null);
+  const [importResult, setImportResult] = useState<{
+    importedCount: number; errors: string[]; duplicates: string[];
+  } | null>(null);
 
   const parseInlineCsv = (text: string) => {
     const input = text.replace(/^\uFEFF/, '').trim();
     if (!input) return [];
-    const lines = input.split(/\r?\n/).filter(l => l.trim().length > 0);
-    if (lines.length < 2) return [];
-    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-    return lines.slice(1).map(line => {
-      const values: string[] = [];
-      let cur = '';
-      let inQuotes = false;
-      for (let i = 0; i < line.length; i++) {
-        const c = line[i];
-        if (c === '"') {
-          inQuotes = !inQuotes;
-        } else if (c === ',' && !inQuotes) {
-          values.push(cur.trim());
-          cur = '';
-        } else {
-          cur += c;
-        }
+    const firstLine = input.split(/\r?\n/, 1)[0] || '';
+    const delimiters = [',', ';', '\t'];
+    const counts = delimiters.map(delimiter => {
+      let count = 0, inQuotes = false;
+      for (let i = 0; i < firstLine.length; i++) {
+        if (firstLine[i] === '"') {
+          if (inQuotes && firstLine[i + 1] === '"') i++;
+          else inQuotes = !inQuotes;
+        } else if (firstLine[i] === delimiter && !inQuotes) count++;
       }
-      values.push(cur.trim());
-      const row: Record<string, any> = {};
-      headers.forEach((h, idx) => {
-        row[h] = values[idx] || '';
-      });
-      return row;
+      return count;
     });
+    const delimiter = delimiters[counts.indexOf(Math.max(...counts))];
+    if (Math.max(...counts) === 0) return [];
+    const matrix: string[][] = [];
+    let row: string[] = [], cell = '', inQuotes = false;
+    for (let i = 0; i < input.length; i++) {
+      const char = input[i];
+      if (char === '"') {
+        if (inQuotes && input[i + 1] === '"') { cell += '"'; i++; }
+        else inQuotes = !inQuotes;
+      } else if (char === delimiter && !inQuotes) {
+        row.push(cell.trim()); cell = '';
+      } else if ((char === '\n' || char === '\r') && !inQuotes) {
+        if (char === '\r' && input[i + 1] === '\n') i++;
+        row.push(cell.trim());
+        if (row.some(value => value.length > 0)) matrix.push(row);
+        row = []; cell = '';
+      } else cell += char;
+    }
+    row.push(cell.trim());
+    if (row.some(value => value.length > 0)) matrix.push(row);
+    if (matrix.length < 2) return [];
+    const headers = matrix[0].map(header => header.replace(/^\uFEFF/, '').trim());
+    return matrix.slice(1).map(values => {
+      const record: Record<string, any> = {};
+      headers.forEach((header, index) => { if (header) record[header] = values[index] ?? ''; });
+      return record;
+    }).filter(record => Object.values(record).some(value => String(value ?? '').trim() !== ''));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+    setImportResult(null);
+    setImportPreviewError(null);
+    const isExcel = /\.xlsx?$|\.xls$/i.test(file.name);
     if (isExcel) {
       const reader = new FileReader();
       reader.onload = (ev) => {
@@ -204,20 +227,44 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     }
     setIsImporting(true);
     setImportPreviewError(null);
+    setImportResult(null);
+    const BATCH_SIZE = 50;
+    const total = importParsedRows.length;
+    const totalBatches = Math.ceil(total / BATCH_SIZE);
+    let importedCount = 0;
+    const importedIds: string[] = [], errors: string[] = [], duplicates: string[] = [];
+    setImportProgress({ current: 0, total, percent: 0, batchIndex: 0, totalBatches });
     try {
-      const result = await api.batchImport(moduleType, importParsedRows, importConflictAction);
-      showToast(`Đã nhập ${result.importedCount} bản ghi vào trạng thái nháp trong ${MODULE_NAMES[moduleType]}`);
-      setPendingApprovalIds(result.importedIds || []);
-      setShowInlineImportModal(false);
-      setShowImportApprovalModal(Boolean(result.importedIds?.length && canApprove));
-      setImportRawText('');
-      setImportParsedRows([]);
+      for (let offset = 0; offset < total; offset += BATCH_SIZE) {
+        const batch = importParsedRows.slice(offset, offset + BATCH_SIZE);
+        const result = await api.batchImport(moduleType, batch, importConflictAction);
+        importedCount += Number(result.importedCount || 0);
+        importedIds.push(...(result.importedIds || []));
+        errors.push(...(result.errors || []));
+        duplicates.push(...(result.duplicates || []));
+        const current = Math.min(offset + batch.length, total);
+        setImportProgress({
+          current, total, percent: Math.round(current / total * 100),
+          batchIndex: Math.floor(offset / BATCH_SIZE) + 1, totalBatches
+        });
+      }
+      setImportResult({ importedCount, errors, duplicates });
+      setPendingApprovalIds([...new Set(importedIds)]);
+      if (importedCount > 0) {
+        showToast(`Đã nhập ${importedCount}/${total} bản ghi vào trạng thái nháp trong ${MODULE_NAMES[moduleType]}.${duplicates.length ? ` Bỏ qua ${duplicates.length} bản ghi trùng.` : ''}`);
+      } else if (duplicates.length > 0 && errors.length === 0) {
+        showToast(`Không có bản ghi mới: ${duplicates.length} dòng trùng dữ liệu đã tồn tại và được bỏ qua.`);
+      } else {
+        showErrorToast(`Không nhập được bản ghi nào. Có ${errors.length} lỗi cần kiểm tra trong báo cáo bên dưới.`);
+      }
+      setShowImportApprovalModal(Boolean(importedIds.length && canApprove));
       await loadData();
     } catch (err: any) {
       setImportPreviewError(err.message || 'Lỗi trong quá trình nhập dữ liệu');
       showErrorToast(err.message || 'Lỗi nhập dữ liệu');
     } finally {
       setIsImporting(false);
+      setImportProgress(null);
     }
   };
 
@@ -2048,8 +2095,9 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
               </div>
               <button
                 type="button"
-                onClick={() => setShowInlineImportModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg"
+                onClick={() => !isImporting && setShowInlineImportModal(false)}
+                disabled={isImporting}
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg disabled:opacity-40"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -2171,11 +2219,44 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
               </div>
             )}
 
+            {isImporting && importProgress && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2">
+                <div className="flex items-center justify-between gap-3 text-xs font-semibold text-emerald-950">
+                  <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Đang nhập dữ liệu vào Cloudflare D1...</span>
+                  <span className="font-mono">{importProgress.current}/{importProgress.total} ({importProgress.percent}%)</span>
+                </div>
+                <div className="h-2.5 bg-emerald-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-600 transition-all duration-300" style={{ width: `${importProgress.percent}%` }} />
+                </div>
+                <div className="text-[11px] text-emerald-800">Lô {importProgress.batchIndex}/{importProgress.totalBatches} · Mỗi lô tối đa 50 bản ghi</div>
+              </div>
+            )}
+            {importResult && (
+              <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                <div className="font-bold text-slate-900">Kết quả nhập dữ liệu: {importResult.importedCount}/{importParsedRows.length} bản ghi được nhập.</div>
+                {importResult.duplicates.length > 0 && <div className="text-amber-800 text-[11px]">Bản ghi trùng được bỏ qua: {importResult.duplicates.length}</div>}
+                {importResult.errors.length > 0 && (
+                  <div className="space-y-1 max-h-36 overflow-y-auto text-[11px] text-rose-700">
+                    <div className="font-semibold">Chi tiết lỗi ({importResult.errors.length}):</div>
+                    {importResult.errors.map((error, index) => <div key={index}>• {error}</div>)}
+                  </div>
+                )}
+                {importResult.duplicates.length > 0 && (
+                  <details className="text-[11px] text-amber-800">
+                    <summary className="cursor-pointer font-semibold">Xem chi tiết {importResult.duplicates.length} dòng trùng</summary>
+                    <div className="mt-1 space-y-1 max-h-28 overflow-y-auto">
+                      {importResult.duplicates.map((duplicate, index) => <div key={index}>• {duplicate}</div>)}
+                    </div>
+                  </details>
+                )}
+              </div>
+            )}
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
               <button
                 type="button"
-                onClick={() => setShowInlineImportModal(false)}
-                className="px-4 py-2 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold cursor-pointer"
+                onClick={() => !isImporting && setShowInlineImportModal(false)}
+                disabled={isImporting}
+                className="px-4 py-2 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold cursor-pointer disabled:opacity-40"
               >
                 Hủy bỏ
               </button>
@@ -2185,8 +2266,8 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                 onClick={handleExecuteImport}
                 className="px-5 py-2 bg-teal-800 hover:bg-teal-700 disabled:opacity-50 text-white rounded-xl font-semibold cursor-pointer flex items-center gap-1.5"
               >
-                <Upload className="w-4 h-4" />
-                <span>{isImporting ? 'Đang nhập...' : `Xác nhận nhập ${importParsedRows.length} bản ghi`}</span>
+                {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                <span>{isImporting ? `Đang nhập... ${importProgress?.percent ?? 0}%` : `Xác nhận nhập ${importParsedRows.length} bản ghi`}</span>
               </button>
             </div>
           </div>
