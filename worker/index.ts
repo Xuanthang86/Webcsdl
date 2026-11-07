@@ -1192,6 +1192,9 @@ export default {
           const projectsByYear: Record<string, number> = {};
           const patentsByYear: Record<string, number> = {};
           const tasksByField: Record<string, number> = {};
+          const tasksByUnit: Record<string, number> = {};
+          const tasksByLevel: Record<string, number> = {};
+          const projectsByField: Record<string, number> = {};
           const initiativesByField: Record<string, number> = {};
           const expertsByYear: Record<string, number> = {};
           const supportOrgsByYear: Record<string, number> = {};
@@ -1340,7 +1343,7 @@ export default {
                 'established_year', 'start_year', 'created_at'
               ]),
               aggregateModuleYears('startup_projects', projectsByYear, [
-                'start_year', 'start_date', 'implementation_time', 'created_at'
+                'founding_year', 'start_year', 'start_date', 'implementation_time', 'created_at'
               ]),
               aggregateModuleYears('startup_ideas', ideasByYear, [
                 'submitted_at', 'submission_date', 'idea_date', 'created_at'
@@ -1349,7 +1352,7 @@ export default {
                 'filing_date', 'application_date', 'grant_date', 'issue_date', 'created_at'
               ]),
               aggregateModuleYears('experts', expertsByYear, [
-                'joined_at', 'join_date', 'registration_date', 'created_at'
+                'start_work_year', 'work_start_year', 'joined_at', 'join_date', 'registration_year', 'registration_date', 'created_at'
               ]),
               aggregateModuleYears('support_organizations', supportOrgsByYear, [
                 'established_date', 'founded_date', 'establishment_year', 'created_at'
@@ -1362,18 +1365,50 @@ export default {
               ])
             ]);
 
-            try {
-              const tf = await env.DB.prepare(`SELECT COALESCE(NULLIF(field, ''), 'Đa ngành') as f, COUNT(*) as c FROM science_tasks GROUP BY f`).all<any>();
-              for (const r of (tf.results || [])) {
-                if (r.f) tasksByField[r.f] = Number(r.c) || 0;
-              }
-            } catch {}
+            // Aggregate physical and custom fields. Missing values remain visible,
+            // and multiple distinct labels on one record are counted once per label.
+            const aggregateModuleGroups = async (table: string, target: Record<string, number>, candidateFields: string[]) => {
+              try {
+                const rows = await env.DB.prepare('SELECT * FROM "' + table + '"').all<any>();
+                const normalizeKey = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[_\s-]/g, '').toLowerCase();
+                for (const row of rows.results || []) {
+                  let custom: Record<string, any> = {};
+                  try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; if (!custom || typeof custom !== 'object' || Array.isArray(custom)) custom = {}; } catch { custom = {}; }
+                  let rawValue: any = null;
+                  for (const candidate of candidateFields) {
+                    const key = normalizeKey(candidate);
+                    const physicalKey = Object.keys(row).find(name => normalizeKey(name) === key);
+                    const customKey = Object.keys(custom).find(name => normalizeKey(name) === key);
+                    const value = physicalKey ? row[physicalKey] : customKey ? custom[customKey] : null;
+                    if (value !== null && value !== undefined && String(value).trim() !== '') { rawValue = value; break; }
+                  }
+                  const labels = Array.isArray(rawValue) ? rawValue : rawValue === null ? [] : String(rawValue).split(/[;|\n]+/);
+                  const seen = new Set<string>();
+                  let added = false;
+                  for (const rawLabel of labels) {
+                    const label = String(rawLabel ?? '').trim();
+                    if (!label) continue;
+                    const key = label.toLocaleLowerCase('vi');
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    target[label] = (target[label] || 0) + 1;
+                    added = true;
+                  }
+                  if (!added) target['Chưa cập nhật'] = (target['Chưa cập nhật'] || 0) + 1;
+                }
+              } catch (error) { console.error('Không thể tổng hợp phân loại ' + table + ':', error); }
+            };
+
+            await Promise.all([
+              aggregateModuleGroups('science_tasks', tasksByField, ['field', 'scientific_field', 'research_field', 'linhvuc', 'linhvuckhoahoc']),
+              aggregateModuleGroups('science_tasks', tasksByUnit, ['lead_agency', 'managing_agency', 'lead_organization', 'owner_name', 'receiving_unit', 'organization', 'agency', 'coquanchutri', 'donvichutri']),
+              aggregateModuleGroups('science_tasks', tasksByLevel, ['management_level', 'task_level', 'project_level', 'level', 'capquanly', 'capdetai']),
+              aggregateModuleGroups('startup_projects', projectsByField, ['field', 'business_field', 'startup_field', 'sector', 'linhvuckhoinghiep', 'linhvuc'])
+            ]);
 
             try {
               const inf = await env.DB.prepare(`SELECT COALESCE(NULLIF(field, ''), 'Lĩnh vực khác') as f, COUNT(*) as c FROM initiatives GROUP BY f`).all<any>();
-              for (const r of (inf.results || [])) {
-                if (r.f) initiativesByField[r.f] = Number(r.c) || 0;
-              }
+              for (const r of (inf.results || [])) { if (r.f) initiativesByField[r.f] = Number(r.c) || 0; }
             } catch {}
           }
 
@@ -1387,19 +1422,9 @@ export default {
           try {
             const expertInfo = await env.DB.prepare('PRAGMA table_info(experts)').all<any>();
             const expertColumns = new Set((expertInfo.results || []).map((column: any) => String(column.name)));
-            const expertFieldsToRead = [
-              'field', 'specialization', 'workplace', 'degree', 'academic_rank',
-              'research_title', 'job_title', 'position', 'organization',
-              'current_affiliation', 'expertise', 'specialty'
-            ];
-            const selectedExpertFields = [
-              ...expertFieldsToRead.filter(field => expertColumns.has(field)),
-              ...(expertColumns.has('data_json') ? ['data_json'] : [])
-            ];
-            if (selectedExpertFields.length > 0) {
-              const expertRows = await env.DB.prepare(
-                'SELECT ' + [...new Set(selectedExpertFields)].map(field => '"' + field + '"').join(', ') + ' FROM experts'
-              ).all<any>();
+            // Read all physical columns to include legacy/custom field names.
+            const expertRows = await env.DB.prepare('SELECT * FROM experts').all<any>();
+            if (expertColumns.size > 0) {
               const normalizeExpertKey = (value: string) => value.replace(/[_\s-]/g, '').toLowerCase();
               const getExpertValue = (row: any, custom: Record<string, any>, candidates: string[]) => {
                 for (const candidate of candidates) {
@@ -1411,10 +1436,10 @@ export default {
                 }
                 return null;
               };
-              const addExpertGroup = (target: Record<string, number>, value: any, prefix = '') => {
-                if (value === null || value === undefined) return;
-                const labels = Array.isArray(value) ? value : String(value).split(/[;|\n]+/);
+              const addExpertGroup = (target: Record<string, number>, value: any, prefix = '', fallbackLabel?: string) => {
+                const labels = Array.isArray(value) ? value : value === null || value === undefined ? [] : String(value).split(/[;|\n]+/);
                 const seen = new Set<string>();
+                let added = false;
                 for (const rawLabel of labels) {
                   const label = String(rawLabel ?? '').trim();
                   if (!label) continue;
@@ -1423,7 +1448,9 @@ export default {
                   if (seen.has(key)) continue;
                   seen.add(key);
                   target[displayLabel] = (target[displayLabel] || 0) + 1;
+                  added = true;
                 }
+                if (!added && fallbackLabel) target[fallbackLabel] = (target[fallbackLabel] || 0) + 1;
               };
               for (const row of expertRows.results || []) {
                 let custom: Record<string, any> = {};
@@ -1432,12 +1459,12 @@ export default {
                   if (!custom || typeof custom !== 'object' || Array.isArray(custom)) custom = {};
                 } catch { custom = {}; }
 
-                const fieldValue = getExpertValue(row, custom, ['field', 'specialization', 'specialty', 'expertise']);
-                const specialtyValue = getExpertValue(row, custom, ['specialization', 'specialty', 'expertise']);
-                const workplaceValue = getExpertValue(row, custom, ['workplace', 'organization', 'current_affiliation', 'affiliation', 'agency', 'institution']);
-                addExpertGroup(expertsByField, fieldValue);
-                addExpertGroup(expertsBySpecialty, specialtyValue);
-                addExpertGroup(expertsByWorkplace, workplaceValue);
+                const fieldValue = getExpertValue(row, custom, ['field', 'research_field', 'professional_field', 'expertise_area', 'major_field', 'specialization', 'specialty', 'expertise', 'research_area', 'linhvucchuyenmon', 'linhvuckhoahoc', 'linhvuc']);
+                const specialtyValue = getExpertValue(row, custom, ['specialization', 'specialty', 'expertise', 'major', 'discipline', 'research_specialty', 'chuyenganh', 'chuyennganh', 'chuyenmon']);
+                const workplaceValue = getExpertValue(row, custom, ['workplace', 'organization', 'current_affiliation', 'affiliation', 'agency', 'institution', 'working_unit', 'current_workplace', 'organization_name', 'unit', 'employer', 'work_unit', 'tendonvicongtac', 'coquancongtac', 'donvicongtac', 'coquan', 'tochuc']);
+                addExpertGroup(expertsByField, fieldValue, '', 'Chưa cập nhật');
+                addExpertGroup(expertsBySpecialty, specialtyValue, '', 'Chưa cập nhật');
+                addExpertGroup(expertsByWorkplace, workplaceValue, '', 'Chưa cập nhật');
 
                 const rankValue = getExpertValue(row, custom, ['academic_rank', 'academicRank', 'rank']);
                 const degreeValue = getExpertValue(row, custom, ['degree', 'qualification', 'academic_degree']);
@@ -1524,6 +1551,9 @@ export default {
               universitiesByYear,
               wardsByYear,
               tasksByField,
+              tasksByUnit,
+              tasksByLevel,
+              projectsByField,
               initiativesByField,
               yearlyStats
             }
@@ -2259,6 +2289,8 @@ export default {
         }
 
         const tableColumns = await ensureModuleDataJson(env.DB, moduleName);
+        const tableInfoResult = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
+        const requiredInsertColumns = (tableInfoResult.results || []).filter((column: any) => Number(column.notnull) === 1 && column.dflt_value === null && String(column.name) !== 'id');
         if (!tableColumns.has('status')) {
           return jsonResponse({ success: false, message: 'Phân hệ này chưa có trường status để quản lý quy trình nháp và phê duyệt. Chưa nhập dữ liệu để tránh công khai sai quy trình.' }, 409, corsHeaders);
         }
@@ -2517,6 +2549,25 @@ export default {
                 }
               }
               if (Object.keys(customFields).length) values.data_json = JSON.stringify(customFields);
+            }
+
+            // Deployed D1 schemas may have extra NOT NULL columns beyond schema.sql.
+            // These imports are private drafts; preserve existing values on overwrite
+            // and use conservative defaults only for missing required columns.
+            for (const columnInfo of requiredInsertColumns) {
+              const column = String(columnInfo.name);
+              const currentValue = values[column];
+              if (currentValue !== undefined && currentValue !== null && String(currentValue).trim() !== '') continue;
+              if (duplicate && duplicate[column] !== undefined && duplicate[column] !== null) { values[column] = duplicate[column]; continue; }
+              if (['title', 'name', 'project_name'].includes(column)) values[column] = mapped[primaryColumn] || '';
+              else if (column === 'module_type') values[column] = moduleName;
+              else if (column === 'created_by' || column === 'updated_by') values[column] = currentUser.fullName || currentUser.username || 'system';
+              else if (column === 'created_at' || column === 'updated_at') values[column] = new Date().toISOString();
+              else if (column === 'verification_status') values[column] = 'unverified';
+              else if (column === 'publicity_level') values[column] = 'private';
+              else if (column === 'status') values[column] = 'draft';
+              else if (column === 'code') values[column] = `${moduleName.toUpperCase()}-${crypto.randomUUID().replace(/-/g, '').slice(0, 12).toUpperCase()}`;
+              else values[column] = /(INT|REAL|NUM|DEC|BOOL|FLOAT|DOUBLE)/.test(String(columnInfo.type || '').toUpperCase()) ? 0 : '';
             }
 
             if (duplicate) {
