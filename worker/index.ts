@@ -640,7 +640,7 @@ export default {
         const sessionCookie = currentUser.role !== 'public_user' && cookieToken
           ? `danang_session=${encodeURIComponent(cookieToken)}; Path=/; HttpOnly; Secure; SameSite=Lax`
           : undefined;
-        return jsonResponse({
+        const response = jsonResponse({
           success: true,
           user: currentUser,
           availableRoles: [
@@ -655,7 +655,15 @@ export default {
             { role: 'investor_user', label: 'Nhà đầu tư / Quỹ' },
             { role: 'public_user', label: 'Công dân / Người dùng công khai' }
           ]
-        }, 200, sessionCookie ? { ...corsHeaders, 'Set-Cookie': sessionCookie } : corsHeaders);
+
+        }, 200, corsHeaders);
+        if (sessionCookie) {
+          response.headers.append('Set-Cookie', sessionCookie);
+        }
+        if (getCookie(request, 'portal_session')) {
+          response.headers.append('Set-Cookie', 'portal_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0');
+        }
+        return response;
       }
 
       // E. Auth: Login (`POST /api/auth/login`) - Strict D1 Verification, No Hardcoded Accounts
