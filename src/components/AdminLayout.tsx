@@ -513,7 +513,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             )}
 
             </div>
-            <div className="hidden lg:block mt-auto">
+            <div className="hidden lg:block lg:mt-auto">
               <Footer config={systemConfig} />
             </div>
           </div>
