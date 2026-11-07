@@ -2458,9 +2458,9 @@ export default {
           tenxaphuongdackhu: 'name', tenxaphuong: 'name', tentruong: 'name',
           tentruongdaihoccaodang: 'name', nguoidaidienduan: 'representative',
           thongtinlienhe: 'contact_info',
-          thuocxaphuong: 'ward', xaphuong: 'ward', phuongxa: 'ward', donvixaphuong: 'ward',
-          tentruongdaihoc: 'name', tentruongcaodang: 'name', tentruongdaihoccaodang: 'name',
-          dienthoai: 'contact_phone', sodienthoai: 'contact_phone', emailtruong: 'contact_email'
+          xaphuong: 'ward', phuongxa: 'ward', donvixaphuong: 'ward',
+          tentruongdaihoc: 'name', tentruongcaodang: 'name',
+          sodienthoai: 'contact_phone', emailtruong: 'contact_email'
         };
 
         const primaryHeaderAliases: Record<string, string[]> = {
@@ -2531,6 +2531,11 @@ export default {
             if (key === 'nambatdaukhoinghiep' && ['startup_projects', 'startup_ideas', 'startups'].includes(moduleName)) target = 'founding_year';
             if (key === 'thoigianthuchien' && moduleName === 'experts') target = 'project_duration';
             if (key === 'thanhvienthamgia' && moduleName === 'experts') target = 'project_members';
+            if (moduleName === 'universities') {
+              if (['thuocxaphuong', 'xaphuong', 'phuongxa', 'donvixaphuong'].includes(key)) target = 'ward';
+              if (['dienthoai', 'sodienthoai'].includes(key)) target = 'contact_phone';
+              if (key === 'tentruongdaihoccaodang') target = primaryColumn;
+            }
             if (key.startsWith('website')) target = 'website';
             if (key.startsWith('sanphamgiaiquyetvande')) target = 'problem_solved';
             if (key.startsWith('duanduocuomtaotutochuc')) target = 'incubated_at';
