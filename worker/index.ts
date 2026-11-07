@@ -2134,7 +2134,7 @@ export default {
         if (!env.DB) return jsonResponse({ success: false, message: 'Cơ sở dữ liệu D1 chưa kết nối.' }, 500, corsHeaders);
         try {
           const rows = await env.DB.prepare("SELECT type, name, sql FROM sqlite_master WHERE sql IS NOT NULL AND type IN ('table', 'index', 'view', 'trigger') AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' ORDER BY CASE type WHEN 'table' THEN 1 WHEN 'index' THEN 2 WHEN 'view' THEN 3 ELSE 4 END, name").all<any>();
-          const sql = (rows.results || []).map((row: any) => String(row.sql).trim().replace(/;?$/, ';')).join('\\n\\n') + '\\n';
+          const sql = (rows.results || []).map((row: any) => String(row.sql).trim().replace(/;?$/, ';')).join('\n\n') + '\n';
           return new Response(sql, { status: 200, headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8', 'Content-Disposition': url.searchParams.get('download') === '1' ? 'attachment; filename="khcn_d1_schema.sql"' : 'inline; filename="khcn_d1_schema.sql"', 'Cache-Control': 'no-store' } });
         } catch (e: any) {
           return jsonResponse({ success: false, message: 'Không thể xuất cấu trúc SQL D1: ' + (e?.message || 'Lỗi không xác định') }, 500, corsHeaders);
