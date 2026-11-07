@@ -439,7 +439,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
 
           {/* Sub-tabs for the 7 ecosystem child data types */}
-          <div className="flex flex-wrap items-center gap-1.5 pb-2 text-xs">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none text-xs lg:flex-wrap lg:overflow-visible">
             <button
               onClick={() => setActiveEcosystemTab('all')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 cursor-pointer ${

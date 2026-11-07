@@ -511,8 +511,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <BackupRestoreView canRestore={canRestoreBackup} />
             )}
           </div>
-          <Footer config={systemConfig} />
+          <div className="hidden lg:block">
+            <Footer config={systemConfig} />
+          </div>
         </main>
+        <div className="lg:hidden">
+          <Footer config={systemConfig} />
+        </div>
       </div>
 
     </div>
