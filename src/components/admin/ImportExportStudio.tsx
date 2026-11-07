@@ -527,8 +527,8 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
   // Row validation calculation
   const totalRows = parsedRows.length;
   const validRowsCount = parsedRows.filter(r => {
-    const titleVal = r['Tên đề tài'] || r['title'] || r['Tên sáng kiến'] || r['Tên Chuyên gia'] || 
-                     r['Tên doanh nghiệp'] || r['Tên tổ chức'] || r['Tên dự án'] || r['Tên ý tưởng'] || 
+    const titleVal = r['Tên đề tài'] || r['title'] || r['Tên sáng kiến'] || r['Tên sáng chế'] || r['Tên Chuyên gia'] || r['Tên nhà đầu tư'] || r['Tên quỹ đầu tư'] || 
+                     r['Tên doanh nghiệp'] || r['Tên tổ chức'] || r['Tên dự án'] || r['Tên ý tưởng'] || r['Tên công nghệ'] || r['Tên chương trình'] || r['Tên văn bản'] || r['Tên thiết bị'] || 
                      r['Tên xã/phường/đặc khu'] || r['Tên trường'] || r['name'] || Object.values(r)[1];
     return titleVal && String(titleVal).trim().length > 0;
   }).length;
@@ -909,7 +909,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
               <span className="text-xl font-bold font-mono">{importResult.duplicates.length}</span>
             </div>
             <div className="p-3 bg-red-50 text-red-950 border border-red-200 rounded-lg">
-              <span className="block font-medium">Lỗi dữ liệu (thiếu trường):</span>
+              <span className="block font-medium">Lỗi không thể nhập:</span>
               <span className="text-xl font-bold font-mono">{importResult.errors.length}</span>
             </div>
           </div>

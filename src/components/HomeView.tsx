@@ -33,6 +33,8 @@ interface HomeViewProps {
   featuredWards?: BaseEntity[];
   featuredUniversities?: BaseEntity[];
   featuredPopularStartups?: BaseEntity[];
+  featuredInvestors?: BaseEntity[];
+  featuredFunds?: BaseEntity[];
   featuredNeeds?: BaseEntity[];
   featuredPolicies?: BaseEntity[];
   systemConfig: SystemConfig;
@@ -57,6 +59,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
   featuredWards = [],
   featuredUniversities = [],
   featuredPopularStartups = [],
+  featuredInvestors = [],
+  featuredFunds = [],
   systemConfig,
   onSearch,
   onNavigateBrowse,
@@ -65,7 +69,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onOpenConnectModal,
   onOpenAdvancedSearch
 }) => {
-  const [activeEcosystemTab, setActiveEcosystemTab] = useState<'all' | 'startups' | 'support_organizations' | 'startup_projects' | 'startup_ideas' | 'wards' | 'universities' | 'featured_startups'>('all');
+  const [activeEcosystemTab, setActiveEcosystemTab] = useState<'all' | 'startups' | 'support_organizations' | 'startup_projects' | 'startup_ideas' | 'wards' | 'universities' | 'featured_startups' | 'investors' | 'investment_funds'>('all');
 
   // Format currency with standard Vietnamese format: 6,5 tỷ đồng
   const formatVND = (num?: number) => {
@@ -435,7 +439,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
 
           {/* Sub-tabs for the 7 ecosystem child data types */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none text-xs">
+          <div className="flex flex-wrap items-center gap-1.5 pb-2 text-xs">
             <button
               onClick={() => setActiveEcosystemTab('all')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 cursor-pointer ${
@@ -515,6 +519,26 @@ export const HomeView: React.FC<HomeViewProps> = ({
               }`}
             >
               Doanh nghiệp tiêu biểu
+            </button>
+            <button
+              onClick={() => setActiveEcosystemTab('investors')}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 cursor-pointer ${
+                activeEcosystemTab === 'investors'
+                  ? 'bg-rose-800 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              Nhà đầu tư
+            </button>
+            <button
+              onClick={() => setActiveEcosystemTab('investment_funds')}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 cursor-pointer ${
+                activeEcosystemTab === 'investment_funds'
+                  ? 'bg-rose-800 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              Quỹ đầu tư
             </button>
           </div>
 
@@ -880,6 +904,60 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         <span className="text-slate-400">Mô hình tăng trưởng</span>
                         <span className="text-teal-800 font-semibold group-hover:underline">Chi tiết →</span>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 5.8 NHÀ ĐẦU TƯ */}
+            {(activeEcosystemTab === 'all' || activeEcosystemTab === 'investors') && (
+              <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <Users className="w-4 h-4 text-cyan-600" />
+                    <span>Nhà đầu tư</span>
+                  </h3>
+                  <button onClick={() => onNavigateBrowse('investors')} className="text-xs text-teal-800 font-semibold hover:underline">
+                    Xem tất cả ({stats?.totalInvestors || 0}) →
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {featuredInvestors.slice(0, 3).map((item, idx) => (
+                    <div key={item.id} onClick={() => onViewDetail(item)} className="bg-slate-50 hover:bg-white p-4 rounded-xl border border-slate-200 hover:border-cyan-400 transition-all cursor-pointer flex flex-col justify-between group">
+                      <div className="space-y-2">
+                        <div className="text-xs font-mono text-cyan-800 font-bold">STT {idx + 1}</div>
+                        <h4 className="font-bold text-slate-900 group-hover:text-cyan-800 text-sm line-clamp-2">{item.title || item.name || item.investorName || 'Nhà đầu tư'}</h4>
+                        <p className="text-xs text-slate-600 line-clamp-3">{item.description || item.summary || item.investmentThesis || item.investmentFocus || 'Thông tin đang được cập nhật.'}</p>
+                      </div>
+                      <div className="pt-2 mt-3 border-t border-slate-200 text-[11px] text-teal-800 font-semibold">Chi tiết →</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 5.9 QUỸ ĐẦU TƯ */}
+            {(activeEcosystemTab === 'all' || activeEcosystemTab === 'investment_funds') && (
+              <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-indigo-600" />
+                    <span>Quỹ đầu tư</span>
+                  </h3>
+                  <button onClick={() => onNavigateBrowse('investment_funds')} className="text-xs text-teal-800 font-semibold hover:underline">
+                    Xem tất cả ({stats?.totalFunds || 0}) →
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {featuredFunds.slice(0, 3).map((item, idx) => (
+                    <div key={item.id} onClick={() => onViewDetail(item)} className="bg-slate-50 hover:bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer flex flex-col justify-between group">
+                      <div className="space-y-2">
+                        <div className="text-xs font-mono text-indigo-800 font-bold">STT {idx + 1}</div>
+                        <h4 className="font-bold text-slate-900 group-hover:text-indigo-800 text-sm line-clamp-2">{item.title || item.name || item.fundName || 'Quỹ đầu tư'}</h4>
+                        <p className="text-xs text-slate-600 line-clamp-3">{item.description || item.summary || item.investmentStrategy || item.investmentFocus || 'Thông tin đang được cập nhật.'}</p>
+                      </div>
+                      <div className="pt-2 mt-3 border-t border-slate-200 text-[11px] text-teal-800 font-semibold">Chi tiết →</div>
                     </div>
                   ))}
                 </div>

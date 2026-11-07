@@ -134,6 +134,15 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   const visibleTopModules = topCoreModules.filter(m => allowedModules.includes(m.mod));
   const visibleEcosystemModules = ecosystemModules.filter(m => allowedModules.includes(m.mod));
+  const desktopHiddenEcosystemModules = new Set<ModuleType>([
+    'organizations',
+    'publications',
+    'technologies',
+    'collaboration_needs',
+    'programs',
+    'policies',
+    'lab_equipments'
+  ]);
 
   React.useEffect(() => {
     if (isRestrictedOfficer && allowedModules.length > 0) {
@@ -278,7 +287,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                       <button
                         key={item.mod}
                         onClick={() => handleSelectModule(item.mod)}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${desktopHiddenEcosystemModules.has(item.mod) ? 'lg:hidden' : ''} ${
                           isActive
                             ? 'bg-sky-700/80 text-white font-bold shadow-xs'
                             : 'hover:bg-slate-700 text-slate-100'
@@ -432,8 +441,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
         </header>
 
-        <main className="flex-1 min-h-0 p-4 sm:p-6 lg:p-8 overflow-y-auto overscroll-contain">
-          <div className="max-w-7xl mx-auto space-y-6">
+        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+          <div className="max-w-7xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
             {activeTab === 'dashboard' && (
               <DashboardView
                 stats={stats}
@@ -502,10 +511,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <BackupRestoreView canRestore={canRestoreBackup} />
             )}
           </div>
+          <Footer config={systemConfig} />
         </main>
-
-        {/* Institutional Footer in Admin */}
-        <Footer config={systemConfig} />
       </div>
 
     </div>

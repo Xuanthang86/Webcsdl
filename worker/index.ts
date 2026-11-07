@@ -2126,7 +2126,27 @@ export default {
           if (env.DB) {
             try {
               await env.DB.prepare(`DELETE FROM ${moduleName} WHERE id = ?`).bind(recordId).run();
-              await env.DB.prepare(`DELETE FROM relationships WHERE source_id = ? OR target_id = ?`).bind(recordId, recordId).run();
+
+              // Clean up linked records only when a supported relationship table exists.
+              // Older D1 databases may use entity_relationships, while newer worker code
+              // may encounter relationships. Missing optional link tables must not block
+              // deletion of the requested module record.
+              const relationshipTables = await env.DB.prepare(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('relationships', 'entity_relationships')"
+              ).all<{ name: string }>();
+              for (const relationshipTable of relationshipTables.results || []) {
+                const relationshipColumns = await env.DB.prepare(
+                  `PRAGMA table_info("${relationshipTable.name}")`
+                ).all<any>();
+                const availableRelationshipColumns = new Set(
+                  (relationshipColumns.results || []).map((column: any) => String(column.name))
+                );
+                if (availableRelationshipColumns.has('source_id') && availableRelationshipColumns.has('target_id')) {
+                  await env.DB.prepare(
+                    `DELETE FROM "${relationshipTable.name}" WHERE source_id = ? OR target_id = ?`
+                  ).bind(recordId, recordId).run();
+                }
+              }
 
               // Audit log
               await env.DB.prepare(`
@@ -2259,6 +2279,29 @@ export default {
           thongtinlienhe: 'contact_info'
         };
 
+        const primaryHeaderAliases: Record<string, string[]> = {
+          science_tasks: ['tendetai'],
+          initiatives: ['tensangkien'],
+          patents: ['tensangche', 'tenphatminh'],
+          experts: ['tenchuyengia', 'hovaten', 'hoten', 'tencanhan'],
+          startups: ['tendoanhnghiep'],
+          support_organizations: ['tentochuc'],
+          startup_projects: ['tenduan'],
+          startup_ideas: ['tenytuong', 'tenytuongkhoinghiep'],
+          wards: ['tenxaphuong', 'tenxaphuongdackhu'],
+          universities: ['tentruong', 'tentruongdaihoccaodang'],
+          featured_startups: ['tenduan'],
+          organizations: ['tentochuc', 'tenvien', 'tentochuckhcn'],
+          investors: ['tennhadautu', 'hovaten', 'hoten'],
+          investment_funds: ['tenquydautu', 'tenquy', 'tenquydautu'],
+          technologies: ['tencongnghe'],
+          programs: ['tenchuongtrinh', 'tencohoi'],
+          collaboration_needs: ['tennhucau', 'tendexuat'],
+          publications: ['tenbaibao', 'tencongbo'],
+          lab_equipments: ['tenthietbi', 'tenphongthinghiem'],
+          policies: ['tenvanban', 'tentrichyeu', 'tenchinhsach']
+        };
+
         const importedIds: string[] = [];
         let importedCount = 0;
         const errors: string[] = [];
@@ -2271,19 +2314,8 @@ export default {
           return jsonResponse({ success: false, message: 'Không xác định được trường tên/tiêu đề chính của phân hệ.' }, 409, corsHeaders);
         }
 
-        const requiredFieldsByModule: Record<string, string[]> = {
-          science_tasks: ['__primary__', 'management_level', 'lead_organization', 'principal_investigator', 'execution_time', 'field', 'summary', 'evidence_documents', 'storage_code'],
-          initiatives: ['__primary__', 'recognition_year', 'authors', 'owner_name', 'owner_address', 'field'],
-          experts: ['__primary__', 'birth_date', 'gender', 'start_work_year', 'research_title', 'job_title', 'email', 'phone', 'field', 'specialty', 'workplace', 'training_process', 'work_experience', 'foreign_languages', 'experience_notes'],
-          startups: ['__primary__', 'field', 'summary', 'problem_solved', 'founder_count', 'current_staff_count', 'leader_name', 'leader_phone', 'leader_email', 'founded_year'],
-          support_organizations: ['__primary__', 'address', 'information'],
-          startup_projects: ['__primary__', 'address', 'field', 'summary', 'problem_solved', 'team_size', 'leader_name', 'leader_phone', 'leader_email', 'incubator', 'start_year'],
-          startup_ideas: ['__primary__', 'ward_school', 'summary', 'problem_solved', 'team_size', 'leader_name', 'leader_phone', 'leader_email', 'mentor_teacher', 'organization'],
-          wards: ['__primary__', 'address', 'contact_info'],
-          universities: ['__primary__', 'ward', 'address', 'contact_info'],
-          featured_startups: ['__primary__', 'project_name', 'representative', 'address', 'contact_info', 'ward']
-        };
-        const requiredFields = requiredFieldsByModule[moduleName] || ['__primary__'];
+        // Bulk imports create private drafts; incomplete optional fields can be completed before approval.
+        const requiredFields = ['__primary__'];
 
         for (let idx = 0; idx < rawItems.length; idx++) {
           const raw = rawItems[idx];
@@ -2297,7 +2329,8 @@ export default {
             if (rawValue === null || rawValue === undefined || rawValue === '') continue;
             const key = normalizeImportKey(rawKey);
             let target = aliases[key] || rawKey.replace(/([A-Z])/g, '_$1').toLowerCase();
-            if (['title', 'name', 'projectname'].includes(key) && !tableColumns.has(target)) target = primaryColumn;
+            if (['title', 'name', 'projectname'].includes(target) && !tableColumns.has(target)) target = primaryColumn;
+            if ((primaryHeaderAliases[moduleName] || []).includes(key)) target = primaryColumn;
             if (key.startsWith('diachihoatdong')) target = 'address';
             if (key === 'nambatdaukhoinghiep' && moduleName === 'startup_projects') target = 'start_year';
             if (key === 'thoigianthuchien' && moduleName === 'experts') target = 'project_duration';

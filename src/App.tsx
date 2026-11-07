@@ -164,6 +164,8 @@ export default function App() {
   const [featuredWards, setFeaturedWards] = useState<BaseEntity[]>([]);
   const [featuredUniversities, setFeaturedUniversities] = useState<BaseEntity[]>([]);
   const [featuredPopularStartups, setFeaturedPopularStartups] = useState<BaseEntity[]>([]);
+  const [featuredInvestors, setFeaturedInvestors] = useState<BaseEntity[]>([]);
+  const [featuredFunds, setFeaturedFunds] = useState<BaseEntity[]>([]);
   const [featuredNeeds, setFeaturedNeeds] = useState<BaseEntity[]>([]);
   const [featuredPolicies, setFeaturedPolicies] = useState<BaseEntity[]>([]);
 
@@ -220,6 +222,8 @@ export default function App() {
         wards,
         universities,
         popStartups,
+        investors,
+        funds,
         needs,
         pols
       ] = await Promise.all([
@@ -234,6 +238,8 @@ export default function App() {
         api.getModuleRecords('wards', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'wards' as any }))),
         api.getModuleRecords('universities', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'universities' as any }))),
         api.getModuleRecords('featured_startups', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'featured_startups' as any }))),
+        api.getModuleRecords('investors', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'investors' as any }))).catch(() => [] as BaseEntity[]),
+        api.getModuleRecords('investment_funds', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'investment_funds' as any }))).catch(() => [] as BaseEntity[]),
         api.getModuleRecords('collaboration_needs', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'collaboration_needs' as any }))),
         api.getModuleRecords('policies', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'policies' as any })))
       ]);
@@ -249,6 +255,8 @@ export default function App() {
       setFeaturedWards(wards.slice(0, 3));
       setFeaturedUniversities(universities.slice(0, 3));
       setFeaturedPopularStartups(popStartups.slice(0, 3));
+      setFeaturedInvestors(investors.slice(0, 3));
+      setFeaturedFunds(funds.slice(0, 3));
       setFeaturedNeeds(needs.slice(0, 3));
       setFeaturedPolicies(pols.slice(0, 3));
     } catch (err) {
@@ -445,6 +453,8 @@ export default function App() {
             featuredWards={featuredWards}
             featuredUniversities={featuredUniversities}
             featuredPopularStartups={featuredPopularStartups}
+            featuredInvestors={featuredInvestors}
+            featuredFunds={featuredFunds}
             featuredNeeds={featuredNeeds}
             featuredPolicies={featuredPolicies}
             systemConfig={systemConfig}
