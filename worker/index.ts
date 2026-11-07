@@ -635,6 +635,11 @@ export default {
 
       // D. Auth: Current User (`/api/auth/me`)
       if (url.pathname === '/api/auth/me') {
+        // Upgrade an existing persistent cookie to a browser-session cookie.
+        // This also handles accounts already logged in before this deployment.
+        const sessionCookie = currentUser.role !== 'public_user' && cookieToken
+          ? `danang_session=${encodeURIComponent(cookieToken)}; Path=/; HttpOnly; Secure; SameSite=Lax`
+          : undefined;
         return jsonResponse({
           success: true,
           user: currentUser,
@@ -650,7 +655,7 @@ export default {
             { role: 'investor_user', label: 'Nhà đầu tư / Quỹ' },
             { role: 'public_user', label: 'Công dân / Người dùng công khai' }
           ]
-        }, 200, corsHeaders);
+        }, 200, sessionCookie ? { ...corsHeaders, 'Set-Cookie': sessionCookie } : corsHeaders);
       }
 
       // E. Auth: Login (`POST /api/auth/login`) - Strict D1 Verification, No Hardcoded Accounts
@@ -742,7 +747,8 @@ export default {
           exp: Date.now() + 7 * 24 * 60 * 60 * 1000
         }, secret);
 
-        const cookieHeader = `danang_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800`;
+        // Session cookie: intentionally omit Max-Age/Expires so it is not persistent across browser restarts.
+        const cookieHeader = `danang_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; Secure; SameSite=Lax`;
 
         // Audit log
         try {
