@@ -108,6 +108,24 @@ function canCreateModuleRecords(user: any, moduleName: string): boolean {
   if (canManageModuleRecords(user, moduleName)) return true;
   return String(user?.role || '') === 'public_user' && ['science_tasks', 'initiatives', 'startups', 'startup_projects', 'startup_ideas', 'experts', 'collaboration_needs'].includes(moduleName);
 }
+
+function canApproveWorkflow(user: any): boolean { return ['super_admin', 'system_admin', 'agency_leader'].includes(String(user?.role || '')); }
+function isAllowedWorkflowStatus(status: string): boolean { return ['under_review', 'needs_revision', 'rejected', 'approved', 'published'].includes(status); }
+function canExportModuleData(user: any): boolean { return ['super_admin', 'system_admin', 'data_officer'].includes(String(user?.role || '')); }
+function getPrimaryImportColumn(moduleName: string, tableColumns: Set<string>): string {
+  const preferred: Record<string, string> = { startups: 'name', startup_projects: 'title', wards: 'name', universities: 'name' };
+  const preferredColumn = preferred[moduleName];
+  return preferredColumn && tableColumns.has(preferredColumn) ? preferredColumn : tableColumns.has('title') ? 'title' : tableColumns.has('name') ? 'name' : tableColumns.has('project_name') ? 'project_name' : '';
+}
+function buildPublicVisibilityWhere(columns: Set<string>): string {
+  if (!columns.has('status')) return ' WHERE 1 = 0';
+  const conditions = ["LOWER(COALESCE(status, '')) IN ('approved', 'published')"];
+  if (columns.has('publicity_level')) conditions.push("LOWER(COALESCE(publicity_level, 'public')) = 'public'");
+  return ' WHERE ' + conditions.join(' AND ');
+}
+function normalizeSnapshotSchemaSql(sql: string): string { return sql.replace(/[`"\[\]]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); }
+function createSessionCookie(token: string): string { return `danang_session=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Lax`; }
+
 function isPrivilegedMessageReader(user: any): boolean {
   return ['super_admin', 'system_admin', 'agency_leader', 'data_officer'].includes(String(user?.role || ''));
 }
@@ -809,7 +827,7 @@ export default {
         }, secret);
 
         // Session cookie: intentionally omit Max-Age/Expires so it is not persistent across browser restarts.
-        const cookieHeader = `danang_session=${encodeURIComponent(sessionToken)}; Path=/; HttpOnly; Secure; SameSite=Lax`;
+        const cookieHeader = createSessionCookie(sessionToken);
 
         // Audit log
         try {
@@ -1725,7 +1743,7 @@ export default {
           const missing = [...actual.keys()].filter(name => !Object.prototype.hasOwnProperty.call(snapshot.tables, name));
           const extra = names.filter(name => !actual.has(name));
           if (missing.length || extra.length) return jsonResponse({ success: false, message: 'Cấu trúc snapshot không khớp D1. Thiếu: ' + (missing.join(', ') || 'không có') + '; dư: ' + (extra.join(', ') || 'không có') + '. Cần đồng bộ schema/migration trước khi phục hồi.' }, 409, corsHeaders);
-          const norm = (sql: string) => sql.replace(/[`"\[\]]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+          const norm = normalizeSnapshotSchemaSql;
           const rowsByTable = new Map<string, any[]>();
           let totalRows = 0;
           for (const tableName of actual.keys()) {
@@ -1845,7 +1863,7 @@ export default {
         if (!ALLOWED_MODULES.includes(moduleName)) {
           return jsonResponse({ success: false, message: 'Phân hệ dữ liệu không hợp lệ.' }, 400, corsHeaders);
         }
-        if (!['super_admin', 'system_admin', 'data_officer'].includes(currentUser.role)) {
+        if (!canExportModuleData(currentUser)) {
           return jsonResponse({ success: false, message: 'Bạn không có quyền xuất dữ liệu.' }, 403, corsHeaders);
         }
         if (!env.DB) {
@@ -2270,13 +2288,13 @@ export default {
 
         // 1. Workflow Transition: POST /api/modules/:moduleName/:id/workflow
         if (recordId && subAction === 'workflow' && request.method === 'POST') {
-          if (!['super_admin', 'system_admin', 'agency_leader'].includes(currentUser.role)) {
+          if (!canApproveWorkflow(currentUser)) {
             return jsonResponse({ success: false, message: 'Bạn không có quyền phê duyệt quy trình hồ sơ.' }, 403, corsHeaders);
           }
           const body = await request.json().catch(() => ({})) as any;
           const { status, note } = body;
           const nextStatus = String(status || '');
-          if (!['under_review', 'needs_revision', 'rejected', 'approved', 'published'].includes(nextStatus)) return jsonResponse({ success: false, message: 'Trạng thái quy trình không hợp lệ.' }, 400, corsHeaders);
+          if (!isAllowedWorkflowStatus(nextStatus)) return jsonResponse({ success: false, message: 'Trạng thái quy trình không hợp lệ.' }, 400, corsHeaders);
           if (!env.DB) return jsonResponse({ success: false, message: 'Cơ sở dữ liệu D1 chưa kết nối.' }, 500, corsHeaders);
           if (env.DB) {
             try {
@@ -2368,8 +2386,7 @@ export default {
               if (publicOnly) {
                 const tableInfo = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
                 const columns = new Set((tableInfo.results || []).map((column: any) => column.name));
-                if (columns.has('status')) visibilityWhere = ` WHERE LOWER(COALESCE(status, '')) IN ('approved', 'published')`;
-                if (columns.has('publicity_level')) visibilityWhere += `${visibilityWhere ? ' AND' : ' WHERE'} LOWER(COALESCE(publicity_level, 'public')) = 'public'`;
+                visibilityWhere = buildPublicVisibilityWhere(columns);
               }
               const results = await env.DB.prepare(`SELECT * FROM ${moduleName}${visibilityWhere} ORDER BY created_at DESC LIMIT ? OFFSET ?`).bind(limit, offset).all<any>();
               const countResult = await env.DB.prepare(`SELECT COUNT(*) as total FROM ${moduleName}${visibilityWhere}`).first<{ total: number }>();
@@ -2671,19 +2688,7 @@ export default {
         // Prefer the canonical primary field for these modules. Some deployed
         // D1 schemas may contain both "title" and "name"; a generic title-first
         // choice can leave a NOT NULL name column empty during imports.
-        const preferredPrimaryColumns: Record<string, string> = {
-          startups: 'name',
-          startup_projects: 'title',
-          wards: 'name',
-          universities: 'name'
-        };
-        const preferredPrimaryColumn = preferredPrimaryColumns[moduleName];
-        const primaryColumn = preferredPrimaryColumn && tableColumns.has(preferredPrimaryColumn)
-          ? preferredPrimaryColumn
-          : tableColumns.has('title') ? 'title'
-          : tableColumns.has('name') ? 'name'
-          : tableColumns.has('project_name') ? 'project_name'
-          : '';
+        const primaryColumn = getPrimaryImportColumn(moduleName, tableColumns);
         if (!primaryColumn) {
           return jsonResponse({ success: false, message: 'Không xác định được trường tên/tiêu đề chính của phân hệ.' }, 409, corsHeaders);
         }
@@ -2967,42 +2972,137 @@ export default {
         }
         results.push({ id: 4, name: 'Xác thực tài khoản và ma trận phân quyền người dùng (PBKDF2 + Salt)', passed: t4Passed, message: t4Msg, durationMs: Date.now() - t4Start });
 
-        // 5. RBAC Endpoint Enforcement
+        // 5. Execute role-policy assertions using the same helpers as API routes.
         const t5Start = Date.now();
-        const roleCheck = ['super_admin', 'system_admin'].includes(currentUser.role);
-        results.push({ id: 5, name: 'Kiểm tra phân quyền trên từng thao tác nghiệp vụ (RBAC)', passed: roleCheck, message: 'Endpoint được bảo vệ nghiêm ngặt bằng middleware xác thực vai trò.', durationMs: Date.now() - t5Start });
+        const assertions = [
+          !canViewRestrictedModule({ role: 'public_user' }, 'science_tasks'),
+          canViewRestrictedModule({ role: 'data_officer' }, 'science_tasks'),
+          !canManageModuleRecords({ role: 'public_user' }, 'science_tasks'),
+          canManageModuleRecords({ role: 'partner_officer' }, 'startup_projects'),
+          !canManageModuleRecords({ role: 'partner_officer' }, 'science_tasks'),
+          canCreateModuleRecords({ role: 'public_user' }, 'science_tasks'),
+          !canCreateModuleRecords({ role: 'public_user' }, 'users'),
+          !isPrivilegedMessageReader({ role: 'evaluator_expert' }),
+          isPrivilegedMessageReader({ role: 'agency_leader' }),
+          canApproveWorkflow({ role: 'agency_leader' }) && !canApproveWorkflow({ role: 'data_officer' }),
+          canExportModuleData({ role: 'data_officer' }) && !canExportModuleData({ role: 'agency_leader' })
+        ];
+        const roleCheck = assertions.every(Boolean);
+        results.push({ id: 5, name: 'Ma trận RBAC theo vai trò và nghiệp vụ thực tế', passed: roleCheck, message: roleCheck ? 'Đã thực thi 11 phép kiểm tra quyền xem nội bộ, tạo/sửa, phê duyệt, xuất dữ liệu và xem tin nhắn.' : 'Có quy tắc RBAC không đúng ma trận mong đợi.', durationMs: Date.now() - t5Start });
 
-        // 6. Draft & Restricted Data Protection
+        // 6. Execute the live public visibility predicate; schema/query failures fail closed.
         const t6Start = Date.now();
         let t6Passed = false;
         let t6Msg = '';
         if (env.DB) {
           try {
-            const draftCheck = await env.DB.prepare("SELECT COUNT(*) as c FROM science_tasks WHERE status = 'draft' AND publicity_level = 'public'").first<{ c: number }>();
-            t6Passed = (draftCheck?.c || 0) === 0;
-            t6Msg = t6Passed ? 'Đã kiểm tra: Không có bản ghi nháp nào bị hiển thị công khai.' : 'Phát hiện bản ghi nháp có gắn cờ công khai.';
-          } catch (e: any) {
-            t6Passed = true;
-            t6Msg = 'Cơ chế lọc nháp an toàn.';
-          }
+            const info = await env.DB.prepare('PRAGMA table_info("science_tasks")').all<any>();
+            const columns = new Set((info.results || []).map((column: any) => String(column.name)));
+            if (!columns.has('status')) throw new Error('Thiếu cột status.');
+            const where = buildPublicVisibilityWhere(columns);
+            const violations = await env.DB.prepare(`SELECT COUNT(*) AS c FROM science_tasks${where} AND LOWER(COALESCE(status, '')) NOT IN ('approved', 'published')`).first<{ c: number }>();
+            t6Passed = Number(violations?.c || 0) === 0;
+            t6Msg = t6Passed ? 'Truy vấn theo điều kiện công khai không trả hồ sơ nháp/chưa duyệt.' : `Phát hiện ${violations?.c || 0} hồ sơ không đủ điều kiện trong kết quả công khai.`;
+          } catch (e: any) { t6Msg = 'Không thể xác minh bộ lọc dữ liệu công khai: ' + e.message; }
         }
-        results.push({ id: 6, name: 'Bảo vệ dữ liệu nội bộ và ngăn người dùng không có quyền xem dữ liệu hạn chế', passed: t6Passed, message: t6Msg, durationMs: Date.now() - t6Start });
+        results.push({ id: 6, name: 'Bảo vệ dữ liệu nội bộ và bộ lọc công khai D1', passed: t6Passed, message: t6Msg, durationMs: Date.now() - t6Start });
 
-        // 7. Workflow State Transitions
+        // 7. Execute a temporary create -> approve -> read -> delete cycle in one D1 batch.
         const t7Start = Date.now();
-        results.push({ id: 7, name: 'Quy trình tiếp nhận, phê duyệt, từ chối và bổ sung hồ sơ', passed: true, message: 'Luồng thẩm định 5 bước hỗ trợ chuyển đổi trạng thái nguyên tử.', durationMs: Date.now() - t7Start });
+        let t7Passed = false;
+        let t7Msg = '';
+        if (env.DB) {
+          try {
+            const id = `qa_workflow_${crypto.randomUUID()}`;
+            const info = await env.DB.prepare('PRAGMA table_info("initiatives")').all<any>();
+            const defs = info.results || [];
+            const columns = new Set(defs.map((column: any) => String(column.name)));
+            if (!columns.has('id') || !columns.has('title') || !columns.has('status')) throw new Error('Bảng initiatives thiếu id/title/status.');
+            const row: Record<string, any> = { id, title: 'Kiểm thử quy trình tạm thời', status: 'draft' };
+            for (const col of defs) {
+              const name = String(col.name);
+              if (row[name] !== undefined || col.dflt_value !== null || (Number(col.notnull) !== 1 && Number(col.pk) === 0)) continue;
+              if (name === 'created_at' || name === 'updated_at') row[name] = new Date().toISOString();
+              else if (name === 'created_by' || name === 'updated_by') row[name] = 'qa-test';
+              else if (name === 'verification_status') row[name] = 'unverified';
+              else if (name === 'publicity_level') row[name] = 'private';
+              else if (name === 'module_type') row[name] = 'initiatives';
+              else if (name === 'id') row[name] = id;
+              else if (/(INT|REAL|NUM|DEC|BOOL|FLOAT|DOUBLE)/.test(String(col.type || '').toUpperCase())) row[name] = 0;
+              else row[name] = `qa-${crypto.randomUUID()}`;
+            }
+            const names = Object.keys(row).filter(name => columns.has(name));
+            const insert = env.DB.prepare(`INSERT INTO initiatives (${names.map(name => `"${name}"`).join(', ')}) VALUES (${names.map(() => '?').join(', ')})`).bind(...names.map(name => row[name]));
+            const update = env.DB.prepare("UPDATE initiatives SET status = 'approved' WHERE id = ? AND status = 'draft'").bind(id);
+            const read = env.DB.prepare('SELECT status FROM initiatives WHERE id = ?').bind(id);
+            const remove = env.DB.prepare('DELETE FROM initiatives WHERE id = ?').bind(id);
+            const probe = await env.DB.batch([insert, update, read, remove]);
+            const readStatus = probe?.[2]?.results?.[0]?.status;
+            t7Passed = probe?.length === 4 && probe[0]?.success && Number(probe[0]?.meta?.changes || 0) === 1 && probe[1]?.success && Number(probe[1]?.meta?.changes || 0) === 1 && readStatus === 'approved' && probe[3]?.success && Number(probe[3]?.meta?.changes || 0) === 1;
+            t7Msg = t7Passed ? 'Đã thực thi tạo nháp, chuyển trạng thái, đọc lại và xóa bản ghi thử trong một giao dịch.' : 'D1 không hoàn thành đầy đủ chu trình nghiệp vụ.';
+          } catch (e: any) { t7Msg = 'Kiểm thử quy trình thất bại: ' + e.message; }
+        }
+        results.push({ id: 7, name: 'Thực thi nghiệp vụ tạo hồ sơ và chuyển trạng thái trên D1', passed: t7Passed, message: t7Msg, durationMs: Date.now() - t7Start });
 
-        // 8. Batch Import Validation
+        // 8. Check actual D1 import targets and primary-column selection.
         const t8Start = Date.now();
-        results.push({ id: 8, name: 'Nhập dữ liệu Excel/CSV và xử lý tệp sai cấu trúc', passed: true, message: 'Bộ chuẩn hóa tiếng Việt hỗ trợ chính xác 10/10 phân hệ dữ liệu.', durationMs: Date.now() - t8Start });
+        let t8Passed = false;
+        let t8Msg = '';
+        if (env.DB) {
+          try {
+            const missing: string[] = [];
+            for (const moduleName of ALLOWED_MODULES) {
+              const info = await env.DB.prepare(`PRAGMA table_info("${moduleName}")`).all<any>();
+              const cols = new Set((info.results || []).map((column: any) => String(column.name)));
+              if (!getPrimaryImportColumn(moduleName, cols) || !cols.has('status')) missing.push(moduleName);
+            }
+            const uni = await env.DB.prepare('PRAGMA table_info("universities")').all<any>();
+            const uniCols = new Set((uni.results || []).map((column: any) => String(column.name)));
+            t8Passed = missing.length === 0 && getPrimaryImportColumn('universities', uniCols) === 'name';
+            t8Msg = t8Passed ? `Đã kiểm tra schema và trường tên chính của ${ALLOWED_MODULES.length} phân hệ; universities dùng cột name.` : 'Phân hệ thiếu trường tên chính/status: ' + missing.join(', ');
+          } catch (e: any) { t8Msg = 'Không thể kiểm tra schema nhập hàng loạt: ' + e.message; }
+        }
+        results.push({ id: 8, name: 'Kiểm tra schema và ánh xạ trường nhập hàng loạt', passed: t8Passed, message: t8Msg, durationMs: Date.now() - t8Start });
 
-        // 9. Duplicate Prevention
+        // 9. Verify duplicate primary keys fail and D1 rolls back the whole batch.
         const t9Start = Date.now();
-        results.push({ id: 9, name: 'Phát hiện và ngăn chặn dữ liệu trùng lặp', passed: true, message: 'Khóa chính và mã định danh ngăn ngừa trùng lặp bản ghi.', durationMs: Date.now() - t9Start });
+        let t9Passed = false;
+        let t9Msg = '';
+        if (env.DB) {
+          try {
+            const id = `qa_duplicate_${crypto.randomUUID()}`;
+            const info = await env.DB.prepare('PRAGMA table_info("initiatives")').all<any>();
+            const defs = info.results || [];
+            const columns = new Set(defs.map((column: any) => String(column.name)));
+            if (!columns.has('id') || !columns.has('title')) throw new Error('Bảng initiatives thiếu id/title.');
+            const row: Record<string, any> = { id, title: 'Kiểm thử trùng lặp tạm thời', status: 'draft' };
+            for (const col of defs) {
+              const name = String(col.name);
+              if (row[name] !== undefined || col.dflt_value !== null || (Number(col.notnull) !== 1 && Number(col.pk) === 0)) continue;
+              if (name === 'created_at' || name === 'updated_at') row[name] = new Date().toISOString();
+              else if (name === 'created_by' || name === 'updated_by') row[name] = 'qa-test';
+              else if (name === 'verification_status') row[name] = 'unverified';
+              else if (name === 'publicity_level') row[name] = 'private';
+              else if (name === 'module_type') row[name] = 'initiatives';
+              else if (/(INT|REAL|NUM|DEC|BOOL|FLOAT|DOUBLE)/.test(String(col.type || '').toUpperCase())) row[name] = 0;
+              else row[name] = `qa-${crypto.randomUUID()}`;
+            }
+            const names = Object.keys(row).filter(name => columns.has(name));
+            const sql = `INSERT INTO initiatives (${names.map(name => `"${name}"`).join(', ')}) VALUES (${names.map(() => '?').join(', ')})`;
+            let duplicateRejected = false;
+            try { await env.DB.batch([env.DB.prepare(sql).bind(...names.map(name => row[name])), env.DB.prepare(sql).bind(...names.map(name => row[name]))]); }
+            catch (e: any) { duplicateRejected = /unique|primary key/i.test(String(e?.message || e)); }
+            const residual = await env.DB.prepare('SELECT COUNT(*) AS c FROM initiatives WHERE id = ?').bind(id).first<{ c: number }>();
+            t9Passed = duplicateRejected && Number(residual?.c || 0) === 0;
+            t9Msg = t9Passed ? 'D1 từ chối khóa chính trùng và rollback cả batch; không để lại bản ghi thử.' : 'Không xác nhận được lỗi trùng khóa và rollback nguyên tử.';
+          } catch (e: any) { t9Msg = 'Kiểm thử trùng lặp thất bại: ' + e.message; }
+        }
+        results.push({ id: 9, name: 'Kiểm tra trùng khóa và rollback giao dịch D1', passed: t9Passed, message: t9Msg, durationMs: Date.now() - t9Start });
 
-        // 10. Role-controlled Export
+        // 10. Execute export permission assertions using the route policy helper.
         const t10Start = Date.now();
-        results.push({ id: 10, name: 'Xuất dữ liệu có kiểm soát phân quyền', passed: true, message: 'Trích xuất CSV/Excel tuân thủ các cột công khai hoặc phân quyền.', durationMs: Date.now() - t10Start });
+        const exportCheck = canExportModuleData({ role: 'super_admin' }) && canExportModuleData({ role: 'system_admin' }) && canExportModuleData({ role: 'data_officer' }) && !canExportModuleData({ role: 'agency_leader' }) && !canExportModuleData({ role: 'public_user' });
+        results.push({ id: 10, name: 'Kiểm tra quyền xuất dữ liệu theo vai trò', passed: exportCheck, message: exportCheck ? 'Đã kiểm tra 5 vai trò theo chính sách xuất dữ liệu thực tế.' : 'Ma trận quyền xuất dữ liệu không đúng.', durationMs: Date.now() - t10Start });
 
         // 11. Audit Logging
         const t11Start = Date.now();
@@ -3020,25 +3120,78 @@ export default {
         }
         results.push({ id: 11, name: 'Kiểm tra nhật ký truy vết hệ thống (Audit Logs)', passed: t11Passed, message: t11Msg, durationMs: Date.now() - t11Start });
 
-        // 12. Mobile Responsive Architecture
+        // 12. Check the actual Worker static-assets binding; responsive layout needs browser QA.
         const t12Start = Date.now();
-        results.push({ id: 12, name: 'Kiểm tra giao diện đa thiết bị (Responsive Mobile & Desktop)', passed: true, message: 'Kiến trúc responsive Tailwind CSS với viewport tiêu chuẩn.', durationMs: Date.now() - t12Start });
+        const assetsReady = Boolean(env.ASSETS);
+        results.push({ id: 12, name: 'Kiểm tra liên kết tài nguyên frontend trên Worker', passed: assetsReady, message: assetsReady ? 'Worker đã liên kết static assets; kiểm tra responsive cần thực hiện trên trình duyệt.' : 'Worker chưa có binding ASSETS.', durationMs: Date.now() - t12Start });
 
-        // 13. Backup & Schema Sync
+        // 13. Read live sqlite_master and PRAGMA definitions used by backup/restore.
         const t13Start = Date.now();
-        results.push({ id: 13, name: 'Kiểm tra tính năng sao lưu (Backup) và phục hồi (Restore)', passed: true, message: 'D1 migration dump & SQLite snapshot sẵn sàng cho phục hồi.', durationMs: Date.now() - t13Start });
+        let t13Passed = false;
+        let t13Msg = '';
+        if (env.DB) {
+          try {
+            const tables = await env.DB.prepare("SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'").all<any>();
+            const appTables = (tables.results || []).filter((row: any) => [...ALLOWED_MODULES, 'users', 'system_config', 'audit_logs', 'attachments', 'connection_messages', 'form_configs', 'relationships', 'entity_relationships'].includes(String(row.name)));
+            const invalid: string[] = [];
+            for (const row of appTables) {
+              const name = String(row.name);
+              const info = await env.DB.prepare(`PRAGMA table_info("${name}")`).all<any>();
+              if (!String(row.sql || '').trim() || !(info.results || []).length || !normalizeSnapshotSchemaSql(String(row.sql)).length) invalid.push(name);
+            }
+            t13Passed = invalid.length === 0 && appTables.length > 0;
+            t13Msg = t13Passed ? `Đã đọc schema và cấu trúc cột của ${appTables.length} bảng ứng dụng.` : 'Bảng thiếu định nghĩa schema/cột: ' + invalid.join(', ');
+          } catch (e: any) { t13Msg = 'Không thể kiểm tra schema sao lưu/phục hồi: ' + e.message; }
+        }
+        results.push({ id: 13, name: 'Đối chiếu schema D1 phục vụ sao lưu và phục hồi', passed: t13Passed, message: t13Msg, durationMs: Date.now() - t13Start });
 
-        // 14. Real Aggregated Calculations Performance
+        // 14. Run real dashboard aggregate queries and record their elapsed time.
         const t14Start = Date.now();
-        results.push({ id: 14, name: 'Hiệu năng tính toán chỉ số thống kê tổng hợp', passed: true, message: 'Tính toán chỉ số từ D1 hoàn thành trong thời gian thực.', durationMs: Date.now() - t14Start });
+        let t14Passed = false;
+        let t14Msg = '';
+        if (env.DB) {
+          try {
+            const aggregate = await env.DB.batch([
+              env.DB.prepare('SELECT COUNT(*) AS total FROM science_tasks'),
+              env.DB.prepare('SELECT COUNT(*) AS total FROM experts'),
+              env.DB.prepare('SELECT status, COUNT(*) AS total FROM initiatives GROUP BY status')
+            ]);
+            t14Passed = aggregate.length === 3 && aggregate.every((result: any) => result?.success) && Date.now() - t14Start < 5000;
+            t14Msg = t14Passed ? `Đã thực thi 3 truy vấn thống kê D1 trong ${Date.now() - t14Start} ms.` : 'Truy vấn thống kê lỗi hoặc vượt ngưỡng 5 giây.';
+          } catch (e: any) { t14Msg = 'Lỗi truy vấn thống kê tổng hợp: ' + e.message; }
+        }
+        results.push({ id: 14, name: 'Hiệu năng truy vấn thống kê tổng hợp D1', passed: t14Passed, message: t14Msg, durationMs: Date.now() - t14Start });
 
-        // 15. Exception Handling & SQL Injection Prevention
+        // 15. Prove an injection-shaped value remains a bound parameter, not SQL.
         const t15Start = Date.now();
-        results.push({ id: 15, name: 'Kiểm tra xử lý ngoại lệ và an toàn đồng thời', passed: true, message: '100% câu lệnh D1 sử dụng prepared statements tham số hóa an toàn.', durationMs: Date.now() - t15Start });
+        let t15Passed = false;
+        let t15Msg = '';
+        if (env.DB) {
+          try {
+            const payload = "' OR 1=1; DROP TABLE users; --";
+            const probe = await env.DB.prepare('SELECT ? AS supplied_value, 7 AS control_value').bind(payload).first<any>();
+            t15Passed = probe?.supplied_value === payload && Number(probe?.control_value) === 7;
+            t15Msg = t15Passed ? 'Payload SQL injection được giữ nguyên dưới dạng dữ liệu tham số.' : 'Prepared statement trả kết quả không mong đợi.';
+          } catch (e: any) { t15Msg = 'Kiểm thử tham số SQL thất bại: ' + e.message; }
+        }
+        results.push({ id: 15, name: 'Kiểm tra prepared statement và dữ liệu đầu vào độc hại', passed: t15Passed, message: t15Msg, durationMs: Date.now() - t15Start });
 
-        // 16. Approved Data Visibility
+        // 16. Query the same public visibility predicate used by public module listings.
         const t16Start = Date.now();
-        results.push({ id: 16, name: 'Kiểm tra dữ liệu tự động công khai sau khi phê duyệt chính thức', passed: true, message: 'Bộ lọc tự động phân phối bản ghi phê duyệt tới trang chủ và tra cứu.', durationMs: Date.now() - t16Start });
+        let t16Passed = false;
+        let t16Msg = '';
+        if (env.DB) {
+          try {
+            const info = await env.DB.prepare('PRAGMA table_info("science_tasks")').all<any>();
+            const columns = new Set((info.results || []).map((column: any) => String(column.name)));
+            const where = buildPublicVisibilityWhere(columns);
+            const visible = await env.DB.prepare(`SELECT COUNT(*) AS total FROM science_tasks${where}`).first<any>();
+            const invalid = await env.DB.prepare(`SELECT COUNT(*) AS total FROM science_tasks${where} AND LOWER(COALESCE(status, '')) NOT IN ('approved', 'published')`).first<any>();
+            t16Passed = Number(visible?.total || 0) >= 0 && Number(invalid?.total || 0) === 0;
+            t16Msg = t16Passed ? `Bộ lọc công khai trả ${visible?.total || 0} hồ sơ và không trả hồ sơ chưa duyệt.` : 'Có hồ sơ không đủ điều kiện trong tập kết quả công khai.';
+          } catch (e: any) { t16Msg = 'Không thể xác minh bộ lọc công khai: ' + e.message; }
+        }
+        results.push({ id: 16, name: 'Kiểm tra điều kiện công khai sau phê duyệt', passed: t16Passed, message: t16Msg, durationMs: Date.now() - t16Start });
 
         // 17. Brute-force Account Lock
         const t17Start = Date.now();
@@ -3051,15 +3204,17 @@ export default {
             t17Passed = colNames.has('failed_attempts') && colNames.has('locked_until');
             t17Msg = t17Passed ? 'Hệ thống tự động khóa tài khoản sau 5 lần nhập sai mật khẩu liên tiếp.' : 'Bảng users cần bổ sung các cột failed_attempts, locked_until.';
           } catch (e: any) {
-            t17Passed = true;
-            t17Msg = 'Cơ chế khóa bảo vệ brute-force kích hoạt.';
+            t17Passed = false;
+            t17Msg = 'Không thể đọc schema users để xác minh khóa brute-force: ' + e.message;
           }
         }
         results.push({ id: 17, name: 'Kiểm tra cơ chế khóa tài khoản và phòng chống tấn công dò mật khẩu (Brute-force)', passed: t17Passed, message: t17Msg, durationMs: Date.now() - t17Start });
 
-        // 18. Secure Session Management
+        // 18. Test the exact session cookie builder used by login.
         const t18Start = Date.now();
-        results.push({ id: 18, name: 'Bảo mật phiên làm việc với HttpOnly Cookie và HMAC-SHA256', passed: true, message: 'Phiên làm việc mang HttpOnly, SameSite=Lax và chữ ký mật mã an toàn.', durationMs: Date.now() - t18Start });
+        const cookieProbe = createSessionCookie('test-session-token');
+        const t18Passed = Boolean(secret) && cookieProbe.includes('HttpOnly') && cookieProbe.includes('Secure') && cookieProbe.includes('SameSite=Lax') && !/Max-Age|Expires=/i.test(cookieProbe);
+        results.push({ id: 18, name: 'Bảo mật phiên làm việc bằng HttpOnly Cookie và HMAC-SHA256', passed: t18Passed, message: t18Passed ? 'Cookie dùng HttpOnly, Secure, SameSite=Lax và không lưu bền sau khi đóng trình duyệt.' : 'Thiếu secret hoặc thuộc tính bảo mật cookie.', durationMs: Date.now() - t18Start });
 
         const passedTests = results.filter(r => r.passed).length;
         return jsonResponse({
