@@ -92,23 +92,9 @@ export default function App() {
   }, [currentView]);
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
   const [showAdvancedSearchModal, setShowAdvancedSearchModal] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | undefined>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem('portal_cached_user');
-        if (cached) return JSON.parse(cached);
-      } catch {}
-    }
-    return undefined;
-  });
-
-  useEffect(() => {
-    if (currentUser && currentUser.role !== 'public_user') {
-      localStorage.setItem('portal_cached_user', JSON.stringify(currentUser));
-    } else if (currentUser && currentUser.role === 'public_user') {
-      localStorage.removeItem('portal_cached_user');
-    }
-  }, [currentUser]);
+  // The server's HttpOnly session cookie is the sole source of authentication.
+  // Do not restore an authenticated user from persistent browser storage.
+  const [currentUser, setCurrentUser] = useState<User | undefined>(undefined);
   const [availableRoles, setAvailableRoles] = useState<Array<{ role: string; label: string }>>([]);
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({
     portalName: 'Cổng dữ liệu Tổng hợp khoa học, công nghệ & khởi nghiệp đổi mới sáng tạo',
