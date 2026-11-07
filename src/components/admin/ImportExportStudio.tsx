@@ -301,12 +301,12 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
   };
 
   const parseCsvText = (text: string) => {
-    const input = String(text || '').replace(/^\\uFEFF/, '');
+    const input = String(text || '').replace(/^\uFEFF/, '');
     if (!input.trim()) return [];
 
     // Detect the delimiter from the first logical CSV record, ignoring
     // delimiters inside quoted cells.
-    const delimiters = [',', ';', '\\t'];
+    const delimiters = [',', ';', '\t'];
     const delimiterCounts = delimiters.map(delimiter => {
       let count = 0;
       let insideQuote = false;
@@ -315,7 +315,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
         if (char === '"') {
           if (insideQuote && input[i + 1] === '"') i++;
           else insideQuote = !insideQuote;
-        } else if ((char === '\\n' || char === '\\r') && !insideQuote) {
+        } else if ((char === '\n' || char === '\r') && !insideQuote) {
           break;
         } else if (char === delimiter && !insideQuote) {
           count++;
@@ -345,8 +345,8 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
       } else if (char === delimiter && !insideQuote) {
         row.push(cell.trim());
         cell = '';
-      } else if ((char === '\\n' || char === '\\r') && !insideQuote) {
-        if (char === '\\r' && input[i + 1] === '\\n') i++;
+      } else if ((char === '\n' || char === '\r') && !insideQuote) {
+        if (char === '\r' && input[i + 1] === '\n') i++;
         row.push(cell.trim());
         if (row.some(value => value.length > 0)) matrix.push(row);
         row = [];
@@ -359,7 +359,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
     if (row.some(value => value.length > 0)) matrix.push(row);
     if (matrix.length < 2) return [];
 
-    const headers = matrix[0].map(header => header.replace(/^\\uFEFF/, '').trim());
+    const headers = matrix[0].map(header => header.replace(/^\uFEFF/, '').trim());
     return matrix.slice(1).map(values => {
       const record: Record<string, any> = {};
       headers.forEach((header, index) => {
