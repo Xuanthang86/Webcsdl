@@ -1,4 +1,4 @@
-# CỔNG DỮ LIỆU TỔNG HỢP KH&CN, ĐỔI MỚI SÁNG TẠO VÀ KHỞI NGHIỆP THÀNH PHỐ ĐÀ NẴNG
+# CỔNG DỮ LIỆU VỀ KHOA HỌC CÔNG NGHỆ VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG
 ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG — SỞ KHOA HỌC VÀ CÔNG NGHỆ
 
 Hệ thống quản lý, tích hợp, tra cứu và khai thác dữ liệu tập trung phục vụ công tác quản lý nhà nước, nghiên cứu khoa học, thương mại hóa công nghệ và phát triển hệ sinh thái khởi nghiệp đổi mới sáng tạo (ĐMST).
