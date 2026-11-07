@@ -65,22 +65,22 @@ class DetailModalErrorBoundary extends React.Component<
 export default function App() {
   const [currentView, setCurrentView] = useState<'home' | 'browse' | 'admin'>(() => {
     if (typeof window !== 'undefined') {
+      const hasActiveTabSession = window.sessionStorage.getItem('portal_tab_active') === 'true';
       const hash = window.location.hash.replace('#', '');
-      if (hash === 'admin' || hash === 'browse' || hash === 'home') {
-        return hash as any;
-      }
-      const saved = localStorage.getItem('portal_current_view');
-      if (saved === 'admin' || saved === 'browse' || saved === 'home') {
-        return saved as any;
-      }
+      if (hash === 'admin' && hasActiveTabSession) return 'admin';
+      if (hash === 'browse' || hash === 'home') return hash;
+      const saved = window.sessionStorage.getItem('portal_current_view');
+      if (saved === 'admin' && hasActiveTabSession) return 'admin';
+      if (saved === 'browse' || saved === 'home') return saved;
     }
     return 'home';
   });
 
-  // Keep localStorage and URL hash in sync with view
+  // Keep the view only for this browser tab session; never persist an admin route across restarts.
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('portal_current_view', currentView);
+      window.sessionStorage.setItem('portal_current_view', currentView);
+      window.localStorage.removeItem('portal_current_view');
       if (currentView === 'home') {
         if (window.location.hash) {
           history.replaceState(null, '', window.location.pathname + window.location.search);
