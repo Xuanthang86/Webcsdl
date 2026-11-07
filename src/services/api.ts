@@ -9,33 +9,18 @@ import {
   ConnectionMessage
 } from '../types';
 
-const TOKEN_KEY = 'portal_session_token';
-
-function getStoredToken(): string {
-  if (typeof window === 'undefined') return '';
-  return window.sessionStorage.getItem(TOKEN_KEY) || window.localStorage.getItem(TOKEN_KEY) || '';
-}
-
-function setStoredToken(token: string): void {
+// Authentication is cookie-based. The HttpOnly session cookie is intentionally
+// non-persistent so closing the browser ends the login session.
+function removeLegacyStoredTokens(): void {
   if (typeof window === 'undefined') return;
-  window.sessionStorage.setItem(TOKEN_KEY, token);
-  window.localStorage.setItem(TOKEN_KEY, token);
-}
-
-function removeStoredToken(): void {
-  if (typeof window === 'undefined') return;
-  window.sessionStorage.removeItem(TOKEN_KEY);
-  window.localStorage.removeItem(TOKEN_KEY);
+  window.sessionStorage.removeItem('portal_session_token');
+  window.localStorage.removeItem('portal_session_token');
+  window.localStorage.removeItem('portal_auth_token');
 }
 
 function getAuthHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
-  const token = getStoredToken();
-  const headers: Record<string, string> = { ...extraHeaders };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-    headers['x-session-token'] = token;
-  }
-  return headers;
+  removeLegacyStoredTokens();
+  return { ...extraHeaders };
 }
 
 function authFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
@@ -104,7 +89,6 @@ export const api = {
     if (!data.token || typeof data.token !== 'string') {
       throw new Error('Đăng nhập không nhận được mã phiên hợp lệ từ máy chủ. Vui lòng thử lại.');
     }
-    setStoredToken(data.token);
     return data.user;
   },
 
