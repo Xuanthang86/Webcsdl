@@ -2154,6 +2154,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                 value={importRawText}
                 onChange={(e) => {
                   setImportRawText(e.target.value);
+                  setImportResult(null);
                   try {
                     const rows = parseInlineCsv(e.target.value);
                     setImportParsedRows(rows);
