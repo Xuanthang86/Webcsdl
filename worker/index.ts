@@ -2561,6 +2561,7 @@ export default {
                 env.DB.prepare(`DELETE FROM ${moduleName} WHERE id = ?`).bind(recordId),
                 await buildAuditLogStatement(env.DB, currentUser, 'delete', moduleName, recordId, `Xóa bản ghi [${recordId}]`, true)
               ];
+              await ensureRelationshipsTable(env.DB);
               const relationshipTables = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('relationships', 'entity_relationships')").all<{ name: string }>();
               for (const relationshipTable of relationshipTables.results || []) {
                 const relationshipName = String(relationshipTable.name);
@@ -2965,18 +2966,21 @@ export default {
         }
         results.push({ id: 1, name: 'Kiểm tra kết nối và truy vấn CSDL Cloudflare D1', passed: t1Passed, message: t1Msg, durationMs: Date.now() - t1Start });
 
-        // 2. Core Tables Integrity
+        // 2. Core Tables Integrity: apply additive compatibility migrations first.
         const t2Start = Date.now();
         let t2Passed = false;
         let t2Msg = '';
         if (env.DB) {
           try {
+            await ensureAuditLogTable(env.DB);
+            const relationshipTable = await ensureRelationshipsTable(env.DB);
             const tables = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table'").all<{ name: string }>();
             const tableNames = new Set((tables.results || []).map(r => r.name));
-            const requiredTables = ['science_tasks', 'initiatives', 'experts', 'startups', 'support_organizations', 'startup_projects', 'startup_ideas', 'wards', 'universities', 'users', 'relationships', 'audit_logs', 'system_config'];
+            const requiredTables = ['science_tasks', 'initiatives', 'experts', 'startups', 'support_organizations', 'startup_projects', 'startup_ideas', 'wards', 'universities', 'users', 'audit_logs', 'system_config'];
             const missing = requiredTables.filter(t => !tableNames.has(t));
-            t2Passed = missing.length === 0;
-            t2Msg = t2Passed ? `13 bảng dữ liệu chuẩn đã sẵn sàng trong D1.` : `Thiếu các bảng: ${missing.join(', ')}`;
+            const relationshipReady = ['relationships', 'entity_relationships'].includes(relationshipTable);
+            t2Passed = missing.length === 0 && relationshipReady;
+            t2Msg = t2Passed ? `Các bảng dữ liệu chuẩn và bảng liên kết (${relationshipTable}) đã sẵn sàng trong D1.` : `Thiếu các bảng: ${missing.join(', ')}`;
           } catch (e: any) {
             t2Passed = false;
             t2Msg = 'Lỗi kiểm tra bảng: ' + e.message;
@@ -2990,9 +2994,10 @@ export default {
         let t3Msg = '';
         if (env.DB) {
           try {
-            const relCount = await env.DB.prepare('SELECT COUNT(*) as c FROM relationships').first<{ c: number }>();
+            const relationshipTable = await ensureRelationshipsTable(env.DB);
+            const relCount = await env.DB.prepare(`SELECT COUNT(*) as c FROM "${relationshipTable}"`).first<{ c: number }>();
             t3Passed = Number(relCount?.c) >= 0;
-            t3Msg = `Bảng liên kết đa chiều hoạt động tốt, hiện có ${relCount?.c || 0} liên kết.`;
+            t3Msg = `Bảng liên kết đa chiều (${relationshipTable}) hoạt động tốt, hiện có ${relCount?.c || 0} liên kết.`;
           } catch (e: any) {
             t3Passed = false;
             t3Msg = 'Lỗi bảng quan hệ: ' + e.message;
