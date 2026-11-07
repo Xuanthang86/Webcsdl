@@ -27,8 +27,6 @@ import {
   MessageSquare, 
   Menu, 
   X,
-  ChevronDown,
-  Layers,
   ArrowLeft,
   Sliders,
   Users,
@@ -75,7 +73,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [activeModule, setActiveModule] = useState<ModuleType>('science_tasks');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [coreListOpen, setCoreListOpen] = useState(true);
-  const [auxiliaryDropdownOpen, setAuxiliaryDropdownOpen] = useState(false);
   const [selectedEntityForRel, setSelectedEntityForRel] = useState<BaseEntity | null>(null);
 
   const isWardOfficer = currentUser?.role === 'partner_officer';
@@ -141,7 +138,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   }, [isRestrictedOfficer, allowedModules, activeModule]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row font-sans text-slate-800">
+    <div className="min-h-screen lg:h-screen lg:min-h-0 lg:overflow-hidden bg-slate-50 flex flex-col lg:flex-row font-sans text-slate-800">
       
       {/* Mobile & Tablet Header with Toggle */}
       <div className="lg:hidden bg-gradient-to-r from-sky-800 via-sky-700 to-sky-900 text-white p-3.5 flex items-center justify-between border-b border-sky-700/60 sticky top-0 z-30 shadow-md">
@@ -178,10 +175,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
       {/* Admin Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-72 sm:w-80 bg-slate-700 text-slate-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-auto lg:min-h-screen shrink-0 flex flex-col justify-between border-r border-slate-700
+        fixed inset-y-0 left-0 z-50 w-72 sm:w-80 bg-slate-700 text-slate-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:min-h-0 shrink-0 flex flex-col justify-between border-r border-slate-700
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        <div className="p-4 space-y-4 overflow-y-auto">
+        <div className="p-4 space-y-4 overflow-y-auto flex-1 min-h-0">
           
           {/* Brand & Title */}
           <div className="pb-3 border-b border-slate-700 flex items-center justify-between">
@@ -288,46 +285,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 </div>
               </div>
             )}
-
-              {/* Phân hệ Bổ trợ & Tri thức */}
-              {!isRestrictedOfficer && <div className="hidden lg:block pt-2">
-                <button
-                  onClick={() => setAuxiliaryDropdownOpen(!auxiliaryDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
-                >
-                  <div className="flex items-center gap-2.5 truncate">
-                    <Layers className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span className="truncate">Các Phân Hệ Bổ Sung</span>
-                  </div>
-                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${auxiliaryDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {auxiliaryDropdownOpen && (
-                  <div className="mt-0.5 ml-4 pl-2 border-l border-slate-700 space-y-0.5">
-                    {[
-                      { mod: 'organizations' as ModuleType, label: 'Tổ chức KH&CN, Viện trường' },
-                      { mod: 'publications' as ModuleType, label: 'Bài báo & Công bố khoa học' },
-                      { mod: 'technologies' as ModuleType, label: 'Công nghệ & Chuyển giao' },
-                      { mod: 'collaboration_needs' as ModuleType, label: 'Nhu cầu kết nối & Đặt hàng' },
-                      { mod: 'programs' as ModuleType, label: 'Chương trình & Cơ hội hỗ trợ' },
-                      { mod: 'policies' as ModuleType, label: 'Chính sách, Văn bản & Biểu mẫu' },
-                      { mod: 'lab_equipments' as ModuleType, label: 'Phòng thí nghiệm & Thiết bị' }
-                    ].map(item => (
-                      <button
-                        key={item.mod}
-                        onClick={() => handleSelectModule(item.mod)}
-                        className={`w-full text-left px-2.5 py-1.5 rounded-md text-[11px] truncate transition-colors ${
-                          activeTab === 'module_crud' && activeModule === item.mod
-                            ? 'bg-teal-900/70 text-teal-200 font-semibold'
-                            : 'hover:bg-slate-700/80 text-slate-200 hover:text-white'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>}
 
             {!isRestrictedOfficer && <div className="pt-2 space-y-1">
               <button
@@ -438,7 +395,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen bg-slate-50">
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen lg:h-screen lg:min-h-0 bg-slate-50">
         
         {/* Desktop Admin Top Header */}
         <header className="hidden lg:flex items-center justify-between px-8 py-5 bg-gradient-to-r from-sky-800 via-sky-700 to-sky-900 text-white border-b border-sky-700/60 shadow-sm shrink-0">
@@ -468,7 +425,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <main className="flex-1 min-h-0 p-4 sm:p-6 lg:p-8 overflow-y-auto overscroll-contain">
           <div className="max-w-7xl mx-auto space-y-6">
             {activeTab === 'dashboard' && (
               <DashboardView

@@ -444,7 +444,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
-              Tất cả 7 loại dữ liệu con
+              Các loại dữ liệu trong Hệ sinh thái
             </button>
             <button
               onClick={() => setActiveEcosystemTab('startups')}
