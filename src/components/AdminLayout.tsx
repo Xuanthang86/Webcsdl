@@ -113,13 +113,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { mod: 'featured_startups', label: 'Doanh nghiệp khởi nghiệp tiêu biểu', icon: Star, color: 'text-amber-300' },
     { mod: 'investors', label: 'Nhà đầu tư', icon: Users, color: 'text-cyan-300' },
     { mod: 'investment_funds', label: 'Quỹ đầu tư', icon: Building2, color: 'text-indigo-300' },
-    { mod: 'organizations', label: 'Tổ chức KH&CN, Viện trường', icon: Building2, color: 'text-sky-300' },
-    { mod: 'publications', label: 'Bài báo & Công bố khoa học', icon: FileCheck, color: 'text-emerald-300' },
-    { mod: 'technologies', label: 'Công nghệ & Chuyển giao', icon: Sliders, color: 'text-violet-300' },
-    { mod: 'collaboration_needs', label: 'Nhu cầu kết nối & Đặt hàng', icon: MessageSquare, color: 'text-amber-300' },
-    { mod: 'programs', label: 'Chương trình & Cơ hội hỗ trợ', icon: Target, color: 'text-cyan-300' },
-    { mod: 'policies', label: 'Chính sách, Văn bản & Biểu mẫu', icon: FileText, color: 'text-indigo-300' },
-    { mod: 'lab_equipments', label: 'Phòng thí nghiệm & Thiết bị', icon: Settings, color: 'text-rose-300' }
   ];
 
   const allModulesList = [...topCoreModules, ...ecosystemModules];
@@ -134,16 +127,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   const visibleTopModules = topCoreModules.filter(m => allowedModules.includes(m.mod));
   const visibleEcosystemModules = ecosystemModules.filter(m => allowedModules.includes(m.mod));
-  const desktopHiddenEcosystemModules = new Set<ModuleType>([
-    'organizations',
-    'publications',
-    'technologies',
-    'collaboration_needs',
-    'programs',
-    'policies',
-    'lab_equipments'
-  ]);
-
   React.useEffect(() => {
     if (isRestrictedOfficer && allowedModules.length > 0) {
       if (!allowedModules.includes(activeModule)) {
@@ -287,7 +270,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                       <button
                         key={item.mod}
                         onClick={() => handleSelectModule(item.mod)}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${desktopHiddenEcosystemModules.has(item.mod) ? 'lg:hidden' : ''} ${
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${
                           isActive
                             ? 'bg-sky-700/80 text-white font-bold shadow-xs'
                             : 'hover:bg-slate-700 text-slate-100'
