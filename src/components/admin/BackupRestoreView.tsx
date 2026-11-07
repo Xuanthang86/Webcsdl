@@ -11,12 +11,14 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
   const [snapshot, setSnapshot] = useState<any>(null);
   const [isRestoring, setIsRestoring] = useState(false);
   const [confirmRestore, setConfirmRestore] = useState(false);
+  const [preRestoreBackupConfirmed, setPreRestoreBackupConfirmed] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     setSelectedFile(null);
     setSnapshot(null);
+    setPreRestoreBackupConfirmed(false);
     setMessage(null);
     if (!file) return;
     if (!file.name.toLowerCase().endsWith('.json')) {
@@ -31,9 +33,10 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
       // by this screen can always be restored by the same screen.
       const fileText = (await file.text()).replace(/^\uFEFF/, '');
       const parsed = JSON.parse(fileText);
-      if (!parsed || typeof parsed !== 'object' || !parsed.systemConfig || !Array.isArray(parsed.science_tasks)) {
-        throw new Error('Tệp không có cấu trúc bản sao lưu dữ liệu hợp lệ.');
+      if (!parsed || typeof parsed !== 'object' || parsed.backupFormat !== 'khcn-d1-full-backup-v1' || !parsed.systemConfig || !Array.isArray(parsed.science_tasks) || !parsed.tables || typeof parsed.tables !== 'object' || !parsed.schema || typeof parsed.schema !== 'object') {
+        throw new Error('Tệp không có định dạng snapshot D1 đầy đủ hoặc thiếu dữ liệu/schema bảng.');
       }
+      if (file.size > 20 * 1024 * 1024) throw new Error('Tệp sao lưu vượt giới hạn 20 MB của quy trình phục hồi an toàn.');
       setSelectedFile(file);
       setSnapshot(parsed);
     } catch (error: any) {
@@ -128,9 +131,14 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
                   <div className="mt-1 text-slate-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB · Tệp JSON hợp lệ về cấu trúc cơ bản</div>
                 </div>
               )}
+              <a href="/api/backup" download className="inline-flex text-xs font-semibold text-sky-800 underline underline-offset-2">Tải và lưu bản sao lưu hiện tại trước khi phục hồi</a>
+              <label className="flex items-start gap-2 text-xs text-slate-600">
+                <input type="checkbox" checked={preRestoreBackupConfirmed} onChange={e => setPreRestoreBackupConfirmed(e.target.checked)} className="mt-0.5 rounded border-slate-300" />
+                <span>Tôi đã tải và lưu bản sao lưu hiện tại để có thể quay lại trạng thái trước khi phục hồi.</span>
+              </label>
               <button
                 type="button"
-                disabled={!snapshot || isRestoring}
+                disabled={!snapshot || isRestoring || !preRestoreBackupConfirmed}
                 onClick={() => setConfirmRestore(true)}
                 className="min-h-10 w-full sm:w-auto px-4 py-2 rounded-lg bg-amber-700 hover:bg-amber-800 disabled:opacity-50 text-white text-sm font-semibold flex items-center justify-center gap-2"
               >
@@ -151,7 +159,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
         <div>
           <div className="font-semibold">Kiểm soát an toàn</div>
           <p className="mt-1 text-xs leading-relaxed">
-            Máy chủ tiếp tục kiểm tra quyền truy cập. Trước khi phục hồi, hệ thống tự lưu một bản dự phòng trạng thái hiện tại; thao tác phục hồi thay thế dữ liệu đang sử dụng bằng snapshot đã chọn.
+            Máy chủ chỉ cho phép Super Admin phục hồi, đối chiếu schema snapshot với D1 và thực hiện toàn bộ thay đổi trong một giao dịch. Nếu một bước ghi thất bại, D1 rollback toàn bộ. Sau khi phục hồi thành công, chỉ có thể quay lại trạng thái cũ bằng bản sao lưu hiện tại mà bạn đã tải và lưu trước đó.
           </p>
         </div>
       </div>
@@ -164,7 +172,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({ canRestore
               <div>
                 <h2 className="font-bold text-slate-900">Xác nhận phục hồi toàn bộ dữ liệu?</h2>
                 <p className="mt-2 text-sm text-slate-600">
-                  Thao tác này sẽ thay thế dữ liệu hiện tại bằng nội dung trong tệp sao lưu. Chỉ tiếp tục khi đã chọn đúng tệp và hiểu rõ ảnh hưởng.
+                  Thao tác này sẽ thay thế dữ liệu hiện tại bằng nội dung trong tệp sao lưu. Nếu snapshot không tương thích schema hoặc có lỗi ghi, hệ thống từ chối/rollback. Muốn quay lại sau khi phục hồi thành công, cần dùng bản sao lưu hiện tại đã tải trước đó.
                 </p>
                 <p className="mt-2 text-xs font-semibold text-rose-700 break-all">{selectedFile?.name}</p>
               </div>

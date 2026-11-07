@@ -69,16 +69,6 @@ export const api = {
     return parseJsonResponse(res);
   },
 
-  async switchRole(role: string): Promise<User> {
-    const res = await authFetch('/api/auth/switch-role', {
-      method: 'POST',
-      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ role })
-    });
-    const data = await parseJsonResponse(res);
-    return data.user;
-  },
-
   async login(username: string, password?: string): Promise<User> {
     const res = await authFetch('/api/auth/login', {
       method: 'POST',
@@ -90,16 +80,6 @@ export const api = {
       throw new Error('Đăng nhập không nhận được thông tin tài khoản hợp lệ từ máy chủ. Vui lòng thử lại.');
     }
     // The session is held only in an HttpOnly cookie, never in JavaScript storage.
-    return data.user;
-  },
-
-  async register(params: { username: string; password: string; fullName: string; email?: string; role?: string; phone?: string; organization?: string }): Promise<User> {
-    const res = await authFetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
-    });
-    const data = await parseJsonResponse(res);
     return data.user;
   },
 

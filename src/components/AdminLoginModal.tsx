@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { User } from '../types';
 import { ShieldCheck, Lock, User as UserIcon, AlertCircle, X, CheckCircle2, Eye, EyeOff } from 'lucide-react';
@@ -17,16 +17,11 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
     if (typeof window === 'undefined') return '';
     return window.localStorage.getItem('portal_remembered_username') || '';
   });
-  const [password, setPassword] = useState(() => {
-    if (typeof window === 'undefined') return '';
-    const saved = window.localStorage.getItem('portal_remembered_password');
-    if (!saved) return '';
-    try {
-      return decodeURIComponent(atob(saved));
-    } catch {
-      return '';
-    }
-  });
+  const [password, setPassword] = useState('');
+
+  useEffect(() => {
+    try { window.localStorage.removeItem('portal_remembered_password'); } catch {}
+  }, []);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,9 +38,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
         if (rememberAccount) {
           window.localStorage.setItem('portal_remember_account', 'true');
           window.localStorage.setItem('portal_remembered_username', normalizedUsername);
-          try {
-            window.localStorage.setItem('portal_remembered_password', btoa(encodeURIComponent(password)));
-          } catch {}
+          window.localStorage.removeItem('portal_remembered_password');
         } else {
           window.localStorage.removeItem('portal_remember_account');
           window.localStorage.removeItem('portal_remembered_username');

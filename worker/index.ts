@@ -213,23 +213,34 @@ async function ensureAuditLogTable(db: D1Database): Promise<Set<string>> {
   return new Set((info.results || []).map((column: any) => String(column.name)));
 }
 
+async function buildAuditLogStatement(db: D1Database, actor: any, action: string, moduleName: string, entityId: string, details: string, onlyIfPreviousWriteChanged = false): Promise<D1PreparedStatement> {
+  const columns = await ensureAuditLogTable(db);
+  const now = new Date().toISOString();
+  const values: Record<string, any> = {
+    id: `log_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`, user_id: actor?.id || null,
+    user_name: actor?.fullName || actor?.username || 'system', user_role: actor?.role || 'system', action,
+    module: moduleName, target_module: moduleName, entity_id: entityId, target_id: entityId, details,
+    created_at: now, timestamp: now
+  };
+  const entries = Object.entries(values).filter(([column]) => columns.has(column));
+  if (!entries.some(([column]) => column === 'action')) throw new Error('Bảng audit_logs thiếu cột action bắt buộc.');
+  const columnSql = entries.map(([column]) => `"${column}"`).join(', ');
+  const valueSql = entries.map(() => '?').join(', ');
+  const sql = onlyIfPreviousWriteChanged ? `INSERT INTO audit_logs (${columnSql}) SELECT ${valueSql} WHERE changes() > 0` : `INSERT INTO audit_logs (${columnSql}) VALUES (${valueSql})`;
+  return db.prepare(sql).bind(...entries.map(([, value]) => value));
+}
+
+
 // Helper: Origin & CSRF validation
 function isAllowedOrigin(origin: string | null, requestUrl: string): boolean {
-  if (!origin) return true;
+  if (!origin) return false;
   try {
-    const origUrl = new URL(origin);
-    const host = origUrl.hostname;
-    const reqHost = new URL(requestUrl).hostname;
-    if (host === reqHost) return true;
-    if (host === 'khcn.xuanthang.io.vn' || host.endsWith('.xuanthang.io.vn')) return true;
-    if (host.endsWith('.run.app')) return true;
-    if (host.endsWith('.pages.dev')) return true;
-    if (host.endsWith('.workers.dev')) return true;
-    if (host === 'localhost' || host === '127.0.0.1') return true;
-    return false;
-  } catch {
-    return false;
-  }
+    const originUrl = new URL(origin);
+    const requestOrigin = new URL(requestUrl);
+    if (originUrl.origin === requestOrigin.origin) return true;
+    const localHosts = ['localhost', '127.0.0.1'];
+    return localHosts.includes(originUrl.hostname) && localHosts.includes(requestOrigin.hostname);
+  } catch { return false; }
 }
 
 function getCorsHeaders(request: Request): Record<string, string> {
@@ -443,7 +454,7 @@ export default {
       // 3. CSRF / Origin Check for State-Changing Requests
       if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
         const origin = request.headers.get('Origin') || request.headers.get('Referer');
-        if (origin && !isAllowedOrigin(origin, request.url)) {
+        if (!origin || !isAllowedOrigin(origin, request.url)) {
           return jsonResponse({
             success: false,
             message: 'Từ chối truy cập: Vi phạm chính sách kiểm tra Origin / CSRF.'
@@ -1696,6 +1707,84 @@ export default {
         }
       }
 
+      // Full restore is schema-checked and committed as one D1 batch transaction.
+      if (url.pathname === '/api/restore' && request.method === 'POST') {
+        if (currentUser.role !== 'super_admin') return jsonResponse({ success: false, message: 'Chỉ Super Admin mới được phục hồi toàn bộ dữ liệu hệ thống.' }, 403, corsHeaders);
+        if (!env.DB) return jsonResponse({ success: false, message: 'Cơ sở dữ liệu D1 chưa kết nối.' }, 500, corsHeaders);
+        const snapshot = await request.json().catch(() => null) as any;
+        if (!snapshot || snapshot.backupFormat !== 'khcn-d1-full-backup-v1' || !snapshot.tables || typeof snapshot.tables !== 'object' || !snapshot.schema || typeof snapshot.schema !== 'object') return jsonResponse({ success: false, message: 'Tệp sao lưu không đúng định dạng snapshot D1 đầy đủ hoặc thiếu cấu trúc bảng.' }, 400, corsHeaders);
+        try {
+          if (new TextEncoder().encode(JSON.stringify(snapshot)).length > 20_000_000) return jsonResponse({ success: false, message: 'Snapshot vượt giới hạn an toàn 20 MB. Không có dữ liệu nào bị thay đổi.' }, 413, corsHeaders);
+          const allow = new Set<string>([...ALLOWED_MODULES, 'system_config', 'users', 'entity_relationships', 'relationships', 'audit_logs', 'connection_messages', 'attachments', 'form_configs']);
+          const tableResult = await env.DB.prepare("SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' ORDER BY name").all<any>();
+          const actual = new Map<string, string>();
+          for (const t of tableResult.results || []) if (allow.has(String(t.name))) actual.set(String(t.name), String(t.sql || ''));
+          const names = Object.keys(snapshot.tables).filter(name => name !== 'd1_migrations');
+          const unknown = names.filter(name => !allow.has(name));
+          if (unknown.length) return jsonResponse({ success: false, message: 'Snapshot chứa bảng ngoài danh mục ứng dụng: ' + unknown.join(', ') }, 409, corsHeaders);
+          const missing = [...actual.keys()].filter(name => !Object.prototype.hasOwnProperty.call(snapshot.tables, name));
+          const extra = names.filter(name => !actual.has(name));
+          if (missing.length || extra.length) return jsonResponse({ success: false, message: 'Cấu trúc snapshot không khớp D1. Thiếu: ' + (missing.join(', ') || 'không có') + '; dư: ' + (extra.join(', ') || 'không có') + '. Cần đồng bộ schema/migration trước khi phục hồi.' }, 409, corsHeaders);
+          const norm = (sql: string) => sql.replace(/[`"\[\]]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+          const rowsByTable = new Map<string, any[]>();
+          let totalRows = 0;
+          for (const tableName of actual.keys()) {
+            const rows = snapshot.tables[tableName];
+            const snapshotSql = String(snapshot.schema[tableName] || '');
+            if (!Array.isArray(rows) || !snapshotSql.trim()) return jsonResponse({ success: false, message: `Snapshot thiếu dữ liệu/schema của bảng ${tableName}.` }, 409, corsHeaders);
+            if (norm(snapshotSql) !== norm(actual.get(tableName) || '')) return jsonResponse({ success: false, message: `Schema bảng ${tableName} khác D1 hiện tại. Cần áp dụng migration tương ứng; dữ liệu chưa bị thay đổi.` }, 409, corsHeaders);
+            const info = await env.DB.prepare(`PRAGMA table_info("${tableName}")`).all<any>();
+            const columnRows = info.results || [];
+            const columns = new Set(columnRows.map((column: any) => String(column.name)));
+            const snapshotColumns = new Set<string>();
+            for (const row of rows) {
+              if (!row || typeof row !== 'object' || Array.isArray(row)) return jsonResponse({ success: false, message: `Snapshot có bản ghi không hợp lệ trong bảng ${tableName}.` }, 400, corsHeaders);
+              Object.keys(row).forEach(key => snapshotColumns.add(key));
+            }
+            const unknownColumns = [...snapshotColumns].filter(column => !columns.has(column) || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(column));
+            if (unknownColumns.length) return jsonResponse({ success: false, message: `Bảng ${tableName} có cột không tồn tại trong D1: ${unknownColumns.join(', ')}.` }, 409, corsHeaders);
+            const required = columnRows.filter((column: any) => (Number(column.notnull) === 1 || Number(column.pk) > 0) && column.dflt_value === null).map((column: any) => String(column.name));
+            for (let i = 0; i < rows.length; i++) {
+              const missingColumns = required.filter(column => !Object.prototype.hasOwnProperty.call(rows[i], column) || rows[i][column] === null || rows[i][column] === undefined);
+              if (missingColumns.length) return jsonResponse({ success: false, message: `Bảng ${tableName}, dòng ${i + 1} thiếu cột bắt buộc: ${missingColumns.join(', ')}.` }, 409, corsHeaders);
+            }
+            if (new TextEncoder().encode(JSON.stringify(rows)).length > 1_800_000) return jsonResponse({ success: false, message: `Dữ liệu bảng ${tableName} vượt giới hạn 1,8 MB. Không có dữ liệu nào bị thay đổi.` }, 413, corsHeaders);
+            rowsByTable.set(tableName, rows);
+            totalRows += rows.length;
+          }
+          const users = rowsByTable.get('users') || [];
+          const currentAdmin = users.find((u: any) => String(u.id) === String(currentUser.id));
+          const activeAdmin = users.some((u: any) => String(u.role) === 'super_admin' && Number(u.is_active) === 1 && u.password_hash && (u.password_salt || u.salt));
+          if (!currentAdmin || String(currentAdmin.role) !== 'super_admin' || Number(currentAdmin.is_active) !== 1 || !activeAdmin) return jsonResponse({ success: false, message: 'Snapshot phải giữ tài khoản Super Admin đang phục hồi và ít nhất một Super Admin đang hoạt động có hash/salt.' }, 409, corsHeaders);
+          const deleteOrder = ['attachments', 'connection_messages', 'relationships', 'entity_relationships', 'audit_logs', ...[...ALLOWED_MODULES].reverse(), 'form_configs', 'users', 'system_config'];
+          const insertOrder = ['system_config', 'users', 'form_configs', ...ALLOWED_MODULES, 'relationships', 'entity_relationships', 'connection_messages', 'attachments', 'audit_logs'];
+          const statements: D1PreparedStatement[] = [];
+          for (const name of deleteOrder) if (actual.has(name)) statements.push(env.DB.prepare(`DELETE FROM "${name}"`));
+          for (const name of insertOrder) {
+            if (!actual.has(name)) continue;
+            const rows = rowsByTable.get(name) || [];
+            if (!rows.length) continue;
+            const columns = [...new Set(rows.flatMap((row: any) => Object.keys(row)))];
+            const colSql = columns.map(col => `"${col}"`).join(', ');
+            const selectSql = columns.map(col => `json_extract(value, '$."${col}"')`).join(', ');
+            statements.push(env.DB.prepare(`INSERT INTO "${name}" (${colSql}) SELECT ${selectSql} FROM json_each(?)`).bind(JSON.stringify(rows)));
+          }
+          if (actual.has('audit_logs')) {
+            const info = await env.DB.prepare('PRAGMA table_info("audit_logs")').all<any>();
+            const cols = new Set((info.results || []).map((x: any) => String(x.name)));
+            const now = new Date().toISOString();
+            const values: Record<string, any> = { id: `log_restore_${crypto.randomUUID()}`, user_id: currentUser.id, user_name: currentUser.fullName, user_role: currentUser.role, action: 'restore', module: 'system', target_module: 'system', entity_id: null, target_id: null, details: `Phục hồi snapshot ${snapshot.generatedAt || 'không rõ thời điểm'} (${totalRows} bản ghi).`, created_at: now, timestamp: now };
+            const entries = Object.entries(values).filter(([col]) => cols.has(col));
+            if (entries.some(([col]) => col === 'action')) statements.push(env.DB.prepare(`INSERT INTO audit_logs (${entries.map(([col]) => `"${col}"`).join(', ')}) VALUES (${entries.map(() => '?').join(', ')})`).bind(...entries.map(([, value]) => value)));
+          }
+          const results = await env.DB.batch(statements);
+          if (!Array.isArray(results) || results.length !== statements.length || results.some((result: any) => !result?.success)) throw new Error('D1 không xác nhận đầy đủ giao dịch phục hồi; D1 sẽ rollback nếu có lỗi trong batch.');
+          return jsonResponse({ success: true, restoredTables: actual.size, restoredRows: totalRows, message: `Đã phục hồi ${totalRows} bản ghi trên ${actual.size} bảng trong một giao dịch D1.` }, 200, corsHeaders);
+        } catch (error: any) {
+          return jsonResponse({ success: false, message: 'Không thể phục hồi snapshot D1: ' + (error?.message || 'Lỗi không xác định') + '. Nếu batch thất bại, toàn bộ thay đổi được rollback.' }, 500, corsHeaders);
+        }
+      }
+
       // K. Global Search across all D1 modules.
       if (url.pathname === '/api/search') {
         const rawQuery = sanitizeString(url.searchParams.get('q') || '').trim();
@@ -2040,6 +2129,9 @@ export default {
           if (!needId || !senderName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderEmail) || !messageText) return jsonResponse({ success: false, message: 'Vui lòng cung cấp hồ sơ kết nối, họ tên, email hợp lệ và nội dung tin nhắn.' }, 400, corsHeaders);
           const target = await env.DB.prepare('SELECT * FROM collaboration_needs WHERE id = ?').bind(needId).first<any>();
           if (!target) return jsonResponse({ success: false, message: 'Không tìm thấy nhu cầu kết nối được chọn.' }, 404, corsHeaders);
+          const targetStatus = String(target.status || 'published').toLowerCase();
+          const targetVisibility = String(target.publicity_level || target.publicityLevel || 'public').toLowerCase();
+          if (!['approved', 'published'].includes(targetStatus) || !['public', ''].includes(targetVisibility)) return jsonResponse({ success: false, message: 'Nhu cầu kết nối hiện không được công khai hoặc không còn tiếp nhận kết nối.' }, 404, corsHeaders);
           const targetTitle = String(target.title || target.name || target.need_title || needId);
           const msg = {
             id: `msg_${Date.now()}_${crypto.randomUUID().slice(0, 4)}`,
@@ -2334,14 +2426,10 @@ export default {
               const cols = entries.map(([column]) => column).join(', ');
               const placeholders = entries.map(() => '?').join(', ');
               const values = entries.map(([, value]) => typeof value === 'object' && value !== null ? JSON.stringify(value) : value);
-              const inserted = await env.DB.prepare(`INSERT INTO ${moduleName} (${cols}) VALUES (${placeholders})`).bind(...values).run();
-              if (!inserted.success || Number(inserted.meta?.changes || 0) !== 1) throw new Error('D1 không xác nhận đã tạo bản ghi.');
-
-              // Audit log
-              await env.DB.prepare(`
-                INSERT INTO audit_logs (id, user_id, user_name, user_role, action, target_module, target_id, details, timestamp)
-                VALUES (?, ?, ?, ?, 'create', ?, ?, ?, datetime('now'))
-              `).bind(`log_${Date.now()}_${crypto.randomUUID().slice(0, 4)}`, currentUser.id, currentUser.fullName, currentUser.role, moduleName, newId, `Tạo mới bản ghi [${clean.title || clean.id}]`).run();
+              const recordStatement = env.DB.prepare(`INSERT INTO ${moduleName} (${cols}) VALUES (${placeholders})`).bind(...values);
+              const auditStatement = await buildAuditLogStatement(env.DB, currentUser, 'create', moduleName, newId, `Tạo mới bản ghi [${clean.title || clean.id}]`);
+              const writeResults = await env.DB.batch([recordStatement, auditStatement]);
+              if (!writeResults?.[0]?.success || Number(writeResults[0]?.meta?.changes || 0) !== 1 || !writeResults?.[1]?.success || Number(writeResults[1]?.meta?.changes || 0) !== 1) throw new Error('D1 không xác nhận đầy đủ thao tác tạo hồ sơ và nhật ký kiểm toán; giao dịch đã được hoàn tác.');
             } catch (e: any) {
               return jsonResponse({ success: false, message: 'Lỗi ghi dữ liệu D1: ' + e.message }, 500, corsHeaders);
             }
@@ -2386,14 +2474,11 @@ export default {
               const setClause = entries.map(([column]) => `${column} = ?`).join(', ');
               const values = entries.map(([, value]) => typeof value === 'object' && value !== null ? JSON.stringify(value) : value);
               values.push(recordId);
-              const updated = await env.DB.prepare(`UPDATE ${moduleName} SET ${setClause} WHERE id = ?`).bind(...values).run();
-              if (!updated.success || Number(updated.meta?.changes || 0) !== 1) return jsonResponse({ success: false, message: 'Không tìm thấy bản ghi hoặc D1 không xác nhận cập nhật.' }, 404, corsHeaders);
-
-              // Audit log
-              await env.DB.prepare(`
-                INSERT INTO audit_logs (id, user_id, user_name, user_role, action, target_module, target_id, details, timestamp)
-                VALUES (?, ?, ?, ?, 'update', ?, ?, ?, datetime('now'))
-              `).bind(`log_${Date.now()}_${crypto.randomUUID().slice(0, 4)}`, currentUser.id, currentUser.fullName, currentUser.role, moduleName, recordId, `Chỉnh sửa bản ghi [${clean.title || recordId}]`).run();
+              const recordStatement = env.DB.prepare(`UPDATE ${moduleName} SET ${setClause} WHERE id = ?`).bind(...values);
+              const auditStatement = await buildAuditLogStatement(env.DB, currentUser, 'update', moduleName, recordId, `Chỉnh sửa bản ghi [${clean.title || recordId}]`, true);
+              const writeResults = await env.DB.batch([recordStatement, auditStatement]);
+              if (!writeResults?.[0]?.success || Number(writeResults[0]?.meta?.changes || 0) !== 1) return jsonResponse({ success: false, message: 'Không tìm thấy bản ghi hoặc D1 không xác nhận cập nhật.' }, 404, corsHeaders);
+              if (!writeResults?.[1]?.success || Number(writeResults[1]?.meta?.changes || 0) !== 1) throw new Error('D1 không xác nhận ghi nhật ký kiểm toán; giao dịch đã được hoàn tác.');
             } catch (e: any) {
               return jsonResponse({ success: false, message: 'Lỗi cập nhật D1: ' + e.message }, 500, corsHeaders);
             }
@@ -2408,34 +2493,21 @@ export default {
           }
           if (env.DB) {
             try {
-              await env.DB.prepare(`DELETE FROM ${moduleName} WHERE id = ?`).bind(recordId).run();
-
-              // Clean up linked records only when a supported relationship table exists.
-              // Older D1 databases may use entity_relationships, while newer worker code
-              // may encounter relationships. Missing optional link tables must not block
-              // deletion of the requested module record.
-              const relationshipTables = await env.DB.prepare(
-                "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('relationships', 'entity_relationships')"
-              ).all<{ name: string }>();
+              const deleteStatements: D1PreparedStatement[] = [
+                env.DB.prepare(`DELETE FROM ${moduleName} WHERE id = ?`).bind(recordId),
+                await buildAuditLogStatement(env.DB, currentUser, 'delete', moduleName, recordId, `Xóa bản ghi [${recordId}]`, true)
+              ];
+              const relationshipTables = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('relationships', 'entity_relationships')").all<{ name: string }>();
               for (const relationshipTable of relationshipTables.results || []) {
-                const relationshipColumns = await env.DB.prepare(
-                  `PRAGMA table_info("${relationshipTable.name}")`
-                ).all<any>();
-                const availableRelationshipColumns = new Set(
-                  (relationshipColumns.results || []).map((column: any) => String(column.name))
-                );
-                if (availableRelationshipColumns.has('source_id') && availableRelationshipColumns.has('target_id')) {
-                  await env.DB.prepare(
-                    `DELETE FROM "${relationshipTable.name}" WHERE source_id = ? OR target_id = ?`
-                  ).bind(recordId, recordId).run();
-                }
+                const relationshipName = String(relationshipTable.name);
+                if (!['relationships', 'entity_relationships'].includes(relationshipName)) continue;
+                const relationshipColumns = await env.DB.prepare(`PRAGMA table_info("${relationshipName}")`).all<any>();
+                const availableRelationshipColumns = new Set((relationshipColumns.results || []).map((column: any) => String(column.name)));
+                if (availableRelationshipColumns.has('source_id') && availableRelationshipColumns.has('target_id')) deleteStatements.push(env.DB.prepare(`DELETE FROM "${relationshipName}" WHERE source_id = ? OR target_id = ?`).bind(recordId, recordId));
               }
-
-              // Audit log
-              await env.DB.prepare(`
-                INSERT INTO audit_logs (id, user_id, user_name, user_role, action, target_module, target_id, details, timestamp)
-                VALUES (?, ?, ?, ?, 'delete', ?, ?, ?, datetime('now'))
-              `).bind(`log_${Date.now()}_${crypto.randomUUID().slice(0, 4)}`, currentUser.id, currentUser.fullName, currentUser.role, moduleName, recordId, `Xóa bản ghi [${recordId}]`).run();
+              const deleteResults = await env.DB.batch(deleteStatements);
+              if (!deleteResults?.[0]?.success || Number(deleteResults[0]?.meta?.changes || 0) !== 1) return jsonResponse({ success: false, message: 'Không tìm thấy bản ghi hoặc D1 không xác nhận xóa.' }, 404, corsHeaders);
+              if (!deleteResults?.[1]?.success || Number(deleteResults[1]?.meta?.changes || 0) !== 1) throw new Error('D1 không xác nhận ghi nhật ký xóa; giao dịch đã được hoàn tác.');
             } catch (e: any) {
               return jsonResponse({ success: false, message: 'Lỗi xóa bản ghi D1: ' + e.message }, 500, corsHeaders);
             }
@@ -2579,7 +2651,7 @@ export default {
           startup_projects: ['tenduan', 'tenduankhoinghiep', 'tendukhoinghiep', 'tenduanstartup', 'tenduankhoinghiepsangtao', 'tenproject', 'projectname', 'projecttitle'],
           startup_ideas: ['tenytuong', 'tenytuongkhoinghiep', 'tenytuongkhoinghiepsangtao', 'ideaname', 'ideatitle'],
           wards: ['tenxaphuong', 'tenxaphuongdackhu', 'tenxa', 'tenphuong', 'tendackhu', 'wardname'],
-          universities: ['tentruong', 'tentruongdaihoccaodang', 'tentruongdaihoc', 'tentruongcaodang', 'tentrungcap', 'universityname', 'schoolname', 'collegename'],
+          universities: ['tentruong', 'truongdaihoccaodang', 'tentruongdaihoccaodang', 'tentruongdaihoc', 'tentruongcaodang', 'tentruonghoc', 'tendaotao', 'tencosodaotao', 'tencosogiaoduc', 'tendaihoc', 'tendonvi', 'tentrungcap', 'universityname', 'schoolname', 'collegename'],
           featured_startups: ['tenduan', 'tendoanhnghiep', 'projectname', 'projecttitle'],
           organizations: ['tentochuc', 'tenvien', 'tentochuckhcn', 'tentochuckhoahoccongnghe', 'organizationname'],
           investors: ['tennhadautu', 'hovaten', 'hoten', 'tennhadautucanhan', 'investorname', 'fullname'],
@@ -2638,9 +2710,9 @@ export default {
             if (key === 'thoigianthuchien' && moduleName === 'experts') target = 'project_duration';
             if (key === 'thanhvienthamgia' && moduleName === 'experts') target = 'project_members';
             if (moduleName === 'universities') {
-              if (['thuocxaphuong', 'xaphuong', 'phuongxa', 'donvixaphuong'].includes(key)) target = 'ward';
-              if (['dienthoai', 'sodienthoai'].includes(key)) target = 'contact_phone';
-              if (key === 'tentruongdaihoccaodang') target = primaryColumn;
+              if (['thuocxaphuong', 'xaphuong', 'phuongxa', 'donvixaphuong', 'tenxaphuong', 'tenphuongxa', 'ward', 'wardname', 'commune'].includes(key)) target = 'ward';
+              if (['dienthoai', 'sodienthoai', 'sodienthoailienhe', 'dienthoailienhe'].includes(key)) target = 'contact_phone';
+              if (['tentruongdaihoccaodang', 'truongdaihoccaodang', 'tentruonghoc', 'tendaotao', 'tencosodaotao', 'tencosogiaoduc', 'tendaihoc', 'tendonvi', 'universityname', 'schoolname', 'collegename'].includes(key)) target = primaryColumn;
             }
             if (key.startsWith('website')) target = 'website';
             if (key.startsWith('sanphamgiaiquyetvande')) target = 'problem_solved';
@@ -2761,7 +2833,8 @@ export default {
                 const value = values[column];
                 return typeof value === 'object' && value !== null ? JSON.stringify(value) : value;
               });
-              await env.DB.prepare(`UPDATE ${moduleName} SET ${assignments} WHERE id = ?`).bind(...params, duplicate.id).run();
+              const updateResult = await env.DB.prepare(`UPDATE ${moduleName} SET ${assignments} WHERE id = ?`).bind(...params, duplicate.id).run();
+              if (!updateResult.success || Number(updateResult.meta?.changes || 0) !== 1) throw new Error('D1 không xác nhận cập nhật bản ghi trùng lặp.');
               if (String(duplicate.status || '').toLowerCase() === 'draft') importedIds.push(String(duplicate.id));
             } else {
               const columns = Object.keys(values).filter(column => tableColumns.has(column));
@@ -2770,7 +2843,8 @@ export default {
                 const value = values[column];
                 return typeof value === 'object' && value !== null ? JSON.stringify(value) : value;
               });
-              await env.DB.prepare(`INSERT INTO ${moduleName} (${columns.map(column => `"${column}"`).join(', ')}) VALUES (${placeholders})`).bind(...params).run();
+              const insertResult = await env.DB.prepare(`INSERT INTO ${moduleName} (${columns.map(column => `"${column}"`).join(', ')}) VALUES (${placeholders})`).bind(...params).run();
+              if (!insertResult.success || Number(insertResult.meta?.changes || 0) !== 1) throw new Error('D1 không xác nhận đã thêm bản ghi.');
               importedIds.push(id);
             }
             importedCount += 1;

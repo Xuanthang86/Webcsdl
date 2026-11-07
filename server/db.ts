@@ -255,10 +255,6 @@ class DatabaseManager {
       const uName = u.username.toLowerCase();
       const uEmail = (u.email || '').toLowerCase();
       if (uName === key || uEmail === key) return true;
-      if (key === 'admin' && uName === 'superadmin') return true;
-      if (key === 'officer1' && uName === 'officer') return true;
-      if (key === 'superadmin@danang.gov.vn' && uName === 'superadmin') return true;
-      if (key === 'xuanthangbx01qb@gmail.com' && uName === 'superadmin') return true;
       return false;
     });
     if (!user || !user.isActive) {
@@ -274,11 +270,11 @@ class DatabaseManager {
         isValid = true;
       }
     } else {
-      // Legacy plaintext check & automatic cryptographic upgrade
-      const validPlain = user.password || 'admin123';
-      if (password === validPlain || password === 'admin123') {
+      // Local seed accounts require an explicit local-only bootstrap secret.
+      const bootstrapPassword = process.env.DEV_SEED_PASSWORD || '';
+      if (bootstrapPassword.length >= 12 && password === bootstrapPassword) {
         isValid = true;
-        const { hash, salt } = hashPassword(password || 'admin123');
+        const { hash, salt } = hashPassword(password);
         user.passwordHash = hash;
         user.passwordSalt = salt;
         delete user.password;
@@ -307,7 +303,8 @@ class DatabaseManager {
       throw new Error(`Tên đăng nhập "${userData.username}" đã tồn tại trên hệ thống.`);
     }
 
-    const rawPassword = userData.password || 'admin123';
+    const rawPassword = String(userData.password || '');
+    if (rawPassword.length < 8) throw new Error('Mật khẩu tài khoản mới phải có ít nhất 8 ký tự.');
     const { hash, salt } = hashPassword(rawPassword);
 
     const newUser: User = {

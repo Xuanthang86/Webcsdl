@@ -306,22 +306,6 @@ export default function App() {
     }
   };
 
-  const handleSwitchRole = async (role: string) => {
-    try {
-      const user = await api.switchRole(role);
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('portal_tab_active', 'true');
-      }
-      setCurrentUser(user);
-      setSuccessToast(`Đã chuyển đổi sang vai trò: ${user.fullName} (${user.role})`);
-      setTimeout(() => setSuccessToast(null), 3000);
-      const newStats = await api.getStats();
-      setStats(newStats);
-    } catch (err: any) {
-      showError(err.message || 'Lỗi chuyển đổi vai trò');
-    }
-  };
-
   const handleOpenDetail = async (entity: BaseEntity) => {
     if (!entity || !entity.id) return;
     const modType = entity.moduleType || 'science_tasks';
@@ -426,7 +410,6 @@ export default function App() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           currentUser={currentUser}
-          onSwitchRole={handleSwitchRole}
           availableRoles={availableRoles}
           systemConfig={systemConfig}
           onOpenSubmitModal={() => setShowSubmitModal(true)}

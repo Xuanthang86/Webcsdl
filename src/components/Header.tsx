@@ -30,7 +30,6 @@ interface HeaderProps {
   currentView: 'home' | 'browse' | 'admin';
   onNavigate: (view: 'home' | 'browse' | 'admin') => void;
   currentUser?: User;
-  onSwitchRole: (role: string) => void;
   availableRoles: Array<{ role: string; label: string }>;
   systemConfig: SystemConfig;
   onOpenSubmitModal: () => void;
@@ -44,7 +43,6 @@ export const Header: React.FC<HeaderProps> = ({
   currentView,
   onNavigate,
   currentUser,
-  onSwitchRole,
   availableRoles,
   systemConfig,
   onOpenSubmitModal,
