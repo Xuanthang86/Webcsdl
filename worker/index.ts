@@ -235,12 +235,17 @@ async function ensureAuditLogTable(db: D1Database): Promise<Set<string>> {
     ['user_id', 'TEXT'], ['user_name', 'TEXT'], ['user_role', 'TEXT'],
     ['action', "TEXT NOT NULL DEFAULT 'system'"], ['module', 'TEXT'],
     ['entity_id', 'TEXT'], ['details', 'TEXT'], ['ip_address', 'TEXT'],
-    ['created_at', "TEXT DEFAULT (datetime('now'))"], ['timestamp', "TEXT DEFAULT (datetime('now'))"]
+    // SQLite ALTER TABLE requires a constant default; timestamps are backfilled below.
+    ['created_at', 'TEXT'], ['timestamp', 'TEXT']
   ];
   for (const [name, definition] of additions) {
     if (columns.has(name)) continue;
     try { await db.prepare(`ALTER TABLE audit_logs ADD COLUMN "${name}" ${definition}`).run(); }
     catch { /* Another request may have applied the same additive migration. */ }
+  }
+  for (const name of ['created_at', 'timestamp']) {
+    try { await db.prepare(`UPDATE audit_logs SET "${name}" = datetime('now') WHERE "${name}" IS NULL`).run(); }
+    catch { /* Keep the existing audit history readable if a legacy schema is unusual. */ }
   }
   info = await db.prepare('PRAGMA table_info(audit_logs)').all<any>();
   columns = new Set((info.results || []).map((column: any) => String(column.name)));
