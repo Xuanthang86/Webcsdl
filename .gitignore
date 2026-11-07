@@ -10,3 +10,6 @@ coverage/
 # Local development database may contain account hashes and personal data
 /data/db.json
 /data/db.json.corrupt.*
+
+# Historical D1 dump contains account credential hashes and should remain local only
+/d1-migration.sql
