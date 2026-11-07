@@ -11,7 +11,7 @@ import {
 
 // Authentication is cookie-based. The HttpOnly session cookie is intentionally
 // non-persistent so closing the browser ends the login session.
-function removeLegacyStoredTokens(): void {
+function removeStoredToken(): void {
   if (typeof window === 'undefined') return;
   window.sessionStorage.removeItem('portal_session_token');
   window.localStorage.removeItem('portal_session_token');
@@ -19,7 +19,7 @@ function removeLegacyStoredTokens(): void {
 }
 
 function getAuthHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
-  removeLegacyStoredTokens();
+  removeStoredToken();
   return { ...extraHeaders };
 }
 
