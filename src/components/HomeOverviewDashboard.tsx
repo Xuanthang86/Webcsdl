@@ -401,6 +401,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
                         </div>
                       ))}
                     </div>
+                    <p className="text-[10px] text-slate-500">Một chuyên gia có thể đồng thời có học hàm và học vị; tổng lượt phân loại vì vậy có thể lớn hơn tổng số hồ sơ.</p>
                   </div>
                 </div>
               )}
@@ -500,6 +501,16 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
                       );
                     })}
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-rose-100 text-[11px]">
+                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1">
+                      <div className="font-semibold text-emerald-800">Dự án khởi nghiệp theo năm</div>
+                      {projectYears.slice(0, 5).map(item => <div key={item.name} className="flex justify-between gap-2"><span>{item.name}</span><strong>{item.count}</strong></div>)}
+                    </div>
+                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1">
+                      <div className="font-semibold text-emerald-800">Dự án khởi nghiệp theo lĩnh vực</div>
+                      {projectFields.slice(0, 5).map(item => <div key={item.name} className="flex justify-between gap-2"><span className="truncate">{item.name}</span><strong>{item.count}</strong></div>)}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -586,6 +597,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
                   </div>
                 ))}
               </div>
+              <p className="text-[10px] text-slate-500 md:col-span-2 xl:col-span-5">Một chuyên gia có thể đồng thời có học hàm và học vị; tổng lượt phân loại vì vậy có thể lớn hơn tổng số hồ sơ.</p>
             </div>
           </div>
         )}
