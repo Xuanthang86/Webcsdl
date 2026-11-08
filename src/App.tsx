@@ -268,7 +268,15 @@ export default function App() {
     initAppData();
 
     const handleAuthExpired = () => {
-      handleLogout();
+      const adminWasOpen = window.sessionStorage.getItem('portal_current_view') === 'admin' || window.location.hash === '#admin';
+      setCurrentUser(undefined);
+      if (adminWasOpen) {
+        // Preserve the admin screen after an iOS/WebKit tab restore. The API remains
+        // protected by the HttpOnly cookie; require re-authentication before data access.
+        window.sessionStorage.setItem('portal_tab_active', 'true');
+        setCurrentView('admin');
+        setShowAdminLoginModal(true);
+      }
     };
     window.addEventListener('portal:auth-expired', handleAuthExpired);
     return () => window.removeEventListener('portal:auth-expired', handleAuthExpired);
@@ -369,6 +377,7 @@ export default function App() {
     if (administrativeRoles.includes(user.role)) {
       setCurrentView('admin');
     } else {
+      sessionStorage.removeItem('portal_tab_active');
       setCurrentView('home');
     }
   };
