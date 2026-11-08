@@ -3,9 +3,14 @@ import type { Request, Response, NextFunction } from 'express';
 import type { User, UserRole, ModuleType } from './types.ts';
 import { db } from './db.ts';
 
-const SESSION_SECRET = (process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 32)
-  ? process.env.SESSION_SECRET
-  : 'danang-sokhcn-portal-secure-secret-2026-v2-production-key';
+const configuredSessionSecret = process.env.SESSION_SECRET || '';
+if (process.env.NODE_ENV === 'production' && configuredSessionSecret.length < 32) {
+  throw new Error('SESSION_SECRET must be configured with at least 32 characters in production.');
+}
+// Development gets a process-local random secret; it is never a production fallback.
+const SESSION_SECRET = configuredSessionSecret.length >= 32
+  ? configuredSessionSecret
+  : crypto.randomBytes(32).toString('hex');
 
 // In-memory set for revoked tokens (e.g. on logout or password change)
 const revokedTokenSignatures = new Set<string>();
