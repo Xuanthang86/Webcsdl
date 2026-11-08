@@ -146,16 +146,18 @@ export const DetailModal: React.FC<DetailModalProps> = ({
 
   const handleDownloadFile = async (fileName?: string) => {
     const safeTitle = (entity.title || 'ban_ghi').slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_');
-    const expertCode = entity.moduleType === 'experts' && entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_') ? entity.code : entity.id;
+    const expertCode = entity.moduleType === 'experts'
+      ? (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_') ? entity.code : 'chua-cap-nhat')
+      : (entity.code || entity.id);
     const rawDocName = fileName || `Ho_so_${expertCode}_${safeTitle}.txt`;
-    const docName = rawDocName.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-zA-Z0-9._-]/g, '_');
+    const docName = rawDocName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9._-]/g, '_');
     const content = `================================================================================
 ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ
 CỔNG DỮ LIỆU TỔNG HỢP KH&CN, ĐỔI MỚI SÁNG TẠO VÀ KHỞI NGHIỆP CẤP THÀNH PHỐ
 ================================================================================
 HỒ SƠ THÔNG TIN TRÍCH XUẤT CHÍNH THỨC
 Thời gian trích xuất: ${new Date().toLocaleString('vi-VN')}
-Mã số quản lý định danh: ${entity.code || entity.id}
+Mã số quản lý định danh: ${entity.moduleType === 'experts' && expertCode === 'chua-cap-nhat' ? 'Chưa cập nhật' : expertCode}
 Phân hệ cơ sở dữ liệu: ${entity.moduleType || 'science_tasks'}
 
 1. THÔNG TIN CHUNG
@@ -171,6 +173,38 @@ Phân hệ cơ sở dữ liệu: ${entity.moduleType || 'science_tasks'}
 
 2. MÔ TẢ TÓM TẮT NỘI DUNG
 ${entity.description || 'Không có mô tả chi tiết'}
+${entity.moduleType === 'experts' ? `
+3. THÔNG TIN CHUYÊN GIA
+- Họ và tên: ${safeDisplayValue(entity.fullName || entity.full_name || entity.expertName || entity.expert_name || entity.name || entity.title)}
+- Năm sinh: ${safeDisplayValue(entity.birthYear)}
+- Chuyên ngành: ${safeDisplayValue(entity.specialty || entity.primaryField || entity.field)}
+${isAuthorized ? `
+- Ngày tháng năm sinh: ${safeDisplayValue(entity.birthDate)}
+- Giới tính: ${safeDisplayValue(entity.gender)}
+- Học hàm: ${safeDisplayValue(entity.academicRank)}
+- Học vị: ${safeDisplayValue(entity.degree)}
+- Năm bắt đầu công tác: ${safeDisplayValue(entity.startWorkYear || entity.startYear)}
+- Chức danh nghiên cứu: ${safeDisplayValue(entity.researchTitle)}
+- Chức vụ: ${safeDisplayValue(entity.jobTitle || entity.position)}
+- Email: ${safeDisplayValue(entity.email || entity.publicEmail)}
+- Điện thoại: ${safeDisplayValue(entity.phone || entity.publicPhone)}
+- Lĩnh vực: ${safeDisplayValue(entity.field)}
+- Đơn vị công tác: ${safeDisplayValue(entity.workplace || entity.leadOrganization || entity.organization)}
+- Quá trình đào tạo: ${safeDisplayValue(entity.trainingProcess)}
+- Quá trình công tác: ${safeDisplayValue(entity.workExperience)}
+- Bài báo/công bố: ${safeDisplayValue(entity.publications)}
+- Văn bằng/chứng chỉ: ${safeDisplayValue(entity.qualifications)}
+- Công trình/kết quả nghiên cứu: ${safeDisplayValue(entity.researchOutputs)}
+- Đề tài/dự án: ${safeDisplayValue(entity.projects)}
+- Cấp đề tài: ${safeDisplayValue(entity.projectLevel)}
+- Thời gian thực hiện: ${safeDisplayValue(entity.projectDuration)}
+- Thành viên tham gia: ${safeDisplayValue(entity.projectMembers)}
+- Vai trò: ${safeDisplayValue(entity.projectRole)}
+- Tình trạng: ${safeDisplayValue(entity.projectStatus)}
+- Giải thưởng: ${safeDisplayValue(entity.awards)}
+- Kinh nghiệm: ${safeDisplayValue(entity.experienceNotes)}
+` : '- Thông tin chi tiết chuyên sâu: yêu cầu tài khoản được cấp quyền để trích xuất.'}
+` : ''}
 
 ================================================================================
 Bản quyền dữ liệu thuộc UBND Thành phố & Sở Khoa học và Công nghệ.
@@ -424,7 +458,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Mã / STT:</span>
-                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{entity.moduleType === 'experts' ? (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_') ? entity.code : 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}</span>
+                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{entity.code || entity.id}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Năm công nhận:</span>
