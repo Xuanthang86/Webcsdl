@@ -234,7 +234,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
           <div className="w-full min-w-0 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
               <span className="font-mono font-medium text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                {entity.code || entity.id}
+                {entity.moduleType === 'experts' ? (entity.code || 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}
               </span>
               <span aria-hidden="true">·</span>
               <span className="font-semibold text-slate-700 capitalize">
@@ -418,7 +418,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Mã / STT:</span>
-                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{entity.code || entity.id}</span>
+                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{entity.moduleType === 'experts' ? (entity.code || 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Năm công nhận:</span>
