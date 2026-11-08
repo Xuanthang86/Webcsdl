@@ -969,7 +969,9 @@ export default {
             userRow.role,
             `Đăng nhập thành công với tài khoản [${userRow.username}]`
           ).run();
-        } catch {}
+        } catch (auditError) {
+          console.error('[Audit] Không thể ghi nhật ký đăng nhập:', auditError);
+        }
 
         return jsonResponse({
           success: true,
@@ -3186,12 +3188,10 @@ export default {
           try {
             const missing: string[] = [];
             for (const moduleName of ALLOWED_MODULES) {
-              const info = await env.DB.prepare(`PRAGMA table_info("${moduleName}")`).all<any>();
-              const cols = new Set((info.results || []).map((column: any) => String(column.name)));
+              const cols = await ensureModuleImportSchema(env.DB, moduleName);
               if (!getPrimaryImportColumn(moduleName, cols) || !cols.has('status')) missing.push(moduleName);
             }
-            const uni = await env.DB.prepare('PRAGMA table_info("universities")').all<any>();
-            const uniCols = new Set((uni.results || []).map((column: any) => String(column.name)));
+            const uniCols = await ensureModuleImportSchema(env.DB, 'universities');
             t8Passed = missing.length === 0 && getPrimaryImportColumn('universities', uniCols) === 'name';
             t8Msg = t8Passed ? `Đã kiểm tra schema và trường tên chính của ${ALLOWED_MODULES.length} phân hệ; universities dùng cột name.` : 'Phân hệ thiếu trường tên chính/status: ' + missing.join(', ');
           } catch (e: any) { t8Msg = 'Không thể kiểm tra schema nhập hàng loạt: ' + e.message; }
