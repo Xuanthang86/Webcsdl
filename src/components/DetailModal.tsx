@@ -37,6 +37,7 @@ import {
   School
 } from 'lucide-react';
 import { AttachmentManagerModal } from './AttachmentManagerModal';
+import { deliverFile } from '../utils/fileDownload';
 
 interface DetailModalProps {
   entity: BaseEntity | null;
@@ -143,16 +144,18 @@ export const DetailModal: React.FC<DetailModalProps> = ({
     }
   };
 
-  const handleDownloadFile = (fileName?: string) => {
+  const handleDownloadFile = async (fileName?: string) => {
     const safeTitle = (entity.title || 'ban_ghi').slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_');
-    const docName = fileName || `Ho_so_${entity.code || (entity.moduleType === 'experts' ? 'Mã chuyên gia chưa cập nhật' : entity.id)}_${safeTitle}.txt`;
+    const expertCode = entity.moduleType === 'experts' && entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_') ? entity.code : entity.id;
+    const rawDocName = fileName || `Ho_so_${expertCode}_${safeTitle}.txt`;
+    const docName = rawDocName.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-zA-Z0-9._-]/g, '_');
     const content = `================================================================================
 ỦY BAN NHÂN DÂN THÀNH PHỐ ĐÀ NẴNG - SỞ KHOA HỌC VÀ CÔNG NGHỆ
 CỔNG DỮ LIỆU TỔNG HỢP KH&CN, ĐỔI MỚI SÁNG TẠO VÀ KHỞI NGHIỆP CẤP THÀNH PHỐ
 ================================================================================
 HỒ SƠ THÔNG TIN TRÍCH XUẤT CHÍNH THỨC
 Thời gian trích xuất: ${new Date().toLocaleString('vi-VN')}
-Mã số quản lý định danh: ${entity.moduleType === 'experts' ? (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_') ? entity.code : 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}
+Mã số quản lý định danh: ${entity.code || entity.id}
 Phân hệ cơ sở dữ liệu: ${entity.moduleType || 'science_tasks'}
 
 1. THÔNG TIN CHUNG
@@ -176,17 +179,16 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
 `;
 
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = docName.endsWith('.txt') ? docName : `${docName}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    setDownloadSuccessToast(true);
-    setTimeout(() => setDownloadSuccessToast(false), 3000);
+    const finalName = docName.endsWith('.txt') ? docName : `${docName}.txt`;
+    try {
+      await deliverFile(blob, finalName);
+      setDownloadSuccessToast(true);
+      window.setTimeout(() => setDownloadSuccessToast(false), 6000);
+    } catch (error: any) {
+      if (error?.name === 'AbortError') return;
+      console.error('Không thể tạo tệp hồ sơ chuyên gia:', error);
+      window.alert('Không thể tạo tệp hồ sơ. Vui lòng thử lại hoặc kiểm tra quyền tải tệp của trình duyệt.');
+    }
   };
 
   const handleCopyLink = () => {
@@ -261,7 +263,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
           <div className="w-full sm:w-auto flex items-center justify-end gap-2 shrink-0">
             {downloadSuccessToast && (
               <span className="text-[11px] text-teal-700 font-semibold bg-teal-50 px-2 py-1 rounded-lg border border-teal-200 animate-in fade-in">
-                Đã tải tệp về máy!
+                Đã tạo tệp. Trên iPhone/iPad, chọn Chia sẻ → Lưu vào Tệp.
               </span>
             )}
             <button
