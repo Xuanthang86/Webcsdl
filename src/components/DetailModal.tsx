@@ -546,7 +546,11 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <UserIcon className="w-4 h-4 text-teal-700" />
                     <span>Hồ sơ Chuyên gia Khoa học & Công nghệ</span>
                   </div>
-                  <span className="font-mono text-teal-800">{entity.moduleType === 'experts' ? (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_') ? entity.code : 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}</span>
+                  {entity.moduleType !== 'experts' ? (
+                    <span className="font-mono text-teal-800">{entity.code || entity.id}</span>
+                  ) : (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_') ? (
+                    <span className="font-mono text-teal-800">{entity.code}</span>
+                  ) : null)}
                 </div>
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
