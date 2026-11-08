@@ -119,9 +119,11 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
   const taskYears = Object.entries(stats?.tasksByYear || {})
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => {
-      const aIsYear = /^\d{4}$/.test(a.name);
-      const bIsYear = /^\\d{4}$/.test(b.name);
-      if (aIsYear && bIsYear) return Number(b.name) - Number(a.name);
+      const aYear = Number(a.name);
+      const bYear = Number(b.name);
+      const aIsYear = a.name.length === 4 && Number.isInteger(aYear);
+      const bIsYear = b.name.length === 4 && Number.isInteger(bYear);
+      if (aIsYear && bIsYear) return bYear - aYear;
       if (aIsYear) return -1;
       if (bIsYear) return 1;
       return b.count - a.count;
