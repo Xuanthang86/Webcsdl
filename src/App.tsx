@@ -67,10 +67,13 @@ export default function App() {
     if (typeof window !== 'undefined') {
       const hasActiveTabSession = window.sessionStorage.getItem('portal_tab_active') === 'true';
       const hash = window.location.hash.replace('#', '');
-      if (hash === 'admin' && hasActiveTabSession) return 'admin';
+      // The hash is only a route hint, never an authentication credential.
+      // Restore the admin screen even if iOS discarded sessionStorage; the server
+      // still validates the HttpOnly session and the UI will request login if needed.
+      if (hash === 'admin') return 'admin';
       if (hash === 'browse' || hash === 'home') return hash;
       const saved = window.sessionStorage.getItem('portal_current_view');
-      if (saved === 'admin' && hasActiveTabSession) return 'admin';
+      if (saved === 'admin') return 'admin';
       if (saved === 'browse' || saved === 'home') return saved;
     }
     return 'home';
@@ -196,8 +199,14 @@ export default function App() {
     try {
       // 1. Load User
       const userRes = await api.getCurrentUser();
-      if (userRes?.user) {
+      const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'];
+      if (userRes?.user && (currentView !== 'admin' || administrativeRoles.includes(userRes.user.role))) {
         setCurrentUser(userRes.user);
+      } else if (currentView === 'admin') {
+        // Keep the requested admin route after a reload, but never restore an
+        // authenticated identity from browser storage. Require a fresh login.
+        setCurrentUser(undefined);
+        setShowAdminLoginModal(true);
       }
       setAvailableRoles(userRes.availableRoles || []);
 
@@ -281,6 +290,45 @@ export default function App() {
     window.addEventListener('portal:auth-expired', handleAuthExpired);
     return () => window.removeEventListener('portal:auth-expired', handleAuthExpired);
   }, []);
+
+  // iOS Safari may suspend or restore a tab without remounting the React app.
+  // Revalidate the server session when an admin tab becomes visible again.
+  useEffect(() => {
+    if (currentView !== 'admin') return;
+    const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'];
+    let wasHidden = document.visibilityState === 'hidden';
+    const revalidateAdminSession = async () => {
+      try {
+        const response = await api.getCurrentUser();
+        if (response?.user && administrativeRoles.includes(response.user.role)) {
+          setCurrentUser(response.user);
+        } else {
+          setCurrentUser(undefined);
+          setShowAdminLoginModal(true);
+        }
+      } catch {
+        setCurrentUser(undefined);
+        setShowAdminLoginModal(true);
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        wasHidden = true;
+      } else if (wasHidden) {
+        wasHidden = false;
+        void revalidateAdminSession();
+      }
+    };
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) void revalidateAdminSession();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pageshow', onPageShow);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pageshow', onPageShow);
+    };
+  }, [currentView]);
 
   const handleLogout = async () => {
     try {
