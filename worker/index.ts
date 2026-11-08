@@ -2161,21 +2161,38 @@ export default {
         if (!env.DB) return jsonResponse({ success: false, message: 'Cơ sở dữ liệu D1 chưa kết nối.' }, 500, corsHeaders);
         const body = await request.json().catch(() => ({})) as any;
         const { fileName, fileSize, mimeType, cdnUrl, entityId, moduleType, title } = body;
-        if (!fileName || !cdnUrl || !moduleType || !ALLOWED_MODULES.includes(String(moduleType))) {
-          return jsonResponse({ success: false, message: 'Thiếu thông tin tệp hoặc đường dẫn CDN.' }, 400, corsHeaders);
+        const cleanFileName = sanitizeString(String(fileName || '')).replace(/[\\u0000-\\u001f\\u007f]/g, '').slice(0, 255);
+        const numericFileSize = Number(fileSize);
+        const cleanMimeType = sanitizeString(String(mimeType || 'application/octet-stream')).slice(0, 128);
+        if (!cleanFileName || !cdnUrl || !moduleType || !ALLOWED_MODULES.includes(String(moduleType)) || !Number.isFinite(numericFileSize) || numericFileSize <= 0 || numericFileSize > 50 * 1024 * 1024) {
+          return jsonResponse({ success: false, message: 'Thông tin tệp không hợp lệ; dung lượng tối đa 50 MB.' }, 400, corsHeaders);
+        }
+        if (/^(text\\/html|application\\/(?:javascript|x-javascript)|image\\/svg\\+xml)/i.test(cleanMimeType)) {
+          return jsonResponse({ success: false, message: 'Định dạng tệp có nguy cơ thực thi nội dung không được chấp nhận.' }, 415, corsHeaders);
+        }
+        let normalizedCdnUrl = '';
+        try {
+          const parsedCdnUrl = new URL(String(cdnUrl));
+          const configuredEndpoint = new URL(env.IMAGEKIT_URL_ENDPOINT || 'https://ik.imagekit.io/danangsokhcn');
+          if (configuredEndpoint.protocol !== 'https:' || parsedCdnUrl.protocol !== 'https:' || parsedCdnUrl.origin !== configuredEndpoint.origin || parsedCdnUrl.username || parsedCdnUrl.password) {
+            throw new Error('CDN origin mismatch');
+          }
+          normalizedCdnUrl = parsedCdnUrl.toString();
+        } catch {
+          return jsonResponse({ success: false, message: 'Đường dẫn tệp phải thuộc CDN ImageKit HTTPS đã cấu hình.' }, 400, corsHeaders);
         }
 
-        const isImage = (mimeType || '').startsWith('image/');
+        const isImage = cleanMimeType.startsWith('image/');
         const attachment = {
           id: `att_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`,
-          fileName: sanitizeString(fileName),
-          fileSize: Number(fileSize) || 0,
-          mimeType: sanitizeString(mimeType || 'application/octet-stream'),
-          cdnUrl: sanitizeString(cdnUrl),
-          thumbnailUrl: isImage ? `${cdnUrl}?tr=w-300,h-300,fo-auto` : null,
-          entityId: entityId ? sanitizeString(entityId) : null,
-          moduleType: moduleType ? sanitizeString(moduleType) : null,
-          title: title ? sanitizeString(title) : sanitizeString(fileName),
+          fileName: cleanFileName,
+          fileSize: numericFileSize,
+          mimeType: cleanMimeType,
+          cdnUrl: normalizedCdnUrl,
+          thumbnailUrl: isImage ? `${normalizedCdnUrl}?tr=w-300,h-300,fo-auto` : null,
+          entityId: entityId ? sanitizeString(String(entityId)).slice(0, 128) : null,
+          moduleType: String(moduleType),
+          title: title ? sanitizeString(String(title)).slice(0, 255) : cleanFileName,
           uploadedBy: currentUser.fullName,
           createdAt: new Date().toISOString()
         };
