@@ -428,6 +428,7 @@ export interface User {
   passwordHash?: string;
   passwordSalt?: string;
   passwordIterations?: number;
+  passwordVersion?: number;
   fullName: string;
   email: string;
   role: UserRole;
