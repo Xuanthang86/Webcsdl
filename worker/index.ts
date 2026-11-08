@@ -495,9 +495,10 @@ function timingSafeEqualStr(a: string, b: string): boolean {
 }
 
 // Versioned PBKDF2 parameters. Existing rows are explicitly tagged as 10,000
-// iterations by the additive migration; new credentials use the stronger target.
+// iterations by the additive migration. Cloudflare Workers WebCrypto currently
+// supports PBKDF2 up to 100,000 iterations, so stay within that runtime ceiling.
 const LEGACY_PASSWORD_ITERATIONS = 10000;
-const CURRENT_PASSWORD_ITERATIONS = 210000;
+const CURRENT_PASSWORD_ITERATIONS = 100000;
 
 async function ensureUserPasswordIterations(db: D1Database): Promise<void> {
   let info = await db.prepare('PRAGMA table_info(users)').all<any>();
@@ -516,7 +517,7 @@ async function ensureUserPasswordIterations(db: D1Database): Promise<void> {
 // PBKDF2 Password Hashing with SHA-512 in pure Web Crypto API.
 // The iteration count is stored per account so legacy hashes remain verifiable.
 async function hashPasswordWebCrypto(password: string, saltHex: string, iterations = CURRENT_PASSWORD_ITERATIONS): Promise<string> {
-  if (!Number.isSafeInteger(iterations) || iterations < LEGACY_PASSWORD_ITERATIONS || iterations > 1000000) {
+  if (!Number.isSafeInteger(iterations) || iterations < LEGACY_PASSWORD_ITERATIONS || iterations > 100000) {
     throw new Error('Tham số PBKDF2 không hợp lệ.');
   }
   const enc = new TextEncoder();
