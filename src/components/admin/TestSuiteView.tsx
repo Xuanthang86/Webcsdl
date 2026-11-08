@@ -15,6 +15,7 @@ export const TestSuiteView: React.FC = () => {
   const runAllTests = async () => {
     setIsRunning(true);
     setErrorMsg(null);
+    setTestReport(null);
     try {
       const data = await api.runAcceptanceTests();
       setTestReport(data);
@@ -89,7 +90,7 @@ export const TestSuiteView: React.FC = () => {
           </div>
 
           <div className="text-right text-[11px] text-slate-500 font-mono">
-            Tỷ lệ đạt chuẩn: <span className="font-bold text-emerald-700 text-sm">{((testReport.passedTests / testReport.totalTests) * 100).toFixed(0)}%</span>
+            Tỷ lệ đạt chuẩn: <span className="font-bold text-emerald-700 text-sm">{(testReport.totalTests > 0 ? (testReport.passedTests / testReport.totalTests) * 100 : 0).toFixed(0)}%</span>
           </div>
         </div>
       )}
@@ -101,26 +102,17 @@ export const TestSuiteView: React.FC = () => {
         </div>
 
         <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
-          {(testReport?.results || [
-            { id: 1, name: '1. Tạo, sửa, xem, tìm kiếm và lọc từng loại dữ liệu', passed: true, message: 'CRUD và tìm kiếm full-text trên thực thể hoạt động.', durationMs: 12 },
-            { id: 2, name: '2. Liên kết nhiều loại dữ liệu và truy cập qua lại giữa các bản ghi', passed: true, message: 'Quan hệ đa chiều 2 chiều giữa chuyên gia, nhiệm vụ, sáng kiến hoạt động.', durationMs: 8 },
-            { id: 3, name: '3. Đăng ký, đăng nhập, phân quyền 9 vai trò người dùng', passed: true, message: 'Ma trận quyền người dùng được kiểm soát ở backend.', durationMs: 5 },
-            { id: 4, name: '4. Kiểm tra phân quyền ở frontend và backend trên từng API', passed: true, message: 'Middleware bảo vệ endpoint API an toàn.', durationMs: 6 },
-            { id: 5, name: '5. Ngăn người dùng không có quyền xem dữ liệu hạn chế/nội bộ', passed: true, message: 'Bộ lọc công khai lọc chính xác dữ liệu nội bộ.', durationMs: 4 },
-            { id: 6, name: '6. Tiếp nhận, phê duyệt, từ chối và yêu cầu bổ sung hồ sơ', passed: true, message: 'Quy trình thẩm định 5 bước ghi nhật ký vết đầy đủ.', durationMs: 15 },
-            { id: 7, name: '7. Nhập dữ liệu hợp lệ và xử lý tệp sai cấu trúc', passed: true, message: 'Bộ lọc import chặn các dòng thiếu trường bắt buộc.', durationMs: 9 },
-            { id: 8, name: '8. Phát hiện và ngăn chặn dữ liệu trùng lặp', passed: true, message: 'Phát hiện trùng mã và trùng tiêu đề chính xác.', durationMs: 7 },
-            { id: 9, name: '9. Xuất dữ liệu CSV/Excel theo quyền', passed: true, message: 'Xuất tệp CSV kèm mã hóa UTF-8 tiếng Việt chuẩn.', durationMs: 5 },
-            { id: 10, name: '10. Kiểm tra nhật ký thay đổi (Audit Logs)', passed: true, message: 'Mọi thao tác sửa đổi, phê duyệt đều được ghi vết.', durationMs: 4 },
-            { id: 11, name: '11. Kiểm tra giao diện trên thiết bị di động (Responsive)', passed: true, message: 'Giao diện tối ưu cho máy tính, tablet và mobile.', durationMs: 3 },
-            { id: 12, name: '12. Kiểm tra sao lưu (Backup) và khôi phục (Restore)', passed: true, message: 'Snapshot JSON toàn diện được tạo và phục hồi trơn tru.', durationMs: 10 },
-            { id: 13, name: '13. Kiểm tra hiệu năng với dữ liệu thử nghiệm có quy mô phù hợp', passed: true, message: 'Thời gian phản hồi tính toán thống kê < 50ms.', durationMs: 14 },
-            { id: 14, name: '14. Kiểm tra các trường hợp lỗi và thao tác đồng thời', passed: true, message: 'Xử lý ngoại lệ với thông báo thân thiện và mã HTTP chuẩn.', durationMs: 5 },
-            { id: 15, name: '15. Kiểm tra dữ liệu được công khai sau khi phê duyệt', passed: true, message: '100% bản ghi sau phê duyệt hiển thị trên cổng công khai.', durationMs: 6 },
-            { id: 16, name: '16. Kiểm tra không xuất hiện số liệu thống kê sai hoặc đếm trùng', passed: true, message: 'Xác thực ID duy nhất và khớp tuyệt đối số lượng trong DB.', durationMs: 5 },
-            { id: 17, name: '17. Kiểm tra bảo mật phiên, chống mạo danh vai trò & che giấu hash mật khẩu', passed: true, message: 'Phiên làm việc bảo mật mật mã học, ngăn chặn rò rỉ hash mật khẩu.', durationMs: 6 },
-            { id: 18, name: '18. Kiểm tra cơ chế lưu trữ nguyên tử (Atomic Writes) và độ bền dữ liệu', passed: true, message: 'Cơ chế ghi tệp nguyên tử qua temp file & rename hoạt động trơn tru.', durationMs: 8 }
-          ]).map((t) => (
+          {!testReport && (
+            <div className="p-6 text-center text-slate-500 bg-slate-50">
+              Chưa chạy kiểm thử. Nhấn “Chạy toàn bộ kịch bản nghiệm thu & bảo mật” để bắt đầu đánh giá.
+            </div>
+          )}
+          {testReport && testReport.results.length === 0 && (
+            <div className="p-6 text-center text-amber-700 bg-amber-50">
+              Máy chủ chưa trả về kết quả kiểm thử. Vui lòng chạy lại hoặc kiểm tra kết nối.
+            </div>
+          )}
+          {(testReport?.results || []).map((t) => (
             <div key={t.id} className="p-3 bg-white hover:bg-slate-50 flex items-start justify-between gap-3">
               <div className="flex items-start gap-2.5">
                 {t.passed ? (
