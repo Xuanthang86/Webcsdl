@@ -74,7 +74,7 @@ const DB_FILE = path.join(DB_DIR, 'db.json');
 
 // Versioned PBKDF2 parameters shared with the Cloudflare Worker authentication flow.
 const LEGACY_PASSWORD_ITERATIONS = 10000;
-const CURRENT_PASSWORD_ITERATIONS = 210000;
+const CURRENT_PASSWORD_ITERATIONS = 100000;
 
 export function hashPassword(password: string, existingSalt?: string, iterations = CURRENT_PASSWORD_ITERATIONS): { hash: string; salt: string; iterations: number } {
   if (!Number.isSafeInteger(iterations) || iterations < LEGACY_PASSWORD_ITERATIONS || iterations > 1000000) {
