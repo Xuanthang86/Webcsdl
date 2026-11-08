@@ -21,13 +21,15 @@ interface HomeOverviewDashboardProps {
   systemConfig: SystemConfig;
   onNavigateBrowse: (category?: string) => void;
   onRetry?: () => void;
+  showIntro?: boolean;
 }
 
 export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
   stats,
   systemConfig,
   onNavigateBrowse,
-  onRetry
+  onRetry,
+  showIntro = true
 }) => {
   const [showTaskDetails, setShowTaskDetails] = useState(false);
   const [showExpertDetails, setShowExpertDetails] = useState(false);
@@ -114,7 +116,16 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
   const expertUnits = toBreakdown(stats?.expertsByWorkplace);
   const expertTitles = toBreakdown(stats?.expertsByTitle);
   const expertYears = toBreakdown(stats?.expertsByYear);
-  const taskYears = toBreakdown(stats?.tasksByYear);
+  const taskYears = Object.entries(stats?.tasksByYear || {})
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => {
+      const aIsYear = /^\\d{4}$/.test(a.name);
+      const bIsYear = /^\\d{4}$/.test(b.name);
+      if (aIsYear && bIsYear) return Number(b.name) - Number(a.name);
+      if (aIsYear) return -1;
+      if (bIsYear) return 1;
+      return b.count - a.count;
+    });
   const taskFields = toBreakdown(stats?.tasksByField);
   const taskUnits = toBreakdown(stats?.tasksByUnit);
   const taskLevels = toBreakdown(stats?.tasksByLevel);
@@ -146,14 +157,14 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
         
         {/* Top Header Row of Dashboard */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-sky-200">
-          <div>
+          {showIntro && (<div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900">
               Tổng quan Cơ sở dữ liệu KHCN & KNĐMST TP Đà Nẵng
             </h2>
             <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
               Dữ liệu quản lý nhà nước tập trung từ Sở Khoa học & Công nghệ thành phố Đà Nẵng, các Viện trường, Doanh nghiệp và Mạng lưới ĐMST
             </p>
-          </div>
+          </div>)}
 
           {/* Quick Aggregate Badge */}
           <div className="flex items-center gap-3 bg-white/90 backdrop-blur-md p-3.5 rounded-2xl border border-sky-200 shadow-2xs self-start md:self-auto shrink-0">
