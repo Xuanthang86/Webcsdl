@@ -112,9 +112,14 @@ function canCreateModuleRecords(user: any, moduleName: string): boolean {
 function canApproveWorkflow(user: any): boolean { return ['super_admin', 'system_admin', 'agency_leader'].includes(String(user?.role || '')); }
 function isAllowedWorkflowStatus(status: string): boolean { return ['under_review', 'needs_revision', 'rejected', 'approved', 'published'].includes(status); }
 function canExportModuleData(user: any): boolean { return ['super_admin', 'system_admin', 'data_officer'].includes(String(user?.role || '')); }
+const PRIMARY_IMPORT_COLUMNS: Record<string, string> = {
+  startups: 'name', startup_projects: 'title', wards: 'name', universities: 'name',
+  organizations: 'name', investors: 'name', investment_funds: 'name',
+  technologies: 'title', programs: 'title', publications: 'title', lab_equipments: 'name'
+};
+
 function getPrimaryImportColumn(moduleName: string, tableColumns: Set<string>): string {
-  const preferred: Record<string, string> = { startups: 'name', startup_projects: 'title', wards: 'name', universities: 'name' };
-  const preferredColumn = preferred[moduleName];
+  const preferredColumn = PRIMARY_IMPORT_COLUMNS[moduleName];
   return preferredColumn && tableColumns.has(preferredColumn) ? preferredColumn : tableColumns.has('title') ? 'title' : tableColumns.has('name') ? 'name' : tableColumns.has('project_name') ? 'project_name' : '';
 }
 function buildPublicVisibilityWhere(columns: Set<string>): string {
@@ -179,6 +184,78 @@ async function ensureModuleDataJson(db: D1Database, moduleName: string): Promise
     }
     info = await db.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
     columns = new Set((info.results || []).map((column: any) => String(column.name)));
+  }
+  return columns;
+}
+
+// Additive import-schema compatibility for ecosystem modules deployed with older
+// or incomplete schemas. Existing rows are retained and never made public by default.
+async function ensureModuleImportSchema(db: D1Database, moduleName: string): Promise<Set<string>> {
+  if (!ALLOWED_MODULES.includes(moduleName)) throw new Error('Invalid module');
+  let columns = await ensureModuleDataJson(db, moduleName);
+  if (!columns.size) throw new Error(`Bảng ${moduleName} chưa tồn tại trong D1.`);
+
+  let primaryColumn = getPrimaryImportColumn(moduleName, columns);
+  if (!primaryColumn) {
+    primaryColumn = PRIMARY_IMPORT_COLUMNS[moduleName] || 'title';
+    await db.prepare(`ALTER TABLE "${moduleName}" ADD COLUMN "${primaryColumn}" TEXT`).run();
+    columns.add(primaryColumn);
+  }
+  if (!columns.has('status')) {
+    // No default is assigned here: existing records are backfilled conservatively below.
+    await db.prepare(`ALTER TABLE "${moduleName}" ADD COLUMN status TEXT`).run();
+    columns.add('status');
+  }
+
+  const info = await db.prepare(`PRAGMA table_info("${moduleName}")`).all<any>();
+  columns = new Set((info.results || []).map((column: any) => String(column.name)));
+  const rows = await db.prepare(
+    `SELECT id, data_json, "${primaryColumn}" AS primary_value, status FROM "${moduleName}" WHERE id IS NOT NULL`
+  ).all<any>();
+  const normalizeKey = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const candidates: Record<string, string[]> = {
+    organizations: ['name', 'title', 'organizationName', 'tenToChuc', 'tenVien', 'tenToChucKHcn'],
+    investors: ['name', 'title', 'fullName', 'investorName', 'tenNhaDauTu', 'hoVaTen'],
+    investment_funds: ['name', 'title', 'fundName', 'tenQuyDauTu', 'tenQuy'],
+    technologies: ['title', 'name', 'technologyName', 'tenCongNghe', 'tenKetQuaNghienCuu'],
+    programs: ['title', 'name', 'programName', 'tenChuongTrinh', 'tenChuongTrinhHoTro'],
+    publications: ['title', 'name', 'publicationTitle', 'tenBaiBao', 'tenCongBo'],
+    lab_equipments: ['name', 'title', 'equipmentName', 'tenThietBi', 'tenPhongThiNghiem']
+  };
+  const validStatuses = new Set(['draft', 'submitted', 'under_review', 'needs_revision', 'approved', 'rejected', 'archived', 'published']);
+  const updates: D1PreparedStatement[] = [];
+  for (const row of rows.results || []) {
+    let custom: Record<string, any> = {};
+    try {
+      custom = row.data_json ? JSON.parse(String(row.data_json)) : {};
+      if (!custom || typeof custom !== 'object' || Array.isArray(custom)) custom = {};
+    } catch { custom = {}; }
+    const normalized = new Map(Object.entries(custom).map(([key, value]) => [normalizeKey(key), value]));
+    let primaryValue = row.primary_value;
+    if (primaryValue === null || primaryValue === undefined || String(primaryValue).trim() === '') {
+      for (const candidate of candidates[moduleName] || ['title', 'name']) {
+        const value = normalized.get(normalizeKey(candidate));
+        if (value !== null && value !== undefined && String(value).trim() !== '') {
+          primaryValue = String(value).trim();
+          break;
+        }
+      }
+    }
+    let statusValue = String(row.status || '').trim().toLowerCase();
+    if (!validStatuses.has(statusValue)) {
+      const rawStatus = custom.status ?? custom.approvalStatus ?? custom.approval_status ?? custom.workflowStatus ?? custom.workflow_status;
+      const candidateStatus = String(rawStatus || '').trim().toLowerCase();
+      statusValue = validStatuses.has(candidateStatus) ? candidateStatus : 'draft';
+    }
+    if ((primaryValue !== null && primaryValue !== undefined && String(primaryValue).trim() !== '') ||
+        !String(row.status || '').trim()) {
+      updates.push(db.prepare(
+        `UPDATE "${moduleName}" SET "${primaryColumn}" = CASE WHEN "${primaryColumn}" IS NULL OR TRIM(CAST("${primaryColumn}" AS TEXT)) = '' THEN ? ELSE "${primaryColumn}" END, status = CASE WHEN status IS NULL OR TRIM(status) = '' THEN ? ELSE status END WHERE id = ?`
+      ).bind(primaryValue ?? null, statusValue, row.id));
+    }
+  }
+  for (let offset = 0; offset < updates.length; offset += 80) {
+    await db.batch(updates.slice(offset, offset + 80));
   }
   return columns;
 }
@@ -2603,7 +2680,7 @@ export default {
           return jsonResponse({ success: false, message: 'CSDL D1 chưa kết nối.' }, 500, corsHeaders);
         }
 
-        const tableColumns = await ensureModuleDataJson(env.DB, moduleName);
+        const tableColumns = await ensureModuleImportSchema(env.DB, moduleName);
         const tableInfoResult = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
         const requiredInsertColumns = (tableInfoResult.results || []).filter((column: any) => Number(column.notnull) === 1 && column.dflt_value === null && String(column.name) !== 'id');
         if (!tableColumns.has('status')) {
@@ -2805,7 +2882,7 @@ export default {
 
           // Keep both common name/title columns populated when an older or
           // extended deployment contains both columns with NOT NULL constraints.
-          if (['startups', 'wards', 'startup_projects'].includes(moduleName)) {
+          if (['startups', 'wards', 'startup_projects', 'universities'].includes(moduleName)) {
             const primaryValue = mapped[primaryColumn];
             if (primaryValue !== undefined && primaryValue !== null && String(primaryValue).trim() !== '') {
               if (tableColumns.has('name') && !mapped.name) mapped.name = primaryValue;
