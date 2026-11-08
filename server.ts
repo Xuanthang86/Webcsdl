@@ -3,7 +3,6 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import { apiRouter } from './server/routes/api.ts';
 
 dotenv.config();
 
@@ -11,6 +10,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
+  // Load .env before importing auth modules so SESSION_SECRET is evaluated correctly.
+  const { apiRouter } = await import('./server/routes/api.ts');
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
   const isProduction = process.env.NODE_ENV === 'production';
