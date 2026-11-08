@@ -55,6 +55,7 @@ export const AuditLogView: React.FC = () => {
 
   const getModuleName = (mod?: ModuleType | string) => {
     if (!mod) return 'Toàn hệ thống';
+    if (mod === 'audit_logs') return 'Nhật ký truy vết hệ thống';
     return (MODULE_NAMES as Record<string, string>)[mod] || mod;
   };
 
