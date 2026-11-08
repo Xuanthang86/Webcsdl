@@ -985,7 +985,7 @@ export default {
         // 3. Verify password via PBKDF2 WebCrypto
         let isValid = false;
         const storedIterations = Number(userRow.password_iterations || LEGACY_PASSWORD_ITERATIONS);
-        if (userRow.password_hash && userRow.password_salt && Number.isSafeInteger(storedIterations) && storedIterations >= LEGACY_PASSWORD_ITERATIONS && storedIterations <= 1000000) {
+        if (userRow.password_hash && userRow.password_salt && Number.isSafeInteger(storedIterations) && storedIterations >= LEGACY_PASSWORD_ITERATIONS && storedIterations <= CURRENT_PASSWORD_ITERATIONS) {
           const computedHash = await hashPasswordWebCrypto(password, userRow.password_salt, storedIterations);
           isValid = timingSafeEqualStr(computedHash, userRow.password_hash);
         }
