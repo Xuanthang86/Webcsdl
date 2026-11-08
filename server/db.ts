@@ -72,11 +72,17 @@ export interface DatabaseSchema {
 const DB_DIR = path.resolve(process.cwd(), 'data');
 const DB_FILE = path.join(DB_DIR, 'db.json');
 
-// Password security helper using PBKDF2 with SHA-512 and salt
-export function hashPassword(password: string, existingSalt?: string): { hash: string; salt: string } {
+// Versioned PBKDF2 parameters shared with the Cloudflare Worker authentication flow.
+const LEGACY_PASSWORD_ITERATIONS = 10000;
+const CURRENT_PASSWORD_ITERATIONS = 210000;
+
+export function hashPassword(password: string, existingSalt?: string, iterations = CURRENT_PASSWORD_ITERATIONS): { hash: string; salt: string; iterations: number } {
+  if (!Number.isSafeInteger(iterations) || iterations < LEGACY_PASSWORD_ITERATIONS || iterations > 1000000) {
+    throw new Error('Tham số PBKDF2 không hợp lệ.');
+  }
   const salt = existingSalt || crypto.randomBytes(16).toString('hex');
-  const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
-  return { hash, salt };
+  const hash = crypto.pbkdf2Sync(password, salt, iterations, 64, 'sha512').toString('hex');
+  return { hash, salt, iterations };
 }
 
 // In-memory rate limiting tracker for login attempts
@@ -263,20 +269,32 @@ class DatabaseManager {
 
     let isValid = false;
     if (user.passwordHash && user.passwordSalt) {
-      const computed = hashPassword(password, user.passwordSalt).hash;
-      const bufA = Buffer.from(computed);
-      const bufB = Buffer.from(user.passwordHash);
-      if (bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB)) {
-        isValid = true;
+      const storedIterations = Number(user.passwordIterations || LEGACY_PASSWORD_ITERATIONS);
+      if (Number.isSafeInteger(storedIterations) && storedIterations >= LEGACY_PASSWORD_ITERATIONS && storedIterations <= 1000000) {
+        const computed = hashPassword(password, user.passwordSalt, storedIterations).hash;
+        const bufA = Buffer.from(computed);
+        const bufB = Buffer.from(user.passwordHash);
+        if (bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB)) {
+          isValid = true;
+          if (storedIterations < CURRENT_PASSWORD_ITERATIONS) {
+            // Upgrade only after the legacy password has been verified successfully.
+            const upgraded = hashPassword(password);
+            user.passwordHash = upgraded.hash;
+            user.passwordSalt = upgraded.salt;
+            user.passwordIterations = upgraded.iterations;
+            this.saveDatabase();
+          }
+        }
       }
     } else {
       // Local seed accounts require an explicit local-only bootstrap secret.
       const bootstrapPassword = process.env.DEV_SEED_PASSWORD || '';
       if (bootstrapPassword.length >= 12 && password === bootstrapPassword) {
         isValid = true;
-        const { hash, salt } = hashPassword(password);
+        const { hash, salt, iterations } = hashPassword(password);
         user.passwordHash = hash;
         user.passwordSalt = salt;
+        user.passwordIterations = iterations;
         delete user.password;
         this.saveDatabase();
       }
@@ -305,13 +323,14 @@ class DatabaseManager {
 
     const rawPassword = String(userData.password || '');
     if (rawPassword.length < 8) throw new Error('Mật khẩu tài khoản mới phải có ít nhất 8 ký tự.');
-    const { hash, salt } = hashPassword(rawPassword);
+    const { hash, salt, iterations } = hashPassword(rawPassword);
 
     const newUser: User = {
       id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       username: (userData.username || `user_${Date.now()}`).trim(),
       passwordHash: hash,
       passwordSalt: salt,
+      passwordIterations: iterations,
       fullName: userData.fullName || 'Người dùng mới',
       email: userData.email || `${(userData.username || 'user').trim()}@thanhpho.gov.vn`,
       role: userData.role || 'public_user',
@@ -350,11 +369,13 @@ class DatabaseManager {
     const current = this.data.users[idx];
     let passwordHash = current.passwordHash;
     let passwordSalt = current.passwordSalt;
+    let passwordIterations = Number(current.passwordIterations || LEGACY_PASSWORD_ITERATIONS);
 
     if (updates.password && updates.password.trim() !== '') {
       const hashed = hashPassword(updates.password);
       passwordHash = hashed.hash;
       passwordSalt = hashed.salt;
+      passwordIterations = hashed.iterations;
     }
 
     const updatedUser: User = {
@@ -363,7 +384,8 @@ class DatabaseManager {
       id: current.id,
       username: current.username,
       passwordHash,
-      passwordSalt
+      passwordSalt,
+      passwordIterations
     };
     delete updatedUser.password;
 
