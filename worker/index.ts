@@ -433,8 +433,13 @@ function getCorsHeaders(request: Request): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, x-session-token'
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, x-session-token',
+    'Vary': 'Origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
   };
+  if (new URL(request.url).protocol === 'https:') {
+    headers['Strict-Transport-Security'] = 'max-age=31536000';
+  }
   if (origin && allowed) {
     headers['Access-Control-Allow-Origin'] = origin;
     headers['Access-Control-Allow-Credentials'] = 'true';
@@ -619,7 +624,7 @@ async function verifyToken(token: string, secret: string): Promise<any | null> {
     );
     const expectedSig = await crypto.subtle.sign('HMAC', key, enc.encode(b64Payload));
     const expectedSigB64 = bytesToBase64Url(new Uint8Array(expectedSig));
-    if (sigPart !== expectedSigB64) return null;
+    if (!timingSafeEqualStr(sigPart, expectedSigB64)) return null;
 
     const payloadBytes = base64UrlToBytes(b64Payload);
     const payloadStr = new TextDecoder().decode(payloadBytes);
@@ -634,7 +639,8 @@ function getCookie(request: Request, name: string): string | null {
   const cookieHeader = request.headers.get('Cookie');
   if (!cookieHeader) return null;
   const match = cookieHeader.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
-  return match ? decodeURIComponent(match[3]) : null;
+  if (!match) return null;
+  try { return decodeURIComponent(match[3]); } catch { return null; }
 }
 
 export default {
@@ -662,6 +668,7 @@ export default {
         assetHeaders.set('X-Frame-Options', 'DENY');
         assetHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin');
         assetHeaders.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+        if (url.protocol === 'https:') assetHeaders.set('Strict-Transport-Security', 'max-age=31536000');
         return new Response(assetResponse.body, {
           status: assetResponse.status,
           statusText: assetResponse.statusText,
@@ -745,7 +752,6 @@ export default {
       // A. Health Check & Live D1 Ping
       if (url.pathname === '/health') {
         let d1Status = 'disconnected';
-        let d1Error: string | null = null;
         if (env.DB) {
           try {
             const ping = await env.DB.prepare('SELECT 1 as alive').first<{ alive: number }>();
@@ -753,16 +759,14 @@ export default {
               d1Status = 'connected';
             }
           } catch (e: any) {
-            d1Error = e?.message || 'Lỗi truy vấn ping D1';
+            console.error('[Health] D1 probe failed:', e);
           }
         }
         return jsonResponse({
           status: d1Status === 'connected' ? 'ok' : 'degraded',
           service: 'Cổng Dữ Liệu KHCN & KNĐMST TP Đà Nẵng',
           runtime: 'cloudflare_workers',
-          d1_bound: Boolean(env.DB),
           d1_status: d1Status,
-          d1_error: d1Error,
           time: new Date().toISOString()
         }, d1Status === 'connected' ? 200 : 503, corsHeaders);
       }
@@ -803,7 +807,7 @@ export default {
               }
             }, 200, corsHeaders);
           } catch (error: any) {
-            return jsonResponse({ success: false, message: 'Không thể đọc cấu hình D1: ' + (error?.message || 'Lỗi không xác định') }, 500, corsHeaders);
+            return jsonResponse({ success: false, message: 'Không thể đọc cấu hình hệ thống. Vui lòng thử lại hoặc liên hệ quản trị viên.' }, 500, corsHeaders);
           }
         }
 
@@ -855,7 +859,7 @@ export default {
             };
             return jsonResponse({ success: true, config: savedConfig, message: 'Đã lưu cấu hình hệ thống vào D1.' }, 200, corsHeaders);
           } catch (error: any) {
-            return jsonResponse({ success: false, message: 'Không thể lưu cấu hình vào D1: ' + (error?.message || 'Lỗi không xác định') }, 500, corsHeaders);
+            return jsonResponse({ success: false, message: 'Không thể lưu cấu hình hệ thống. Vui lòng thử lại hoặc liên hệ quản trị viên.' }, 500, corsHeaders);
           }
         }
       }
@@ -1969,7 +1973,7 @@ export default {
         } catch (error: any) {
           return jsonResponse({
             success: false,
-            message: 'Không thể tạo bản sao lưu D1: ' + (error?.message || 'Lỗi không xác định')
+            message: 'Không thể tạo bản sao lưu dữ liệu. Vui lòng thử lại hoặc liên hệ quản trị viên.'
           }, 500, corsHeaders);
         }
       }
@@ -2048,7 +2052,7 @@ export default {
           if (!Array.isArray(results) || results.length !== statements.length || results.some((result: any) => !result?.success)) throw new Error('D1 không xác nhận đầy đủ giao dịch phục hồi; D1 sẽ rollback nếu có lỗi trong batch.');
           return jsonResponse({ success: true, restoredTables: actual.size, restoredRows: totalRows, message: `Đã phục hồi ${totalRows} bản ghi trên ${actual.size} bảng trong một giao dịch D1.` }, 200, corsHeaders);
         } catch (error: any) {
-          return jsonResponse({ success: false, message: 'Không thể phục hồi snapshot D1: ' + (error?.message || 'Lỗi không xác định') + '. Nếu batch thất bại, toàn bộ thay đổi được rollback.' }, 500, corsHeaders);
+          return jsonResponse({ success: false, message: 'Không thể phục hồi snapshot D1. Nếu giao dịch thất bại, D1 sẽ rollback toàn bộ thay đổi; vui lòng kiểm tra nhật ký hệ thống.' }, 500, corsHeaders);
         }
       }
 
@@ -2100,7 +2104,7 @@ export default {
             if (allResults.length >= 5000) break;
           }
         } catch (error: any) {
-          return jsonResponse({ success: false, message: 'Không thể hoàn thành tìm kiếm D1: ' + (error?.message || 'Lỗi không xác định') }, 500, corsHeaders);
+          return jsonResponse({ success: false, message: 'Không thể hoàn thành tìm kiếm dữ liệu. Vui lòng thử lại.' }, 500, corsHeaders);
         }
         return jsonResponse({ success: true, total: allResults.length, results: allResults }, 200, corsHeaders);
       }
@@ -2868,7 +2872,7 @@ export default {
             const partialMessage = approvedCount > 0
               ? ` Đã phê duyệt thành công ${approvedCount}/${ids.length} bản ghi trước khi phát sinh lỗi; vui lòng tải lại danh sách để kiểm tra trạng thái.`
               : '';
-            return jsonResponse({ success: false, approvedCount, message: 'Không thể phê duyệt dữ liệu trong D1: ' + (error?.message || 'Lỗi không xác định') + partialMessage }, 500, corsHeaders);
+            return jsonResponse({ success: false, approvedCount, message: 'Không thể hoàn thành phê duyệt dữ liệu.' + partialMessage }, 500, corsHeaders);
           }
         }
 
@@ -3512,10 +3516,10 @@ export default {
       if (url.pathname.startsWith('/api') || url.pathname === '/health') {
         return jsonResponse({
           success: false,
-          message: 'Lỗi máy chủ nội bộ: ' + (fatalErr?.message || 'Không xác định')
+          message: 'Máy chủ đang gặp sự cố nội bộ. Vui lòng thử lại sau.'
         }, 500, corsHeaders);
       }
-      return new Response('Lỗi máy chủ (500): ' + (fatalErr?.message || 'Không xác định'), { status: 500 });
+      return new Response('Máy chủ đang gặp sự cố nội bộ.', { status: 500, headers: { 'X-Content-Type-Options': 'nosniff' } });
     }
   }
 };
