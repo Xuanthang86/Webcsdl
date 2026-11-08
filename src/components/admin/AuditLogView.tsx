@@ -15,6 +15,7 @@ const ACTION_LABELS: Record<string, { label: string; color: string }> = {
   import: { label: 'Nhập dữ liệu', color: 'bg-purple-50 text-purple-800 border-purple-200' },
   export: { label: 'Xuất dữ liệu', color: 'bg-cyan-50 text-cyan-800 border-cyan-200' },
   login: { label: 'Đăng nhập', color: 'bg-slate-100 text-slate-800 border-slate-300' },
+  view: { label: 'Truy cập nhật ký', color: 'bg-slate-100 text-slate-700 border-slate-200' },
   system_config: { label: 'Cấu hình hệ thống', color: 'bg-violet-50 text-violet-800 border-violet-200' }
 };
 
