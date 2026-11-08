@@ -499,18 +499,26 @@ function timingSafeEqualStr(a: string, b: string): boolean {
 // supports PBKDF2 up to 100,000 iterations, so stay within that runtime ceiling.
 const LEGACY_PASSWORD_ITERATIONS = 10000;
 const CURRENT_PASSWORD_ITERATIONS = 100000;
+const LEGACY_PASSWORD_VERSION = 1;
+const CURRENT_PASSWORD_VERSION = 2;
 
 async function ensureUserPasswordIterations(db: D1Database): Promise<void> {
-  let info = await db.prepare('PRAGMA table_info(users)').all<any>();
-  let columns = new Set((info.results || []).map((column: any) => String(column.name)));
-  if (columns.has('password_iterations')) return;
-  try {
-    await db.prepare(`ALTER TABLE users ADD COLUMN password_iterations INTEGER NOT NULL DEFAULT ${LEGACY_PASSWORD_ITERATIONS}`).run();
-  } catch (error) {
-    // Another request may have applied this additive migration concurrently.
-    info = await db.prepare('PRAGMA table_info(users)').all<any>();
-    columns = new Set((info.results || []).map((column: any) => String(column.name)));
-    if (!columns.has('password_iterations')) throw error;
+  const requiredColumns = [
+    { name: 'password_iterations', definition: `INTEGER NOT NULL DEFAULT ${LEGACY_PASSWORD_ITERATIONS}` },
+    { name: 'password_version', definition: `INTEGER NOT NULL DEFAULT ${LEGACY_PASSWORD_VERSION}` }
+  ];
+  for (const required of requiredColumns) {
+    let info = await db.prepare('PRAGMA table_info(users)').all<any>();
+    let columns = new Set((info.results || []).map((column: any) => String(column.name)));
+    if (columns.has(required.name)) continue;
+    try {
+      await db.prepare(`ALTER TABLE users ADD COLUMN ${required.name} ${required.definition}`).run();
+    } catch (error) {
+      // Another request may have applied this additive migration concurrently.
+      info = await db.prepare('PRAGMA table_info(users)').all<any>();
+      columns = new Set((info.results || []).map((column: any) => String(column.name)));
+      if (!columns.has(required.name)) throw error;
+    }
   }
 }
 
@@ -881,10 +889,10 @@ export default {
         const now = new Date().toISOString();
         const id = `usr_${crypto.randomUUID()}`;
         const inserted = await env.DB.prepare(`
-          INSERT INTO users (id, username, password_hash, password_salt, password_iterations, full_name, email, role, organization, phone, is_active, created_at, updated_at)
-          SELECT ?, ?, ?, ?, ?, ?, ?, 'super_admin', ?, ?, 1, ?, ?
+          INSERT INTO users (id, username, password_hash, password_salt, password_iterations, password_version, full_name, email, role, organization, phone, is_active, created_at, updated_at)
+          SELECT ?, ?, ?, ?, ?, ?, ?, ?, 'super_admin', ?, ?, 1, ?, ?
           WHERE NOT EXISTS (SELECT 1 FROM users)
-        `).bind(id, username, hash, salt, CURRENT_PASSWORD_ITERATIONS, fullName, email, organization, phone, now, now).run();
+        `).bind(id, username, hash, salt, CURRENT_PASSWORD_ITERATIONS, CURRENT_PASSWORD_VERSION, fullName, email, organization, phone, now, now).run();
         if (Number(inserted.meta?.changes || 0) !== 1) {
           return jsonResponse({ success: false, message: 'Một tài khoản đã được khởi tạo đồng thời. Vui lòng đăng nhập.' }, 409, corsHeaders);
         }
@@ -961,7 +969,7 @@ export default {
 
         // 1. Fetch user from D1
         const userRow = await env.DB.prepare(`
-          SELECT id, username, full_name, email, role, organization, department, phone, is_active, password_hash, password_salt, password_iterations, failed_attempts, locked_until
+          SELECT id, username, full_name, email, role, organization, department, phone, is_active, password_hash, password_salt, password_iterations, password_version, failed_attempts, locked_until
           FROM users 
           WHERE LOWER(username) = ?
         `).bind(username).first<any>();
@@ -985,7 +993,8 @@ export default {
         // 3. Verify password via PBKDF2 WebCrypto
         let isValid = false;
         const storedIterations = Number(userRow.password_iterations || LEGACY_PASSWORD_ITERATIONS);
-        if (userRow.password_hash && userRow.password_salt && Number.isSafeInteger(storedIterations) && storedIterations >= LEGACY_PASSWORD_ITERATIONS && storedIterations <= CURRENT_PASSWORD_ITERATIONS) {
+        const storedVersion = Number(userRow.password_version || LEGACY_PASSWORD_VERSION);
+        if (userRow.password_hash && userRow.password_salt && Number.isSafeInteger(storedIterations) && storedIterations >= LEGACY_PASSWORD_ITERATIONS && storedIterations <= CURRENT_PASSWORD_ITERATIONS && Number.isSafeInteger(storedVersion) && storedVersion >= LEGACY_PASSWORD_VERSION && storedVersion <= CURRENT_PASSWORD_VERSION) {
           const computedHash = await hashPasswordWebCrypto(password, userRow.password_salt, storedIterations);
           isValid = timingSafeEqualStr(computedHash, userRow.password_hash);
         }
@@ -1010,15 +1019,15 @@ export default {
         await env.DB.prepare(`
           UPDATE users SET failed_attempts = 0, locked_until = NULL, updated_at = datetime('now') WHERE id = ?
         `).bind(userRow.id).run();
-        if (storedIterations < CURRENT_PASSWORD_ITERATIONS) {
+        if (storedIterations < CURRENT_PASSWORD_ITERATIONS || storedVersion < CURRENT_PASSWORD_VERSION) {
           const oldHash = userRow.password_hash;
           const oldSalt = userRow.password_salt;
           ctx.waitUntil((async () => {
             try {
               const upgradedSalt = generateRandomSalt();
               const upgradedHash = await hashPasswordWebCrypto(password, upgradedSalt, CURRENT_PASSWORD_ITERATIONS);
-              await env.DB!.prepare(`UPDATE users SET password_hash = ?, password_salt = ?, password_iterations = ?, updated_at = datetime('now') WHERE id = ? AND password_hash = ? AND password_salt = ?`)
-                .bind(upgradedHash, upgradedSalt, CURRENT_PASSWORD_ITERATIONS, userRow.id, oldHash, oldSalt).run();
+              await env.DB!.prepare(`UPDATE users SET password_hash = ?, password_salt = ?, password_iterations = ?, password_version = ?, updated_at = datetime('now') WHERE id = ? AND password_hash = ? AND password_salt = ?`)
+                .bind(upgradedHash, upgradedSalt, CURRENT_PASSWORD_ITERATIONS, CURRENT_PASSWORD_VERSION, userRow.id, oldHash, oldSalt).run();
             } catch (upgradeError) {
               console.warn('[Auth] Deferred password-hash upgrade failed; legacy hash remains valid:', upgradeError);
             }
@@ -1111,7 +1120,7 @@ export default {
 
         await ensureUserPasswordIterations(env.DB);
         const userRow = await env.DB.prepare(`
-          SELECT id, password_hash, password_salt, password_iterations FROM users WHERE id = ?
+          SELECT id, password_hash, password_salt, password_iterations, password_version FROM users WHERE id = ?
         `).bind(currentUser.id).first<any>();
 
         if (!userRow) {
@@ -1124,6 +1133,10 @@ export default {
           return jsonResponse({ success: false, message: 'Không thể xác minh mật khẩu hiện tại. Vui lòng liên hệ quản trị viên để được hỗ trợ.' }, 400, corsHeaders);
         }
         const currentIterations = Number(userRow.password_iterations || LEGACY_PASSWORD_ITERATIONS);
+        const currentVersion = Number(userRow.password_version || LEGACY_PASSWORD_VERSION);
+        if (!Number.isSafeInteger(currentVersion) || currentVersion < LEGACY_PASSWORD_VERSION || currentVersion > CURRENT_PASSWORD_VERSION) {
+          return jsonResponse({ success: false, message: 'Phiên bản hash mật khẩu không hợp lệ. Vui lòng liên hệ quản trị viên.' }, 400, corsHeaders);
+        }
         const checkHash = await hashPasswordWebCrypto(currentPassword, userRow.password_salt, currentIterations);
         if (!timingSafeEqualStr(checkHash, userRow.password_hash)) {
           return jsonResponse({ success: false, message: 'Mật khẩu hiện tại không chính xác.' }, 400, corsHeaders);
@@ -1133,8 +1146,8 @@ export default {
         const newHash = await hashPasswordWebCrypto(newPassword, newSalt);
 
         await env.DB.prepare(`
-          UPDATE users SET password_hash = ?, password_salt = ?, password_iterations = ?, updated_at = datetime('now') WHERE id = ?
-        `).bind(newHash, newSalt, CURRENT_PASSWORD_ITERATIONS, currentUser.id).run();
+          UPDATE users SET password_hash = ?, password_salt = ?, password_iterations = ?, password_version = ?, updated_at = datetime('now') WHERE id = ?
+        `).bind(newHash, newSalt, CURRENT_PASSWORD_ITERATIONS, CURRENT_PASSWORD_VERSION, currentUser.id).run();
 
         try {
           await ensureAuditLogTable(env.DB);
@@ -1252,19 +1265,19 @@ export default {
 
           if (userCols.has('password_salt') && userCols.has('salt')) {
             await env.DB.prepare(`
-              INSERT INTO users (id, username, password_hash, password_salt, password_iterations, salt, full_name, email, role, organization, department, phone, is_active, created_at, updated_at)
+              INSERT INTO users (id, username, password_hash, password_salt, password_iterations, password_version, salt, full_name, email, role, organization, department, phone, is_active, created_at, updated_at)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-            `).bind(newId, username, hash, salt, CURRENT_PASSWORD_ITERATIONS, salt, fullName, email, role, organization, departmentJson, phone, nowIso, nowIso).run();
+            `).bind(newId, username, hash, salt, CURRENT_PASSWORD_ITERATIONS, CURRENT_PASSWORD_VERSION, salt, fullName, email, role, organization, departmentJson, phone, nowIso, nowIso).run();
           } else if (userCols.has('password_salt')) {
             await env.DB.prepare(`
-              INSERT INTO users (id, username, password_hash, password_salt, password_iterations, full_name, email, role, organization, department, phone, is_active, created_at, updated_at)
+              INSERT INTO users (id, username, password_hash, password_salt, password_iterations, password_version, full_name, email, role, organization, department, phone, is_active, created_at, updated_at)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-            `).bind(newId, username, hash, salt, CURRENT_PASSWORD_ITERATIONS, fullName, email, role, organization, departmentJson, phone, nowIso, nowIso).run();
+            `).bind(newId, username, hash, salt, CURRENT_PASSWORD_ITERATIONS, CURRENT_PASSWORD_VERSION, fullName, email, role, organization, departmentJson, phone, nowIso, nowIso).run();
           } else {
             await env.DB.prepare(`
-              INSERT INTO users (id, username, password_hash, password_iterations, salt, full_name, email, role, organization, department, phone, is_active, created_at, updated_at)
+              INSERT INTO users (id, username, password_hash, password_iterations, password_version, salt, full_name, email, role, organization, department, phone, is_active, created_at, updated_at)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-            `).bind(newId, username, hash, CURRENT_PASSWORD_ITERATIONS, salt, fullName, email, role, organization, departmentJson, phone, nowIso, nowIso).run();
+            `).bind(newId, username, hash, CURRENT_PASSWORD_ITERATIONS, CURRENT_PASSWORD_VERSION, salt, fullName, email, role, organization, departmentJson, phone, nowIso, nowIso).run();
           }
 
           return jsonResponse({
@@ -1330,6 +1343,7 @@ export default {
           let newHash = existing.password_hash;
           let newSalt = existing.password_salt || existing.salt;
           let newIterations = Number(existing.password_iterations || LEGACY_PASSWORD_ITERATIONS);
+          let newVersion = Number(existing.password_version || LEGACY_PASSWORD_VERSION);
           if (body.password && String(body.password).length >= 6) {
             if (isAdminAccount) {
               if (!body.oldPassword) {
@@ -1343,6 +1357,7 @@ export default {
             newSalt = generateRandomSalt();
             newHash = await hashPasswordWebCrypto(String(body.password), newSalt, CURRENT_PASSWORD_ITERATIONS);
             newIterations = CURRENT_PASSWORD_ITERATIONS;
+            newVersion = CURRENT_PASSWORD_VERSION;
           }
 
           const userTableInfo = await env.DB.prepare("PRAGMA table_info(users)").all<any>();
@@ -1350,16 +1365,16 @@ export default {
 
           if (userCols.has('password_salt') && userCols.has('salt')) {
             await env.DB.prepare(`
-              UPDATE users SET full_name = ?, email = ?, role = ?, phone = ?, organization = ?, department = ?, is_active = ?, password_hash = ?, password_salt = ?, password_iterations = ?, salt = ?, updated_at = datetime('now') WHERE id = ?
-            `).bind(fullName, email, role, phone, org, deptJson, isActive, newHash, newSalt, newIterations, newSalt, userId).run();
+              UPDATE users SET full_name = ?, email = ?, role = ?, phone = ?, organization = ?, department = ?, is_active = ?, password_hash = ?, password_salt = ?, password_iterations = ?, password_version = ?, salt = ?, updated_at = datetime('now') WHERE id = ?
+            `).bind(fullName, email, role, phone, org, deptJson, isActive, newHash, newSalt, newIterations, newVersion, newSalt, userId).run();
           } else if (userCols.has('password_salt')) {
             await env.DB.prepare(`
-              UPDATE users SET full_name = ?, email = ?, role = ?, phone = ?, organization = ?, department = ?, is_active = ?, password_hash = ?, password_salt = ?, password_iterations = ?, updated_at = datetime('now') WHERE id = ?
-            `).bind(fullName, email, role, phone, org, deptJson, isActive, newHash, newSalt, newIterations, userId).run();
+              UPDATE users SET full_name = ?, email = ?, role = ?, phone = ?, organization = ?, department = ?, is_active = ?, password_hash = ?, password_salt = ?, password_iterations = ?, password_version = ?, updated_at = datetime('now') WHERE id = ?
+            `).bind(fullName, email, role, phone, org, deptJson, isActive, newHash, newSalt, newIterations, newVersion, userId).run();
           } else {
             await env.DB.prepare(`
-              UPDATE users SET full_name = ?, email = ?, role = ?, phone = ?, organization = ?, department = ?, is_active = ?, password_hash = ?, password_iterations = ?, salt = ?, updated_at = datetime('now') WHERE id = ?
-            `).bind(fullName, email, role, phone, org, deptJson, isActive, newHash, newIterations, newSalt, userId).run();
+              UPDATE users SET full_name = ?, email = ?, role = ?, phone = ?, organization = ?, department = ?, is_active = ?, password_hash = ?, password_iterations = ?, password_version = ?, salt = ?, updated_at = datetime('now') WHERE id = ?
+            `).bind(fullName, email, role, phone, org, deptJson, isActive, newHash, newIterations, newVersion, newSalt, userId).run();
           }
 
           let resModules: string[] = [];
