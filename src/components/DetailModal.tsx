@@ -233,12 +233,16 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
         <div className="sticky top-0 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 z-10">
           <div className="w-full min-w-0 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span className="font-mono font-medium text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                {entity.moduleType === 'experts' ? (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_') ? entity.code : 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}
-              </span>
-              <span aria-hidden="true">·</span>
+              {(entity.moduleType !== 'experts' || (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_'))) && (
+                <>
+                  <span className="font-mono font-medium text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                    {entity.moduleType === 'experts' ? entity.code : (entity.code || entity.id)}
+                  </span>
+                  <span aria-hidden="true">·</span>
+                </>
+              )}
               <span className="font-semibold text-slate-700 capitalize">
-                {(entity.moduleType || 'science_tasks').replace(/_/g, ' ')}
+                {entity.moduleType === 'experts' ? 'Chuyên gia' : (entity.moduleType || 'science_tasks').replace(/_/g, ' ')}
               </span>
               <span aria-hidden="true">·</span>
               <span>Cập nhật: {formatDateSafe(entity.updatedAt || entity.createdAt)}</span>
