@@ -152,7 +152,7 @@ CỔNG DỮ LIỆU TỔNG HỢP KH&CN, ĐỔI MỚI SÁNG TẠO VÀ KHỞI NGHI�
 ================================================================================
 HỒ SƠ THÔNG TIN TRÍCH XUẤT CHÍNH THỨC
 Thời gian trích xuất: ${new Date().toLocaleString('vi-VN')}
-Mã số quản lý định danh: ${entity.code || entity.id}
+Mã số quản lý định danh: ${entity.moduleType === 'experts' ? (entity.code || 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}
 Phân hệ cơ sở dữ liệu: ${entity.moduleType || 'science_tasks'}
 
 1. THÔNG TIN CHUNG
@@ -542,7 +542,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <UserIcon className="w-4 h-4 text-teal-700" />
                     <span>Hồ sơ Chuyên gia Khoa học & Công nghệ</span>
                   </div>
-                  <span className="font-mono text-teal-800">{entity.code || entity.id}</span>
+                  <span className="font-mono text-teal-800">{entity.moduleType === 'experts' ? (entity.code || 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}</span>
                 </div>
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
