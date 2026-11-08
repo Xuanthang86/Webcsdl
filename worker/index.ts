@@ -84,7 +84,8 @@ function hydrateModuleRow(row: any, moduleName?: string): any {
     const camelKey = key.replace(/_([a-z])/g, (_match, letter) => letter.toUpperCase());
     normalized[camelKey] = value;
   }
-  const merged: Record<string, any> = { moduleType: moduleName || row.module_type || row.moduleType, ...normalized, ...custom };
+  // Keep flexible custom fields, but never let data_json override authoritative D1 columns.
+  const merged: Record<string, any> = { ...custom, ...normalized, moduleType: moduleName || row.module_type || row.moduleType };
   if (!merged.title) merged.title = merged.name || merged.companyName || merged.projectName || merged.fullName || '';
   if (moduleName === 'startups' && !merged.companyName) merged.companyName = merged.name || merged.title;
   if (moduleName === 'startup_projects' && !merged.projectName) merged.projectName = merged.title || merged.name;
@@ -979,7 +980,8 @@ export default {
         `).bind(username).first<any>();
 
         if (!userRow || userRow.is_active !== 1) {
-          return jsonResponse({ success: false, message: 'Tên đăng nhập hoặc mật khẩu không chính xác hoặc tài khoản đã bị khóa.' }, 401, corsHeaders);
+          // Use the same response as an incorrect password to avoid disclosing account existence.
+          return jsonResponse({ success: false, message: 'Tên đăng nhập hoặc mật khẩu không chính xác.' }, 401, corsHeaders);
         }
 
         // 2. Check lock status
