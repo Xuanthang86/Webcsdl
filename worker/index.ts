@@ -197,12 +197,24 @@ async function ensureModuleImportSchema(db: D1Database, moduleName: string): Pro
 
   let primaryColumn = PRIMARY_IMPORT_COLUMNS[moduleName] || getPrimaryImportColumn(moduleName, columns) || 'title';
   if (!columns.has(primaryColumn)) {
-    await db.prepare(`ALTER TABLE "${moduleName}" ADD COLUMN "${primaryColumn}" TEXT`).run();
+    try {
+      await db.prepare(`ALTER TABLE "${moduleName}" ADD COLUMN "${primaryColumn}" TEXT`).run();
+    } catch (error) {
+      const refreshed = await db.prepare(`PRAGMA table_info("${moduleName}")`).all<any>();
+      const refreshedColumns = new Set((refreshed.results || []).map((column: any) => String(column.name)));
+      if (!refreshedColumns.has(primaryColumn)) throw error;
+    }
     columns.add(primaryColumn);
   }
   if (!columns.has('status')) {
     // No default is assigned here: existing records are backfilled conservatively below.
-    await db.prepare(`ALTER TABLE "${moduleName}" ADD COLUMN status TEXT`).run();
+    try {
+      await db.prepare(`ALTER TABLE "${moduleName}" ADD COLUMN status TEXT`).run();
+    } catch (error) {
+      const refreshed = await db.prepare(`PRAGMA table_info("${moduleName}")`).all<any>();
+      const refreshedColumns = new Set((refreshed.results || []).map((column: any) => String(column.name)));
+      if (!refreshedColumns.has('status')) throw error;
+    }
     columns.add('status');
   }
 
