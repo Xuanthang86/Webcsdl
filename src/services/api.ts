@@ -32,8 +32,8 @@ function authFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Re
   });
 }
 
-async function parseJsonResponse<T = any>(res: Response): Promise<T> {
-  if (res.status === 401 && typeof window !== 'undefined') {
+async function parseJsonResponse<T = any>(res: Response, options: { suppressAuthExpired?: boolean } = {}): Promise<T> {
+  if (res.status === 401 && typeof window !== 'undefined' && !options.suppressAuthExpired) {
     removeStoredToken();
     window.dispatchEvent(new CustomEvent('portal:auth-expired'));
   }
@@ -75,7 +75,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
-    const data = await parseJsonResponse(res);
+    const data = await parseJsonResponse(res, { suppressAuthExpired: true });
     if (!data.user || typeof data.user !== 'object') {
       throw new Error('Đăng nhập không nhận được thông tin tài khoản hợp lệ từ máy chủ. Vui lòng thử lại.');
     }
@@ -89,7 +89,7 @@ export const api = {
         method: 'POST',
         headers: getAuthHeaders()
       });
-      await parseJsonResponse(res).catch(() => {});
+      await parseJsonResponse(res, { suppressAuthExpired: true }).catch(() => {});
     } finally {
       removeStoredToken();
     }
@@ -347,7 +347,18 @@ export const api = {
       headers: getAuthHeaders()
     });
     const json = await parseJsonResponse(res);
-    return json.logs || [];
+    return (Array.isArray(json.logs) ? json.logs : []).map((row: any) => ({
+      id: String(row.id || ''),
+      userId: row.user_id || row.userId || '',
+      userName: row.user_name || row.userName || 'Hệ thống',
+      userRole: row.user_role || row.userRole || 'system',
+      action: row.action || 'unknown',
+      targetModule: row.target_module || row.targetModule || row.module || undefined,
+      targetId: row.target_id || row.targetId || row.entity_id || undefined,
+      targetTitle: row.target_title || row.targetTitle || undefined,
+      details: row.details || '',
+      timestamp: row.timestamp || row.created_at || row.createdAt || ''
+    }));
   },
 
   // Connections
