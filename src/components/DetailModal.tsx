@@ -152,7 +152,7 @@ CỔNG DỮ LIỆU TỔNG HỢP KH&CN, ĐỔI MỚI SÁNG TẠO VÀ KHỞI NGHI�
 ================================================================================
 HỒ SƠ THÔNG TIN TRÍCH XUẤT CHÍNH THỨC
 Thời gian trích xuất: ${new Date().toLocaleString('vi-VN')}
-Mã số quản lý định danh: ${entity.moduleType === 'experts' ? (entity.code || 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}
+Mã số quản lý định danh: ${entity.moduleType === 'experts' ? (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_') ? entity.code : 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}
 Phân hệ cơ sở dữ liệu: ${entity.moduleType || 'science_tasks'}
 
 1. THÔNG TIN CHUNG
@@ -234,7 +234,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
           <div className="w-full min-w-0 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
               <span className="font-mono font-medium text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                {entity.moduleType === 'experts' ? (entity.code || 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}
+                {entity.moduleType === 'experts' ? (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_') ? entity.code : 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}
               </span>
               <span aria-hidden="true">·</span>
               <span className="font-semibold text-slate-700 capitalize">
@@ -250,7 +250,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
               )}
             </div>
             <h2 className="w-full min-w-0 text-lg sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug break-words [overflow-wrap:anywhere]">
-              {(entity.moduleType === 'experts' ? (entity.fullName || entity.expertName || entity.name || (entity.title && entity.title !== entity.id ? entity.title : 'Hồ sơ chuyên gia')) : entity.title) || 'Không có tiêu đề'}
+              {(entity.moduleType === 'experts' ? (entity.fullName || entity.full_name || entity.expertName || entity.expert_name || entity.name || (entity.title && entity.title !== entity.id && !String(entity.title).startsWith('experts_imp_') ? entity.title : 'Hồ sơ chuyên gia')) : entity.title) || 'Không có tiêu đề'}
             </h2>
           </div>
 
@@ -418,7 +418,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Mã / STT:</span>
-                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{entity.moduleType === 'experts' ? (entity.code || 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}</span>
+                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{entity.moduleType === 'experts' ? (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_') ? entity.code : 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Năm công nhận:</span>
@@ -542,7 +542,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <UserIcon className="w-4 h-4 text-teal-700" />
                     <span>Hồ sơ Chuyên gia Khoa học & Công nghệ</span>
                   </div>
-                  <span className="font-mono text-teal-800">{entity.moduleType === 'experts' ? (entity.code || 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}</span>
+                  <span className="font-mono text-teal-800">{entity.moduleType === 'experts' ? (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_') ? entity.code : 'Mã chuyên gia chưa cập nhật') : (entity.code || entity.id)}</span>
                 </div>
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
