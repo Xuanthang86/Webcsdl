@@ -448,6 +448,11 @@ function jsonResponse(data: any, status = 200, extraHeaders: Record<string, stri
     status,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store, max-age=0',
+      'Pragma': 'no-cache',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
       ...extraHeaders
     }
   });
@@ -642,9 +647,19 @@ export default {
     const isApiRequest = url.pathname.startsWith('/api') || url.pathname === '/health';
     if (!isApiRequest) {
       if (env.ASSETS) {
-        return env.ASSETS.fetch(request);
+        const assetResponse = await env.ASSETS.fetch(request);
+        const assetHeaders = new Headers(assetResponse.headers);
+        assetHeaders.set('X-Content-Type-Options', 'nosniff');
+        assetHeaders.set('X-Frame-Options', 'DENY');
+        assetHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        assetHeaders.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+        return new Response(assetResponse.body, {
+          status: assetResponse.status,
+          statusText: assetResponse.statusText,
+          headers: assetHeaders
+        });
       }
-      return new Response('Not Found', { status: 404 });
+      return new Response('Not Found', { status: 404, headers: { 'X-Content-Type-Options': 'nosniff' } });
     }
 
     try {
