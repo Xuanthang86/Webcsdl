@@ -209,7 +209,7 @@ async function ensureModuleImportSchema(db: D1Database, moduleName: string): Pro
   const info = await db.prepare(`PRAGMA table_info("${moduleName}")`).all<any>();
   columns = new Set((info.results || []).map((column: any) => String(column.name)));
   const rows = await db.prepare(
-    `SELECT * FROM "${moduleName}" WHERE id IS NOT NULL`
+    `SELECT * FROM "${moduleName}" WHERE id IS NOT NULL AND ( "${primaryColumn}" IS NULL OR TRIM(CAST("${primaryColumn}" AS TEXT)) = '' OR status IS NULL OR TRIM(status) = '' )`
   ).all<any>();
   const normalizeKey = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/[^a-z0-9]/g, '');
   const candidates: Record<string, string[]> = {
@@ -2243,6 +2243,10 @@ export default {
           return jsonResponse({ success: false, message: 'Chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
         }
         try {
+          await ensureAuditLogTable(env.DB);
+          // Viewing the audit trail is itself an auditable security event. This also
+          // confirms the trail is writable when a newly initialized system has no rows.
+          await buildAuditLogStatement(env.DB, currentUser, 'view', 'audit_logs', '', 'Truy cập Nhật ký truy vết hệ thống').then(statement => statement.run());
           const auditColumns = await ensureAuditLogTable(env.DB);
           const sortColumn = auditColumns.has('timestamp') ? 'timestamp' : 'created_at';
           const requestedLimit = Number.parseInt(url.searchParams.get('limit') || '100', 10);
