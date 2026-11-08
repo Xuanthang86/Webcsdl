@@ -28,12 +28,24 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const loginForm = e.currentTarget as HTMLFormElement;
     setError(null);
     setLoading(true);
 
     try {
       const normalizedUsername = username.trim();
       const user = await api.login(normalizedUsername, password);
+      if (rememberAccount && typeof window !== 'undefined') {
+        try {
+          const CredentialCtor = (window as any).PasswordCredential;
+          const credentialStore = (navigator as any).credentials;
+          if (CredentialCtor && credentialStore?.store && loginForm) {
+            await credentialStore.store(new CredentialCtor(loginForm));
+          }
+        } catch (credentialError) {
+          console.debug('[Login] Browser credential manager is unavailable:', credentialError);
+        }
+      }
       if (typeof window !== 'undefined') {
         if (rememberAccount) {
           window.localStorage.setItem('portal_remember_account', 'true');
@@ -78,7 +90,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSuc
         </div>
 
         {/* Modal Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form name="admin-login" autoComplete="on" onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-800 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
