@@ -74,6 +74,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [coreListOpen, setCoreListOpen] = useState(true);
   const [selectedEntityForRel, setSelectedEntityForRel] = useState<BaseEntity | null>(null);
+  const adminContentRef = React.useRef<HTMLElement | null>(null);
+
+  const goToAdminOverview = () => {
+    setActiveTab('dashboard');
+    setSidebarOpen(false);
+    requestAnimationFrame(() => adminContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' }));
+  };
 
   const isWardOfficer = currentUser?.role === 'partner_officer';
   const canManageUsers = currentUser?.role === 'super_admin' || currentUser?.role === 'system_admin';
@@ -142,7 +149,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       {/* Mobile & Tablet Header with Toggle */}
       <div className="lg:hidden bg-gradient-to-r from-sky-800 via-sky-700 to-sky-900 text-white p-3.5 flex items-center justify-between border-b border-sky-700/60 sticky top-0 z-30 shadow-md">
         <div 
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          onClick={goToAdminOverview}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') goToAdminOverview(); }}
           className="flex items-center gap-2 cursor-pointer group"
           title="Về đầu trang quản trị"
         >
@@ -398,7 +408,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         
         {/* Desktop Admin Top Header */}
         <header className="hidden lg:flex items-center justify-between px-8 py-5 bg-gradient-to-r from-sky-800 via-sky-700 to-sky-900 text-white border-b border-sky-700/60 shadow-sm shrink-0">
-          <div onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="cursor-pointer" title="Về đầu trang quản trị">
+          <div onClick={goToAdminOverview} className="cursor-pointer" title="Về Tổng quan & Chỉ số">
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase leading-none">CỔNG DỮ LIỆU</h1>
             <p className="mt-1.5 text-[11px] xl:text-xs 2xl:text-sm font-bold text-sky-200 tracking-tight uppercase leading-tight whitespace-nowrap">VỀ KHOA HỌC, CÔNG NGHỆ VÀ KHỞI NGHIỆP ĐỔI MỚI SÁNG TẠO THÀNH PHỐ ĐÀ NẴNG</p>
           </div>
@@ -424,13 +434,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
         </header>
 
-        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+        <main ref={adminContentRef} className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
           <div className="lg:min-h-full lg:flex lg:flex-col">
             <div className="max-w-7xl mx-auto w-full lg:flex-1 space-y-6 p-4 sm:p-6 lg:p-8">
             {activeTab === 'dashboard' && (
               <DashboardView
                 stats={stats}
                 currentUser={currentUser}
+                systemConfig={systemConfig}
                 onNavigateModule={(mod) => handleSelectModule(mod as ModuleType)}
                 onOpenTestRunner={() => setActiveTab('test_suite')}
               />
