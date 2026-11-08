@@ -993,7 +993,7 @@ apiRouter.post('/imagekit/upload', (req: AuthenticatedRequest, res: Response): v
   const cleanFileName = sanitizeString(fileName || '').slice(0, 255);
   const numericFileSize = Number(fileSize);
   const cleanMimeType = sanitizeString(mimeType || 'application/octet-stream').slice(0, 128);
-  if (!cleanFileName || !Number.isFinite(numericFileSize) || numericFileSize <= 0 || numericFileSize > 50 * 1024 * 1024) {
+  if (!cleanFileName || !moduleType || !VALID_MODULES.has(String(moduleType)) || !Number.isFinite(numericFileSize) || numericFileSize <= 0 || numericFileSize > 50 * 1024 * 1024) {
     res.status(400).json({ success: false, message: 'Tên tệp hoặc dung lượng tệp không hợp lệ (tối đa 50 MB).' });
     return;
   }
