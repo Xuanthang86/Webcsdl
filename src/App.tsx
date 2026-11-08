@@ -65,7 +65,6 @@ class DetailModalErrorBoundary extends React.Component<
 export default function App() {
   const [currentView, setCurrentView] = useState<'home' | 'browse' | 'admin'>(() => {
     if (typeof window !== 'undefined') {
-      const hasActiveTabSession = window.sessionStorage.getItem('portal_tab_active') === 'true';
       const hash = window.location.hash.replace('#', '');
       // The hash is only a route hint, never an authentication credential.
       // Restore the admin screen even if iOS discarded sessionStorage; the server
