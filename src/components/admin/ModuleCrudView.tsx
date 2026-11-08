@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { AttachmentManagerModal } from '../AttachmentManagerModal';
+import { deliverFile } from '../../utils/fileDownload';
 import { getScienceTaskUnits, getScienceTaskYears, matchesScienceTaskLevel, normalizeScienceTaskText } from '../../utils/scienceTaskFilters';
 
 interface ModuleCrudViewProps {
@@ -314,9 +315,10 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     }
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     try {
-      const exportData = filteredRecords.map((r, i) => {
+      const exportSource = moduleType === 'experts' ? records : filteredRecords;
+      const exportData = exportSource.map((r, i) => {
         const base: Record<string, any> = {
           'Mã định danh': r.code,
           'Tên bản ghi': r.title,
@@ -343,9 +345,17 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       const ws = XLSX.utils.json_to_sheet(exportData.length > 0 ? exportData : [{ 'Mã': 'MDD-01', 'Tên': 'Mẫu' }]);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, moduleType.slice(0, 31));
-      XLSX.writeFile(wb, `du-lieu-${moduleType}-${new Date().toISOString().slice(0, 10)}.xlsx`);
-      showToast('Đã xuất dữ liệu Excel (.xlsx) thành công');
+      const excelBytes = XLSX.write(wb, { bookType: 'xlsx', type: 'array', compression: true });
+      const blob = new Blob([excelBytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const fileName = `du-lieu-${moduleType}-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const delivery = await deliverFile(blob, fileName);
+      showToast(delivery === 'shared'
+        ? 'Đã mở bảng Chia sẻ. Chọn “Lưu vào Tệp” để lưu bảng Excel.'
+        : delivery === 'opened'
+          ? 'Tệp Excel đã mở trong tab mới. Chọn Chia sẻ → Lưu vào Tệp.'
+          : 'Đã tạo tệp Excel và gửi đến mục Tải về.');
     } catch (err: any) {
+      if (err?.name === 'AbortError') return;
       showErrorToast(err.message || 'Lỗi xuất file Excel');
     }
   };
