@@ -195,9 +195,8 @@ async function ensureModuleImportSchema(db: D1Database, moduleName: string): Pro
   let columns = await ensureModuleDataJson(db, moduleName);
   if (!columns.size) throw new Error(`Bảng ${moduleName} chưa tồn tại trong D1.`);
 
-  let primaryColumn = getPrimaryImportColumn(moduleName, columns);
-  if (!primaryColumn) {
-    primaryColumn = PRIMARY_IMPORT_COLUMNS[moduleName] || 'title';
+  let primaryColumn = PRIMARY_IMPORT_COLUMNS[moduleName] || getPrimaryImportColumn(moduleName, columns) || 'title';
+  if (!columns.has(primaryColumn)) {
     await db.prepare(`ALTER TABLE "${moduleName}" ADD COLUMN "${primaryColumn}" TEXT`).run();
     columns.add(primaryColumn);
   }
@@ -210,7 +209,7 @@ async function ensureModuleImportSchema(db: D1Database, moduleName: string): Pro
   const info = await db.prepare(`PRAGMA table_info("${moduleName}")`).all<any>();
   columns = new Set((info.results || []).map((column: any) => String(column.name)));
   const rows = await db.prepare(
-    `SELECT id, data_json, "${primaryColumn}" AS primary_value, status FROM "${moduleName}" WHERE id IS NOT NULL`
+    `SELECT * FROM "${moduleName}" WHERE id IS NOT NULL`
   ).all<any>();
   const normalizeKey = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/[^a-z0-9]/g, '');
   const candidates: Record<string, string[]> = {
@@ -231,7 +230,17 @@ async function ensureModuleImportSchema(db: D1Database, moduleName: string): Pro
       if (!custom || typeof custom !== 'object' || Array.isArray(custom)) custom = {};
     } catch { custom = {}; }
     const normalized = new Map(Object.entries(custom).map(([key, value]) => [normalizeKey(key), value]));
-    let primaryValue = row.primary_value;
+    let primaryValue = row[primaryColumn];
+    if (primaryValue === null || primaryValue === undefined || String(primaryValue).trim() === '') {
+      // Preserve a legacy physical name/title before consulting the flexible JSON payload.
+      for (const physicalCandidate of ['name', 'title', 'project_name', 'company_name', 'full_name', 'organization_name']) {
+        const physicalValue = row[physicalCandidate];
+        if (physicalValue !== null && physicalValue !== undefined && String(physicalValue).trim() !== '') {
+          primaryValue = physicalValue;
+          break;
+        }
+      }
+    }
     if (primaryValue === null || primaryValue === undefined || String(primaryValue).trim() === '') {
       for (const candidate of candidates[moduleName] || ['title', 'name']) {
         const value = normalized.get(normalizeKey(candidate));
