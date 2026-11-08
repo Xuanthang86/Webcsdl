@@ -976,7 +976,7 @@ apiRouter.get('/imagekit/auth', requireRole(['super_admin', 'system_admin', 'age
   const signature = crypto.createHmac('sha1', privateKey).update(token + expire).digest('hex');
 
   res.setHeader('Cache-Control', 'no-store');
-  res.json({ token, expire, signature, publicKey, urlEndpoint: endpoint.toString().replace(/\\/$/, '') });
+  res.json({ token, expire, signature, publicKey, urlEndpoint: endpoint.toString().replace(/\/$/, '') });
 });
 
 apiRouter.post('/imagekit/upload', (req: AuthenticatedRequest, res: Response): void => {
@@ -997,12 +997,12 @@ apiRouter.post('/imagekit/upload', (req: AuthenticatedRequest, res: Response): v
     res.status(400).json({ success: false, message: 'Tên tệp hoặc dung lượng tệp không hợp lệ (tối đa 50 MB).' });
     return;
   }
-  if (/^(text\\/html|application\\/(?:javascript|x-javascript)|image\\/svg\\+xml)/i.test(cleanMimeType)) {
+  if (/^(text\/html|application\/(?:javascript|x-javascript)|image\/svg\+xml)/i.test(cleanMimeType)) {
     res.status(415).json({ success: false, message: 'Định dạng tệp có nguy cơ thực thi nội dung không được chấp nhận.' });
     return;
   }
   const endpoint = process.env.IMAGEKIT_URL_ENDPOINT || 'https://ik.imagekit.io/danangsokhcn';
-  let finalCdnUrl = `${endpoint.replace(/\\/$/, '')}/uploads/${Date.now()}_${encodeURIComponent(cleanFileName)}`;
+  let finalCdnUrl = `${endpoint.replace(/\/$/, '')}/uploads/${Date.now()}_${encodeURIComponent(cleanFileName)}`;
   if (cdnUrl) {
     try {
       const parsed = new URL(String(cdnUrl));
