@@ -955,19 +955,28 @@ apiRouter.get('/d1/reconcile', requireRole(['super_admin', 'system_admin']), (re
 });
 
 // 14. ImageKit CDN Integration & Attachment Management
-apiRouter.get('/imagekit/auth', (req: AuthenticatedRequest, res: Response): void => {
+apiRouter.get('/imagekit/auth', requireRole(['super_admin', 'system_admin', 'agency_leader', 'data_officer']), (req: AuthenticatedRequest, res: Response): void => {
+  const privateKey = process.env.IMAGEKIT_PRIVATE_KEY || '';
+  const publicKey = process.env.IMAGEKIT_PUBLIC_KEY || '';
+  const urlEndpoint = process.env.IMAGEKIT_URL_ENDPOINT || '';
+  if (!privateKey || !publicKey || !urlEndpoint) {
+    res.status(503).json({ success: false, message: 'ImageKit chưa được cấu hình đầy đủ trên máy chủ.' });
+    return;
+  }
+  let endpoint: URL;
+  try {
+    endpoint = new URL(urlEndpoint);
+    if (endpoint.protocol !== 'https:') throw new Error('HTTPS is required');
+  } catch {
+    res.status(503).json({ success: false, message: 'Địa chỉ ImageKit không hợp lệ.' });
+    return;
+  }
   const token = crypto.randomUUID();
   const expire = Math.floor(Date.now() / 1000) + 2400; // 40 minutes valid
-  const privateKey = process.env.IMAGEKIT_PRIVATE_KEY || 'imagekit_private_danang_sokhcn_2026';
   const signature = crypto.createHmac('sha1', privateKey).update(token + expire).digest('hex');
 
-  res.json({
-    token,
-    expire,
-    signature,
-    publicKey: process.env.IMAGEKIT_PUBLIC_KEY || 'public_danang_sokhcn_prod',
-    urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || 'https://ik.imagekit.io/danangsokhcn'
-  });
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ token, expire, signature, publicKey, urlEndpoint: endpoint.toString().replace(/\\/$/, '') });
 });
 
 apiRouter.post('/imagekit/upload', (req: AuthenticatedRequest, res: Response): void => {
@@ -981,25 +990,41 @@ apiRouter.post('/imagekit/upload', (req: AuthenticatedRequest, res: Response): v
   }
 
   const { fileName, fileSize, mimeType, cdnUrl, dataUrl, entityId, moduleType, title } = req.body;
-  if (!fileName) {
-    res.status(400).json({ success: false, message: 'Thiếu tên tệp đính kèm.' });
+  const cleanFileName = sanitizeString(fileName || '').slice(0, 255);
+  const numericFileSize = Number(fileSize);
+  const cleanMimeType = sanitizeString(mimeType || 'application/octet-stream').slice(0, 128);
+  if (!cleanFileName || !Number.isFinite(numericFileSize) || numericFileSize <= 0 || numericFileSize > 50 * 1024 * 1024) {
+    res.status(400).json({ success: false, message: 'Tên tệp hoặc dung lượng tệp không hợp lệ (tối đa 50 MB).' });
     return;
   }
-
-  // Generate CDN URL (if not direct from ImageKit client SDK)
-  const safeName = encodeURIComponent(sanitizeString(fileName));
-  const finalCdnUrl = cdnUrl || `https://ik.imagekit.io/danangsokhcn/uploads/${Date.now()}_${safeName}`;
-  const isImage = (mimeType || '').startsWith('image/');
+  if (/^(text\\/html|application\\/(?:javascript|x-javascript)|image\\/svg\\+xml)/i.test(cleanMimeType)) {
+    res.status(415).json({ success: false, message: 'Định dạng tệp có nguy cơ thực thi nội dung không được chấp nhận.' });
+    return;
+  }
+  const endpoint = process.env.IMAGEKIT_URL_ENDPOINT || 'https://ik.imagekit.io/danangsokhcn';
+  let finalCdnUrl = `${endpoint.replace(/\\/$/, '')}/uploads/${Date.now()}_${encodeURIComponent(cleanFileName)}`;
+  if (cdnUrl) {
+    try {
+      const parsed = new URL(String(cdnUrl));
+      const allowed = new URL(endpoint);
+      if (parsed.protocol !== 'https:' || parsed.hostname !== allowed.hostname || parsed.username || parsed.password) throw new Error('Invalid CDN origin');
+      finalCdnUrl = parsed.toString();
+    } catch {
+      res.status(400).json({ success: false, message: 'Đường dẫn tệp phải thuộc CDN ImageKit đã cấu hình.' });
+      return;
+    }
+  }
+  const isImage = cleanMimeType.startsWith('image/');
   const thumbnailUrl = isImage ? `${finalCdnUrl}?tr=w-300,h-300,fo-auto` : undefined;
 
   const attachment = db.addAttachment({
-    fileName: sanitizeString(fileName),
-    fileSize: Number(fileSize) || 0,
-    mimeType: sanitizeString(mimeType || 'application/octet-stream'),
+    fileName: cleanFileName,
+    fileSize: numericFileSize,
+    mimeType: cleanMimeType,
     cdnUrl: finalCdnUrl,
     thumbnailUrl,
-    entityId: entityId ? sanitizeString(entityId) : undefined,
-    moduleType: moduleType ? sanitizeString(moduleType) : undefined,
+    entityId: entityId ? sanitizeString(String(entityId)).slice(0, 128) : undefined,
+    moduleType: moduleType && VALID_MODULES.has(String(moduleType)) ? sanitizeString(String(moduleType)) : undefined,
     title: title ? sanitizeString(title) : sanitizeString(fileName)
   }, req.user);
 
