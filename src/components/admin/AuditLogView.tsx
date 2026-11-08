@@ -22,16 +22,19 @@ const ACTION_LABELS: Record<string, { label: string; color: string }> = {
 export const AuditLogView: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('all');
 
   const loadLogs = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await api.getAuditLogs(150);
       setLogs(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setLoadError(err?.message || 'Không thể tải nhật ký truy vết.');
     } finally {
       setLoading(false);
     }
@@ -145,9 +148,13 @@ export const AuditLogView: React.FC = () => {
                 <tr>
                   <td colSpan={5} className="py-8 text-center text-slate-400 font-sans">Đang tải nhật ký...</td>
                 </tr>
+              ) : loadError ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-rose-700 font-sans">{loadError}</td>
+                </tr>
               ) : filteredLogs.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-400 font-sans">Không tìm thấy bản ghi nhật ký phù hợp.</td>
+                  <td colSpan={5} className="py-8 text-center text-slate-400 font-sans">Chưa có bản ghi nhật ký phù hợp với điều kiện lọc.</td>
                 </tr>
               ) : (
                 filteredLogs.map(l => (
