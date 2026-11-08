@@ -154,7 +154,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </button>
       </div>
 
-      <HomeOverviewDashboard stats={stats} systemConfig={systemConfig} onNavigateBrowse={onNavigateModule} />
+      <HomeOverviewDashboard stats={stats} systemConfig={systemConfig} onNavigateBrowse={(category) => onNavigateModule(category || 'science_tasks')} />
 
       {/* Grid: Approval Queue & Module Matrix */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
