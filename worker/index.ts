@@ -192,6 +192,24 @@ async function ensureModuleDataJson(db: D1Database, moduleName: string): Promise
 // or incomplete schemas. Existing rows are retained and never made public by default.
 async function ensureModuleImportSchema(db: D1Database, moduleName: string): Promise<Set<string>> {
   if (!ALLOWED_MODULES.includes(moduleName)) throw new Error('Invalid module');
+
+  // Some approved ecosystem modules were listed in the API but never created in
+  // older D1 installations. Create only a minimal, whitelisted, additive table;
+  // flexible source columns are retained in data_json by the import pipeline.
+  const existingTable = await db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?").bind(moduleName).first<any>();
+  if (!existingTable) {
+    const primaryColumn = PRIMARY_IMPORT_COLUMNS[moduleName] || 'title';
+    await db.prepare(`CREATE TABLE IF NOT EXISTS \"${moduleName}\" (
+      id TEXT PRIMARY KEY,
+      \"${primaryColumn}\" TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'draft',
+      data_json TEXT,
+      created_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`).run();
+  }
+
   let columns = await ensureModuleDataJson(db, moduleName);
   if (!columns.size) throw new Error(`Bảng ${moduleName} chưa tồn tại trong D1.`);
 
@@ -471,8 +489,31 @@ function timingSafeEqualStr(a: string, b: string): boolean {
   return result === 0;
 }
 
-// PBKDF2 Password Hashing with SHA-512 in pure Web Crypto API
-async function hashPasswordWebCrypto(password: string, saltHex: string): Promise<string> {
+// Versioned PBKDF2 parameters. Existing rows are explicitly tagged as 10,000
+// iterations by the additive migration; new credentials use the stronger target.
+const LEGACY_PASSWORD_ITERATIONS = 10000;
+const CURRENT_PASSWORD_ITERATIONS = 210000;
+
+async function ensureUserPasswordIterations(db: D1Database): Promise<void> {
+  let info = await db.prepare('PRAGMA table_info(users)').all<any>();
+  let columns = new Set((info.results || []).map((column: any) => String(column.name)));
+  if (columns.has('password_iterations')) return;
+  try {
+    await db.prepare(`ALTER TABLE users ADD COLUMN password_iterations INTEGER NOT NULL DEFAULT ${LEGACY_PASSWORD_ITERATIONS}`).run();
+  } catch (error) {
+    // Another request may have applied this additive migration concurrently.
+    info = await db.prepare('PRAGMA table_info(users)').all<any>();
+    columns = new Set((info.results || []).map((column: any) => String(column.name)));
+    if (!columns.has('password_iterations')) throw error;
+  }
+}
+
+// PBKDF2 Password Hashing with SHA-512 in pure Web Crypto API.
+// The iteration count is stored per account so legacy hashes remain verifiable.
+async function hashPasswordWebCrypto(password: string, saltHex: string, iterations = CURRENT_PASSWORD_ITERATIONS): Promise<string> {
+  if (!Number.isSafeInteger(iterations) || iterations < LEGACY_PASSWORD_ITERATIONS || iterations > 1000000) {
+    throw new Error('Tham số PBKDF2 không hợp lệ.');
+  }
   const enc = new TextEncoder();
   const passwordKey = await crypto.subtle.importKey(
     'raw',
@@ -486,7 +527,7 @@ async function hashPasswordWebCrypto(password: string, saltHex: string): Promise
     {
       name: 'PBKDF2',
       salt: saltBytes,
-      iterations: 10000,
+      iterations,
       hash: 'SHA-512'
     },
     passwordKey,
@@ -814,6 +855,7 @@ export default {
         if (!/^[a-z0-9._-]{3,64}$/.test(username) || password.length < 12 || !fullName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
           return jsonResponse({ success: false, message: 'Vui lòng cung cấp username hợp lệ, họ tên, email và mật khẩu tối thiểu 12 ký tự.' }, 400, corsHeaders);
         }
+        await ensureUserPasswordIterations(env.DB);
         const existing = await env.DB.prepare('SELECT COUNT(*) AS total FROM users').first<any>();
         if (Number(existing?.total || 0) !== 0) {
           return jsonResponse({ success: false, message: 'Đã tồn tại tài khoản. Không thể thực hiện khởi tạo Super Admin lần nữa.' }, 409, corsHeaders);
@@ -823,10 +865,10 @@ export default {
         const now = new Date().toISOString();
         const id = `usr_${crypto.randomUUID()}`;
         const inserted = await env.DB.prepare(`
-          INSERT INTO users (id, username, password_hash, password_salt, full_name, email, role, organization, phone, is_active, created_at, updated_at)
-          SELECT ?, ?, ?, ?, ?, ?, 'super_admin', ?, ?, 1, ?, ?
+          INSERT INTO users (id, username, password_hash, password_salt, password_iterations, full_name, email, role, organization, phone, is_active, created_at, updated_at)
+          SELECT ?, ?, ?, ?, ?, ?, ?, 'super_admin', ?, ?, 1, ?, ?
           WHERE NOT EXISTS (SELECT 1 FROM users)
-        `).bind(id, username, hash, salt, fullName, email, organization, phone, now, now).run();
+        `).bind(id, username, hash, salt, CURRENT_PASSWORD_ITERATIONS, fullName, email, organization, phone, now, now).run();
         if (Number(inserted.meta?.changes || 0) !== 1) {
           return jsonResponse({ success: false, message: 'Một tài khoản đã được khởi tạo đồng thời. Vui lòng đăng nhập.' }, 409, corsHeaders);
         }
@@ -899,9 +941,11 @@ export default {
           return jsonResponse({ success: false, message: 'Hệ thống chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
         }
 
+        await ensureUserPasswordIterations(env.DB);
+
         // 1. Fetch user from D1
         const userRow = await env.DB.prepare(`
-          SELECT id, username, full_name, email, role, organization, department, phone, is_active, password_hash, password_salt, failed_attempts, locked_until
+          SELECT id, username, full_name, email, role, organization, department, phone, is_active, password_hash, password_salt, password_iterations, failed_attempts, locked_until
           FROM users 
           WHERE LOWER(username) = ?
         `).bind(username).first<any>();
@@ -924,8 +968,9 @@ export default {
 
         // 3. Verify password via PBKDF2 WebCrypto
         let isValid = false;
-        if (userRow.password_hash && userRow.password_salt) {
-          const computedHash = await hashPasswordWebCrypto(password, userRow.password_salt);
+        const storedIterations = Number(userRow.password_iterations || LEGACY_PASSWORD_ITERATIONS);
+        if (userRow.password_hash && userRow.password_salt && Number.isSafeInteger(storedIterations) && storedIterations >= LEGACY_PASSWORD_ITERATIONS && storedIterations <= 1000000) {
+          const computedHash = await hashPasswordWebCrypto(password, userRow.password_salt, storedIterations);
           isValid = timingSafeEqualStr(computedHash, userRow.password_hash);
         }
 
@@ -944,10 +989,25 @@ export default {
           return jsonResponse({ success: false, message: 'Tên đăng nhập hoặc mật khẩu không chính xác.' }, 401, corsHeaders);
         }
 
-        // 4. Successful login -> reset failed counter
+        // 4. Successful login -> reset failed counter. Upgrade old hashes in the
+        // background so a valid login is never blocked by the stronger rehash.
         await env.DB.prepare(`
           UPDATE users SET failed_attempts = 0, locked_until = NULL, updated_at = datetime('now') WHERE id = ?
         `).bind(userRow.id).run();
+        if (storedIterations < CURRENT_PASSWORD_ITERATIONS) {
+          const oldHash = userRow.password_hash;
+          const oldSalt = userRow.password_salt;
+          ctx.waitUntil((async () => {
+            try {
+              const upgradedSalt = generateRandomSalt();
+              const upgradedHash = await hashPasswordWebCrypto(password, upgradedSalt, CURRENT_PASSWORD_ITERATIONS);
+              await env.DB!.prepare(`UPDATE users SET password_hash = ?, password_salt = ?, password_iterations = ?, updated_at = datetime('now') WHERE id = ? AND password_hash = ? AND password_salt = ?`)
+                .bind(upgradedHash, upgradedSalt, CURRENT_PASSWORD_ITERATIONS, userRow.id, oldHash, oldSalt).run();
+            } catch (upgradeError) {
+              console.warn('[Auth] Deferred password-hash upgrade failed; legacy hash remains valid:', upgradeError);
+            }
+          })());
+        }
 
         let loginManagedModules: string[] = [];
         try {
@@ -1033,8 +1093,9 @@ export default {
           return jsonResponse({ success: false, message: 'Hệ thống chưa kết nối cơ sở dữ liệu D1.' }, 500, corsHeaders);
         }
 
+        await ensureUserPasswordIterations(env.DB);
         const userRow = await env.DB.prepare(`
-          SELECT id, password_hash, password_salt FROM users WHERE id = ?
+          SELECT id, password_hash, password_salt, password_iterations FROM users WHERE id = ?
         `).bind(currentUser.id).first<any>();
 
         if (!userRow) {
@@ -1046,7 +1107,8 @@ export default {
         if (!currentPassword || !userRow.password_hash || !userRow.password_salt) {
           return jsonResponse({ success: false, message: 'Không thể xác minh mật khẩu hiện tại. Vui lòng liên hệ quản trị viên để được hỗ trợ.' }, 400, corsHeaders);
         }
-        const checkHash = await hashPasswordWebCrypto(currentPassword, userRow.password_salt);
+        const currentIterations = Number(userRow.password_iterations || LEGACY_PASSWORD_ITERATIONS);
+        const checkHash = await hashPasswordWebCrypto(currentPassword, userRow.password_salt, currentIterations);
         if (!timingSafeEqualStr(checkHash, userRow.password_hash)) {
           return jsonResponse({ success: false, message: 'Mật khẩu hiện tại không chính xác.' }, 400, corsHeaders);
         }
@@ -1055,8 +1117,8 @@ export default {
         const newHash = await hashPasswordWebCrypto(newPassword, newSalt);
 
         await env.DB.prepare(`
-          UPDATE users SET password_hash = ?, password_salt = ?, updated_at = datetime('now') WHERE id = ?
-        `).bind(newHash, newSalt, currentUser.id).run();
+          UPDATE users SET password_hash = ?, password_salt = ?, password_iterations = ?, updated_at = datetime('now') WHERE id = ?
+        `).bind(newHash, newSalt, CURRENT_PASSWORD_ITERATIONS, currentUser.id).run();
 
         try {
           await ensureAuditLogTable(env.DB);
@@ -1157,6 +1219,7 @@ export default {
             return jsonResponse({ success: false, message: 'CSDL chưa kết nối.' }, 500, corsHeaders);
           }
 
+          await ensureUserPasswordIterations(env.DB);
           // Check if username already exists
           const existing = await env.DB.prepare('SELECT id FROM users WHERE LOWER(username) = ?').bind(username).first();
           if (existing) {
@@ -1173,19 +1236,19 @@ export default {
 
           if (userCols.has('password_salt') && userCols.has('salt')) {
             await env.DB.prepare(`
-              INSERT INTO users (id, username, password_hash, password_salt, salt, full_name, email, role, organization, department, phone, is_active, created_at, updated_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-            `).bind(newId, username, hash, salt, salt, fullName, email, role, organization, departmentJson, phone, nowIso, nowIso).run();
+              INSERT INTO users (id, username, password_hash, password_salt, password_iterations, salt, full_name, email, role, organization, department, phone, is_active, created_at, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+            `).bind(newId, username, hash, salt, CURRENT_PASSWORD_ITERATIONS, salt, fullName, email, role, organization, departmentJson, phone, nowIso, nowIso).run();
           } else if (userCols.has('password_salt')) {
             await env.DB.prepare(`
-              INSERT INTO users (id, username, password_hash, password_salt, full_name, email, role, organization, department, phone, is_active, created_at, updated_at)
+              INSERT INTO users (id, username, password_hash, password_salt, password_iterations, full_name, email, role, organization, department, phone, is_active, created_at, updated_at)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-            `).bind(newId, username, hash, salt, fullName, email, role, organization, departmentJson, phone, nowIso, nowIso).run();
+            `).bind(newId, username, hash, salt, CURRENT_PASSWORD_ITERATIONS, fullName, email, role, organization, departmentJson, phone, nowIso, nowIso).run();
           } else {
             await env.DB.prepare(`
-              INSERT INTO users (id, username, password_hash, salt, full_name, email, role, organization, department, phone, is_active, created_at, updated_at)
+              INSERT INTO users (id, username, password_hash, password_iterations, salt, full_name, email, role, organization, department, phone, is_active, created_at, updated_at)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-            `).bind(newId, username, hash, salt, fullName, email, role, organization, departmentJson, phone, nowIso, nowIso).run();
+            `).bind(newId, username, hash, CURRENT_PASSWORD_ITERATIONS, salt, fullName, email, role, organization, departmentJson, phone, nowIso, nowIso).run();
           }
 
           return jsonResponse({
@@ -1199,6 +1262,7 @@ export default {
           if (!env.DB) {
             return jsonResponse({ success: false, message: 'CSDL chưa kết nối.' }, 500, corsHeaders);
           }
+          await ensureUserPasswordIterations(env.DB);
           const existing = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(userId).first<any>();
           if (!existing) {
             return jsonResponse({ success: false, message: 'Không tìm thấy tài khoản.' }, 404, corsHeaders);
@@ -1249,18 +1313,20 @@ export default {
 
           let newHash = existing.password_hash;
           let newSalt = existing.password_salt || existing.salt;
+          let newIterations = Number(existing.password_iterations || LEGACY_PASSWORD_ITERATIONS);
           if (body.password && String(body.password).length >= 6) {
             if (isAdminAccount) {
               if (!body.oldPassword) {
                 return jsonResponse({ success: false, message: 'Vui lòng cung cấp mật khẩu cũ để xác thực thay đổi mật khẩu quản trị viên.' }, 400, corsHeaders);
               }
-              const oldComputed = await hashPasswordWebCrypto(String(body.oldPassword), newSalt);
+              const oldComputed = await hashPasswordWebCrypto(String(body.oldPassword), newSalt, newIterations);
               if (!timingSafeEqualStr(oldComputed, existing.password_hash)) {
                 return jsonResponse({ success: false, message: 'Mật khẩu cũ không chính xác.' }, 400, corsHeaders);
               }
             }
             newSalt = generateRandomSalt();
-            newHash = await hashPasswordWebCrypto(String(body.password), newSalt);
+            newHash = await hashPasswordWebCrypto(String(body.password), newSalt, CURRENT_PASSWORD_ITERATIONS);
+            newIterations = CURRENT_PASSWORD_ITERATIONS;
           }
 
           const userTableInfo = await env.DB.prepare("PRAGMA table_info(users)").all<any>();
@@ -1268,16 +1334,16 @@ export default {
 
           if (userCols.has('password_salt') && userCols.has('salt')) {
             await env.DB.prepare(`
-              UPDATE users SET full_name = ?, email = ?, role = ?, phone = ?, organization = ?, department = ?, is_active = ?, password_hash = ?, password_salt = ?, salt = ?, updated_at = datetime('now') WHERE id = ?
-            `).bind(fullName, email, role, phone, org, deptJson, isActive, newHash, newSalt, newSalt, userId).run();
+              UPDATE users SET full_name = ?, email = ?, role = ?, phone = ?, organization = ?, department = ?, is_active = ?, password_hash = ?, password_salt = ?, password_iterations = ?, salt = ?, updated_at = datetime('now') WHERE id = ?
+            `).bind(fullName, email, role, phone, org, deptJson, isActive, newHash, newSalt, newIterations, newSalt, userId).run();
           } else if (userCols.has('password_salt')) {
             await env.DB.prepare(`
-              UPDATE users SET full_name = ?, email = ?, role = ?, phone = ?, organization = ?, department = ?, is_active = ?, password_hash = ?, password_salt = ?, updated_at = datetime('now') WHERE id = ?
-            `).bind(fullName, email, role, phone, org, deptJson, isActive, newHash, newSalt, userId).run();
+              UPDATE users SET full_name = ?, email = ?, role = ?, phone = ?, organization = ?, department = ?, is_active = ?, password_hash = ?, password_salt = ?, password_iterations = ?, updated_at = datetime('now') WHERE id = ?
+            `).bind(fullName, email, role, phone, org, deptJson, isActive, newHash, newSalt, newIterations, userId).run();
           } else {
             await env.DB.prepare(`
-              UPDATE users SET full_name = ?, email = ?, role = ?, phone = ?, organization = ?, department = ?, is_active = ?, password_hash = ?, salt = ?, updated_at = datetime('now') WHERE id = ?
-            `).bind(fullName, email, role, phone, org, deptJson, isActive, newHash, newSalt, userId).run();
+              UPDATE users SET full_name = ?, email = ?, role = ?, phone = ?, organization = ?, department = ?, is_active = ?, password_hash = ?, password_iterations = ?, salt = ?, updated_at = datetime('now') WHERE id = ?
+            `).bind(fullName, email, role, phone, org, deptJson, isActive, newHash, newIterations, newSalt, userId).run();
           }
 
           let resModules: string[] = [];
