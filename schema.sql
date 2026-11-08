@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL,
     password_salt TEXT,
     password_iterations INTEGER NOT NULL DEFAULT 10000,
+    password_version INTEGER NOT NULL DEFAULT 1,
     salt TEXT,
     full_name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
