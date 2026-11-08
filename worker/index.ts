@@ -2161,13 +2161,13 @@ export default {
         if (!env.DB) return jsonResponse({ success: false, message: 'Cơ sở dữ liệu D1 chưa kết nối.' }, 500, corsHeaders);
         const body = await request.json().catch(() => ({})) as any;
         const { fileName, fileSize, mimeType, cdnUrl, entityId, moduleType, title } = body;
-        const cleanFileName = sanitizeString(String(fileName || '')).replace(/[\\u0000-\\u001f\\u007f]/g, '').slice(0, 255);
+        const cleanFileName = sanitizeString(String(fileName || '')).replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 255);
         const numericFileSize = Number(fileSize);
         const cleanMimeType = sanitizeString(String(mimeType || 'application/octet-stream')).slice(0, 128);
         if (!cleanFileName || !cdnUrl || !moduleType || !ALLOWED_MODULES.includes(String(moduleType)) || !Number.isFinite(numericFileSize) || numericFileSize <= 0 || numericFileSize > 50 * 1024 * 1024) {
           return jsonResponse({ success: false, message: 'Thông tin tệp không hợp lệ; dung lượng tối đa 50 MB.' }, 400, corsHeaders);
         }
-        if (/^(text\\/html|application\\/(?:javascript|x-javascript)|image\\/svg\\+xml)/i.test(cleanMimeType)) {
+        if (/^(text\/html|application\/(?:javascript|x-javascript)|image\/svg\+xml)/i.test(cleanMimeType)) {
           return jsonResponse({ success: false, message: 'Định dạng tệp có nguy cơ thực thi nội dung không được chấp nhận.' }, 415, corsHeaders);
         }
         let normalizedCdnUrl = '';
