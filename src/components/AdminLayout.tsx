@@ -154,7 +154,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           tabIndex={0}
           onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') goToAdminOverview(); }}
           className="flex items-center gap-2 cursor-pointer group"
-          title="Về đầu trang quản trị"
+          title="Về Tổng quan & Chỉ số"
         >
           <div className="w-8 h-8 rounded-lg bg-white text-sky-900 flex items-center justify-center font-black text-xs transition-colors shrink-0 shadow-xs">
             ĐN
