@@ -23,5 +23,8 @@
     "ENVIRONMENT": "production",
     "PORTAL_NAME": "Cổng dữ liệu KHCN & KNĐMST TP Đà Nẵng",
     "IMAGEKIT_URL_ENDPOINT": "https://ik.imagekit.io/danangsokhcn"
+  },
+  "observability": {
+    "enabled": true
   }
 }

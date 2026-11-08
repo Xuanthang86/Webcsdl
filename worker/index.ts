@@ -36,6 +36,8 @@ export interface Env {
   IMAGEKIT_PUBLIC_KEY?: string;
   IMAGEKIT_PRIVATE_KEY?: string;
   IMAGEKIT_URL_ENDPOINT?: string;
+  BETTERSTACK_SOURCE_TOKEN?: string;
+  BETTERSTACK_INGESTING_HOST?: string;
 }
 
 // Whitelisted core and ecosystem modules
@@ -644,6 +646,63 @@ function getCookie(request: Request, name: string): string | null {
   try { return decodeURIComponent(match[3]); } catch { return null; }
 }
 
+// Send only sanitized operational/security events to Better Stack when configured.
+// Never include credentials, cookies, request bodies, personal data, or raw D1 errors.
+function queueBetterStackLog(
+  env: Env,
+  ctx: ExecutionContext,
+  level: 'warn' | 'error',
+  message: string,
+  attributes: Record<string, string | number | boolean | null> = {}
+): void {
+  const sourceToken = env.BETTERSTACK_SOURCE_TOKEN?.trim();
+  const rawHost = env.BETTERSTACK_INGESTING_HOST?.trim();
+  if (!sourceToken || !rawHost) return;
+
+  try {
+    // Accept only Better Stack ingestion hosts to prevent SSRF through misconfiguration.
+    const parsed = new URL(rawHost.includes('://') ? rawHost : `https://${rawHost}`);
+    const host = parsed.hostname.toLowerCase();
+    const validHost = parsed.protocol === 'https:' && !parsed.username && !parsed.password &&
+      parsed.pathname === '/' && !parsed.search && !parsed.hash &&
+      (host === 'in.logs.betterstack.com' || host.endsWith('.betterstackdata.com'));
+    if (!validHost) {
+      console.warn('[BetterStack] Ignoring invalid ingestion host configuration.');
+      return;
+    }
+
+    const event = {
+      dt: new Date().toISOString(),
+      level,
+      message,
+      service: 'webcsdlkhcn',
+      environment: env.ENVIRONMENT || 'unknown',
+      ...attributes
+    };
+    ctx.waitUntil((async () => {
+      try {
+        const response = await fetch(`https://${host}/`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${sourceToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(event)
+        });
+        if (!response.ok) console.warn('[BetterStack] Operational log delivery returned HTTP', response.status);
+      } catch {
+        console.warn('[BetterStack] Operational log delivery failed; application request remains unaffected.');
+      }
+    })());
+  } catch {
+    console.warn('[BetterStack] Invalid ingestion host configuration.');
+  }
+}
+
+function getOperationalRequestId(request: Request): string {
+  return request.headers.get('cf-ray') || crypto.randomUUID();
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -759,8 +818,11 @@ export default {
             if (ping?.alive === 1) {
               d1Status = 'connected';
             }
-          } catch (e: any) {
-            console.error('[Health] D1 probe failed:', e);
+          } catch {
+            console.error('[Health] D1 probe failed.');
+            queueBetterStackLog(env, ctx, 'error', 'D1 health probe failed', {
+              component: 'D1', route: '/health', request_id: getOperationalRequestId(request)
+            });
           }
         }
         return jsonResponse({
@@ -769,7 +831,7 @@ export default {
           runtime: 'cloudflare_workers',
           d1_status: d1Status,
           time: new Date().toISOString()
-        }, d1Status === 'connected' ? 200 : 503, corsHeaders);
+        }, d1Status === 'connected' ? 200 : 503, { ...corsHeaders, 'Cache-Control': 'no-store' });
       }
 
       // B. System Configuration
@@ -1012,6 +1074,10 @@ export default {
             await env.DB.prepare(`
               UPDATE users SET failed_attempts = ?, locked_until = ?, updated_at = datetime('now') WHERE id = ?
             `).bind(newFailed, lockUntilIso, userRow.id).run();
+            queueBetterStackLog(env, ctx, 'warn', 'Account brute-force lockout triggered', {
+              component: 'authentication', route: '/api/auth/login', request_id: getOperationalRequestId(request),
+              failed_attempts: newFailed, lockout_minutes: 15
+            });
           } else {
             await env.DB.prepare(`
               UPDATE users SET failed_attempts = ?, updated_at = datetime('now') WHERE id = ?
@@ -3514,6 +3580,10 @@ export default {
 
       return new Response('Not Found', { status: 404 });
     } catch (fatalErr: any) {
+      queueBetterStackLog(env, ctx, 'error', 'Unhandled Worker exception', {
+        component: 'worker', route: url.pathname, method: request.method,
+        request_id: getOperationalRequestId(request), error_name: String(fatalErr?.name || 'Error').slice(0, 80)
+      });
       console.error('[Worker Fatal Error]', fatalErr);
       if (url.pathname.startsWith('/api') || url.pathname === '/health') {
         return jsonResponse({
