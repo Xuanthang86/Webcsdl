@@ -145,7 +145,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({
   };
 
   const handleDownloadFile = async (fileName?: string) => {
-    const safeTitle = (entity.title || 'ban_ghi').slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_');
+    const expertDisplayName = entity.fullName || entity.full_name || entity.expertName || entity.expert_name || entity.name || entity.title || 'chuyen_gia';
+    const safeTitle = String(entity.moduleType === 'experts' ? expertDisplayName : (entity.title || 'ban_ghi')).slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_');
     const expertCode = entity.moduleType === 'experts'
       ? (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_') ? entity.code : 'chua-cap-nhat')
       : (entity.code || entity.id);
@@ -161,7 +162,7 @@ Mã số quản lý định danh: ${entity.moduleType === 'experts' && expertCod
 Phân hệ cơ sở dữ liệu: ${entity.moduleType || 'science_tasks'}
 
 1. THÔNG TIN CHUNG
-- Tiêu đề / Tên: ${entity.title || 'Chưa cập nhật tiêu đề'}
+- Tiêu đề / Tên: ${entity.moduleType === 'experts' ? expertDisplayName : (entity.title || 'Chưa cập nhật tiêu đề')}
 - Lĩnh vực chuyên ngành: ${entity.field || 'Đa ngành'}
 - Chủ trì / Tác giả / Đơn vị sở hữu: ${entity.ownerName || 'Chưa cập nhật'}
 - Nguồn gốc dữ liệu: ${entity.source || 'Cơ quan có thẩm quyền'}
