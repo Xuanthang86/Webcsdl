@@ -175,7 +175,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
           {/* Pillar 1: Nhiệm vụ, Đề tài KH&CN */}
           <div 
             onClick={() => onNavigateBrowse('science_tasks')}
-            className="bg-white hover:bg-sky-50/50 border border-sky-200/90 hover:border-sky-400 rounded-2xl p-4 transition-all cursor-pointer group flex flex-col justify-between shadow-2xs"
+            className={`bg-white hover:bg-sky-50/50 border border-sky-200/90 hover:border-sky-400 rounded-2xl p-4 transition-all cursor-pointer group flex flex-col justify-between shadow-2xs ${showTaskDetails ? 'lg:col-span-5' : ''}`}
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -217,6 +217,22 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </div>
             </div>
           </div>
+
+        {showTaskDetails && (
+          <div className="lg:col-span-5 p-4 bg-white/95 border border-teal-200 rounded-2xl animate-in fade-in duration-150 space-y-3 shadow-sm">
+            <div className="flex items-center justify-between pb-2 border-b border-teal-100">
+              <div className="text-xs font-bold text-teal-900 uppercase tracking-wider">Phân loại Đề tài, nhiệm vụ KH&CN</div>
+              <button type="button" onClick={() => setShowTaskDetails(false)} className="text-xs text-slate-500 hover:text-slate-800 px-2 py-1 rounded bg-slate-100 cursor-pointer">Đóng ✕</button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 text-xs">
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5"><div className="font-semibold text-[11px] uppercase text-teal-800">Theo năm</div>{taskYears.slice(0, 8).map(item => <div key={item.name} className="flex justify-between gap-2 border-b border-slate-200/60 py-1"><span>{item.name}</span><strong>{item.count}</strong></div>)}</div>
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5"><div className="font-semibold text-[11px] uppercase text-teal-800">Theo lĩnh vực</div>{taskFields.slice(0, 8).map(item => <div key={item.name} className="flex justify-between gap-2 border-b border-slate-200/60 py-1"><span className="truncate">{item.name}</span><strong>{item.count}</strong></div>)}</div>
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5"><div className="font-semibold text-[11px] uppercase text-teal-800">Theo đơn vị / cơ quan</div>{taskUnits.slice(0, 8).map(item => <div key={item.name} className="flex justify-between gap-2 border-b border-slate-200/60 py-1"><span className="truncate">{item.name}</span><strong>{item.count}</strong></div>)}</div>
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5"><div className="font-semibold text-[11px] uppercase text-teal-800">Theo cấp quản lý</div>{taskLevels.slice(0, 8).map(item => <div key={item.name} className="flex justify-between gap-2 border-b border-slate-200/60 py-1"><span className="truncate">{item.name}</span><strong>{item.count}</strong></div>)}</div>
+            </div>
+            <p className="text-[10px] text-slate-500">Dữ liệu thiếu thông tin được thể hiện ở nhóm “Chưa cập nhật”.</p>
+          </div>
+        )}
 
           {/* Pillar 2: Sáng kiến có tác dụng, ảnh hưởng đối với thành phố
               Yêu cầu: chỉ hiển thị tổng số, sửa "Công nhận cấp TP" thành "Năm hiện tại", bỏ "Làm lợi hàng năm" */}
@@ -517,22 +533,6 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
           </div>
 
         </div>
-
-        {showTaskDetails && (
-          <div className="p-4 bg-white/95 border border-teal-200 rounded-2xl animate-in fade-in duration-150 space-y-3 shadow-sm">
-            <div className="flex items-center justify-between pb-2 border-b border-teal-100">
-              <div className="text-xs font-bold text-teal-900 uppercase tracking-wider">Phân loại Đề tài, nhiệm vụ KH&CN</div>
-              <button type="button" onClick={() => setShowTaskDetails(false)} className="text-xs text-slate-500 hover:text-slate-800 px-2 py-1 rounded bg-slate-100 cursor-pointer">Đóng ✕</button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 text-xs">
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5"><div className="font-semibold text-[11px] uppercase text-teal-800">Theo năm</div>{taskYears.slice(0, 8).map(item => <div key={item.name} className="flex justify-between gap-2 border-b border-slate-200/60 py-1"><span>{item.name}</span><strong>{item.count}</strong></div>)}</div>
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5"><div className="font-semibold text-[11px] uppercase text-teal-800">Theo lĩnh vực</div>{taskFields.slice(0, 8).map(item => <div key={item.name} className="flex justify-between gap-2 border-b border-slate-200/60 py-1"><span className="truncate">{item.name}</span><strong>{item.count}</strong></div>)}</div>
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5"><div className="font-semibold text-[11px] uppercase text-teal-800">Theo đơn vị / cơ quan</div>{taskUnits.slice(0, 8).map(item => <div key={item.name} className="flex justify-between gap-2 border-b border-slate-200/60 py-1"><span className="truncate">{item.name}</span><strong>{item.count}</strong></div>)}</div>
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5"><div className="font-semibold text-[11px] uppercase text-teal-800">Theo cấp quản lý</div>{taskLevels.slice(0, 8).map(item => <div key={item.name} className="flex justify-between gap-2 border-b border-slate-200/60 py-1"><span className="truncate">{item.name}</span><strong>{item.count}</strong></div>)}</div>
-            </div>
-            <p className="text-[10px] text-slate-500">Dữ liệu thiếu thông tin được thể hiện ở nhóm “Chưa cập nhật”.</p>
-          </div>
-        )}
 
         {/* Expandable Breakdown for Pillar 4: Chuyên gia theo Lĩnh vực, Chuyên ngành, Đơn vị, Học hàm & Học vị (Desktop only) */}
         {showExpertDetails && (
