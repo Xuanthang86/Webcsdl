@@ -1912,6 +1912,28 @@ export default {
             console.error('Không thể tổng hợp phân loại ý tưởng khởi nghiệp:', error);
           }
 
+          // Classify approved/public startup projects by their school/ward origin.
+          try {
+            const projectInfo = await env.DB.prepare('PRAGMA table_info(startup_projects)').all<any>();
+            const projectColumns = new Set((projectInfo.results || []).map((column: any) => String(column.name)));
+            const projectRows = await env.DB.prepare('SELECT * FROM startup_projects' + buildPublicVisibilityWhere(projectColumns)).all<any>();
+            const normalizeProjectOrigin = (value: any) => String(value ?? '').normalize('NFD')
+              .replace(/[\\u0300-\\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+            for (const row of projectRows.results || []) {
+              let custom: Record<string, any> = {};
+              try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; } catch { custom = {}; }
+              const raw = row.ward_or_school ?? row.ward_school ?? row.wardSchool ??
+                row.idea_origin_type ?? row.origin_type ??
+                custom.wardOrSchool ?? custom.wardSchool ?? custom.ward_or_school ?? custom.ideaOriginType ?? custom.originType ?? '';
+              const label = normalizeProjectOrigin(raw);
+              if (/(truong|dai hoc|cao dang|school|university|college)/.test(label)) projectsByOrigin.school++;
+              else if (/(xa|phuong|dackhu|ward|commune)/.test(label)) projectsByOrigin.ward++;
+              else projectsByOrigin.other++;
+            }
+          } catch (error) {
+            console.error('Không thể tổng hợp phân loại dự án khởi nghiệp:', error);
+          }
+
           // Expert composition is aggregated from live D1 rows, including
           // configurable fields stored in data_json by the import workflow.
           const expertsByField: Record<string, number> = {};
