@@ -282,7 +282,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>Biểu đồ Phân tích & Thống kê Tăng trưởng</span>
             </h2>
             <p className="text-xs text-slate-500">
-              Thống kê số lượng đề tài, sáng kiến và doanh nghiệp theo Lĩnh vực & theo Năm
+              Phân tích theo năm, lĩnh vực, đơn vị, cấp quản lý, trường học/xã phường, chuyên gia, tổ chức trung gian và nhà đầu tư
             </p>
           </div>
 
