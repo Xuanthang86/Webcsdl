@@ -1831,6 +1831,10 @@ export default {
             ]);
 
             const ecosystemGroupDefinitions: Record<string, string[]> = {
+              science_tasks: ['field', 'scientific_field', 'research_field', 'linhvuc', 'linhvuckhoahoc'],
+              initiatives: ['field', 'initiative_type', 'sector', 'linhvuc'],
+              experts: ['field', 'research_field', 'professional_field', 'expertise_area', 'specialty', 'specialization'],
+              organizations: ['organization_type', 'type', 'field', 'sector', 'category'],
               startups: ['business_field', 'field', 'sector', 'industry', 'linhvuckinhdoanh'],
               support_organizations: ['organization_type', 'type', 'category', 'service_area', 'field'],
               startup_projects: ['field', 'business_field', 'startup_field', 'sector', 'linhvuckhoinghiep'],
@@ -1839,7 +1843,14 @@ export default {
               universities: ['school_type', 'education_level', 'type', 'ward', 'category'],
               featured_startups: ['business_field', 'field', 'industry', 'sector'],
               investors: ['investor_type', 'type', 'investment_stage', 'sector', 'field'],
-              investment_funds: ['fund_type', 'type', 'investment_stage', 'sector', 'field']
+              investment_funds: ['fund_type', 'type', 'investment_stage', 'sector', 'field'],
+              patents: ['patent_type', 'ip_type', 'technology_field', 'field', 'sector'],
+              technologies: ['technology_type', 'technology_field', 'field', 'sector', 'category'],
+              programs: ['program_type', 'support_type', 'field', 'target_group', 'category'],
+              collaboration_needs: ['need_type', 'collaboration_type', 'field', 'sector', 'category'],
+              publications: ['publication_type', 'research_field', 'field', 'journal', 'sector'],
+              lab_equipments: ['equipment_type', 'laboratory_type', 'field', 'category'],
+              policies: ['policy_type', 'document_type', 'issuing_agency', 'field', 'sector']
             };
             await Promise.all(Object.entries(ecosystemGroupDefinitions).map(async ([moduleName, fields]) => {
               const target: Record<string, number> = {};
