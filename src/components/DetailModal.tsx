@@ -944,7 +944,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <Building className="w-4 h-4 text-teal-700" />
                     <span>Hồ sơ Tổ chức Trung gian</span>
                   </div>
-                  <span className="font-mono text-teal-800">{entity.code || entity.id}</span>
+                  <span className="font-mono text-teal-800">{entity.code || 'Chưa cấp mã'}</span>
                 </div>
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
