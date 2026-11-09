@@ -173,6 +173,10 @@ function redactPublicDetail(item: any, moduleName: string): any {
   };
   const safe = { ...item };
   for (const key of restrictedByModule[moduleName] || []) delete safe[key];
+  // Never expose personal phone numbers or mixed contact strings in public API responses.
+  for (const key of Object.keys(safe)) {
+    if (/(phone|mobile|telephone|sodienthoai|contactinfo)/i.test(key)) delete safe[key];
+  }
   return safe;
 }
 
@@ -1583,9 +1587,12 @@ export default {
           }
 
           try {
+            const initiativeInfo = await env.DB.prepare('PRAGMA table_info(initiatives)').all<any>();
+            const initiativeColumns = new Set((initiativeInfo.results || []).map((column: any) => String(column.name)));
+            const savingsExpression = initiativeColumns.has('cost_savings') ? 'COALESCE(SUM(cost_savings), 0)' : '0';
             const initStats = await env.DB.prepare(`
-              SELECT COALESCE(SUM(cost_savings), 0) as savings
-              FROM initiatives
+              SELECT ${savingsExpression} as savings
+              FROM initiatives ${buildPublicVisibilityWhere(initiativeColumns)}
             `).first<{ savings: number }>();
             totalSavings = Number(initStats?.savings) || 0;
           } catch {}
@@ -1603,6 +1610,7 @@ export default {
           const tasksByLevel: Record<string, number> = {};
           const projectsByField: Record<string, number> = {};
           const initiativesByField: Record<string, number> = {};
+          const ideasByOrigin: Record<string, number> = { school: 0, ward: 0, other: 0 };
           const expertsByYear: Record<string, number> = {};
           const supportOrgsByYear: Record<string, number> = {};
           const universitiesByYear: Record<string, number> = {};
@@ -1635,7 +1643,7 @@ export default {
               const availableTaskColumns = candidateColumns.filter(column => taskColumns.has(column));
               if (availableTaskColumns.length > 0) {
                 const taskRows = await env.DB.prepare(
-                  `SELECT ${availableTaskColumns.map(column => `"${column}"`).join(', ')} FROM science_tasks`
+                  `SELECT ${availableTaskColumns.map(column => `"${column}"`).join(', ')} FROM science_tasks ${buildPublicVisibilityWhere(taskColumns)}`
                 ).all<any>();
 
                 const getTaskValue = (row: any, custom: Record<string, any>, names: string[]) => {
@@ -1823,6 +1831,27 @@ export default {
             } catch {}
           }
 
+          // Classify approved/public startup ideas by the source column supplied in Excel.
+          try {
+            const ideaInfo = await env.DB.prepare('PRAGMA table_info(startup_ideas)').all<any>();
+            const ideaColumns = new Set((ideaInfo.results || []).map((column: any) => String(column.name)));
+            const ideaRows = await env.DB.prepare('SELECT * FROM startup_ideas' + buildPublicVisibilityWhere(ideaColumns)).all<any>();
+            const normalizeOrigin = (value: any) => String(value ?? '').normalize('NFD')
+              .replace(/[\\u0300-\\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+            for (const row of ideaRows.results || []) {
+              let custom: Record<string, any> = {};
+              try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; } catch { custom = {}; }
+              const raw = row.ward_or_school ?? row.ward_school ?? row.wardSchool ??
+                custom.wardOrSchool ?? custom.wardSchool ?? custom.ward_or_school ?? custom.ideaOriginType ?? '';
+              const label = normalizeOrigin(raw);
+              if (/(truong|dai hoc|cao dang|school|university|college)/.test(label)) ideasByOrigin.school++;
+              else if (/(xa|phuong|dackhu|ward|commune)/.test(label)) ideasByOrigin.ward++;
+              else ideasByOrigin.other++;
+            }
+          } catch (error) {
+            console.error('Không thể tổng hợp phân loại ý tưởng khởi nghiệp:', error);
+          }
+
           // Expert composition is aggregated from live D1 rows, including
           // configurable fields stored in data_json by the import workflow.
           const expertsByField: Record<string, number> = {};
@@ -1950,6 +1979,7 @@ export default {
               initiativesByYear,
               startupsByYear,
               ideasByYear,
+              ideasByOrigin,
               projectsByYear,
               patentsByYear,
               expertsByYear,
