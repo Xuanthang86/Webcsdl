@@ -927,16 +927,18 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
           <table className="w-full text-left text-xs text-slate-700">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
               <tr>
-                <th className="py-3 px-2 w-9 text-center">
-                  <input
-                    type="checkbox"
-                    aria-label="Chọn tất cả bản ghi đang hiển thị"
-                    checked={visibleRecords.length > 0 && visibleRecords.every(record => selectedIds.includes(record.id))}
-                    onChange={(event) => setSelectedIds(event.target.checked
-                      ? [...new Set([...selectedIds, ...visibleRecords.map(record => record.id)])]
-                      : selectedIds.filter(id => !visibleRecords.some(record => record.id === id)))}
-                  />
-                </th>
+                {canDelete && (
+                  <th className="py-3 px-2 w-9 text-center">
+                    <input
+                      type="checkbox"
+                      aria-label="Chọn tất cả bản ghi đang hiển thị"
+                      checked={visibleRecords.length > 0 && visibleRecords.every(record => selectedIds.includes(record.id))}
+                      onChange={(event) => setSelectedIds(event.target.checked
+                        ? [...new Set([...selectedIds, ...visibleRecords.map(record => record.id)])]
+                        : selectedIds.filter(id => !visibleRecords.some(record => record.id === id)))}
+                    />
+                  </th>
+                )}
                 <th className="py-3 px-4 w-12 text-center">STT</th>
                 <th className="py-3 px-4 w-32">Mã bản ghi</th>
                 <th className="py-3 px-4">Tên / Tiêu đề</th>
@@ -950,29 +952,31 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-slate-400">
+                  <td colSpan={canDelete ? 9 : 8} className="py-8 text-center text-slate-400">
                     Đang tải dữ liệu...
                   </td>
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-slate-400">
+                  <td colSpan={canDelete ? 9 : 8} className="py-8 text-center text-slate-400">
                     Không có bản ghi nào phù hợp với điều kiện lọc.
                   </td>
                 </tr>
               ) : (
                 visibleRecords.map((item, idx) => (
                   <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3 px-2 text-center">
-                      <input
-                        type="checkbox"
-                        aria-label={`Chọn bản ghi ${item.title || item.name || item.id}`}
-                        checked={selectedIds.includes(item.id)}
-                        onChange={(event) => setSelectedIds(current => event.target.checked
-                          ? [...current, item.id]
-                          : current.filter(id => id !== item.id))}
-                      />
-                    </td>
+                    {canDelete && (
+                      <td className="py-3 px-2 text-center">
+                        <input
+                          type="checkbox"
+                          aria-label={`Chọn bản ghi ${item.title || item.name || item.id}`}
+                          checked={selectedIds.includes(item.id)}
+                          onChange={(event) => setSelectedIds(current => event.target.checked
+                            ? [...current, item.id]
+                            : current.filter(id => id !== item.id))}
+                        />
+                      </td>
+                    )}
                     <td className="py-3 px-4 text-center text-slate-400 font-mono text-[11px]">
                       {(currentPage - 1) * pageSize + idx + 1}
                     </td>
