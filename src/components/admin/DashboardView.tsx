@@ -164,7 +164,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     const total = visibleEntries.reduce((sum, [, count]) => sum + count, 0);
     const palette = ['#0f766e', '#2563eb', '#7c3aed', '#d97706', '#0891b2', '#be123c', '#4d7c0f', '#9333ea', '#0369a1', '#64748b'];
     let cursor = 0;
-    const gradientStops = visibleEntries.map(([name, count], index) => {
+    const gradientStops = visibleEntries.map(([, count], index) => {
       const start = cursor;
       cursor += total > 0 ? (count / total) * 100 : 0;
       return palette[index % palette.length] + ' ' + start + '% ' + cursor + '%';
@@ -173,7 +173,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return (
       <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 min-w-0 space-y-3">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-xs font-bold text-slate-800">{title}</h3>
+          <span className={'h-1 w-5 shrink-0 rounded ' + colorClass} aria-hidden="true" />
+          <h3 className="text-xs font-bold text-slate-800 flex-1">{title}</h3>
           <span className="text-[10px] font-mono text-slate-500">Tổng: {total.toLocaleString('vi-VN')}</span>
         </div>
         {visibleEntries.length ? (
