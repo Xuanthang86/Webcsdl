@@ -341,6 +341,7 @@ export default function App() {
 
     const handleAuthExpired = () => {
       const adminWasOpen = window.sessionStorage.getItem('portal_current_view') === 'admin' || window.location.hash === '#admin';
+      window.localStorage.removeItem(AUTH_LAST_ACTIVITY_KEY);
       setCurrentUser(undefined);
       if (adminWasOpen) {
         // Preserve the admin screen after an iOS/WebKit tab restore. The API remains
