@@ -997,11 +997,17 @@ export default {
 
       // D. Auth: Current User (`/api/auth/me`)
       if (url.pathname === '/api/auth/me') {
-        // Refresh only as a browser-session cookie. No Max-Age/Expires is set,
-        // so the browser does not intentionally persist the login across restarts.
-        const sessionCookie = currentUser.role !== 'public_user' && cookieToken
-          ? `danang_session=${encodeURIComponent(cookieToken)}; Path=/; HttpOnly; Secure; SameSite=Lax`
-          : undefined;
+        // Sliding 12-hour token refreshed by the active-tab heartbeat.
+        // The cookie itself remains browser-session-only (no Max-Age/Expires).
+        const refreshedToken = currentUser.role !== 'public_user' && cookieToken
+          ? await signToken({
+              uid: currentUser.id,
+              role: currentUser.role,
+              iat: Date.now(),
+              exp: Date.now() + 12 * 60 * 60 * 1000
+            }, secret)
+          : null;
+        const sessionCookie = refreshedToken ? createSessionCookie(refreshedToken) : undefined;
         const response = jsonResponse({
           success: true,
           user: currentUser,
@@ -1138,7 +1144,7 @@ export default {
           uid: userRow.id,
           role: userRow.role,
           iat: Date.now(),
-          exp: Date.now() + 7 * 24 * 60 * 60 * 1000
+          exp: Date.now() + 12 * 60 * 60 * 1000
         }, secret);
 
         // Keep the HttpOnly cookie scoped to the current browser session.
