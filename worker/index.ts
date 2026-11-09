@@ -1615,10 +1615,21 @@ export default {
           const tasksByUnit: Record<string, number> = {};
           const tasksByLevel: Record<string, number> = {};
           const projectsByField: Record<string, number> = {};
+          const projectsBySchool: Record<string, number> = {};
+          const projectsByWard: Record<string, number> = {};
+          const projectsByOrigin: Record<string, number> = { school: 0, ward: 0, other: 0 };
+          const startupsByField: Record<string, number> = {};
+          const ideasByField: Record<string, number> = {};
+          const ideasBySchool: Record<string, number> = {};
+          const ideasByWard: Record<string, number> = {};
           const initiativesByField: Record<string, number> = {};
+          const supportOrgsByField: Record<string, number> = {};
           const ecosystemClassifications: Record<string, Record<string, number>> = {};
           const ideasByOrigin: Record<string, number> = { school: 0, ward: 0, other: 0 };
           const expertsByYear: Record<string, number> = {};
+          const investorsByYear: Record<string, number> = {};
+          const investmentFundsByYear: Record<string, number> = {};
+          const expertsByAcademicTitle: Record<string, number> = {};
           const supportOrgsByYear: Record<string, number> = {};
           const universitiesByYear: Record<string, number> = {};
           const wardsByYear: Record<string, number> = {};
@@ -1776,6 +1787,12 @@ export default {
               aggregateModuleYears('experts', expertsByYear, [
                 'start_work_year', 'work_start_year', 'joined_at', 'join_date', 'registration_year', 'registration_date', 'created_at'
               ]),
+              aggregateModuleYears('investors', investorsByYear, [
+                'investment_date', 'registration_date', 'founded_date', 'created_at'
+              ]),
+              aggregateModuleYears('investment_funds', investmentFundsByYear, [
+                'launch_date', 'established_date', 'founded_date', 'created_at'
+              ]),
               aggregateModuleYears('support_organizations', supportOrgsByYear, [
                 'established_date', 'founded_date', 'establishment_year', 'created_at'
               ]),
@@ -1827,7 +1844,14 @@ export default {
               aggregateModuleGroups('science_tasks', tasksByField, ['field', 'scientific_field', 'research_field', 'linhvuc', 'linhvuckhoahoc']),
               aggregateModuleGroups('science_tasks', tasksByUnit, ['lead_agency', 'managing_agency', 'lead_organization', 'owner_name', 'receiving_unit', 'organization', 'agency', 'coquanchutri', 'donvichutri']),
               aggregateModuleGroups('science_tasks', tasksByLevel, ['management_level', 'task_level', 'project_level', 'level', 'capquanly', 'capdetai']),
-              aggregateModuleGroups('startup_projects', projectsByField, ['field', 'business_field', 'startup_field', 'sector', 'linhvuckhoinghiep', 'linhvuc'])
+              aggregateModuleGroups('startups', startupsByField, ['business_field', 'field', 'sector', 'industry', 'linhvuckinhdoanh', 'linhvuc']),
+              aggregateModuleGroups('startup_projects', projectsByField, ['field', 'business_field', 'startup_field', 'sector', 'linhvuckhoinghiep', 'linhvuc']),
+              aggregateModuleGroups('startup_projects', projectsBySchool, ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school']),
+              aggregateModuleGroups('startup_projects', projectsByWard, ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality']),
+              aggregateModuleGroups('startup_ideas', ideasByField, ['field', 'startup_field', 'sector', 'linhvuckhoinghiep', 'linhvuc']),
+              aggregateModuleGroups('startup_ideas', ideasBySchool, ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school']),
+              aggregateModuleGroups('startup_ideas', ideasByWard, ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality']),
+              aggregateModuleGroups('support_organizations', supportOrgsByField, ['field', 'service_area', 'sector', 'organization_type', 'type'])
             ]);
 
             const ecosystemGroupDefinitions: Record<string, string[]> = {
@@ -1877,7 +1901,8 @@ export default {
               let custom: Record<string, any> = {};
               try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; } catch { custom = {}; }
               const raw = row.ward_or_school ?? row.ward_school ?? row.wardSchool ??
-                custom.wardOrSchool ?? custom.wardSchool ?? custom.ward_or_school ?? custom.ideaOriginType ?? '';
+                row.idea_origin_type ?? row.origin_type ??
+                custom.wardOrSchool ?? custom.wardSchool ?? custom.ward_or_school ?? custom.ideaOriginType ?? custom.originType ?? '';
               const label = normalizeOrigin(raw);
               if (/(truong|dai hoc|cao dang|school|university|college)/.test(label)) ideasByOrigin.school++;
               else if (/(xa|phuong|dackhu|ward|commune)/.test(label)) ideasByOrigin.ward++;
@@ -1898,7 +1923,7 @@ export default {
             const expertInfo = await env.DB.prepare('PRAGMA table_info(experts)').all<any>();
             const expertColumns = new Set((expertInfo.results || []).map((column: any) => String(column.name)));
             // Read all physical columns to include legacy/custom field names.
-            const expertRows = await env.DB.prepare('SELECT * FROM experts').all<any>();
+            const expertRows = await env.DB.prepare('SELECT * FROM experts' + buildPublicVisibilityWhere(expertColumns)).all<any>();
             if (expertColumns.size > 0) {
               const normalizeExpertKey = (value: string) => value.replace(/[_\s-]/g, '').toLowerCase();
               const getExpertValue = (row: any, custom: Record<string, any>, candidates: string[]) => {
@@ -1945,6 +1970,7 @@ export default {
                 const degreeValue = getExpertValue(row, custom, ['degree', 'qualification', 'academic_degree']);
                 const researchTitleValue = getExpertValue(row, custom, ['research_title', 'job_title', 'position']);
                 addExpertGroup(expertsByDegree, degreeValue);
+                addExpertGroup(expertsByAcademicTitle, rankValue);
                 addExpertGroup(expertsByTitle, rankValue, rankValue ? 'Học hàm: ' : '');
                 addExpertGroup(expertsByTitle, degreeValue, degreeValue ? 'Học vị: ' : '');
                 if (!rankValue && !degreeValue) addExpertGroup(expertsByTitle, researchTitleValue);
@@ -2030,7 +2056,18 @@ export default {
               tasksByField,
               tasksByUnit,
               tasksByLevel,
+              startupsByField,
               projectsByField,
+              projectsBySchool,
+              projectsByWard,
+              projectsByOrigin,
+              ideasByField,
+              ideasBySchool,
+              ideasByWard,
+              supportOrgsByField,
+              investorsByYear,
+              investmentFundsByYear,
+              expertsByAcademicTitle,
               initiativesByField,
               yearlyStats
             }
