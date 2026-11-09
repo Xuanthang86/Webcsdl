@@ -808,7 +808,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2"><School className="w-4 h-4 text-violet-600" /><span>Trường Đại học/Cao đẳng</span></h3>
                   <span className="text-xs text-slate-500 whitespace-nowrap">{featuredUniversities.length} trường</span>
                 </div>
-                <div className="max-h-[470px] overflow-auto rounded-xl border border-slate-200">
+                <div className="max-h-[500px] overflow-auto rounded-xl border border-slate-200">
                   <table className="w-full min-w-[1050px] text-xs text-left">
                     <thead className="sticky top-0 z-10 bg-slate-100 text-slate-700">
                       <tr>
@@ -828,7 +828,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                             <td className="px-3 py-3 text-center font-mono text-slate-500">{idx + 1}</td>
                             <td className="px-3 py-3 font-semibold text-slate-800">{item.title || item.name || item.schoolName || 'Chưa cập nhật'}</td>
                             <td className="px-3 py-3 text-slate-600">{item.ward || item.wardName || item.ward_name || item.wardSchool || item.ward_school || item.administrativeUnit || 'Chưa cập nhật'}</td>
-                            <td className="px-3 py-3 text-slate-600">{item.address || item.operatingAddress || 'Chưa cập nhật'}</td>
+                            <td className="px-3 py-3 text-slate-600">{item.address || item.operatingAddress || item.operating_address || 'Chưa cập nhật'}</td>
                             <td className="px-3 py-3 text-slate-600 break-all">{publicEmail(item)}</td>
                             <td className="px-3 py-3">{website ? <a href={websiteHref(String(website))} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline break-all">{website}</a> : <span className="text-slate-400">Chưa cập nhật</span>}</td>
                           </tr>
@@ -848,7 +848,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2"><Star className="w-4 h-4 text-amber-600" /><span>Doanh nghiệp khởi nghiệp tiêu biểu</span></h3>
                   <span className="text-xs text-slate-500 whitespace-nowrap">{featuredPopularStartups.length} doanh nghiệp</span>
                 </div>
-                <div className="max-h-[470px] overflow-auto rounded-xl border border-slate-200">
+                <div className="max-h-[500px] overflow-auto rounded-xl border border-slate-200">
                   <table className="w-full min-w-[1450px] text-xs text-left">
                     <thead className="sticky top-0 z-10 bg-slate-100 text-slate-700">
                       <tr>
@@ -869,12 +869,12 @@ export const HomeView: React.FC<HomeViewProps> = ({
                           <tr key={item.id} className="hover:bg-amber-50/40">
                             <td className="px-3 py-3 text-center font-mono text-slate-500">{idx + 1}</td>
                             <td className="px-3 py-3 font-semibold text-slate-800">{item.companyName || item.company_name || item.businessName || item.business_name || item.title || item.name || 'Chưa cập nhật'}</td>
-                            <td className="px-3 py-3 text-slate-600">{item.projectName || item.projectTitle || item.project_name || item.title || 'Chưa cập nhật'}</td>
+                            <td className="px-3 py-3 text-slate-600">{item.projectName || item.projectTitle || item.project_name || item.project || 'Chưa cập nhật'}</td>
                             <td className="px-3 py-3 text-slate-600">{item.projectRepresentative || item.project_representative || item.representativeName || item.representative_name || item.representative || item.projectLeader || item.project_leader || item.ownerName || item.leaderName || 'Chưa cập nhật'}</td>
-                            <td className="px-3 py-3 text-slate-600">{item.address || item.operatingAddress || 'Chưa cập nhật'}</td>
+                            <td className="px-3 py-3 text-slate-600">{item.address || item.operatingAddress || item.operating_address || 'Chưa cập nhật'}</td>
                             <td className="px-3 py-3 text-slate-600 break-all">{publicEmail(item)}</td>
                             <td className="px-3 py-3">{website ? <a href={websiteHref(String(website))} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline break-all">{website}</a> : <span className="text-slate-400">Chưa cập nhật</span>}</td>
-                            <td className="px-3 py-3 text-slate-600">{item.ward || item.wardName || item.wardSchool || item.administrativeUnit || 'Chưa cập nhật'}</td>
+                            <td className="px-3 py-3 text-slate-600">{item.ward || item.wardName || item.ward_name || item.wardSchool || item.ward_school || item.administrativeUnit || item.administrative_unit || 'Chưa cập nhật'}</td>
                           </tr>
                         );
                       })}
