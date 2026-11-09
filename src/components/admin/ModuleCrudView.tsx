@@ -940,7 +940,6 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                         <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
                           {item.birthYear && <span className="text-slate-600">Sinh: {item.birthYear}</span>}
                           {item.email && <span className="text-teal-700">{item.email}</span>}
-                          {item.phone && <span className="text-slate-600">· ĐT: {item.phone}</span>}
                           {item.specialty && <span className="bg-blue-50 text-blue-700 px-1.5 py-0.2 rounded border border-blue-200">{item.specialty}</span>}
                         </div>
                       )}
@@ -948,7 +947,6 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       {moduleType === 'startups' && (
                         <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
                           {item.address && <span>Đ/c: {item.address}</span>}
-                          {item.leaderName && <span>Đại diện: <strong className="text-slate-700">{item.leaderName}</strong> ({item.leaderPhone || item.leaderEmail})</span>}
                           {item.foundedYear && <span className="text-slate-400">· Khởi nghiệp: {item.foundedYear}</span>}
                           {item.website && <a href={item.website} target="_blank" rel="noreferrer" className="text-teal-600 hover:underline">Website</a>}
                         </div>
@@ -963,7 +961,6 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       {moduleType === 'startup_projects' && (
                         <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
                           {item.address && <span>Đ/c: {item.address}</span>}
-                          {item.leaderName && <span>Trưởng dự án: <strong className="text-slate-700">{item.leaderName}</strong> ({item.leaderPhone})</span>}
                           {item.incubator && <span className="bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded border border-emerald-200">Ươm tạo: {item.incubator}</span>}
                           {item.startYear && <span className="text-slate-400">· Năm KN: {item.startYear}</span>}
                         </div>
@@ -972,7 +969,6 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       {moduleType === 'startup_ideas' && (
                         <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
                           {item.wardSchool && <span className="bg-yellow-50 text-yellow-800 px-1.5 py-0.2 rounded border border-yellow-200">{item.wardSchool}</span>}
-                          {item.leaderName && <span>Trưởng nhóm: <strong className="text-slate-700">{item.leaderName}</strong> ({item.leaderPhone})</span>}
                           {item.mentorTeacher && <span>GV hướng dẫn: {item.mentorTeacher}</span>}
                         </div>
                       )}
