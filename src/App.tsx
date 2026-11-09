@@ -463,7 +463,9 @@ export default function App() {
       if (now - lastSessionCheckAt >= 60 * 1000) void revalidateAdminSession();
     };
     const onStorage = (event: StorageEvent) => {
-      if (event.key === AUTH_LAST_ACTIVITY_KEY && hasTimedOut()) void expireForInactivity();
+      if (event.key === AUTH_LAST_ACTIVITY_KEY && (event.newValue === null || hasTimedOut())) {
+        void expireForInactivity();
+      }
     };
     const onVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
