@@ -138,7 +138,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
 
   const normalizeInlineHeader = (value: any) => String(value ?? '')
     .normalize('NFD')
-    .replace(/[\\u0300-\\u036f]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[đĐ]/g, 'd')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
@@ -173,7 +173,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       }
     }
     if (headerIndex < 0) headerIndex = 0;
-    const headers = (matrix[headerIndex] || []).map(cell => String(cell ?? '').replace(/^\\uFEFF/, '').trim());
+    const headers = (matrix[headerIndex] || []).map(cell => String(cell ?? '').replace(/^\uFEFF/, '').trim());
     if (headers.filter(Boolean).length < 2) return [];
     return matrix.slice(headerIndex + 1).map(values => {
       const record: Record<string, any> = {};
@@ -185,10 +185,10 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   };
 
   const parseInlineCsv = (text: string) => {
-    const input = String(text || '').replace(/^\\uFEFF/, '');
+    const input = String(text || '').replace(/^\uFEFF/, '');
     if (!input.trim()) return [];
-    const firstLine = input.split(/\\r?\\n/, 1)[0] || '';
-    const delimiters = [',', ';', '\\t'];
+    const firstLine = input.split(/\r?\n/, 1)[0] || '';
+    const delimiters = [',', ';', '\t'];
     const counts = delimiters.map(delimiter => {
       let count = 0, inQuotes = false;
       for (let i = 0; i < firstLine.length; i++) {
@@ -210,8 +210,8 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
         else inQuotes = !inQuotes;
       } else if (char === delimiter && !inQuotes) {
         row.push(cell.trim()); cell = '';
-      } else if ((char === '\\n' || char === '\\r') && !inQuotes) {
-        if (char === '\\r' && input[i + 1] === '\\n') i++;
+      } else if ((char === '\n' || char === '\r') && !inQuotes) {
+        if (char === '\r' && input[i + 1] === '\n') i++;
         row.push(cell.trim());
         if (row.some(value => value.length > 0)) matrix.push(row);
         row = []; cell = '';
@@ -373,7 +373,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
         // Append extra attributes, but never allow an imported STT field to
         // overwrite the sequential row number generated for this export.
         Object.entries(r).forEach(([k, v]) => {
-          const normalizedKey = k.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const normalizedKey = k.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
           if (!['id', 'code', 'title', 'field', 'ownerName', 'status', 'publicityLevel', 'history'].includes(k)
             && !['stt', 'sothutu'].includes(normalizedKey)
             && typeof v !== 'object') {
