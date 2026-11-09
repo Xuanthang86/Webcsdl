@@ -380,11 +380,12 @@ export default function App() {
         window.localStorage.setItem(AUTH_LAST_TAB_CLOSED_KEY, String(Date.now()));
       }
     };
+    const refreshLeaseWhenVisible = () => {
+      if (document.visibilityState === 'visible') refreshTabLease();
+    };
     const tabLeaseHeartbeat = window.setInterval(refreshTabLease, 30 * 1000);
     window.addEventListener('pagehide', markTabClosing);
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') refreshTabLease();
-    });
+    document.addEventListener('visibilitychange', refreshLeaseWhenVisible);
 
     const handleAuthExpired = () => {
       const adminWasOpen = window.sessionStorage.getItem('portal_current_view') === 'admin' || window.location.hash === '#admin';
@@ -402,6 +403,7 @@ export default function App() {
     return () => {
       window.removeEventListener('portal:auth-expired', handleAuthExpired);
       window.removeEventListener('pagehide', markTabClosing);
+      document.removeEventListener('visibilitychange', refreshLeaseWhenVisible);
       window.clearInterval(tabLeaseHeartbeat);
       authChannel?.close();
     };
