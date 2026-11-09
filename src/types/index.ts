@@ -207,8 +207,11 @@ export interface AggregatedStats {
   initiativesByField?: Record<string, number>;
   initiativesByYear?: Record<string, number>;
   startupsByYear?: Record<string, number>;
+  investorsByYear?: Record<string, number>;
+  investmentFundsByYear?: Record<string, number>;
   yearlyStats?: Record<string, { tasks: number; initiatives: number; startups: number; budget: number; savings: number }>;
   expertsByField?: Record<string, number>;
+  expertsByAcademicTitle?: Record<string, number>;
   expertsByWorkplace?: Record<string, number>;
   expertsByDegree?: Record<string, number>;
   expertsBySpecialty?: Record<string, number>;
@@ -224,6 +227,13 @@ export interface AggregatedStats {
   startupsByWard?: Record<string, number>;
   startupsBySchool?: Record<string, number>;
   projectsByField?: Record<string, number>;
+  projectsBySchool?: Record<string, number>;
+  projectsByWard?: Record<string, number>;
+  projectsByOrigin?: Record<string, number>;
+  ideasByField?: Record<string, number>;
+  ideasBySchool?: Record<string, number>;
+  ideasByWard?: Record<string, number>;
+  supportOrgsByField?: Record<string, number>;
   projectsByYear?: Record<string, number>;
   projectsBySchool?: Record<string, number>;
   projectsByWard?: Record<string, number>;
