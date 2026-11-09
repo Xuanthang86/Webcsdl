@@ -9,8 +9,8 @@ import {
   ConnectionMessage
 } from '../types';
 
-// Authentication is cookie-based. The HttpOnly session cookie is intentionally
-// non-persistent so closing the browser ends the login session.
+// Authentication is cookie-based. The HttpOnly session cookie persists for seven days,
+// matching the signed token lifetime; JavaScript storage is never used for credentials.
 function removeStoredToken(): void {
   if (typeof window === 'undefined') return;
   window.sessionStorage.removeItem('portal_session_token');
