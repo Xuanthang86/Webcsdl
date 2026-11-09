@@ -145,7 +145,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
 
   const inlinePrimaryHeaders: Partial<Record<ModuleType, string[]>> = {
     initiatives: ['tensangkien', 'tengiaphap', 'sangkien', 'initiativename'],
-    startups: ['tendoanhnghiep', 'tendoanhnghiepkhoinghiep', 'tencongty', 'tenstartup', 'companyname'],
+    startups: ['tendoanhnghiep', 'tendoanhnghiepkhoinghiep', 'tendoanhnghiepkhoinghiepsangtao', 'tencongty', 'tenstartup', 'companyname'],
     startup_projects: ['tenduan', 'tenduankhoinghiep', 'tenduanstartup', 'projectname', 'projecttitle'],
     startup_ideas: ['tenytuong', 'tenytuongkhoinghiep', 'ideaname', 'ideatitle'],
     wards: ['tenxaphuong', 'tenxaphuongdackhu', 'tenxa', 'tenphuong', 'tendackhu', 'wardname'],
@@ -172,7 +172,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
         break;
       }
     }
-    if (headerIndex < 0) headerIndex = 0;
+    if (headerIndex < 0) return [];
     const headers = (matrix[headerIndex] || []).map(cell => String(cell ?? '').replace(/^\uFEFF/, '').trim());
     if (headers.filter(Boolean).length < 2) return [];
     return matrix.slice(headerIndex + 1).map(values => {
@@ -571,6 +571,35 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     }
   };
 
+  const handleBulkDelete = async () => {
+    const ids = selectedIds.filter(id => records.some(record => record.id === id));
+    if (!ids.length) return;
+    const confirmed = window.confirm(`Bạn chắc chắn muốn xóa ${ids.length} bản ghi đã chọn trong phân hệ ${MODULE_NAMES[moduleType]}? Thao tác này không thể hoàn tác.`);
+    if (!confirmed) return;
+    setIsDeleting(true);
+    const failures: string[] = [];
+    let deleted = 0;
+    try {
+      for (const id of ids) {
+        try {
+          await api.deleteRecord(moduleType, id);
+          deleted++;
+        } catch (error: any) {
+          failures.push(`${id}: ${error.message || 'Không thể xóa'}`);
+        }
+      }
+      setSelectedIds([]);
+      await loadData();
+      if (failures.length) {
+        showErrorToast(`Đã xóa ${deleted}/${ids.length} bản ghi. ${failures.length} bản ghi chưa xóa được: ${failures.slice(0, 5).join('; ')}`);
+      } else {
+        showToast(`Đã xóa thành công ${deleted} bản ghi đã chọn.`);
+      }
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleTransitionWorkflow = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!workflowRecord) return;
@@ -696,6 +725,17 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
             <span className="px-2.5 py-1 bg-sky-50 text-sky-800 border border-sky-200 rounded-lg text-xs font-semibold">
               Chế độ chỉ xem (Read-only)
             </span>
+          )}
+
+          {canDelete && selectedIds.length > 0 && (
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              disabled={isDeleting}
+              className="px-3 py-1.5 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-800 text-xs font-semibold rounded-lg disabled:opacity-50"
+            >
+              {isDeleting ? 'Đang xóa...' : `Xóa ${selectedIds.length} bản ghi đã chọn`}
+            </button>
           )}
 
           {pendingApprovalIds.length > 0 && canApprove && (
@@ -879,6 +919,16 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
           <table className="w-full text-left text-xs text-slate-700">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
               <tr>
+                <th className="py-3 px-2 w-9 text-center">
+                  <input
+                    type="checkbox"
+                    aria-label="Chọn tất cả bản ghi đang hiển thị"
+                    checked={visibleRecords.length > 0 && visibleRecords.every(record => selectedIds.includes(record.id))}
+                    onChange={(event) => setSelectedIds(event.target.checked
+                      ? [...new Set([...selectedIds, ...visibleRecords.map(record => record.id)])]
+                      : selectedIds.filter(id => !visibleRecords.some(record => record.id === id)))}
+                  />
+                </th>
                 <th className="py-3 px-4 w-12 text-center">STT</th>
                 <th className="py-3 px-4 w-32">Mã bản ghi</th>
                 <th className="py-3 px-4">Tên / Tiêu đề</th>
@@ -892,19 +942,29 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-400">
+                  <td colSpan={9} className="py-8 text-center text-slate-400">
                     Đang tải dữ liệu...
                   </td>
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-400">
+                  <td colSpan={9} className="py-8 text-center text-slate-400">
                     Không có bản ghi nào phù hợp với điều kiện lọc.
                   </td>
                 </tr>
               ) : (
                 visibleRecords.map((item, idx) => (
                   <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3 px-2 text-center">
+                      <input
+                        type="checkbox"
+                        aria-label={`Chọn bản ghi ${item.title || item.name || item.id}`}
+                        checked={selectedIds.includes(item.id)}
+                        onChange={(event) => setSelectedIds(current => event.target.checked
+                          ? [...current, item.id]
+                          : current.filter(id => id !== item.id))}
+                      />
+                    </td>
                     <td className="py-3 px-4 text-center text-slate-400 font-mono text-[11px]">
                       {(currentPage - 1) * pageSize + idx + 1}
                     </td>
