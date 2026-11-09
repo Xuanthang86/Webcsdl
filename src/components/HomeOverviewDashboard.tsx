@@ -13,7 +13,9 @@ import {
   School,
   Star,
   Target,
-  ChevronDown
+  ChevronDown,
+  BriefcaseBusiness,
+  Wallet
 } from 'lucide-react';
 
 interface HomeOverviewDashboardProps {
@@ -92,9 +94,11 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
     (stats.totalFeaturedStartups || 0)
   ) : 0;
 
-  // Ecosystem aggregate items (7 child types)
+  // Ecosystem aggregate items (9 child types)
   const ecosystemItems = [
     { key: 'startups', label: 'Doanh nghiệp khởi nghiệp sáng tạo', count: stats?.totalStartups || 0, icon: Rocket },
+    { key: 'investors', label: 'Nhà đầu tư', count: stats?.totalInvestors || 0, icon: BriefcaseBusiness },
+    { key: 'investment_funds', label: 'Quỹ đầu tư', count: stats?.totalFunds || 0, icon: Wallet },
     { key: 'support_organizations', label: 'Tổ chức trung gian', count: stats?.totalSupportOrgs || 0, icon: Building2 },
     { key: 'startup_projects', label: 'Dự án khởi nghiệp', count: stats?.totalProjects || 0, icon: Target },
     { key: 'startup_ideas', label: 'Ý tưởng khởi nghiệp', count: stats?.totalIdeas || 0, icon: Lightbulb },
@@ -438,7 +442,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
           </div>
 
           {/* Pillar 5: Dữ liệu Hệ sinh thái
-              Yêu cầu: chỉ hiển thị tổng số dữ liệu, khi click xem Cơ cấu thì mới xem chi tiết theo từng loại (7 loại con); toggle loại trừ với Cơ cấu chuyên gia */}
+              Yêu cầu: chỉ hiển thị tổng số dữ liệu, khi click xem Cơ cấu thì mới xem chi tiết theo từng loại (9 loại con); toggle loại trừ với Cơ cấu chuyên gia */}
           <div 
             className="bg-white hover:bg-sky-50/50 border border-sky-200/90 hover:border-sky-400 rounded-2xl p-4 transition-all group flex flex-col justify-between shadow-2xs"
           >
@@ -479,7 +483,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
 
               {/* Mặt trước chỉ hiển thị tổng số dữ liệu, không hiển thị các dòng con */}
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
-                <span className="text-[11px] text-slate-500">Xem 7 loại con:</span>
+                <span className="text-[11px] text-slate-500">Xem 9 loại con:</span>
                 <button
                   type="button"
                   onClick={handleToggleEcosystemDetails}
@@ -495,7 +499,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
                   <div className="flex items-center justify-between pb-1.5 border-b border-rose-200">
                     <div className="text-[11px] font-bold text-rose-900 uppercase tracking-wider flex items-center gap-1.5">
                       <Rocket className="w-3.5 h-3.5 text-rose-700" />
-                      <span>Cơ cấu Hệ sinh thái (7 loại)</span>
+                      <span>Cơ cấu Hệ sinh thái (9 loại)</span>
                     </div>
                     <button
                       type="button"
@@ -615,13 +619,13 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
           </div>
         )}
 
-        {/* Expandable Breakdown for Pillar 5: Dữ liệu Hệ sinh thái theo 7 loại dữ liệu con (Desktop only) */}
+        {/* Expandable Breakdown for Pillar 5: Dữ liệu Hệ sinh thái theo 9 loại dữ liệu con (Desktop only) */}
         {showEcosystemDetails && (
           <div className="hidden lg:block p-4 bg-white/95 border border-rose-200 rounded-2xl animate-in fade-in duration-150 space-y-4 shadow-sm">
             <div className="flex items-center justify-between pb-2 border-b border-rose-100">
               <div className="text-xs font-bold text-rose-900 uppercase tracking-wider flex items-center gap-1.5">
                 <Rocket className="w-4 h-4 text-rose-700" />
-                <span>Cơ cấu chi tiết Dữ liệu Hệ sinh thái Khởi nghiệp ĐMST (7 loại con)</span>
+                <span>Cơ cấu chi tiết Dữ liệu Hệ sinh thái Khởi nghiệp ĐMST (9 loại con)</span>
               </div>
               <button
                 type="button"
@@ -633,7 +637,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
             </div>
 
             {/* 7 Child Data Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2.5 text-xs">
               {ecosystemItems.map(item => {
                 const IconComp = item.icon;
                 return (

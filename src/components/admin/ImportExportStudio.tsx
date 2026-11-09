@@ -300,12 +300,68 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  const normalizeImportHeader = (value: any) => String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/gi, 'd')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+
+  const matrixToRecords = (sourceMatrix: any[][]) => {
+    const matrix = (sourceMatrix || []).map(row => Array.isArray(row) ? row : []);
+    if (matrix.length < 2) return [];
+
+    const primaryHints: Record<string, string[]> = {
+      initiatives: ['sangkien', 'giaiphap', 'bienphap'],
+      startups: ['doanhnghiep', 'congty', 'startup'],
+      startup_projects: ['duan', 'project'],
+      wards: ['xaphuong', 'xa', 'phuong', 'dackhu', 'hanhchinh'],
+      universities: ['truong', 'daihoc', 'caodang', 'cosogiaoduc', 'cosodaotao', 'daotao']
+    };
+    const hints = primaryHints[selectedModule] || [
+      'tendetai', 'tensangkien', 'tenchuyengia', 'tendoanhnghiep',
+      'tenduan', 'tenytuong', 'tentochuc', 'tenxaphuong', 'tentruong'
+    ];
+    const hasPrimaryHeader = (row: any[]) => row.some(cell => {
+      const key = normalizeImportHeader(cell);
+      return hints.some(hint => key.includes(hint));
+    });
+
+    // Some workbooks place a merged title/description row above the headings.
+    // Scan only the first 12 rows and require multiple cells plus a relevant
+    // module heading; never infer the record name from a serial-number column.
+    let headerIndex = -1;
+    const scanLimit = Math.min(matrix.length - 1, 11);
+    for (let index = 0; index <= scanLimit; index++) {
+      const row = matrix[index] || [];
+      const nonEmpty = row.filter(cell => String(cell ?? '').trim() !== '').length;
+      if (nonEmpty >= 2 && hasPrimaryHeader(row)) {
+        headerIndex = index;
+        break;
+      }
+    }
+    if (headerIndex < 0) {
+      const firstCount = (matrix[0] || []).filter(cell => String(cell ?? '').trim() !== '').length;
+      const secondCount = (matrix[1] || []).filter(cell => String(cell ?? '').trim() !== '').length;
+      headerIndex = firstCount <= 1 && secondCount >= 2 ? 1 : 0;
+    }
+
+    const headers = (matrix[headerIndex] || []).map(cell => String(cell ?? '').replace(/^\uFEFF/, '').trim());
+    if (headers.filter(Boolean).length < 2) return [];
+    return matrix.slice(headerIndex + 1).map(values => {
+      const record: Record<string, any> = {};
+      headers.forEach((header, index) => {
+        if (header) record[header] = values?.[index] ?? '';
+      });
+      return record;
+    }).filter(record => Object.values(record).some(value => String(value ?? '').trim() !== ''));
+  };
+
   const parseCsvText = (text: string) => {
     const input = String(text || '').replace(/^\uFEFF/, '');
     if (!input.trim()) return [];
 
-    // Detect the delimiter from the first logical CSV record, ignoring
-    // delimiters inside quoted cells.
+    // Detect delimiter from the first logical CSV record, ignoring quoted cells.
     const delimiters = [',', ';', '\t'];
     const delimiterCounts = delimiters.map(delimiter => {
       let count = 0;
@@ -328,8 +384,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
       ? delimiters[delimiterCounts.indexOf(maxDelimiterCount)]
       : ',';
 
-    // Parse the complete CSV stream so quoted cells containing line breaks
-    // do not shift columns or turn one record into several malformed rows.
+    // Parse quoted CSV cells, including escaped quotes and embedded newlines.
     const matrix: string[][] = [];
     let row: string[] = [];
     let cell = '';
@@ -358,29 +413,17 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
     }
     row.push(cell.trim());
     if (row.some(value => value.length > 0)) matrix.push(row);
-    if (matrix.length < 2) return [];
-
-    const headers = matrix[0].map(header => header.replace(/^\uFEFF/, '').trim());
-    return matrix.slice(1).map(values => {
-      const record: Record<string, any> = {};
-      headers.forEach((header, index) => {
-        if (header) record[header] = values[index] ?? '';
-      });
-      return record;
-    }).filter(record => Object.values(record).some(value => String(value ?? '').trim() !== ''));
+    return matrixToRecords(matrix);
   };
 
   const loadSheetData = (wb: XLSX.WorkBook, sheetName: string) => {
     const ws = wb.Sheets[sheetName];
     if (!ws) return;
-    const jsonRows = XLSX.utils.sheet_to_json<any>(ws, { defval: '' });
-    // Filter out completely blank rows
-    const cleanRows = jsonRows.filter(r => 
-      Object.values(r).some(v => v !== null && v !== undefined && String(v).trim().length > 0)
-    );
+    const matrix = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1, defval: '', raw: false });
+    const cleanRows = matrixToRecords(matrix);
     setParsedRows(cleanRows);
-    
-    // Also generate a preview CSV text
+
+    // Also generate a preview CSV text.
     const csv = XLSX.utils.sheet_to_csv(ws);
     setRawText(csv);
     setImportResult(null);

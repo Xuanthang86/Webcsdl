@@ -3028,6 +3028,19 @@ export default {
         let importedCount = 0;
         const errors: string[] = [];
         const duplicates: string[] = [];
+        const primaryHeaderHints: Record<string, string[]> = {
+          initiatives: ['sangkien', 'giaiphap', 'bienphap', 'initiative'],
+          startups: ['doanhnghiep', 'congty', 'startup', 'company'],
+          startup_projects: ['duan', 'project'],
+          wards: ['xaphuong', 'xa', 'phuong', 'dackhu', 'hanhchinh', 'ward'],
+          universities: ['truong', 'daihoc', 'caodang', 'cosogiaoduc', 'cosodaotao', 'daotao', 'school', 'university']
+        };
+        const isPrimaryImportHeader = (key: string): boolean => {
+          const knownAliases = primaryHeaderAliases[moduleName] || [];
+          if (knownAliases.some(alias => key === alias || key.startsWith(alias))) return true;
+          if (!key.startsWith('ten')) return false;
+          return (primaryHeaderHints[moduleName] || []).some(hint => key.includes(hint));
+        };
         // Prefer the canonical primary field for these modules. Some deployed
         // D1 schemas may contain both "title" and "name"; a generic title-first
         // choice can leave a NOT NULL name column empty during imports.
@@ -3050,7 +3063,7 @@ export default {
           for (const [rawKey, rawValue] of Object.entries(raw)) {
             if (rawValue === null || rawValue === undefined || rawValue === '') continue;
             const key = normalizeImportKey(rawKey);
-            let target = aliases[key] || rawKey.replace(/([A-Z])/g, '_$1').toLowerCase();
+            let target = isPrimaryImportHeader(key) ? primaryColumn : (aliases[key] || rawKey.replace(/([A-Z])/g, '_$1').toLowerCase());
             if (['title', 'name', 'projectname', 'project_name', 'expert_name', 'initiative_name', 'patent_name', 'idea_name', 'organization_name', 'fund_name', 'investor_name'].includes(target) && !tableColumns.has(target)) target = primaryColumn;
             if ((primaryHeaderAliases[moduleName] || []).includes(key)) target = primaryColumn;
             if (key.startsWith('diachihoatdong')) target = tableColumns.has('operating_address') ? 'operating_address' : 'address';

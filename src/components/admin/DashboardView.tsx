@@ -189,7 +189,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {/* Interactive Charts & Breakdowns Section */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 min-w-0">
           <div>
             <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-teal-700" />
@@ -200,7 +200,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold overflow-x-auto scrollbar-none max-w-full">
+          <div className="flex flex-wrap items-center justify-start sm:justify-end gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold max-w-full min-w-0 sm:flex-1">
             <button
               onClick={() => setChartTab('tasks')}
               className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${

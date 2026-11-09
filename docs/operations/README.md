@@ -7,6 +7,71 @@ Tài liệu này là quy trình vận hành chuẩn cho website production:
 - D1: `khcn-portal-db`
 - Mã nguồn: https://github.com/Xuanthang86/Webcsdl (chỉ nhánh `main`)
 
+## Hướng dẫn thiết lập lần đầu – làm theo thứ tự
+
+**Không cần cài phần mềm trên laptop/PC để bắt đầu.** Better Stack là dịch vụ sử dụng qua trình duyệt web. Nếu muốn nhận cảnh báo đẩy trên điện thoại, có thể cài ứng dụng **Better Stack On-call** từ App Store hoặc Google Play; đây là tùy chọn, không bắt buộc nếu đã dùng cuộc gọi/SMS.
+
+### A. Tạo tài khoản và thiết lập người nhận cảnh báo
+
+1. Mở https://betterstack.com/ và đăng ký tài khoản bằng email công vụ hoặc email quản trị của đơn vị.
+2. Xác nhận email, đăng nhập và tạo/chọn Team dành riêng cho WebCSDL.
+3. Mở mục quản lý thành viên (People / Team members, tên mục có thể thay đổi theo giao diện), thêm người phụ trách chính và ít nhất một người dự phòng. Mỗi người dùng tài khoản riêng; bật xác thực đa yếu tố nếu tài khoản hỗ trợ.
+4. Kiểm tra số điện thoại và email của người nhận cảnh báo. Không dùng chung tài khoản quản trị.
+
+### B. Tạo hai monitor kiểm tra website
+
+Thực hiện lần lượt cho từng URL:
+
+1. Chọn **Monitors → Create monitor**.
+2. Chọn loại **HTTP(s) / HTTP status**.
+3. Nhập URL tương ứng trong bảng ở Mục 2; đặt tên rõ ràng.
+4. Chọn điều kiện thành công là phản hồi HTTP thuộc nhóm **2xx**; bật kiểm tra SSL/chứng chỉ nếu có lựa chọn.
+5. Chọn chu kỳ 60 giây nếu gói dịch vụ hỗ trợ. Chọn ít nhất hai vùng kiểm tra nếu gói dịch vụ cho phép.
+6. Ở phần **How should we escalate incidents?**, chọn người trực chính hoặc escalation policy.
+7. Bật ít nhất **Call + Push** cho sự cố nghiêm trọng; có thể bật thêm SMS và Email. Lưu monitor.
+8. Lặp lại với URL còn lại. Sau khi tạo, mở từng monitor và kiểm tra trạng thái lần đầu.
+
+Lưu ý: monitor trang chủ xác nhận người dùng truy cập được website; monitor `/health` kiểm tra thêm kết nối D1. Hai monitor có mục đích khác nhau, không thay thế cho nhau.
+
+### C. Bật trợ lý AI SRE tự động điều tra incident
+
+1. Trong Better Stack, mở **Incidents → Integrations → AI SRE** (tên/đường dẫn có thể thay đổi theo gói dịch vụ).
+2. Tạo hoặc kết nối AI SRE integration.
+3. Bật **Investigate new incidents automatically with AI SRE** để AI tự bắt đầu điều tra khi có incident mới.
+4. Kết nối GitHub repository `Xuanthang86/Webcsdl`. Chỉ cấp quyền đọc repository/commit; không cấp quyền quản trị repository.
+5. Chỉ bật nhóm công cụ **read-only**. Không cấp quyền truy cập Cloudflare, secrets, D1 write, restore, deploy, merge hoặc push.
+6. Dán nội dung **Custom system prompt** ở Mục 3 vào cấu hình AI SRE.
+7. Tạo một incident thử nghiệm an toàn (ví dụ monitor thử một URL không tồn tại, không làm thay đổi website thật) để xác nhận AI có ghi nhận và gửi báo cáo điều tra.
+8. Không bật tự tạo Pull Request nếu chưa có chấp thuận riêng; dự án hiện sử dụng duy nhất nhánh `main`.
+
+Nếu tài khoản không hiển thị AI SRE hoặc mục tự động điều tra, hãy kiểm tra gói dịch vụ/quyền sử dụng với Better Stack; không cần cài thêm chatbot khác vào website.
+
+### D. Tạo nguồn log Better Stack và kết nối Worker
+
+1. Trong Better Stack, mở **Telemetry → Sources → Connect source**.
+2. Đặt tên nguồn, ví dụ `WebCSDL Cloudflare Worker`; chọn loại nguồn **HTTP**.
+3. Mở trang cấu hình nguồn vừa tạo, sao chép **Source token** và **Ingesting host**. Không chia sẻ hai giá trị này trong chat, ảnh chụp hoặc GitHub.
+4. Mở Cloudflare Dashboard → chọn tài khoản → **Workers & Pages → webcsdlkhcn → Settings → Variables and Secrets**.
+5. Thêm `BETTERSTACK_SOURCE_TOKEN` với giá trị Source token; đánh dấu là **Secret**.
+6. Thêm `BETTERSTACK_INGESTING_HOST` với giá trị Ingesting host; nhập đúng hostname Better Stack được cấp.
+7. Lưu cấu hình theo hướng dẫn Cloudflare. Không ghi token vào `wrangler.jsonc`, mã nguồn hoặc GitHub.
+8. Sau khi phiên bản Worker có cấu hình mới được áp dụng, truy cập website và kiểm tra **Telemetry → Live tail**. Chờ sự kiện vận hành phát sinh; không tạo lỗi giả trên D1 production chỉ để thử.
+9. Nếu chưa thấy log, kiểm tra lại tên hai biến, hostname và việc áp dụng cấu hình Worker. Chỉ gửi ảnh chụp đã che toàn bộ giá trị bí mật.
+
+Worker hiện gửi các sự kiện bảo mật/vận hành đã chọn lọc, không phải toàn bộ nội dung request. Không có log nào được gửi nếu thiếu một trong hai biến; việc gửi log lỗi không được làm gián đoạn chức năng website.
+
+### E. Tạo quy tắc giới hạn đăng nhập trên Cloudflare
+
+1. Đăng nhập Cloudflare, chọn zone `khcn.xuanthang.io.vn`.
+2. Mở **Security → Security rules → Create rule → Rate limiting rules** (một số giao diện cũ hiển thị **Security → WAF → Rate limiting rules**).
+3. Tạo quy tắc đăng nhập theo thông số tại Mục 5. Ở phần đếm, giữ **IP** làm đặc tính đếm.
+4. Với gói **Free**, chu kỳ đo có thể chỉ có lựa chọn 10 giây và hành động khả dụng là **Block**; chọn ngưỡng và thời gian chặn ngắn theo lựa chọn Cloudflare cung cấp. Với gói Pro trở lên, có thể chọn **Managed Challenge** nếu giao diện cho phép.
+5. Tạo quy tắc bootstrap riêng; không gộp chung với đăng nhập.
+6. Lưu/Deploy từng quy tắc. Sau đó mở **Security → Events** để kiểm tra các request bị giới hạn.
+7. Nếu người dùng hợp lệ bị chặn, điều chỉnh ngưỡng hoặc thời gian chặn trước khi mở rộng quy tắc. Không tạo quy tắc cho toàn bộ `/api/*`.
+
+**Không cần cài tiện ích mở rộng trình duyệt, agent hoặc phần mềm giám sát bên thứ ba trên laptop.** Better Stack kiểm tra website từ bên ngoài; Worker gửi sự kiện trực tiếp qua HTTPS.
+
 ## 1. Nguyên tắc quyền hạn và bảo vệ dữ liệu
 
 1. AI SRE và đơn vị giám sát chỉ được cấp quyền tối thiểu cần thiết. Không cấp Super Admin, Cloudflare Administrator, quyền ghi/xóa D1 hoặc quyền quản lý secrets.
@@ -90,18 +155,18 @@ Thực hiện trong Cloudflare Dashboard → Security → WAF → Rate limiting 
 - Tên: `WebCSDL - Login rate limit`
 - Expression: `http.request.uri.path eq "/api/auth/login"`
 - Counting characteristic: IP
-- Threshold: 5 requests / 60 seconds / IP
-- Action: Managed Challenge (nếu gói hỗ trợ); nếu không, dùng Block với thời gian chặn ngắn và kiểm tra kỹ tác động người dùng hợp lệ.
+- Threshold: khởi điểm 5 requests / 10 seconds / IP trên gói Free (chọn chu kỳ Cloudflare thực sự cung cấp trong tài khoản).
+- Action: gói Free dùng Block; Pro trở lên có thể chọn Managed Challenge nếu có. Giữ thời gian chặn ngắn theo lựa chọn khả dụng và theo dõi Security Events.
 
 ### Quy tắc 2 – Bootstrap quản trị viên lần đầu
 
 - Tên: `WebCSDL - Bootstrap rate limit`
 - Expression: `http.request.uri.path eq "/api/auth/bootstrap-admin"`
 - Counting characteristic: IP
-- Threshold: 3 requests / 600 seconds / IP
-- Action: Block trong 10 phút.
+- Threshold: khởi điểm 3 requests / 10 seconds / IP trên gói Free.
+- Action: Block trong thời gian ngắn mà gói dịch vụ cho phép; theo dõi Security Events sau khi bật.
 
-Lưu ý: Trên gói Free, biểu thức rate limiting có thể chỉ hỗ trợ trường Path/Verified Bot; vì vậy rule dùng path và đếm theo IP, không giả định có thể lọc riêng HTTP method. Không áp dụng giới hạn rộng cho toàn bộ `/api/*`, vì có thể làm gián đoạn tra cứu, tải dữ liệu và chức năng người dùng hợp lệ. Chưa thêm rule cho endpoint tiếp nhận hồ sơ công khai khi chưa xác định chính xác route và lưu lượng hợp lệ.
+Lưu ý: Theo giới hạn Cloudflare hiện hành, gói Free thường chỉ cung cấp chu kỳ 10 giây, đặc tính đếm IP và hành động Block; Managed Challenge và các chu kỳ dài hơn phụ thuộc gói dịch vụ. Vì vậy không cấu hình 60 giây/600 giây nếu giao diện tài khoản không hỗ trợ. Trên gói Free, biểu thức dùng path; không giả định có thể lọc riêng HTTP method. Không áp dụng giới hạn rộng cho toàn bộ `/api/*`, vì có thể làm gián đoạn tra cứu, tải dữ liệu và chức năng người dùng hợp lệ. Chưa thêm rule cho endpoint tiếp nhận hồ sơ công khai khi chưa xác định chính xác route và lưu lượng hợp lệ.
 
 Sau khi tạo từng rule, dùng Security Events để kiểm tra tác động và điều chỉnh ngưỡng trước khi tăng mức chặn.
 
