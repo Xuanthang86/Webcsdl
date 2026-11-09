@@ -498,7 +498,7 @@ export default function App() {
       }
     }, 60 * 1000);
 
-    ['pointerdown', 'keydown', 'touchstart', 'scroll', 'click', 'input'].forEach(type =>
+    ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'scroll', 'click', 'input'].forEach(type =>
       document.addEventListener(type, onUserActivity, { passive: true })
     );
     document.addEventListener('visibilitychange', onVisibilityChange);
@@ -506,7 +506,7 @@ export default function App() {
     window.addEventListener('storage', onStorage);
     return () => {
       window.clearInterval(heartbeat);
-      ['pointerdown', 'keydown', 'touchstart', 'scroll', 'click', 'input'].forEach(type =>
+      ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'scroll', 'click', 'input'].forEach(type =>
         document.removeEventListener(type, onUserActivity)
       );
       document.removeEventListener('visibilitychange', onVisibilityChange);
