@@ -139,6 +139,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const maxSupportOrgsYear = Math.max(...displayYears.map(y => stats.supportOrgsByYear?.[y] || 0), 1);
   const maxUniversitiesYear = Math.max(...displayYears.map(y => stats.universitiesByYear?.[y] || 0), 1);
   const maxWardsYear = Math.max(...displayYears.map(y => stats.wardsByYear?.[y] || 0), 1);
+  const ecosystemClassificationData = (stats as any).ecosystemClassifications || {};
+  const ecosystemClassificationCards = [
+    { key: 'startups', label: 'Doanh nghiệp khởi nghiệp sáng tạo', total: stats.totalStartups },
+    { key: 'support_organizations', label: 'Tổ chức trung gian', total: stats.totalSupportOrgs },
+    { key: 'startup_projects', label: 'Dự án khởi nghiệp', total: stats.totalProjects },
+    { key: 'startup_ideas', label: 'Ý tưởng khởi nghiệp', total: stats.totalIdeas },
+    { key: 'wards', label: 'Xã/phường', total: stats.totalWards },
+    { key: 'universities', label: 'Trường đại học/cao đẳng', total: stats.totalUniversities },
+    { key: 'featured_startups', label: 'Doanh nghiệp khởi nghiệp tiêu biểu', total: stats.totalFeaturedStartups },
+    { key: 'investors', label: 'Nhà đầu tư', total: stats.totalInvestors },
+    { key: 'investment_funds', label: 'Quỹ đầu tư', total: stats.totalFunds }
+  ];
 
   return (
     <div className="space-y-6">
@@ -186,6 +198,44 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       <HomeOverviewDashboard stats={stats} systemConfig={systemConfig} showIntro={false} onNavigateBrowse={(category) => onNavigateModule(category || 'science_tasks')} />
+
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+        <div>
+          <h2 className="text-sm font-bold text-slate-900">Phân loại dữ liệu Hệ sinh thái</h2>
+          <p className="text-xs text-slate-500 mt-1">Thống kê theo trường phân loại thực tế của từng phân hệ; chỉ tính hồ sơ đã phê duyệt và công khai.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {ecosystemClassificationCards.filter(card => card.total > 0).map(card => {
+            const groups = Object.entries(ecosystemClassificationData[card.key] || {})
+              .map(([label, count]) => [label, Number(count) || 0] as [string, number])
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 5);
+            return (
+              <div key={card.key} className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="text-xs font-bold text-slate-800">{card.label}</h3>
+                  <span className="text-xs font-mono font-bold text-teal-800">{card.total}</span>
+                </div>
+                {groups.length > 0 ? (
+                  <div className="mt-2 space-y-1.5">
+                    {groups.map(([label, count]) => (
+                      <div key={label} className="flex items-center justify-between gap-2 text-[11px]">
+                        <span className="min-w-0 truncate text-slate-600" title={label}>{label}</span>
+                        <span className="shrink-0 font-mono font-semibold text-slate-800">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-[11px] text-slate-500">Chưa có trường phân loại được ghi nhận.</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {ecosystemClassificationCards.every(card => !card.total) && (
+          <p className="text-xs text-slate-500">Chưa có hồ sơ hệ sinh thái đã được phê duyệt và công khai để thống kê.</p>
+        )}
+      </div>
 
       {/* Interactive Charts & Breakdowns Section */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
