@@ -72,6 +72,14 @@ Worker hiện gửi các sự kiện bảo mật/vận hành đã chọn lọc, 
 
 **Không cần cài tiện ích mở rộng trình duyệt, agent hoặc phần mềm giám sát bên thứ ba trên laptop.** Better Stack kiểm tra website từ bên ngoài; Worker gửi sự kiện trực tiếp qua HTTPS.
 
+## 0. Phiên đăng nhập quản trị trên laptop/PC
+
+- Cookie `danang_session` là HttpOnly và chỉ thuộc phiên trình duyệt; không đặt `Max-Age` hoặc `Expires` để lưu phiên 7 ngày.
+- Token ký số có thời hạn trượt 12 giờ. Tab quản trị đang hiển thị sẽ gọi xác thực định kỳ 5 phút để gia hạn khi người dùng tiếp tục sử dụng.
+- Các tab đang mở phối hợp qua `BroadcastChannel`. Tab mới chỉ kế thừa phiên khi một tab đang hoạt động xác nhận còn phiên; khi đóng tab cuối cùng, lần mở tab mới sẽ xóa cookie cũ và yêu cầu đăng nhập lại.
+- Tải lại trang không chủ động đăng xuất. Việc đăng xuất thủ công vẫn xóa cookie ngay lập tức.
+- Cơ chế này không lưu mật khẩu/token trong `localStorage` hoặc `sessionStorage`; các dấu đánh dấu tab chỉ dùng để nhận diện vòng đời tab, không phải thông tin xác thực.
+
 ## 1. Nguyên tắc quyền hạn và bảo vệ dữ liệu
 
 1. AI SRE và đơn vị giám sát chỉ được cấp quyền tối thiểu cần thiết. Không cấp Super Admin, Cloudflare Administrator, quyền ghi/xóa D1 hoặc quyền quản lý secrets.
