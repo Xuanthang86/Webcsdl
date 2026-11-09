@@ -73,7 +73,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
   const publicEmail = (item: BaseEntity) => {
     const value = String(item.email || item.contactEmail || item.contact_email || item.publicEmail || item.public_email || item.public_contact_email || item.emailAddress || item.email_address || '').trim();
-    return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value) ? value : 'Chưa cập nhật';
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? value : 'Chưa cập nhật';
   };
   const publicWebsite = (item: BaseEntity) =>
     item.website || item.websiteUrl || item.website_url || item.web || '';
