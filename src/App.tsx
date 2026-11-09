@@ -62,6 +62,24 @@ class DetailModalErrorBoundary extends React.Component<
   }
 }
 
+const AUTH_TAB_CHANNEL = 'webcsdl-auth-tab-session';
+
+async function hasAnotherActiveAuthTab(): Promise<boolean> {
+  if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') return false;
+  return new Promise(resolve => {
+    const channel = new BroadcastChannel(AUTH_TAB_CHANNEL);
+    let found = false;
+    channel.onmessage = event => {
+      if (event.data === 'active') found = true;
+    };
+    channel.postMessage('probe');
+    window.setTimeout(() => {
+      channel.close();
+      resolve(found);
+    }, 160);
+  });
+}
+
 export default function App() {
   const [currentView, setCurrentView] = useState<'home' | 'browse' | 'admin'>(() => {
     if (typeof window !== 'undefined') {
@@ -196,6 +214,28 @@ export default function App() {
 
   const initAppData = async () => {
     try {
+      // A session cookie is shared by tabs. A fresh tab must not silently inherit
+      // an old login unless another currently open tab confirms the same session.
+      if (typeof window !== 'undefined') {
+        const tabMarker = window.sessionStorage.getItem('portal_tab_active') === 'true';
+        const closingMarker = window.sessionStorage.getItem('portal_tab_closing') === 'true';
+        const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+        const isReload = navigation?.type === 'reload';
+        if (closingMarker && isReload && tabMarker) {
+          window.sessionStorage.removeItem('portal_tab_closing');
+        } else if (!tabMarker || closingMarker) {
+          const peerTabIsActive = await hasAnotherActiveAuthTab();
+          if (peerTabIsActive) {
+            window.sessionStorage.setItem('portal_tab_active', 'true');
+            window.sessionStorage.removeItem('portal_tab_closing');
+          } else {
+            await api.logout().catch(() => {});
+            window.sessionStorage.removeItem('portal_tab_active');
+            window.sessionStorage.removeItem('portal_tab_closing');
+          }
+        }
+      }
+
       // 1. Load User
       const userRes = await api.getCurrentUser();
       const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'];
@@ -275,6 +315,26 @@ export default function App() {
   useEffect(() => {
     initAppData();
 
+    // Probe/answer channel lets an additional tab reuse a session only while
+    // another tab is still open; a closed tab leaves no sessionStorage marker.
+    let authChannel: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      authChannel = new BroadcastChannel(AUTH_TAB_CHANNEL);
+      authChannel.onmessage = event => {
+        if (event.data === 'probe' &&
+            window.sessionStorage.getItem('portal_tab_active') === 'true' &&
+            window.sessionStorage.getItem('portal_tab_closing') !== 'true') {
+          authChannel?.postMessage('active');
+        }
+      };
+    }
+    const markTabClosing = () => {
+      if (window.sessionStorage.getItem('portal_tab_active') === 'true') {
+        window.sessionStorage.setItem('portal_tab_closing', 'true');
+      }
+    };
+    window.addEventListener('pagehide', markTabClosing);
+
     const handleAuthExpired = () => {
       const adminWasOpen = window.sessionStorage.getItem('portal_current_view') === 'admin' || window.location.hash === '#admin';
       setCurrentUser(undefined);
@@ -287,7 +347,11 @@ export default function App() {
       }
     };
     window.addEventListener('portal:auth-expired', handleAuthExpired);
-    return () => window.removeEventListener('portal:auth-expired', handleAuthExpired);
+    return () => {
+      window.removeEventListener('portal:auth-expired', handleAuthExpired);
+      window.removeEventListener('pagehide', markTabClosing);
+      authChannel?.close();
+    };
   }, []);
 
   // iOS Safari may suspend or restore a tab without remounting the React app.
@@ -337,6 +401,7 @@ export default function App() {
     } finally {
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('portal_tab_active');
+        sessionStorage.removeItem('portal_tab_closing');
         localStorage.removeItem('portal_auth_token');
         localStorage.removeItem('portal_cached_user');
         localStorage.removeItem('portal_current_view');
@@ -416,6 +481,7 @@ export default function App() {
   const handleAdminLoginSuccess = (user: User) => {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('portal_tab_active', 'true');
+      sessionStorage.removeItem('portal_tab_closing');
     }
     setCurrentUser(user);
     setShowAdminLoginModal(false);
