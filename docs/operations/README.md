@@ -72,13 +72,15 @@ Worker hiện gửi các sự kiện bảo mật/vận hành đã chọn lọc, 
 
 **Không cần cài tiện ích mở rộng trình duyệt, agent hoặc phần mềm giám sát bên thứ ba trên laptop.** Better Stack kiểm tra website từ bên ngoài; Worker gửi sự kiện trực tiếp qua HTTPS.
 
-## 0. Phiên đăng nhập quản trị trên laptop/PC
+## 0. Phiên đăng nhập quản trị trên PC, laptop, tablet và mobile
 
-- Cookie `danang_session` là HttpOnly và chỉ thuộc phiên trình duyệt; không đặt `Max-Age` hoặc `Expires` để lưu phiên 7 ngày.
-- Token ký số có thời hạn trượt 12 giờ. Tab quản trị đang hiển thị sẽ gọi xác thực định kỳ 5 phút để gia hạn khi người dùng tiếp tục sử dụng.
-- Các tab đang mở phối hợp qua `BroadcastChannel`. Tab mới chỉ kế thừa phiên khi một tab đang hoạt động xác nhận còn phiên; khi đóng tab cuối cùng, lần mở tab mới sẽ xóa cookie cũ và yêu cầu đăng nhập lại.
-- Tải lại trang không chủ động đăng xuất. Việc đăng xuất thủ công vẫn xóa cookie ngay lập tức.
-- Cơ chế này không lưu mật khẩu/token trong `localStorage` hoặc `sessionStorage`; các dấu đánh dấu tab chỉ dùng để nhận diện vòng đời tab, không phải thông tin xác thực.
+- Cookie `danang_session` là HttpOnly, Secure, SameSite=Lax và là cookie phiên trình duyệt; không đặt `Max-Age` hoặc `Expires`.
+- Khi người dùng không có thao tác thực tế trong 40 phút, lần tương tác tiếp theo hoặc khi quay lại tab sẽ kết thúc phiên và yêu cầu đăng nhập lại. Các thao tác được nhận diện gồm chạm/click, bàn phím, cuộn trang và nhập liệu.
+- Khi tab website được đóng, hệ thống ghi nhận thời điểm đóng tab cuối cùng. Nếu mở lại sau 20 phút, hệ thống xóa phiên và yêu cầu đăng nhập. Nếu tab khác của website vẫn đang mở, cơ chế lease tab và BroadcastChannel giúp tránh coi nhầm đó là tab cuối.
+- Đóng trình duyệt sẽ kết thúc cookie phiên theo cơ chế browser-session cookie. Tải lại trang trong thời gian cho phép không tự động đăng xuất.
+- Token ký số phía Worker có thời hạn ngắn 41 phút làm lớp bảo vệ bổ sung; giao diện áp dụng ngưỡng không hoạt động 40 phút. Token chỉ được gia hạn khi có hoạt động gần đây, không gia hạn vô thời hạn chỉ vì tab đang mở.
+- `localStorage` chỉ lưu mốc hoạt động, thời điểm đóng tab và lease nhận diện tab; không lưu mật khẩu hoặc token xác thực. Token vẫn nằm trong HttpOnly cookie và JavaScript không thể đọc.
+
 
 ## 1. Nguyên tắc quyền hạn và bảo vệ dữ liệu
 
