@@ -62,63 +62,10 @@ class DetailModalErrorBoundary extends React.Component<
   }
 }
 
-const AUTH_TAB_CHANNEL = 'webcsdl-auth-tab-session';
 const AUTH_LAST_TAB_CLOSED_KEY = 'portal_last_tab_closed_at';
 const AUTH_LAST_ACTIVITY_KEY = 'portal_last_activity_at';
-const AUTH_ACTIVE_TABS_KEY = 'portal_active_tab_leases';
 const AUTH_IDLE_TIMEOUT_MS = 40 * 60 * 1000;
 const AUTH_CLOSED_TAB_TIMEOUT_MS = 20 * 60 * 1000;
-const AUTH_TAB_LEASE_MS = 2 * 60 * 1000;
-
-function getCurrentAuthTabId(): string {
-  let tabId = window.sessionStorage.getItem('portal_tab_id');
-  if (!tabId) {
-    tabId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
-      ? crypto.randomUUID()
-      : `tab-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    window.sessionStorage.setItem('portal_tab_id', tabId);
-  }
-  return tabId;
-}
-
-function readActiveAuthTabLeases(): Record<string, number> {
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(AUTH_ACTIVE_TABS_KEY) || '{}');
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-    const now = Date.now();
-    return Object.fromEntries(Object.entries(parsed).filter(([, value]) =>
-      typeof value === 'number' && now - value < AUTH_TAB_LEASE_MS
-    )) as Record<string, number>;
-  } catch {
-    return {};
-  }
-}
-
-function updateActiveAuthTabLease(tabId: string, active: boolean): void {
-  const leases = readActiveAuthTabLeases();
-  if (active) leases[tabId] = Date.now();
-  else delete leases[tabId];
-  window.localStorage.setItem(AUTH_ACTIVE_TABS_KEY, JSON.stringify(leases));
-}
-
-async function hasAnotherActiveAuthTab(): Promise<boolean> {
-  if (typeof window === 'undefined') return false;
-  const ownTabId = window.sessionStorage.getItem('portal_tab_id') || '';
-  if (Object.keys(readActiveAuthTabLeases()).some(tabId => tabId !== ownTabId)) return true;
-  if (typeof BroadcastChannel === 'undefined') return false;
-  return new Promise(resolve => {
-    const channel = new BroadcastChannel(AUTH_TAB_CHANNEL);
-    let found = false;
-    channel.onmessage = event => {
-      if (event.data === 'active') found = true;
-    };
-    channel.postMessage('probe');
-    window.setTimeout(() => {
-      channel.close();
-      resolve(found);
-    }, 160);
-  });
-}
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'home' | 'browse' | 'admin'>(() => {
@@ -257,14 +204,16 @@ export default function App() {
       // A tab may reuse the browser-session cookie for up to 20 minutes after
       // it was closed. After that grace period, a new tab must authenticate again.
       if (typeof window !== 'undefined') {
-        const tabId = getCurrentAuthTabId();
-        updateActiveAuthTabLease(tabId, true);
+        const now = Date.now();
         const lastTabClosedAt = Number(window.localStorage.getItem(AUTH_LAST_TAB_CLOSED_KEY) || 0);
         const lastActivityAt = Number(window.localStorage.getItem(AUTH_LAST_ACTIVITY_KEY) || 0);
-        const closedLongEnough = lastTabClosedAt > 0 && Date.now() - lastTabClosedAt >= AUTH_CLOSED_TAB_TIMEOUT_MS;
-        const idleExpired = lastActivityAt > 0 && Date.now() - lastActivityAt >= AUTH_IDLE_TIMEOUT_MS;
-        const peerTabIsActive = await hasAnotherActiveAuthTab();
-        if (idleExpired || (closedLongEnough && !peerTabIsActive)) {
+        const closedLongEnough = lastTabClosedAt > 0 && now - lastTabClosedAt >= AUTH_CLOSED_TAB_TIMEOUT_MS;
+        const idleExpired = lastActivityAt > 0 && now - lastActivityAt >= AUTH_IDLE_TIMEOUT_MS;
+        // A closed tab reaches the 20-minute limit only if no other tab has
+        // recorded recent user activity. Active work in another tab is preserved.
+        const closedTabExpired = closedLongEnough &&
+          (lastActivityAt === 0 || now - lastActivityAt >= AUTH_CLOSED_TAB_TIMEOUT_MS);
+        if (idleExpired || closedTabExpired) {
           await api.logout().catch(() => {});
           window.localStorage.removeItem(AUTH_LAST_TAB_CLOSED_KEY);
           window.localStorage.removeItem(AUTH_LAST_ACTIVITY_KEY);
@@ -359,43 +308,21 @@ export default function App() {
   useEffect(() => {
     initAppData();
 
-    // BroadcastChannel plus short-lived localStorage leases identify other
-    // open tabs without storing authentication credentials in browser storage.
-    let authChannel: BroadcastChannel | null = null;
-    if (typeof BroadcastChannel !== 'undefined') {
-      authChannel = new BroadcastChannel(AUTH_TAB_CHANNEL);
-      authChannel.onmessage = event => {
-        if (event.data === 'probe' &&
-            window.sessionStorage.getItem('portal_tab_active') === 'true' &&
-            window.sessionStorage.getItem('portal_tab_closing') !== 'true') {
-          authChannel?.postMessage('active');
-        }
-      };
-    }
-    const tabId = getCurrentAuthTabId();
-    const refreshTabLease = () => updateActiveAuthTabLease(tabId, true);
     const markTabClosing = () => {
-      updateActiveAuthTabLease(tabId, false);
-      const anotherTabRemains = Object.keys(readActiveAuthTabLeases()).length > 0;
-      if (!anotherTabRemains && window.sessionStorage.getItem('portal_tab_active') === 'true') {
+      if (window.sessionStorage.getItem('portal_tab_active') === 'true') {
         window.sessionStorage.setItem('portal_tab_closing', 'true');
+        // Record every WebCSDL tab close. A recent activity timestamp in
+        // another tab prevents an active user from being logged out.
         window.localStorage.setItem(AUTH_LAST_TAB_CLOSED_KEY, String(Date.now()));
       }
     };
-    const refreshLeaseWhenVisible = () => {
-      if (document.visibilityState === 'visible') refreshTabLease();
-    };
-    const tabLeaseHeartbeat = window.setInterval(refreshTabLease, 30 * 1000);
     window.addEventListener('pagehide', markTabClosing);
-    document.addEventListener('visibilitychange', refreshLeaseWhenVisible);
 
     const handleAuthExpired = () => {
       const adminWasOpen = window.sessionStorage.getItem('portal_current_view') === 'admin' || window.location.hash === '#admin';
       window.localStorage.removeItem(AUTH_LAST_ACTIVITY_KEY);
       setCurrentUser(undefined);
       if (adminWasOpen) {
-        // Preserve the admin screen after an iOS/WebKit tab restore. The API remains
-        // protected by the HttpOnly cookie; require re-authentication before data access.
         window.sessionStorage.setItem('portal_tab_active', 'true');
         setCurrentView('admin');
         setShowAdminLoginModal(true);
@@ -405,9 +332,6 @@ export default function App() {
     return () => {
       window.removeEventListener('portal:auth-expired', handleAuthExpired);
       window.removeEventListener('pagehide', markTabClosing);
-      document.removeEventListener('visibilitychange', refreshLeaseWhenVisible);
-      window.clearInterval(tabLeaseHeartbeat);
-      authChannel?.close();
     };
   }, []);
 
@@ -606,7 +530,6 @@ export default function App() {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('portal_tab_active', 'true');
       sessionStorage.removeItem('portal_tab_closing');
-      updateActiveAuthTabLease(getCurrentAuthTabId(), true);
       localStorage.removeItem(AUTH_LAST_TAB_CLOSED_KEY);
       localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, String(Date.now()));
     }
