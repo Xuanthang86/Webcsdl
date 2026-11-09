@@ -71,8 +71,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
 }) => {
   const [activeEcosystemTab, setActiveEcosystemTab] = useState<'all' | 'startups' | 'support_organizations' | 'startup_projects' | 'startup_ideas' | 'wards' | 'universities' | 'featured_startups' | 'investors' | 'investment_funds'>('all');
 
-  const publicEmail = (item: BaseEntity) =>
-    item.email || item.contactEmail || item.contact_email || item.publicEmail || item.public_email || item.public_contact_email || item.emailAddress || item.email_address || 'Chưa cập nhật';
+  const publicEmail = (item: BaseEntity) => {
+    const value = String(item.email || item.contactEmail || item.contact_email || item.publicEmail || item.public_email || item.public_contact_email || item.emailAddress || item.email_address || '').trim();
+    return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value) ? value : 'Chưa cập nhật';
+  };
   const publicWebsite = (item: BaseEntity) =>
     item.website || item.websiteUrl || item.website_url || item.web || '';
   const websiteHref = (value: string) =>
