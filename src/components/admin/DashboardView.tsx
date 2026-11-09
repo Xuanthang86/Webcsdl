@@ -275,7 +275,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {/* Interactive Charts & Breakdowns Section */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 min-w-0">
+        <div className="flex flex-col gap-3 pb-3 border-b border-slate-100 min-w-0">
           <div>
             <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-teal-700" />
