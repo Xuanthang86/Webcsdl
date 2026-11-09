@@ -136,11 +136,59 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     importedCount: number; errors: string[]; duplicates: string[];
   } | null>(null);
 
+  const normalizeInlineHeader = (value: any) => String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\\u0300-\\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+
+  const inlinePrimaryHeaders: Partial<Record<ModuleType, string[]>> = {
+    initiatives: ['tensangkien', 'tengiaphap', 'sangkien', 'initiativename'],
+    startups: ['tendoanhnghiep', 'tendoanhnghiepkhoinghiep', 'tencongty', 'tenstartup', 'companyname'],
+    startup_projects: ['tenduan', 'tenduankhoinghiep', 'tenduanstartup', 'projectname', 'projecttitle'],
+    startup_ideas: ['tenytuong', 'tenytuongkhoinghiep', 'ideaname', 'ideatitle'],
+    wards: ['tenxaphuong', 'tenxaphuongdackhu', 'tenxa', 'tenphuong', 'tendackhu', 'wardname'],
+    universities: ['tentruong', 'tentruongdaihoc', 'tentruongcaodang', 'tentruongdaihoccaodang', 'tendaotao', 'schoolname', 'universityname']
+  };
+
+  const inlineMatrixToRecords = (source: any[][]) => {
+    const matrix = (source || []).map(row => Array.isArray(row) ? row : []);
+    if (matrix.length < 2) return [];
+    const aliases = inlinePrimaryHeaders[moduleType] || [
+      'tendetai', 'tensangkien', 'tenchuyengia', 'tendoanhnghiep',
+      'tenduan', 'tenytuong', 'tentochuc', 'tenxaphuong', 'tentruong'
+    ];
+    let headerIndex = -1;
+    for (let index = 0; index < Math.min(matrix.length - 1, 12); index++) {
+      const row = matrix[index] || [];
+      const nonEmpty = row.filter(cell => String(cell ?? '').trim() !== '').length;
+      const hasPrimary = row.some(cell => {
+        const key = normalizeInlineHeader(cell);
+        return aliases.some(alias => key === alias || key.startsWith(alias));
+      });
+      if (nonEmpty >= 2 && hasPrimary) {
+        headerIndex = index;
+        break;
+      }
+    }
+    if (headerIndex < 0) headerIndex = 0;
+    const headers = (matrix[headerIndex] || []).map(cell => String(cell ?? '').replace(/^\\uFEFF/, '').trim());
+    if (headers.filter(Boolean).length < 2) return [];
+    return matrix.slice(headerIndex + 1).map(values => {
+      const record: Record<string, any> = {};
+      headers.forEach((header, index) => {
+        if (header) record[header] = values?.[index] ?? '';
+      });
+      return record;
+    }).filter(record => Object.values(record).some(value => String(value ?? '').trim() !== ''));
+  };
+
   const parseInlineCsv = (text: string) => {
-    const input = text.replace(/^\uFEFF/, '').trim();
-    if (!input) return [];
-    const firstLine = input.split(/\r?\n/, 1)[0] || '';
-    const delimiters = [',', ';', '\t'];
+    const input = String(text || '').replace(/^\\uFEFF/, '');
+    if (!input.trim()) return [];
+    const firstLine = input.split(/\\r?\\n/, 1)[0] || '';
+    const delimiters = [',', ';', '\\t'];
     const counts = delimiters.map(delimiter => {
       let count = 0, inQuotes = false;
       for (let i = 0; i < firstLine.length; i++) {
@@ -162,8 +210,8 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
         else inQuotes = !inQuotes;
       } else if (char === delimiter && !inQuotes) {
         row.push(cell.trim()); cell = '';
-      } else if ((char === '\n' || char === '\r') && !inQuotes) {
-        if (char === '\r' && input[i + 1] === '\n') i++;
+      } else if ((char === '\\n' || char === '\\r') && !inQuotes) {
+        if (char === '\\r' && input[i + 1] === '\\n') i++;
         row.push(cell.trim());
         if (row.some(value => value.length > 0)) matrix.push(row);
         row = []; cell = '';
@@ -171,13 +219,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     }
     row.push(cell.trim());
     if (row.some(value => value.length > 0)) matrix.push(row);
-    if (matrix.length < 2) return [];
-    const headers = matrix[0].map(header => header.replace(/^\uFEFF/, '').trim());
-    return matrix.slice(1).map(values => {
-      const record: Record<string, any> = {};
-      headers.forEach((header, index) => { if (header) record[header] = values[index] ?? ''; });
-      return record;
-    }).filter(record => Object.values(record).some(value => String(value ?? '').trim() !== ''));
+    return inlineMatrixToRecords(matrix);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -194,7 +236,8 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
           const workbook = XLSX.read(data, { type: 'array' });
           const firstSheet = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheet];
-          const rows = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { defval: '' });
+          const matrix = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1, defval: '', raw: false });
+          const rows = inlineMatrixToRecords(matrix);
           setImportParsedRows(rows);
           const csvText = XLSX.utils.sheet_to_csv(worksheet);
           setImportRawText(csvText);
@@ -518,7 +561,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
     setIsDeleting(true);
     try {
       await api.deleteRecord(moduleType, deleteConfirmRecord.id);
-      showToast(`Đã xóa bản ghi [${deleteConfirmRecord.code}] thành công`);
+      showToast(`Đã xóa bản ghi [${deleteConfirmRecord.title || deleteConfirmRecord.name || deleteConfirmRecord.code || 'bản ghi'}] thành công`);
       setDeleteConfirmRecord(null);
       await loadData();
     } catch (err: any) {
@@ -866,7 +909,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       {(currentPage - 1) * pageSize + idx + 1}
                     </td>
                     <td className="py-3 px-4 font-mono font-medium text-teal-800">
-                      {item.code}
+                      {item.code || (String(item.id || '').startsWith(`${moduleType}_imp_`) ? '—' : item.id || '—')}
                     </td>
                     <td className="py-3 px-4">
                       <div 
