@@ -187,20 +187,26 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   const parseInlineCsv = (text: string) => {
     const input = String(text || '').replace(/^\uFEFF/, '');
     if (!input.trim()) return [];
-    const firstLine = input.split(/\r?\n/, 1)[0] || '';
+    const candidateLines = input.split(/\r?\n/).slice(0, 12);
     const delimiters = [',', ';', '\t'];
-    const counts = delimiters.map(delimiter => {
-      let count = 0, inQuotes = false;
-      for (let i = 0; i < firstLine.length; i++) {
-        if (firstLine[i] === '"') {
-          if (inQuotes && firstLine[i + 1] === '"') i++;
-          else inQuotes = !inQuotes;
-        } else if (firstLine[i] === delimiter && !inQuotes) count++;
+    let delimiter = ',';
+    let bestDelimiterCount = 0;
+    for (const line of candidateLines) {
+      for (const candidate of delimiters) {
+        let count = 0, inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          if (line[i] === '"') {
+            if (inQuotes && line[i + 1] === '"') i++;
+            else inQuotes = !inQuotes;
+          } else if (line[i] === candidate && !inQuotes) count++;
+        }
+        if (count > bestDelimiterCount) {
+          bestDelimiterCount = count;
+          delimiter = candidate;
+        }
       }
-      return count;
-    });
-    const delimiter = delimiters[counts.indexOf(Math.max(...counts))];
-    if (Math.max(...counts) === 0) return [];
+    }
+    if (bestDelimiterCount === 0) return [];
     const matrix: string[][] = [];
     let row: string[] = [], cell = '', inQuotes = false;
     for (let i = 0; i < input.length; i++) {
