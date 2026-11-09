@@ -461,8 +461,8 @@ export default function App() {
       }
       const now = Date.now();
       // Scroll/pointer events can fire rapidly; persist the activity clock at most
-      // once every 15 seconds while still observing every event for timeout checks.
-      if (now - lastActivityWriteAt >= 15 * 1000) {
+      // once per second while still observing every event for timeout checks.
+      if (now - lastActivityWriteAt >= 1000) {
         window.localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, String(now));
         lastActivityWriteAt = now;
       }
