@@ -1842,7 +1842,7 @@ export default {
 
             await Promise.all([
               aggregateModuleGroups('science_tasks', tasksByField, ['field', 'scientific_field', 'research_field', 'linhvuc', 'linhvuckhoahoc']),
-              aggregateModuleGroups('science_tasks', tasksByUnit, ['lead_agency', 'managing_agency', 'lead_organization', 'owner_name', 'receiving_unit', 'organization', 'agency', 'coquanchutri', 'donvichutri']),
+              aggregateModuleGroups('science_tasks', tasksByUnit, ['lead_agency', 'managing_agency', 'lead_organization', 'lead_unit', 'host_organization', 'host_unit', 'implementing_organization', 'implementing_unit', 'owner_name', 'receiving_unit', 'organization', 'agency', 'agency_name', 'coquanchutri', 'donvichutri', 'donvithuchien']),
               aggregateModuleGroups('science_tasks', tasksByLevel, ['management_level', 'task_level', 'project_level', 'level', 'capquanly', 'capdetai']),
               aggregateModuleGroups('startups', startupsByField, ['business_field', 'field', 'sector', 'industry', 'linhvuckinhdoanh', 'linhvuc']),
               aggregateModuleGroups('startup_projects', projectsByField, ['field', 'business_field', 'startup_field', 'sector', 'linhvuckhoinghiep', 'linhvuc']),
@@ -1947,7 +1947,7 @@ export default {
             // Read all physical columns to include legacy/custom field names.
             const expertRows = await env.DB.prepare('SELECT * FROM experts' + buildPublicVisibilityWhere(expertColumns)).all<any>();
             if (expertColumns.size > 0) {
-              const normalizeExpertKey = (value: string) => value.replace(/[_\s-]/g, '').toLowerCase();
+              const normalizeExpertKey = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').replace(/[_\s-]/g, '').toLowerCase();
               const getExpertValue = (row: any, custom: Record<string, any>, candidates: string[]) => {
                 for (const candidate of candidates) {
                   const target = normalizeExpertKey(candidate);
@@ -1988,8 +1988,8 @@ export default {
                 addExpertGroup(expertsBySpecialty, specialtyValue, '', 'Chưa cập nhật');
                 addExpertGroup(expertsByWorkplace, workplaceValue, '', 'Chưa cập nhật');
 
-                const rankValue = getExpertValue(row, custom, ['academic_rank', 'academicRank', 'rank']);
-                const degreeValue = getExpertValue(row, custom, ['degree', 'qualification', 'academic_degree']);
+                const rankValue = getExpertValue(row, custom, ['academic_rank', 'academicRank', 'academic_title', 'academicTitle', 'rank', 'hoc_ham', 'hocham']);
+                const degreeValue = getExpertValue(row, custom, ['degree', 'qualification', 'academic_degree', 'hoc_vi', 'hocvi', 'trinh_do', 'trinhdo']);
                 const researchTitleValue = getExpertValue(row, custom, ['research_title', 'job_title', 'position']);
                 addExpertGroup(expertsByDegree, degreeValue);
                 addExpertGroup(expertsByAcademicTitle, rankValue);
