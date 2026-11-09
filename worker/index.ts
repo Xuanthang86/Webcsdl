@@ -91,6 +91,11 @@ function hydrateModuleRow(row: any, moduleName?: string): any {
   if (!merged.title) merged.title = merged.name || merged.companyName || merged.projectName || merged.fullName || '';
   if (moduleName === 'startups' && !merged.companyName) merged.companyName = merged.name || merged.title;
   if (moduleName === 'startup_projects' && !merged.projectName) merged.projectName = merged.title || merged.name;
+  if (moduleName === 'startup_ideas') {
+    if (!merged.title) merged.title = merged.ideaName || merged.ideaTitle || merged.name || '';
+    if (!merged.description) merged.description = merged.summary || merged.ideaSummary || merged.idea_summary || '';
+    if (!merged.wardSchool) merged.wardSchool = merged.wardOrSchool || merged.ward_school || merged.ward_or_school || '';
+  }
   return merged;
 }
 
@@ -116,14 +121,14 @@ function canApproveWorkflow(user: any): boolean { return ['super_admin', 'system
 function isAllowedWorkflowStatus(status: string): boolean { return ['under_review', 'needs_revision', 'rejected', 'approved', 'published'].includes(status); }
 function canExportModuleData(user: any): boolean { return ['super_admin', 'system_admin', 'data_officer'].includes(String(user?.role || '')); }
 const PRIMARY_IMPORT_COLUMNS: Record<string, string> = {
-  startups: 'name', startup_projects: 'title', wards: 'name', universities: 'name',
+  initiatives: 'title', startups: 'name', startup_projects: 'title', startup_ideas: 'title', wards: 'name', universities: 'name',
   organizations: 'name', investors: 'name', investment_funds: 'name',
   technologies: 'title', programs: 'title', publications: 'title', lab_equipments: 'name'
 };
 
 function getPrimaryImportColumn(moduleName: string, tableColumns: Set<string>): string {
   const preferredColumn = PRIMARY_IMPORT_COLUMNS[moduleName];
-  return preferredColumn && tableColumns.has(preferredColumn) ? preferredColumn : tableColumns.has('title') ? 'title' : tableColumns.has('name') ? 'name' : tableColumns.has('project_name') ? 'project_name' : '';
+  return preferredColumn && tableColumns.has(preferredColumn) ? preferredColumn : tableColumns.has('title') ? 'title' : tableColumns.has('name') ? 'name' : tableColumns.has('project_name') ? 'project_name' : tableColumns.has('idea_name') ? 'idea_name' : tableColumns.has('initiative_name') ? 'initiative_name' : '';
 }
 function buildPublicVisibilityWhere(columns: Set<string>): string {
   if (!columns.has('status')) return ' WHERE 1 = 0';
@@ -132,7 +137,8 @@ function buildPublicVisibilityWhere(columns: Set<string>): string {
   return ' WHERE ' + conditions.join(' AND ');
 }
 function normalizeSnapshotSchemaSql(sql: string): string { return sql.replace(/[`"\[\]]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); }
-function createSessionCookie(token: string): string { return `danang_session=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800`; }
+// Browser-session cookie: closing the browser ends the login session; do not persist it for seven days.
+function createSessionCookie(token: string): string { return `danang_session=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Lax`; }
 
 function isPrivilegedMessageReader(user: any): boolean {
   return ['super_admin', 'system_admin', 'agency_leader', 'data_officer'].includes(String(user?.role || ''));
@@ -987,10 +993,10 @@ export default {
 
       // D. Auth: Current User (`/api/auth/me`)
       if (url.pathname === '/api/auth/me') {
-        // Refresh the authenticated cookie as a seven-day persistent cookie.
-        // This keeps privileged users signed in after closing and reopening the browser.
+        // Refresh only as a browser-session cookie. No Max-Age/Expires is set,
+        // so the browser does not intentionally persist the login across restarts.
         const sessionCookie = currentUser.role !== 'public_user' && cookieToken
-          ? `danang_session=${encodeURIComponent(cookieToken)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800`
+          ? `danang_session=${encodeURIComponent(cookieToken)}; Path=/; HttpOnly; Secure; SameSite=Lax`
           : undefined;
         const response = jsonResponse({
           success: true,
@@ -1131,7 +1137,7 @@ export default {
           exp: Date.now() + 7 * 24 * 60 * 60 * 1000
         }, secret);
 
-        // Persist the HttpOnly session cookie for the same seven-day lifetime as the signed token.
+        // Keep the HttpOnly cookie scoped to the current browser session.
         const cookieHeader = createSessionCookie(sessionToken);
 
         // Audit log
@@ -1486,10 +1492,20 @@ export default {
 
         try {
           const counts: Record<string, number> = {};
+          let pendingApprovalsCount = 0;
           for (const mod of ALLOWED_MODULES) {
             try {
-              const res = await env.DB.prepare(`SELECT COUNT(*) as c FROM ${mod}`).first<{ c: number }>();
+              const info = await env.DB.prepare(`PRAGMA table_info("${mod}")`).all<any>();
+              const columns = new Set((info.results || []).map((column: any) => String(column.name)));
+              const publicWhere = buildPublicVisibilityWhere(columns);
+              const res = await env.DB.prepare(`SELECT COUNT(*) as c FROM "${mod}"${publicWhere}`).first<{ c: number }>();
               counts[mod] = Number(res?.c) || 0;
+              if (columns.has('status')) {
+                const pendingConditions = [`LOWER(COALESCE(status, '')) NOT IN ('approved', 'published')`];
+                if (columns.has('publicity_level')) pendingConditions.push(`LOWER(COALESCE(publicity_level, 'private')) <> 'public'`);
+                const pending = await env.DB.prepare(`SELECT COUNT(*) as c FROM "${mod}" WHERE ${pendingConditions.join(' OR ')}`).first<{ c: number }>();
+                pendingApprovalsCount += Number(pending?.c) || 0;
+              }
             } catch {
               counts[mod] = 0;
             }
@@ -1558,7 +1574,7 @@ export default {
                   THEN 1
                 END) as accepted,
                 ${acceptedBudget} as budget
-              FROM science_tasks
+              FROM science_tasks ${buildPublicVisibilityWhere(taskColumns)}
             `).first<{ accepted: number; budget: number }>();
             tasksAccepted = Number(taskStats?.accepted) || 0;
             totalBudget = Number(taskStats?.budget) || 0;
@@ -1679,11 +1695,11 @@ export default {
                 const info = await env.DB.prepare('PRAGMA table_info("' + table + '")').all<any>();
                 const columns = new Set((info.results || []).map((column: any) => String(column.name)));
                 const availableFields = candidateFields.filter(field => columns.has(field));
-                const selectedFields = [...new Set([...availableFields, ...(columns.has('data_json') ? ['data_json'] : [])])];
+                const selectedFields = [...new Set([...availableFields, ...(columns.has('data_json') ? ['data_json'] : []), ...(columns.has('status') ? ['status'] : []), ...(columns.has('publicity_level') ? ['publicity_level'] : [])])];
                 if (selectedFields.length === 0) return;
 
                 const rows = await env.DB.prepare(
-                  'SELECT ' + selectedFields.map(field => '"' + field.replace(/"/g, '""') + '"').join(', ') + ' FROM "' + table + '"'
+                  'SELECT ' + selectedFields.map(field => '"' + field.replace(/"/g, '""') + '"').join(', ') + ' FROM "' + table + '"' + buildPublicVisibilityWhere(columns)
                 ).all<any>();
                 const normalizeKey = (value: string) => value.replace(/[_\s-]/g, '').toLowerCase();
                 const extractYearValue = (value: any): string | null => {
@@ -1760,7 +1776,9 @@ export default {
             // and multiple distinct labels on one record are counted once per label.
             const aggregateModuleGroups = async (table: string, target: Record<string, number>, candidateFields: string[]) => {
               try {
-                const rows = await env.DB.prepare('SELECT * FROM "' + table + '"').all<any>();
+                const tableInfo = await env.DB.prepare('PRAGMA table_info("' + table + '")').all<any>();
+                const tableColumns = new Set((tableInfo.results || []).map((column: any) => String(column.name)));
+                const rows = await env.DB.prepare('SELECT * FROM "' + table + '"' + buildPublicVisibilityWhere(tableColumns)).all<any>();
                 const normalizeKey = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[_\s-]/g, '').toLowerCase();
                 for (const row of rows.results || []) {
                   let custom: Record<string, any> = {};
@@ -1798,7 +1816,9 @@ export default {
             ]);
 
             try {
-              const inf = await env.DB.prepare(`SELECT COALESCE(NULLIF(field, ''), 'Lĩnh vực khác') as f, COUNT(*) as c FROM initiatives GROUP BY f`).all<any>();
+              const initiativeInfo = await env.DB.prepare('PRAGMA table_info(initiatives)').all<any>();
+              const initiativeColumns = new Set((initiativeInfo.results || []).map((column: any) => String(column.name)));
+              const inf = await env.DB.prepare(`SELECT COALESCE(NULLIF(field, ''), 'Lĩnh vực khác') as f, COUNT(*) as c FROM initiatives ${buildPublicVisibilityWhere(initiativeColumns)} GROUP BY f`).all<any>();
               for (const r of (inf.results || [])) { if (r.f) initiativesByField[r.f] = Number(r.c) || 0; }
             } catch {}
           }
@@ -1918,7 +1938,7 @@ export default {
               verifiedExperts: Number(counts.experts) || 0,
               totalBudgetApproved: totalBudget,
               totalCostSavings: totalSavings,
-              pendingApprovalsCount: 0,
+              pendingApprovalsCount,
               totalRelationships: 0,
               statusBreakdown: {
                 approved: totalScienceTasks + (Number(counts.initiatives) || 0),
