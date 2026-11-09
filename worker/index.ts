@@ -132,7 +132,7 @@ function buildPublicVisibilityWhere(columns: Set<string>): string {
   return ' WHERE ' + conditions.join(' AND ');
 }
 function normalizeSnapshotSchemaSql(sql: string): string { return sql.replace(/[`"\[\]]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); }
-function createSessionCookie(token: string): string { return `danang_session=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Lax`; }
+function createSessionCookie(token: string): string { return `danang_session=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800`; }
 
 function isPrivilegedMessageReader(user: any): boolean {
   return ['super_admin', 'system_admin', 'agency_leader', 'data_officer'].includes(String(user?.role || ''));
@@ -987,10 +987,10 @@ export default {
 
       // D. Auth: Current User (`/api/auth/me`)
       if (url.pathname === '/api/auth/me') {
-        // Upgrade an existing persistent cookie to a browser-session cookie.
-        // This also handles accounts already logged in before this deployment.
+        // Refresh the authenticated cookie as a seven-day persistent cookie.
+        // This keeps privileged users signed in after closing and reopening the browser.
         const sessionCookie = currentUser.role !== 'public_user' && cookieToken
-          ? `danang_session=${encodeURIComponent(cookieToken)}; Path=/; HttpOnly; Secure; SameSite=Lax`
+          ? `danang_session=${encodeURIComponent(cookieToken)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800`
           : undefined;
         const response = jsonResponse({
           success: true,
@@ -1131,7 +1131,7 @@ export default {
           exp: Date.now() + 7 * 24 * 60 * 60 * 1000
         }, secret);
 
-        // Session cookie: intentionally omit Max-Age/Expires so it is not persistent across browser restarts.
+        // Persist the HttpOnly session cookie for the same seven-day lifetime as the signed token.
         const cookieHeader = createSessionCookie(sessionToken);
 
         // Audit log
@@ -3038,8 +3038,12 @@ export default {
         const isPrimaryImportHeader = (key: string): boolean => {
           const knownAliases = primaryHeaderAliases[moduleName] || [];
           if (knownAliases.some(alias => key === alias || key.startsWith(alias))) return true;
-          if (!key.startsWith('ten')) return false;
-          return (primaryHeaderHints[moduleName] || []).some(hint => key.includes(hint));
+          // Real-world spreadsheets do not always prefix the primary column with
+          // "Tên" (for example "Sáng kiến..." or "Doanh nghiệp..."). Accept only
+          // module-specific leading labels, never a generic substring such as STT.
+          return (primaryHeaderHints[moduleName] || []).some(hint =>
+            key === hint || key.startsWith(hint) || key.startsWith(`ten${hint}`)
+          );
         };
         // Prefer the canonical primary field for these modules. Some deployed
         // D1 schemas may contain both "title" and "name"; a generic title-first
