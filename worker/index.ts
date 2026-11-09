@@ -1616,6 +1616,7 @@ export default {
           const tasksByLevel: Record<string, number> = {};
           const projectsByField: Record<string, number> = {};
           const initiativesByField: Record<string, number> = {};
+          const ecosystemClassifications: Record<string, Record<string, number>> = {};
           const ideasByOrigin: Record<string, number> = { school: 0, ward: 0, other: 0 };
           const expertsByYear: Record<string, number> = {};
           const supportOrgsByYear: Record<string, number> = {};
@@ -1829,6 +1830,23 @@ export default {
               aggregateModuleGroups('startup_projects', projectsByField, ['field', 'business_field', 'startup_field', 'sector', 'linhvuckhoinghiep', 'linhvuc'])
             ]);
 
+            const ecosystemGroupDefinitions: Record<string, string[]> = {
+              startups: ['business_field', 'field', 'sector', 'industry', 'linhvuckinhdoanh'],
+              support_organizations: ['organization_type', 'type', 'category', 'service_area', 'field'],
+              startup_projects: ['field', 'business_field', 'startup_field', 'sector', 'linhvuckhoinghiep'],
+              startup_ideas: ['field', 'startup_field', 'sector', 'linhvuckhoinghiep'],
+              wards: ['ward_type', 'administrative_type', 'type', 'category'],
+              universities: ['school_type', 'education_level', 'type', 'ward', 'category'],
+              featured_startups: ['business_field', 'field', 'industry', 'sector'],
+              investors: ['investor_type', 'type', 'investment_stage', 'sector', 'field'],
+              investment_funds: ['fund_type', 'type', 'investment_stage', 'sector', 'field']
+            };
+            await Promise.all(Object.entries(ecosystemGroupDefinitions).map(async ([moduleName, fields]) => {
+              const target: Record<string, number> = {};
+              await aggregateModuleGroups(moduleName, target, fields);
+              ecosystemClassifications[moduleName] = target;
+            }));
+
             try {
               const initiativeInfo = await env.DB.prepare('PRAGMA table_info(initiatives)').all<any>();
               const initiativeColumns = new Set((initiativeInfo.results || []).map((column: any) => String(column.name)));
@@ -1986,6 +2004,7 @@ export default {
               startupsByYear,
               ideasByYear,
               ideasByOrigin,
+              ecosystemClassifications,
               projectsByYear,
               patentsByYear,
               expertsByYear,
