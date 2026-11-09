@@ -593,8 +593,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 );
               })}
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="rounded-lg border border-violet-200 bg-violet-50/70 p-3">
+                <div className="text-[11px] font-semibold text-violet-800">Ý tưởng thuộc trường học</div>
+                <div className="mt-1 text-lg font-bold font-mono text-violet-900">{(stats as any).ideasByOrigin?.school || 0}</div>
+              </div>
+              <div className="rounded-lg border border-sky-200 bg-sky-50/70 p-3">
+                <div className="text-[11px] font-semibold text-sky-800">Ý tưởng thuộc xã/phường</div>
+                <div className="mt-1 text-lg font-bold font-mono text-sky-900">{(stats as any).ideasByOrigin?.ward || 0}</div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="text-[11px] font-semibold text-slate-700">Chưa xác định phân loại</div>
+                <div className="mt-1 text-lg font-bold font-mono text-slate-900">{(stats as any).ideasByOrigin?.other || 0}</div>
+              </div>
+            </div>
             <p className="text-[11px] text-slate-500 italic text-center">
-              Ý tưởng khởi nghiệp mới từ sinh viên, cộng đồng sáng tạo và các cuộc thi ĐMST.
+              Phân loại dựa trên trường “Ý tưởng thuộc Xã/phường - Trường học” trong hồ sơ đã được phê duyệt và công khai.
             </p>
           </div>
         )}
