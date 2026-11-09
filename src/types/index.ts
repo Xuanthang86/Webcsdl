@@ -226,13 +226,7 @@ export interface AggregatedStats {
   startupsByField?: Record<string, number>;
   startupsByWard?: Record<string, number>;
   startupsBySchool?: Record<string, number>;
-  projectsByField?: Record<string, number>;
-  projectsBySchool?: Record<string, number>;
-  projectsByWard?: Record<string, number>;
   projectsByOrigin?: Record<string, number>;
-  ideasByField?: Record<string, number>;
-  ideasBySchool?: Record<string, number>;
-  ideasByWard?: Record<string, number>;
   supportOrgsByField?: Record<string, number>;
   projectsByYear?: Record<string, number>;
   projectsBySchool?: Record<string, number>;
