@@ -971,7 +971,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       {(currentPage - 1) * pageSize + idx + 1}
                     </td>
                     <td className="py-3 px-4 font-mono font-medium text-teal-800">
-                      {item.code || (String(item.id || '').startsWith(`${moduleType}_imp_`) ? '—' : item.id || '—')}
+                      {item.code && item.code !== item.id && !String(item.code).startsWith(`${moduleType}_imp_`) ? item.code : (String(item.id || '').startsWith(`${moduleType}_imp_`) ? '—' : item.id || '—')}
                     </td>
                     <td className="py-3 px-4">
                       <div 
