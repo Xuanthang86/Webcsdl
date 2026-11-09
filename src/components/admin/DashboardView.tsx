@@ -141,6 +141,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const maxWardsYear = Math.max(...displayYears.map(y => stats.wardsByYear?.[y] || 0), 1);
   const ecosystemClassificationData = (stats as any).ecosystemClassifications || {};
   const ecosystemClassificationCards = [
+    { key: 'science_tasks', label: 'Nhiệm vụ khoa học và công nghệ', total: stats.totalScienceTasks },
+    { key: 'initiatives', label: 'Sáng kiến thành phố', total: stats.totalInitiatives },
+    { key: 'experts', label: 'Chuyên gia', total: stats.totalExperts },
+    { key: 'organizations', label: 'Tổ chức khoa học và công nghệ', total: stats.totalOrganizations },
     { key: 'startups', label: 'Doanh nghiệp khởi nghiệp sáng tạo', total: stats.totalStartups },
     { key: 'support_organizations', label: 'Tổ chức trung gian', total: stats.totalSupportOrgs },
     { key: 'startup_projects', label: 'Dự án khởi nghiệp', total: stats.totalProjects },
@@ -149,7 +153,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     { key: 'universities', label: 'Trường đại học/cao đẳng', total: stats.totalUniversities },
     { key: 'featured_startups', label: 'Doanh nghiệp khởi nghiệp tiêu biểu', total: stats.totalFeaturedStartups },
     { key: 'investors', label: 'Nhà đầu tư', total: stats.totalInvestors },
-    { key: 'investment_funds', label: 'Quỹ đầu tư', total: stats.totalFunds }
+    { key: 'investment_funds', label: 'Quỹ đầu tư', total: stats.totalFunds },
+    { key: 'patents', label: 'Sáng chế và sở hữu trí tuệ', total: stats.totalPatents },
+    { key: 'technologies', label: 'Công nghệ và kết quả nghiên cứu', total: stats.totalTechnologies },
+    { key: 'programs', label: 'Chương trình hỗ trợ', total: stats.totalPrograms },
+    { key: 'collaboration_needs', label: 'Nhu cầu kết nối', total: stats.totalCollaborationNeeds },
+    { key: 'publications', label: 'Bài báo và công bố khoa học', total: stats.totalPublications },
+    { key: 'lab_equipments', label: 'Phòng thí nghiệm và thiết bị', total: stats.totalLabEquipments },
+    { key: 'policies', label: 'Chính sách và văn bản', total: stats.totalPolicies }
   ];
 
   return (
