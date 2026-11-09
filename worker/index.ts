@@ -1849,11 +1849,11 @@ export default {
               aggregateModuleGroups('science_tasks', tasksByLevel, ['management_level', 'task_level', 'project_level', 'level', 'capquanly', 'capdetai']),
               aggregateModuleGroups('startups', startupsByField, ['business_field', 'business_sector', 'startup_sector', 'field', 'sector', 'industry', 'industry_sector', 'linhvuckinhdoanh', 'linhvuchoatdong', 'nganhnghe', 'nganhkinhdoanh', 'linhvuc']),
               aggregateModuleGroups('startup_projects', projectsByField, ['field', 'business_field', 'business_sector', 'startup_field', 'startup_sector', 'sector', 'industry', 'linhvuchoatdong', 'nganhnghe', 'linhvuckhoinghiep', 'linhvuc']),
-              aggregateModuleGroups('startup_projects', projectsBySchool, ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school']),
-              aggregateModuleGroups('startup_projects', projectsByWard, ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality']),
+              aggregateModuleGroups('startup_projects', projectsBySchool, ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school', 'tentruong', 'tendonvitruong', 'truonghoc', 'cosodaotao', 'cosogiaoduc']),
+              aggregateModuleGroups('startup_projects', projectsByWard, ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality', 'tenxaphuong', 'xaphuong', 'phuongxa', 'dackhu']),
               aggregateModuleGroups('startup_ideas', ideasByField, ['field', 'idea_field', 'field_of_idea', 'startup_field', 'business_field', 'business_sector', 'sector', 'industry', 'linhvuchoatdong', 'nganhnghe', 'linhvuckhoinghiep', 'linhvuc']),
-              aggregateModuleGroups('startup_ideas', ideasBySchool, ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school']),
-              aggregateModuleGroups('startup_ideas', ideasByWard, ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality']),
+              aggregateModuleGroups('startup_ideas', ideasBySchool, ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school', 'tentruong', 'tendonvitruong', 'truonghoc', 'cosodaotao', 'cosogiaoduc']),
+              aggregateModuleGroups('startup_ideas', ideasByWard, ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality', 'tenxaphuong', 'xaphuong', 'phuongxa', 'dackhu']),
               aggregateModuleGroups('support_organizations', supportOrgsByField, ['field', 'service_area', 'sector', 'organization_type', 'type'])
             ]);
 
@@ -1991,8 +1991,8 @@ export default {
                 } catch { custom = {}; }
 
                 const fieldValue = getExpertValue(row, custom, ['field', 'research_field', 'professional_field', 'expertise_area', 'major_field', 'specialization', 'specialty', 'expertise', 'research_area', 'linhvucchuyenmon', 'linhvuckhoahoc', 'linhvuc']);
-                const specialtyValue = getExpertValue(row, custom, ['specialization', 'specialty', 'expertise', 'major', 'discipline', 'research_specialty', 'chuyenganh', 'chuyennganh', 'chuyenmon']);
-                const workplaceValue = getExpertValue(row, custom, ['workplace', 'organization', 'current_affiliation', 'affiliation', 'agency', 'institution', 'working_unit', 'current_workplace', 'organization_name', 'unit', 'employer', 'work_unit', 'tendonvicongtac', 'coquancongtac', 'donvicongtac', 'coquan', 'tochuc']);
+                const specialtyValue = getExpertValue(row, custom, ['specialization', 'specialty', 'expertise', 'major', 'discipline', 'research_specialty', 'chuyenganh', 'chuyennganh', 'chuyennganhdaotao', 'chuyennganhchinh', 'chuyenmon']);
+                const workplaceValue = getExpertValue(row, custom, ['workplace', 'organization', 'current_affiliation', 'affiliation', 'agency', 'institution', 'working_unit', 'current_workplace', 'organization_name', 'unit', 'employer', 'work_unit', 'tendonvicongtac', 'tendonvichutri', 'coquancongtac', 'tencoquanchutri', 'donvicongtac', 'coquan', 'tochuc']);
                 addExpertGroup(expertsByField, fieldValue, '', 'Chưa cập nhật');
                 addExpertGroup(expertsBySpecialty, specialtyValue, '', 'Chưa cập nhật');
                 addExpertGroup(expertsByWorkplace, workplaceValue, '', 'Chưa cập nhật');
