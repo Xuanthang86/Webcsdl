@@ -1161,7 +1161,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                         <th className="py-3 px-3 w-24 text-center">Sáng lập viên</th>
                         <th className="py-3 px-3 w-24 text-center">Nhân sự</th>
                         <th className="py-3 px-4 w-36">Người đứng đầu</th>
-                        <th className="py-3 px-4 w-32">Số điện thoại</th>
+                        <th className="py-3 px-4 w-32">Liên hệ</th>
                         <th className="py-3 px-4 w-40">Email</th>
                         <th className="py-3 px-4 w-28 text-center">Năm bắt đầu</th>
                         <th className="py-3 px-3 w-20 text-center">Thao tác</th>
@@ -1400,7 +1400,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                                 {item.leaderName || item.representative || item.ownerName || '—'}
                               </td>
                               <td className="py-3 px-4 font-mono text-[11px] text-slate-700">
-                                {item.leaderPhone || item.publicPhone || '—'}
+                                Không công khai
                               </td>
                               <td className="py-3 px-4 font-mono text-[11px] text-teal-800">
                                 {item.leaderEmail || item.publicEmail || '—'}
@@ -1500,7 +1500,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                                 {item.address}
                               </td>
                               <td className="py-3 px-4 font-mono text-[11px] text-slate-700">
-                                {item.contactInfo || item.phone || '0236.3822.xxx'}
+                                Không công khai
                               </td>
                               <td className="py-3 px-4">
                                 {item.website ? (
@@ -1531,7 +1531,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                                 {item.address}
                               </td>
                               <td className="py-3 px-4 font-mono text-[11px] text-slate-700">
-                                {item.contactInfo || item.phone || '0236.3842.xxx'}
+                                Không công khai
                               </td>
                               <td className="py-3 px-4">
                                 {item.website ? (
@@ -1565,7 +1565,7 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                                 {item.address || 'TP. Đà Nẵng'}
                               </td>
                               <td className="py-3 px-4 font-mono text-[11px] text-slate-700">
-                                {item.contactInfo || item.phone || item.email || '—'}
+                                Không công khai
                               </td>
                               <td className="py-3 px-4">
                                 {item.website ? (
