@@ -104,15 +104,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     (_, index) => String(2021 + index)
   );
   const yearMaps = [
-    stats.tasksByYear,
+    yearBreakdown(stats.tasksByYear),
     stats.initiativesByYear,
-    stats.startupsByYear,
+    yearBreakdown(stats.startupsByYear),
     stats.patentsByYear,
-    stats.expertsByYear,
-    stats.projectsByYear,
-    stats.ideasByYear,
-    stats.supportOrgsByYear,
-    stats.investorsByYear,
+    yearBreakdown(stats.expertsByYear),
+    yearBreakdown(stats.projectsByYear),
+    yearBreakdown(stats.ideasByYear),
+    yearBreakdown(stats.supportOrgsByYear),
+    yearBreakdown(stats.investorsByYear),
     stats.investmentFundsByYear
   ];
   const availableYears = Array.from(new Set([
@@ -129,6 +129,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     : yearDisplayMode === 'range'
       ? availableYears.filter(year => Number(year) >= rangeStart && Number(year) <= rangeEnd)
       : (recentFiveYears.length > 0 ? recentFiveYears : availableYears.slice(-5));
+  const yearBreakdown = (source?: Record<string, number>): Record<string, number> => Object.fromEntries(
+    displayYears
+      .map(year => [year, Number(source?.[year] ?? (source as any)?.[Number(year)]) || 0] as [string, number])
+      .filter(([, count]) => count > 0)
+  );
   const maxInitiativesYear = Math.max(...displayYears.map(y => (stats.initiativesByYear?.[y] ?? (stats.initiativesByYear as any)?.[Number(y)]) || 0), 1);
   const maxPatentsYear = Math.max(...displayYears.map(y => stats.patentsByYear?.[y] || 0), 1);
   const ecosystemClassificationData = (stats as any).ecosystemClassifications || {};
@@ -551,7 +556,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {chartTab === 'investment_funds' && (
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between gap-2 text-xs font-bold text-slate-800"><span>Quỹ đầu tư theo năm</span><span className="font-mono text-indigo-800">Tổng: {stats.totalFunds || 0}</span></div>
-            {renderBreakdown('Cơ cấu quỹ đầu tư theo năm', stats.investmentFundsByYear, 'bg-indigo-600')}
+            {renderBreakdown('Cơ cấu quỹ đầu tư theo năm', yearBreakdown(stats.investmentFundsByYear), 'bg-indigo-600')}
           </div>
         )}
 
