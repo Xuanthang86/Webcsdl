@@ -1901,8 +1901,11 @@ export default {
               let custom: Record<string, any> = {};
               try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; } catch { custom = {}; }
               const raw = row.ward_or_school ?? row.ward_school ?? row.wardSchool ??
-                row.idea_origin_type ?? row.origin_type ??
-                custom.wardOrSchool ?? custom.wardSchool ?? custom.ward_or_school ?? custom.ideaOriginType ?? custom.originType ?? '';
+                row.school_ward ?? row.schoolWard ?? row.school_ward_type ?? row.idea_origin_type ?? row.origin_type ??
+                row.classification_type ?? row.category_type ??
+                custom.wardOrSchool ?? custom.wardSchool ?? custom.ward_or_school ?? custom.schoolWard ??
+                custom.school_ward ?? custom.schoolWardType ?? custom.ideaOriginType ?? custom.originType ??
+                custom.classificationType ?? custom.categoryType ?? '';
               const label = normalizeOrigin(raw);
               if (/(truong|dai hoc|cao dang|school|university|college)/.test(label)) ideasByOrigin.school++;
               else if (/(xa|phuong|dackhu|ward|commune)/.test(label)) ideasByOrigin.ward++;
@@ -1923,8 +1926,11 @@ export default {
               let custom: Record<string, any> = {};
               try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; } catch { custom = {}; }
               const raw = row.ward_or_school ?? row.ward_school ?? row.wardSchool ??
-                row.idea_origin_type ?? row.origin_type ??
-                custom.wardOrSchool ?? custom.wardSchool ?? custom.ward_or_school ?? custom.ideaOriginType ?? custom.originType ?? '';
+                row.school_ward ?? row.schoolWard ?? row.school_ward_type ?? row.idea_origin_type ?? row.origin_type ??
+                row.classification_type ?? row.category_type ??
+                custom.wardOrSchool ?? custom.wardSchool ?? custom.ward_or_school ?? custom.schoolWard ??
+                custom.school_ward ?? custom.schoolWardType ?? custom.ideaOriginType ?? custom.originType ??
+                custom.classificationType ?? custom.categoryType ?? '';
               const label = normalizeProjectOrigin(raw);
               if (/(truong|dai hoc|cao dang|school|university|college)/.test(label)) projectsByOrigin.school++;
               else if (/(xa|phuong|dackhu|ward|commune)/.test(label)) projectsByOrigin.ward++;
