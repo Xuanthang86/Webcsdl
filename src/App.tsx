@@ -422,6 +422,7 @@ export default function App() {
     let wasHidden = document.visibilityState === 'hidden';
     let expiring = false;
     let lastSessionCheckAt = 0;
+    let lastActivityWriteAt = 0;
     const readLastActivity = () => Number(window.localStorage.getItem(AUTH_LAST_ACTIVITY_KEY) || 0);
     const expireForInactivity = async () => {
       if (expiring) return;
@@ -459,7 +460,12 @@ export default function App() {
         return;
       }
       const now = Date.now();
-      window.localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, String(now));
+      // Scroll/pointer events can fire rapidly; persist the activity clock at most
+      // once every 15 seconds while still observing every event for timeout checks.
+      if (now - lastActivityWriteAt >= 15 * 1000) {
+        window.localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, String(now));
+        lastActivityWriteAt = now;
+      }
       // Revalidate at most once per minute during real activity, never just because
       // the tab is visible. This avoids extending a session while the user is idle.
       if (now - lastSessionCheckAt >= 60 * 1000) void revalidateAdminSession();
