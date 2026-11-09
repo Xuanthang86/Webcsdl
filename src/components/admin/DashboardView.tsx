@@ -257,7 +257,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 chartTab === 'tasks' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Đề tài KH&CN
+              Đề tài
             </button>
             <button
               onClick={() => setChartTab('initiatives')}
@@ -265,7 +265,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 chartTab === 'initiatives' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Sáng kiến TP
+              Sáng kiến
             </button>
             <button
               onClick={() => setChartTab('startups')}
@@ -273,7 +273,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 chartTab === 'startups' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Doanh nghiệp ĐMST
+              DN ĐMST
             </button>
             <button
               onClick={() => setChartTab('patents')}
@@ -281,7 +281,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 chartTab === 'patents' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Sáng chế & SHTT
+              SHTT
             </button>
             <button
               onClick={() => setChartTab('experts')}
@@ -289,7 +289,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 chartTab === 'experts' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Chuyên gia & Nhà KH
+              Chuyên gia
             </button>
             <button
               onClick={() => setChartTab('projects')}
@@ -297,7 +297,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 chartTab === 'projects' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Dự án KN
+              Dự án
             </button>
             <button
               onClick={() => setChartTab('ideas')}
@@ -305,7 +305,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 chartTab === 'ideas' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Ý tưởng KN
+              Ý tưởng
             </button>
             <button
               onClick={() => setChartTab('support_orgs')}
@@ -313,7 +313,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 chartTab === 'support_orgs' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Tổ chức hỗ trợ
+              Tổ chức
             </button>
             <button
               onClick={() => setChartTab('universities')}
@@ -321,7 +321,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 chartTab === 'universities' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Trường ĐH/CĐ
+              ĐH/CĐ
             </button>
             <button
               onClick={() => setChartTab('wards')}
@@ -329,7 +329,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 chartTab === 'wards' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Xã/Phường
+              Xã/phường
             </button>
           </div>
         </div>
