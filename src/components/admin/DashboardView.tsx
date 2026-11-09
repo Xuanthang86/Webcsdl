@@ -200,10 +200,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center justify-start sm:justify-end gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold max-w-full min-w-0 sm:flex-1">
+          <div className="flex flex-nowrap items-center justify-start gap-1 bg-slate-100 p-1 rounded-xl text-[10px] font-semibold w-full min-w-0 overflow-x-auto">
             <button
               onClick={() => setChartTab('tasks')}
-              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+              className={`flex-1 min-w-0 px-1.5 py-1.5 rounded-lg whitespace-nowrap text-[10px] transition-colors cursor-pointer ${
                 chartTab === 'tasks' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -211,7 +211,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
             <button
               onClick={() => setChartTab('initiatives')}
-              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+              className={`flex-1 min-w-0 px-1.5 py-1.5 rounded-lg whitespace-nowrap text-[10px] transition-colors cursor-pointer ${
                 chartTab === 'initiatives' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -219,7 +219,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
             <button
               onClick={() => setChartTab('startups')}
-              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+              className={`flex-1 min-w-0 px-1.5 py-1.5 rounded-lg whitespace-nowrap text-[10px] transition-colors cursor-pointer ${
                 chartTab === 'startups' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -227,7 +227,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
             <button
               onClick={() => setChartTab('patents')}
-              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+              className={`flex-1 min-w-0 px-1.5 py-1.5 rounded-lg whitespace-nowrap text-[10px] transition-colors cursor-pointer ${
                 chartTab === 'patents' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -235,7 +235,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
             <button
               onClick={() => setChartTab('experts')}
-              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+              className={`flex-1 min-w-0 px-1.5 py-1.5 rounded-lg whitespace-nowrap text-[10px] transition-colors cursor-pointer ${
                 chartTab === 'experts' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -243,7 +243,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
             <button
               onClick={() => setChartTab('projects')}
-              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+              className={`flex-1 min-w-0 px-1.5 py-1.5 rounded-lg whitespace-nowrap text-[10px] transition-colors cursor-pointer ${
                 chartTab === 'projects' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -251,7 +251,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
             <button
               onClick={() => setChartTab('ideas')}
-              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+              className={`flex-1 min-w-0 px-1.5 py-1.5 rounded-lg whitespace-nowrap text-[10px] transition-colors cursor-pointer ${
                 chartTab === 'ideas' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -259,7 +259,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
             <button
               onClick={() => setChartTab('support_orgs')}
-              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+              className={`flex-1 min-w-0 px-1.5 py-1.5 rounded-lg whitespace-nowrap text-[10px] transition-colors cursor-pointer ${
                 chartTab === 'support_orgs' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -267,7 +267,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
             <button
               onClick={() => setChartTab('universities')}
-              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+              className={`flex-1 min-w-0 px-1.5 py-1.5 rounded-lg whitespace-nowrap text-[10px] transition-colors cursor-pointer ${
                 chartTab === 'universities' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -275,7 +275,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
             <button
               onClick={() => setChartTab('wards')}
-              className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${
+              className={`flex-1 min-w-0 px-1.5 py-1.5 rounded-lg whitespace-nowrap text-[10px] transition-colors cursor-pointer ${
                 chartTab === 'wards' ? 'bg-white text-teal-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
