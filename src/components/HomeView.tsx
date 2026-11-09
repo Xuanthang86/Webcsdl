@@ -396,8 +396,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       <span className="text-teal-800 font-medium">{item.email || item.publicEmail || 'chuyengia@danang.gov.vn'}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 font-medium">Điện thoại:</span>{' '}
-                      <span className="font-mono text-slate-700">{item.phone || item.publicPhone || '0905.xxx.xxx'}</span>
+                      <span className="text-slate-400 font-medium">Liên hệ:</span>{' '}
+                      <span className="font-medium text-slate-600">Không công khai số điện thoại</span>
                     </div>
                     <div>
                       <span className="text-slate-400 font-medium">Chuyên ngành:</span>{' '}
@@ -582,7 +582,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         <div className="text-xs text-slate-600 space-y-1">
                           <div><span className="text-slate-400">Địa chỉ:</span> {item.address || 'Đà Nẵng'}</div>
                           <div><span className="text-slate-400">Lĩnh vực:</span> <strong className="text-slate-800">{item.field}</strong></div>
-                          <div><span className="text-slate-400">Người đứng đầu:</span> {item.leaderName || item.ownerName} ({item.leaderPhone || '0905.xxx'})</div>
+                          <div><span className="text-slate-400">Người đứng đầu:</span> {item.leaderName || item.ownerName}</div>
                           <div className="line-clamp-2 text-[11px] text-slate-500 pt-1 border-t border-slate-200">
                             <span className="font-semibold text-slate-700">Giải quyết vấn đề:</span> {item.problemSolved || item.description}
                           </div>
@@ -682,7 +682,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         </h4>
                         <div className="text-xs text-slate-600 space-y-1">
                           <div><span className="text-slate-400">Lĩnh vực:</span> <strong>{item.field}</strong></div>
-                          <div><span className="text-slate-400">Người đứng đầu:</span> {item.leaderName || item.ownerName} ({item.leaderPhone || '0905.xxx'})</div>
+                          <div><span className="text-slate-400">Người đứng đầu:</span> {item.leaderName || item.ownerName}</div>
                           <div className="truncate"><span className="text-slate-400">Ươm tạo từ:</span> {item.incubator || 'Trung tâm ĐMST Đà Nẵng'}</div>
                           <div className="line-clamp-2 text-[11px] text-slate-500 pt-1 border-t border-slate-200">
                             <span className="font-semibold text-slate-700">Giải quyết:</span> {item.problemSolved || item.description}
@@ -737,7 +737,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         </h4>
                         <div className="text-xs text-slate-600 space-y-1">
                           <div><span className="text-slate-400">Lĩnh vực:</span> <strong>{item.field}</strong></div>
-                          <div><span className="text-slate-400">Người đứng đầu:</span> {item.leaderName || item.ownerName} ({item.leaderPhone || '0905.xxx'})</div>
+                          <div><span className="text-slate-400">Người đứng đầu:</span> {item.leaderName || item.ownerName}</div>
                           <div><span className="text-slate-400">GV hướng dẫn:</span> {item.mentorTeacher || 'TS. Huỳnh Tấn Đạt'}</div>
                           <div className="line-clamp-2 text-[11px] text-slate-500 pt-1 border-t border-slate-200">
                             <span className="font-semibold text-slate-700">Giải quyết:</span> {item.problemSolved || item.description}
