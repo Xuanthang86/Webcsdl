@@ -385,9 +385,15 @@ export default function App() {
     const onPageShow = (event: PageTransitionEvent) => {
       if (event.persisted) void revalidateAdminSession();
     };
+    // Keep the sliding token alive while the admin tab remains visible and in use.
+    // Hidden tabs do not refresh; closing the last tab removes the tab-scoped marker.
+    const heartbeat = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void revalidateAdminSession();
+    }, 5 * 60 * 1000);
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('pageshow', onPageShow);
     return () => {
+      window.clearInterval(heartbeat);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('pageshow', onPageShow);
     };
