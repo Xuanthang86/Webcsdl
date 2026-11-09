@@ -188,7 +188,7 @@ ${isAuthorized ? `
 - Chức danh nghiên cứu: ${safeDisplayValue(entity.researchTitle)}
 - Chức vụ: ${safeDisplayValue(entity.jobTitle || entity.position)}
 - Email: ${safeDisplayValue(entity.email || entity.publicEmail)}
-- Điện thoại: ${safeDisplayValue(entity.phone || entity.publicPhone)}
+- Điện thoại: Không công khai
 - Lĩnh vực: ${safeDisplayValue(entity.field)}
 - Đơn vị công tác: ${safeDisplayValue(entity.workplace || entity.leadOrganization || entity.organization)}
 - Quá trình đào tạo: ${safeDisplayValue(entity.trainingProcess)}
@@ -270,7 +270,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
         <div className="sticky top-0 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 z-10">
           <div className="w-full min-w-0 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              {(entity.moduleType !== 'experts' || (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_'))) && (
+              {(entity.moduleType !== 'experts' || (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_'))) && !(entity.moduleType === 'startup_ideas' && String(entity.id || '').startsWith('startup_ideas_imp_')) && (
                 <>
                   <span className="font-mono font-medium text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
                     {entity.moduleType === 'experts' ? entity.code : (entity.code || entity.id)}
@@ -650,7 +650,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       </div>
                       <div>
                         <span className="text-slate-400 block mb-0.5">Điện thoại liên hệ:</span>
-                        <span className="font-mono font-semibold text-slate-800">{entity.phone || entity.publicPhone || 'Chưa cập nhật'}</span>
+                        <span className="font-mono font-semibold text-slate-800">Không công khai số điện thoại</span>
                       </div>
                       <div className="sm:col-span-2">
                         <span className="text-slate-400 block mb-0.5">Lĩnh vực nghiên cứu:</span>
@@ -860,7 +860,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <Building className="w-4 h-4 text-teal-700" />
                     <span>Hồ sơ Doanh nghiệp Khởi nghiệp Sáng tạo</span>
                   </div>
-                  <span className="font-mono text-teal-800">{entity.code || entity.id}</span>
+                  <span className="font-mono text-teal-800">{entity.code || 'Chưa cấp mã'}</span>
                 </div>
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-2 hover:bg-slate-50/50">
@@ -918,9 +918,9 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <span className="sm:col-span-2 font-semibold text-slate-900">{entity.leaderName || entity.representative || entity.ownerName || '—'}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
-                    <span className="font-semibold text-slate-500">Điện thoại / Email người đứng đầu:</span>
+                    <span className="font-semibold text-slate-500">Email người đứng đầu:</span>
                     <span className="sm:col-span-2 font-mono text-slate-800">
-                      {entity.leaderPhone || entity.publicPhone || '0905.123.456'} · <span className="text-teal-800">{entity.leaderEmail || entity.publicEmail || 'contact@startup.vn'}</span>
+                      {entity.leaderEmail || entity.publicEmail || '—'}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
@@ -1055,7 +1055,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <span className="font-semibold text-slate-500">Số điện thoại người đứng đầu:</span>
                     <div className="sm:col-span-2">
                       {isAuthorized ? (
-                        <span className="font-mono font-medium text-slate-900">{entity.leaderPhone || entity.publicPhone || '0905.123.456'}</span>
+                        <span className="font-mono font-medium text-slate-900">Không công khai số điện thoại</span>
                       ) : (
                         <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
                           <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
@@ -1112,7 +1112,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Mã / STT:</span>
-                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{entity.code || entity.id}</span>
+                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{entity.code || 'Chưa cấp mã'}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tên ý tưởng:</span>
@@ -1157,7 +1157,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <span className="font-semibold text-slate-500">Tóm tắt về ý tưởng (Khoảng 150-200 từ):</span>
                     <div className="sm:col-span-2">
                       {isAuthorized ? (
-                        <p className="text-slate-700 leading-relaxed whitespace-pre-line">{entity.description || 'Chưa cập nhật nội dung tóm tắt chi tiết.'}</p>
+                        <p className="text-slate-700 leading-relaxed whitespace-pre-line">{entity.description || entity.summary || 'Chưa cập nhật nội dung tóm tắt chi tiết.'}</p>
                       ) : (
                         <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
                           <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
@@ -1192,11 +1192,11 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
 
                   {/* RESTRICTED: SĐT & Email người đứng đầu */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
-                    <span className="font-semibold text-slate-500">SĐT & Email người đứng đầu:</span>
+                    <span className="font-semibold text-slate-500">Email người đứng đầu:</span>
                     <div className="sm:col-span-2">
                       {isAuthorized ? (
                         <span className="font-mono text-slate-800">
-                          {entity.leaderPhone || entity.publicPhone || '0905.123.789'} · <span className="text-teal-800">{entity.leaderEmail || entity.publicEmail || 'leader@ytuong.vn'}</span>
+                          {entity.leaderEmail || entity.publicEmail || '—'}
                         </span>
                       ) : (
                         <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
@@ -1254,7 +1254,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Thông tin liên hệ:</span>
-                    <span className="sm:col-span-2 font-mono text-slate-800">{entity.contactInfo || entity.phone || '0236.3822.xxx'}</span>
+                    <span className="sm:col-span-2 font-mono text-slate-800">Thông tin liên hệ không công khai</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Website:</span>
@@ -1300,7 +1300,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Thông tin liên hệ:</span>
-                    <span className="sm:col-span-2 font-mono text-slate-800">{entity.contactInfo || entity.phone || '0236.3842.xxx'}</span>
+                    <span className="sm:col-span-2 font-mono text-slate-800">Thông tin liên hệ không công khai</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Website:</span>
@@ -1350,7 +1350,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Thông tin liên hệ:</span>
-                    <span className="sm:col-span-2 font-mono text-slate-800">{entity.contactInfo || entity.phone || entity.email || '0905.888.999'}</span>
+                    <span className="sm:col-span-2 font-mono text-slate-800">{entity.email || 'Thông tin liên hệ không công khai'}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Website:</span>
@@ -1418,7 +1418,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   {entity.contactInfo && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                       <span className="font-semibold text-slate-500">Thông tin liên hệ:</span>
-                      <span className="sm:col-span-2 font-mono text-slate-800">{entity.contactInfo}</span>
+                      <span className="sm:col-span-2 font-mono text-slate-800">Thông tin liên hệ không công khai</span>
                     </div>
                   )}
                   {entity.website && (
