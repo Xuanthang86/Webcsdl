@@ -997,14 +997,14 @@ export default {
 
       // D. Auth: Current User (`/api/auth/me`)
       if (url.pathname === '/api/auth/me') {
-        // Sliding 12-hour token refreshed by the active-tab heartbeat.
+        // Short-lived token renewed only after recent user activity; the client enforces a 40-minute idle timeout.
         // The cookie itself remains browser-session-only (no Max-Age/Expires).
         const refreshedToken = currentUser.role !== 'public_user' && cookieToken
           ? await signToken({
               uid: currentUser.id,
               role: currentUser.role,
               iat: Date.now(),
-              exp: Date.now() + 12 * 60 * 60 * 1000
+              exp: Date.now() + 41 * 60 * 1000
             }, secret)
           : null;
         const sessionCookie = refreshedToken ? createSessionCookie(refreshedToken) : undefined;
@@ -1144,7 +1144,7 @@ export default {
           uid: userRow.id,
           role: userRow.role,
           iat: Date.now(),
-          exp: Date.now() + 12 * 60 * 60 * 1000
+          exp: Date.now() + 41 * 60 * 1000
         }, secret);
 
         // Keep the HttpOnly cookie scoped to the current browser session.
