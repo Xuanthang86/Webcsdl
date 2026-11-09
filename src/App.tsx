@@ -359,8 +359,8 @@ export default function App() {
   useEffect(() => {
     initAppData();
 
-    // Probe/answer channel lets an additional tab reuse a session only while
-    // another tab is still open; a closed tab leaves no sessionStorage marker.
+    // BroadcastChannel plus short-lived localStorage leases identify other
+    // open tabs without storing authentication credentials in browser storage.
     let authChannel: BroadcastChannel | null = null;
     if (typeof BroadcastChannel !== 'undefined') {
       authChannel = new BroadcastChannel(AUTH_TAB_CHANNEL);
