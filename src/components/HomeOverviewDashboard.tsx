@@ -636,7 +636,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               </button>
             </div>
 
-            {/* 7 Child Data Cards */}
+            {/* 9 Child Data Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2.5 text-xs">
               {ecosystemItems.map(item => {
                 const IconComp = item.icon;

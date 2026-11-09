@@ -335,7 +335,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
     for (let index = 0; index <= scanLimit; index++) {
       const row = matrix[index] || [];
       const nonEmpty = row.filter(cell => String(cell ?? '').trim() !== '').length;
-      if (nonEmpty >= 2 && hasPrimaryHeader(row)) {
+      if (nonEmpty >= 3 && hasPrimaryHeader(row)) {
         headerIndex = index;
         break;
       }
@@ -365,6 +365,7 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
     const delimiters = [',', ';', '\t'];
     const delimiterCounts = delimiters.map(delimiter => {
       let count = 0;
+      let logicalRecords = 0;
       let insideQuote = false;
       for (let i = 0; i < input.length; i++) {
         const char = input[i];
@@ -372,7 +373,8 @@ export const ImportExportStudio: React.FC<ImportExportStudioProps> = ({
           if (insideQuote && input[i + 1] === '"') i++;
           else insideQuote = !insideQuote;
         } else if ((char === '\n' || char === '\r') && !insideQuote) {
-          break;
+          logicalRecords++;
+          if (logicalRecords >= 10) break;
         } else if (char === delimiter && !insideQuote) {
           count++;
         }
