@@ -10,7 +10,7 @@ import {
 } from '../types';
 
 // Authentication is cookie-based. The HttpOnly cookie is browser-session-only;
-// the signed token uses a sliding 12-hour lifetime refreshed while an admin tab is active.
+// the signed token expires after 41 minutes and is renewed only while recent user activity continues.
 function removeStoredToken(): void {
   if (typeof window === 'undefined') return;
   window.sessionStorage.removeItem('portal_session_token');
