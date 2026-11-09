@@ -76,7 +76,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const publicWebsite = (item: BaseEntity) =>
     item.website || item.websiteUrl || item.website_url || item.web || '';
   const websiteHref = (value: string) =>
-    /^https?:\\/\\//i.test(value) ? value : `https://${value}`;
+    /^https?:\/\//i.test(value) ? value : `https://${value}`;
 
   // Format currency with standard Vietnamese format: 6,5 tỷ đồng
   const formatVND = (num?: number) => {
