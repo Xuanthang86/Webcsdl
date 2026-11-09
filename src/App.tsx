@@ -260,9 +260,11 @@ export default function App() {
         const tabId = getCurrentAuthTabId();
         updateActiveAuthTabLease(tabId, true);
         const lastTabClosedAt = Number(window.localStorage.getItem(AUTH_LAST_TAB_CLOSED_KEY) || 0);
+        const lastActivityAt = Number(window.localStorage.getItem(AUTH_LAST_ACTIVITY_KEY) || 0);
         const closedLongEnough = lastTabClosedAt > 0 && Date.now() - lastTabClosedAt >= AUTH_CLOSED_TAB_TIMEOUT_MS;
+        const idleExpired = lastActivityAt > 0 && Date.now() - lastActivityAt >= AUTH_IDLE_TIMEOUT_MS;
         const peerTabIsActive = await hasAnotherActiveAuthTab();
-        if (closedLongEnough && !peerTabIsActive) {
+        if (idleExpired || (closedLongEnough && !peerTabIsActive)) {
           await api.logout().catch(() => {});
           window.localStorage.removeItem(AUTH_LAST_TAB_CLOSED_KEY);
           window.localStorage.removeItem(AUTH_LAST_ACTIVITY_KEY);
