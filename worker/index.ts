@@ -1843,7 +1843,7 @@ export default {
             const ideaColumns = new Set((ideaInfo.results || []).map((column: any) => String(column.name)));
             const ideaRows = await env.DB.prepare('SELECT * FROM startup_ideas' + buildPublicVisibilityWhere(ideaColumns)).all<any>();
             const normalizeOrigin = (value: any) => String(value ?? '').normalize('NFD')
-              .replace(/[\\u0300-\\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+              .replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
             for (const row of ideaRows.results || []) {
               let custom: Record<string, any> = {};
               try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; } catch { custom = {}; }
