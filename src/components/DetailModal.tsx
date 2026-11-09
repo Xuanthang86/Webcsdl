@@ -860,7 +860,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <Building className="w-4 h-4 text-teal-700" />
                     <span>Hồ sơ Doanh nghiệp Khởi nghiệp Sáng tạo</span>
                   </div>
-                  <span className="font-mono text-teal-800">{entity.code || 'Chưa cấp mã'}</span>
+                  <span className="font-mono text-teal-800">{entity.code && entity.code !== entity.id && !String(entity.code).startsWith('startup_ideas_imp_') ? entity.code : 'Chưa cấp mã'}</span>
                 </div>
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-2 hover:bg-slate-50/50">
@@ -944,7 +944,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <Building className="w-4 h-4 text-teal-700" />
                     <span>Hồ sơ Tổ chức Trung gian</span>
                   </div>
-                  <span className="font-mono text-teal-800">{entity.code || 'Chưa cấp mã'}</span>
+                  <span className="font-mono text-teal-800">{entity.code && entity.code !== entity.id && !String(entity.code).startsWith('startup_ideas_imp_') ? entity.code : 'Chưa cấp mã'}</span>
                 </div>
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
@@ -1112,7 +1112,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Mã / STT:</span>
-                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{entity.code || 'Chưa cấp mã'}</span>
+                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{entity.code && entity.code !== entity.id && !String(entity.code).startsWith('startup_ideas_imp_') ? entity.code : 'Chưa cấp mã'}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tên ý tưởng:</span>
