@@ -71,6 +71,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
 }) => {
   const [activeEcosystemTab, setActiveEcosystemTab] = useState<'all' | 'startups' | 'support_organizations' | 'startup_projects' | 'startup_ideas' | 'wards' | 'universities' | 'featured_startups' | 'investors' | 'investment_funds'>('all');
 
+  const publicEmail = (item: BaseEntity) =>
+    item.email || item.contactEmail || item.publicEmail || item.public_contact_email || item.emailAddress || 'Chưa cập nhật';
+  const publicWebsite = (item: BaseEntity) =>
+    item.website || item.websiteUrl || item.website_url || item.web || '';
+  const websiteHref = (value: string) =>
+    /^https?:\\/\\//i.test(value) ? value : `https://${value}`;
+
   // Format currency with standard Vietnamese format: 6,5 tỷ đồng
   const formatVND = (num?: number) => {
     if (!num) return '0 đồng';
@@ -754,158 +761,124 @@ export const HomeView: React.FC<HomeViewProps> = ({
               </div>
             )}
 
-            {/* 5.5 DANH SÁCH XÃ/PHƯỜNG (3 dữ liệu con mới nhất) */}
-            {/* Các trường: STT, Tên xã/phường, Địa chỉ */}
+            {/* 5.5 DANH SÁCH XÃ/PHƯỜNG - BẢNG CÔNG KHAI */}
             {(activeEcosystemTab === 'all' || activeEcosystemTab === 'wards') && (
               <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-indigo-600" />
-                    <span>Danh sách xã/phường</span>
-                  </h3>
-                  <button
-                    onClick={() => onNavigateBrowse('wards')}
-                    className="text-xs text-teal-800 font-semibold hover:underline"
-                  >
-                    Xem tất cả ({stats?.totalWards || 0}) →
-                  </button>
+                <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2"><MapPin className="w-4 h-4 text-indigo-600" /><span>Danh sách xã/phường/đặc khu</span></h3>
+                  <span className="text-xs text-slate-500 whitespace-nowrap">{featuredWards.length} đơn vị</span>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {featuredWards.slice(0, 3).map((item, idx) => (
-                    <div
-                      key={item.id}
-                      onClick={() => onViewDetail(item)}
-                      className="bg-slate-50 hover:bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer flex flex-col justify-between group"
-                    >
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="hidden sm:inline font-mono text-indigo-900 font-bold bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
-                            STT {idx + 1}
-                          </span>
-                        </div>
-                        <h4 className="font-bold text-slate-900 group-hover:text-indigo-800 transition-colors text-sm">
-                          {item.title}
-                        </h4>
-                        <div className="text-xs text-slate-600">
-                          <span className="text-slate-400">Địa chỉ:</span> {item.address || 'Quận Hải Châu, TP. Đà Nẵng'}
-                        </div>
-                      </div>
-                      <div className="pt-2 mt-3 border-t border-slate-200 flex items-center justify-between text-[11px]">
-                        <span className="text-slate-400">Đơn vị hành chính</span>
-                        <span className="text-teal-800 font-semibold group-hover:underline">Chi tiết →</span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="max-h-[470px] overflow-auto rounded-xl border border-slate-200">
+                  <table className="w-full min-w-[850px] text-xs text-left">
+                    <thead className="sticky top-0 z-10 bg-slate-100 text-slate-700">
+                      <tr>
+                        <th className="px-3 py-3 w-14 text-center">STT</th>
+                        <th className="px-3 py-3 min-w-[210px]">Tên xã/phường/đặc khu (*)</th>
+                        <th className="px-3 py-3 min-w-[220px]">Địa chỉ (*)</th>
+                        <th className="px-3 py-3 min-w-[190px]">Thông tin liên hệ (*)</th>
+                        <th className="px-3 py-3 min-w-[180px]">Website</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {featuredWards.map((item, idx) => {
+                        const website = publicWebsite(item);
+                        return (
+                          <tr key={item.id} className="hover:bg-indigo-50/40">
+                            <td className="px-3 py-3 text-center font-mono text-slate-500">{idx + 1}</td>
+                            <td className="px-3 py-3 font-semibold text-slate-800">{item.title || item.name || item.wardName || 'Chưa cập nhật'}</td>
+                            <td className="px-3 py-3 text-slate-600">{item.address || item.operatingAddress || 'Chưa cập nhật'}</td>
+                            <td className="px-3 py-3 text-slate-600 break-all">{publicEmail(item)}</td>
+                            <td className="px-3 py-3">{website ? <a href={websiteHref(String(website))} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline break-all">{website}</a> : <span className="text-slate-400">Chưa cập nhật</span>}</td>
+                          </tr>
+                        );
+                      })}
+                      {!featuredWards.length && <tr><td colSpan={5} className="px-3 py-8 text-center text-slate-400">Chưa có dữ liệu công khai.</td></tr>}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
 
-            {/* 5.6 TRƯỜNG ĐẠI HỌC/CAO ĐẲNG TRÊN ĐỊA BÀN (3 dữ liệu con mới nhất) */}
-            {/* Các trường: STT, Tên trường Đại học/Cao đẳng, Xã/phường, Địa chỉ */}
+            {/* 5.6 TRƯỜNG ĐẠI HỌC/CAO ĐẲNG - BẢNG CÔNG KHAI */}
             {(activeEcosystemTab === 'all' || activeEcosystemTab === 'universities') && (
               <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                    <School className="w-4 h-4 text-violet-600" />
-                    <span>Trường Đại học / Cao đẳng trên địa bàn</span>
-                  </h3>
-                  <button
-                    onClick={() => onNavigateBrowse('universities')}
-                    className="text-xs text-teal-800 font-semibold hover:underline"
-                  >
-                    Xem tất cả ({stats?.totalUniversities || 0}) →
-                  </button>
+                <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2"><School className="w-4 h-4 text-violet-600" /><span>Trường Đại học/Cao đẳng</span></h3>
+                  <span className="text-xs text-slate-500 whitespace-nowrap">{featuredUniversities.length} trường</span>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {featuredUniversities.slice(0, 3).map((item, idx) => (
-                    <div
-                      key={item.id}
-                      onClick={() => onViewDetail(item)}
-                      className="bg-slate-50 hover:bg-white p-4 rounded-xl border border-slate-200 hover:border-violet-400 transition-all cursor-pointer flex flex-col justify-between group"
-                    >
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="hidden sm:inline font-mono text-violet-900 font-bold bg-violet-50 px-2 py-0.5 rounded border border-violet-200">
-                            STT {idx + 1}
-                          </span>
-                        </div>
-                        <h4 className="font-bold text-slate-900 group-hover:text-violet-800 transition-colors text-sm line-clamp-2">
-                          {item.title}
-                        </h4>
-                        <div className="text-xs text-slate-600 space-y-1">
-                          <div><span className="text-slate-400">Xã/phường:</span> {item.ward || 'Phường Hòa Khánh Bắc'}</div>
-                          <div className="truncate"><span className="text-slate-400">Địa chỉ:</span> {item.address || 'Quận Liên Chiểu, TP. Đà Nẵng'}</div>
-                        </div>
-                      </div>
-                      <div className="pt-2 mt-3 border-t border-slate-200 flex items-center justify-between text-[11px]">
-                        <span className="text-slate-400">Nguồn lực KH&CN</span>
-                        <span className="text-teal-800 font-semibold group-hover:underline">Chi tiết →</span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="max-h-[470px] overflow-auto rounded-xl border border-slate-200">
+                  <table className="w-full min-w-[1050px] text-xs text-left">
+                    <thead className="sticky top-0 z-10 bg-slate-100 text-slate-700">
+                      <tr>
+                        <th className="px-3 py-3 w-14 text-center">STT</th>
+                        <th className="px-3 py-3 min-w-[220px]">Tên trường (*)</th>
+                        <th className="px-3 py-3 min-w-[170px]">Thuộc xã/phường (*)</th>
+                        <th className="px-3 py-3 min-w-[230px]">Địa chỉ (*)</th>
+                        <th className="px-3 py-3 min-w-[190px]">Thông tin liên hệ (*)</th>
+                        <th className="px-3 py-3 min-w-[180px]">Website</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {featuredUniversities.map((item, idx) => {
+                        const website = publicWebsite(item);
+                        return (
+                          <tr key={item.id} className="hover:bg-violet-50/40">
+                            <td className="px-3 py-3 text-center font-mono text-slate-500">{idx + 1}</td>
+                            <td className="px-3 py-3 font-semibold text-slate-800">{item.title || item.name || item.schoolName || 'Chưa cập nhật'}</td>
+                            <td className="px-3 py-3 text-slate-600">{item.ward || item.wardName || item.wardSchool || item.administrativeUnit || 'Chưa cập nhật'}</td>
+                            <td className="px-3 py-3 text-slate-600">{item.address || item.operatingAddress || 'Chưa cập nhật'}</td>
+                            <td className="px-3 py-3 text-slate-600 break-all">{publicEmail(item)}</td>
+                            <td className="px-3 py-3">{website ? <a href={websiteHref(String(website))} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline break-all">{website}</a> : <span className="text-slate-400">Chưa cập nhật</span>}</td>
+                          </tr>
+                        );
+                      })}
+                      {!featuredUniversities.length && <tr><td colSpan={6} className="px-3 py-8 text-center text-slate-400">Chưa có dữ liệu công khai.</td></tr>}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
 
-            {/* 5.7 DOANH NGHIỆP KHỞI NGHIỆP TIÊU BIỂU (3 dữ liệu con mới nhất) */}
-            {/* Các trường: STT, Tên dự án, Link website */}
+            {/* 5.7 DOANH NGHIỆP KHỞI NGHIỆP TIÊU BIỂU - BẢNG CÔNG KHAI */}
             {(activeEcosystemTab === 'all' || activeEcosystemTab === 'featured_startups') && (
               <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                    <Star className="w-4 h-4 text-amber-600" />
-                    <span>Doanh nghiệp khởi nghiệp tiêu biểu</span>
-                  </h3>
-                  <button
-                    onClick={() => onNavigateBrowse('featured_startups')}
-                    className="text-xs text-teal-800 font-semibold hover:underline"
-                  >
-                    Xem tất cả ({stats?.totalFeaturedStartups || 0}) →
-                  </button>
+                <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2"><Star className="w-4 h-4 text-amber-600" /><span>Doanh nghiệp khởi nghiệp tiêu biểu</span></h3>
+                  <span className="text-xs text-slate-500 whitespace-nowrap">{featuredPopularStartups.length} doanh nghiệp</span>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {featuredPopularStartups.slice(0, 3).map((item, idx) => (
-                    <div
-                      key={item.id}
-                      onClick={() => onViewDetail(item)}
-                      className="bg-slate-50 hover:bg-white p-4 rounded-xl border border-slate-200 hover:border-amber-400 transition-all cursor-pointer flex flex-col justify-between group"
-                    >
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="hidden sm:inline font-mono text-amber-900 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                            STT {idx + 1}
-                          </span>
-                          <span className="text-[11px] text-amber-700 font-medium">Tiêu biểu thành phố</span>
-                        </div>
-                        <h4 className="font-bold text-slate-900 group-hover:text-amber-800 transition-colors text-sm line-clamp-2">
-                          {item.title}
-                        </h4>
-                        <div className="text-xs text-slate-600">
-                          <span className="text-slate-400">Link website:</span>{' '}
-                          {item.website ? (
-                            <a
-                              href={item.website}
-                              target="_blank"
-                              rel="noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-teal-700 hover:underline inline-flex items-center gap-0.5 font-medium"
-                            >
-                              {item.website} <ExternalLink className="w-3 h-3" />
-                            </a>
-                          ) : (
-                            <span className="text-slate-400">Đang cập nhật</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="pt-2 mt-3 border-t border-slate-200 flex items-center justify-between text-[11px]">
-                        <span className="text-slate-400">Mô hình tăng trưởng</span>
-                        <span className="text-teal-800 font-semibold group-hover:underline">Chi tiết →</span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="max-h-[470px] overflow-auto rounded-xl border border-slate-200">
+                  <table className="w-full min-w-[1450px] text-xs text-left">
+                    <thead className="sticky top-0 z-10 bg-slate-100 text-slate-700">
+                      <tr>
+                        <th className="px-3 py-3 w-14 text-center">STT</th>
+                        <th className="px-3 py-3 min-w-[200px]">Tên doanh nghiệp (*)</th>
+                        <th className="px-3 py-3 min-w-[200px]">Tên dự án (*)</th>
+                        <th className="px-3 py-3 min-w-[180px]">Người đại diện dự án (*)</th>
+                        <th className="px-3 py-3 min-w-[220px]">Địa chỉ (*)</th>
+                        <th className="px-3 py-3 min-w-[190px]">Thông tin liên hệ (*)</th>
+                        <th className="px-3 py-3 min-w-[180px]">Website</th>
+                        <th className="px-3 py-3 min-w-[170px]">Thuộc xã/phường (*)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {featuredPopularStartups.map((item, idx) => {
+                        const website = publicWebsite(item);
+                        return (
+                          <tr key={item.id} className="hover:bg-amber-50/40">
+                            <td className="px-3 py-3 text-center font-mono text-slate-500">{idx + 1}</td>
+                            <td className="px-3 py-3 font-semibold text-slate-800">{item.companyName || item.businessName || item.title || item.name || 'Chưa cập nhật'}</td>
+                            <td className="px-3 py-3 text-slate-600">{item.projectName || item.projectTitle || item.project_name || item.title || 'Chưa cập nhật'}</td>
+                            <td className="px-3 py-3 text-slate-600">{item.projectRepresentative || item.representativeName || item.representative || item.ownerName || item.leaderName || 'Chưa cập nhật'}</td>
+                            <td className="px-3 py-3 text-slate-600">{item.address || item.operatingAddress || 'Chưa cập nhật'}</td>
+                            <td className="px-3 py-3 text-slate-600 break-all">{publicEmail(item)}</td>
+                            <td className="px-3 py-3">{website ? <a href={websiteHref(String(website))} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline break-all">{website}</a> : <span className="text-slate-400">Chưa cập nhật</span>}</td>
+                            <td className="px-3 py-3 text-slate-600">{item.ward || item.wardName || item.wardSchool || item.administrativeUnit || 'Chưa cập nhật'}</td>
+                          </tr>
+                        );
+                      })}
+                      {!featuredPopularStartups.length && <tr><td colSpan={8} className="px-3 py-8 text-center text-slate-400">Chưa có dữ liệu công khai.</td></tr>}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
