@@ -79,7 +79,7 @@ Worker hiện gửi các sự kiện bảo mật/vận hành đã chọn lọc, 
 - Khi một tab website được đóng, hệ thống ghi nhận thời điểm đóng. Nếu mở lại sau 20 phút mà không có hoạt động gần đây từ các tab WebCSDL khác, hệ thống xóa phiên và yêu cầu đăng nhập. Nếu người dùng vẫn thao tác trên một tab WebCSDL khác, hoạt động đó được tính chung và không làm gián đoạn phiên đang sử dụng.
 - Đóng trình duyệt sẽ kết thúc cookie phiên theo cơ chế browser-session cookie. Tải lại trang trong thời gian cho phép không tự động đăng xuất.
 - Token ký số của tài khoản quản trị có thời hạn ngắn 41 phút làm lớp bảo vệ bổ sung; giao diện quản trị áp dụng ngưỡng không hoạt động 40 phút. Token chỉ được gia hạn khi có hoạt động gần đây, không gia hạn vô thời hạn chỉ vì tab đang mở. Các vai trò không thuộc nhóm quản trị giữ nguyên chính sách phiên hiện có.
-- `localStorage` chỉ lưu mốc hoạt động, thời điểm đóng tab và lease nhận diện tab; không lưu mật khẩu hoặc token xác thực. Token vẫn nằm trong HttpOnly cookie và JavaScript không thể đọc.
+- `localStorage` chỉ lưu mốc hoạt động và thời điểm đóng tab để phối hợp giữa các tab; không lưu mật khẩu hoặc token xác thực. Token vẫn nằm trong HttpOnly cookie và JavaScript không thể đọc.
 
 
 ## 1. Nguyên tắc quyền hạn và bảo vệ dữ liệu
