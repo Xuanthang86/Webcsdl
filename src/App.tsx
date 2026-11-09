@@ -63,6 +63,10 @@ class DetailModalErrorBoundary extends React.Component<
 }
 
 const AUTH_TAB_CHANNEL = 'webcsdl-auth-tab-session';
+const AUTH_LAST_TAB_CLOSED_KEY = 'portal_last_tab_closed_at';
+const AUTH_LAST_ACTIVITY_KEY = 'portal_last_activity_at';
+const AUTH_IDLE_TIMEOUT_MS = 40 * 60 * 1000;
+const AUTH_CLOSED_TAB_TIMEOUT_MS = 20 * 60 * 1000;
 
 async function hasAnotherActiveAuthTab(): Promise<boolean> {
   if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') return false;
@@ -214,25 +218,21 @@ export default function App() {
 
   const initAppData = async () => {
     try {
-      // A session cookie is shared by tabs. A fresh tab must not silently inherit
-      // an old login unless another currently open tab confirms the same session.
+      // A tab may reuse the browser-session cookie for up to 20 minutes after
+      // it was closed. After that grace period, a new tab must authenticate again.
       if (typeof window !== 'undefined') {
-        const tabMarker = window.sessionStorage.getItem('portal_tab_active') === 'true';
-        const closingMarker = window.sessionStorage.getItem('portal_tab_closing') === 'true';
-        const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
-        const isReload = navigation?.type === 'reload';
-        if (closingMarker && isReload && tabMarker) {
+        const lastTabClosedAt = Number(window.localStorage.getItem(AUTH_LAST_TAB_CLOSED_KEY) || 0);
+        const closedLongEnough = lastTabClosedAt > 0 && Date.now() - lastTabClosedAt >= AUTH_CLOSED_TAB_TIMEOUT_MS;
+        const peerTabIsActive = await hasAnotherActiveAuthTab();
+        if (closedLongEnough && !peerTabIsActive) {
+          await api.logout().catch(() => {});
+          window.localStorage.removeItem(AUTH_LAST_TAB_CLOSED_KEY);
+          window.localStorage.removeItem(AUTH_LAST_ACTIVITY_KEY);
+          window.sessionStorage.removeItem('portal_tab_active');
           window.sessionStorage.removeItem('portal_tab_closing');
-        } else if (!tabMarker || closingMarker) {
-          const peerTabIsActive = await hasAnotherActiveAuthTab();
-          if (peerTabIsActive) {
-            window.sessionStorage.setItem('portal_tab_active', 'true');
-            window.sessionStorage.removeItem('portal_tab_closing');
-          } else {
-            await api.logout().catch(() => {});
-            window.sessionStorage.removeItem('portal_tab_active');
-            window.sessionStorage.removeItem('portal_tab_closing');
-          }
+        } else {
+          window.sessionStorage.setItem('portal_tab_active', 'true');
+          window.sessionStorage.removeItem('portal_tab_closing');
         }
       }
 
@@ -241,6 +241,9 @@ export default function App() {
       const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'];
       if (userRes?.user && (currentView !== 'admin' || administrativeRoles.includes(userRes.user.role))) {
         setCurrentUser(userRes.user);
+        if (administrativeRoles.includes(userRes.user.role)) {
+          window.localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, String(Date.now()));
+        }
       } else if (currentView === 'admin') {
         // Keep the requested admin route after a reload, but never restore an
         // authenticated identity from browser storage. Require a fresh login.
@@ -331,6 +334,7 @@ export default function App() {
     const markTabClosing = () => {
       if (window.sessionStorage.getItem('portal_tab_active') === 'true') {
         window.sessionStorage.setItem('portal_tab_closing', 'true');
+        window.localStorage.setItem(AUTH_LAST_TAB_CLOSED_KEY, String(Date.now()));
       }
     };
     window.addEventListener('pagehide', markTabClosing);
@@ -354,15 +358,37 @@ export default function App() {
     };
   }, []);
 
-  // iOS Safari may suspend or restore a tab without remounting the React app.
-  // Revalidate the server session when an admin tab becomes visible again.
+  // Enforce a 40-minute inactivity timeout on desktop, tablet and mobile.
+  // Only real user interactions extend the local activity clock; background polling
+  // is allowed to refresh the HttpOnly cookie only while recent activity exists.
   useEffect(() => {
-    if (currentView !== 'admin') return;
+    if (currentView !== 'admin' || !currentUser) return;
     const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'];
+    if (!administrativeRoles.includes(currentUser.role)) return;
+
     let wasHidden = document.visibilityState === 'hidden';
+    let expiring = false;
+    let lastSessionCheckAt = 0;
+    const readLastActivity = () => Number(window.localStorage.getItem(AUTH_LAST_ACTIVITY_KEY) || 0);
+    const expireForInactivity = async () => {
+      if (expiring) return;
+      expiring = true;
+      window.localStorage.removeItem(AUTH_LAST_ACTIVITY_KEY);
+      await api.logout().catch(() => {});
+      window.dispatchEvent(new CustomEvent('portal:auth-expired'));
+    };
+    const hasTimedOut = () => {
+      const lastActivity = readLastActivity();
+      return lastActivity > 0 && Date.now() - lastActivity >= AUTH_IDLE_TIMEOUT_MS;
+    };
     const revalidateAdminSession = async () => {
+      if (expiring || hasTimedOut()) {
+        if (hasTimedOut()) void expireForInactivity();
+        return;
+      }
       try {
         const response = await api.getCurrentUser();
+        lastSessionCheckAt = Date.now();
         if (response?.user && administrativeRoles.includes(response.user.role)) {
           setCurrentUser(response.user);
         } else {
@@ -374,30 +400,59 @@ export default function App() {
         setShowAdminLoginModal(true);
       }
     };
+    const onUserActivity = () => {
+      if (hasTimedOut()) {
+        void expireForInactivity();
+        return;
+      }
+      const now = Date.now();
+      window.localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, String(now));
+      // Revalidate at most once per minute during real activity, never just because
+      // the tab is visible. This avoids extending a session while the user is idle.
+      if (now - lastSessionCheckAt >= 60 * 1000) void revalidateAdminSession();
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === AUTH_LAST_ACTIVITY_KEY && hasTimedOut()) void expireForInactivity();
+    };
     const onVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         wasHidden = true;
       } else if (wasHidden) {
         wasHidden = false;
-        void revalidateAdminSession();
+        if (hasTimedOut()) void expireForInactivity();
+        else void revalidateAdminSession();
       }
     };
     const onPageShow = (event: PageTransitionEvent) => {
-      if (event.persisted) void revalidateAdminSession();
+      if (event.persisted) {
+        if (hasTimedOut()) void expireForInactivity();
+        else void revalidateAdminSession();
+      }
     };
-    // Keep the sliding token alive while the admin tab remains visible and in use.
-    // Hidden tabs do not refresh; closing the last tab removes the tab-scoped marker.
     const heartbeat = window.setInterval(() => {
-      if (document.visibilityState === 'visible') void revalidateAdminSession();
-    }, 5 * 60 * 1000);
+      if (document.visibilityState === 'visible' && !hasTimedOut()) {
+        // A quiet visible tab does not refresh the session; this is only a safety
+        // revalidation after recent activity, not an inactivity-extending heartbeat.
+        if (Date.now() - readLastActivity() < 5 * 60 * 1000) void revalidateAdminSession();
+      }
+    }, 60 * 1000);
+
+    ['pointerdown', 'keydown', 'touchstart', 'scroll', 'click', 'input'].forEach(type =>
+      document.addEventListener(type, onUserActivity, { passive: true })
+    );
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('pageshow', onPageShow);
+    window.addEventListener('storage', onStorage);
     return () => {
       window.clearInterval(heartbeat);
+      ['pointerdown', 'keydown', 'touchstart', 'scroll', 'click', 'input'].forEach(type =>
+        document.removeEventListener(type, onUserActivity)
+      );
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('pageshow', onPageShow);
+      window.removeEventListener('storage', onStorage);
     };
-  }, [currentView]);
+  }, [currentView, currentUser?.id]);
 
   const handleLogout = async () => {
     try {
@@ -408,6 +463,8 @@ export default function App() {
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('portal_tab_active');
         sessionStorage.removeItem('portal_tab_closing');
+        localStorage.removeItem(AUTH_LAST_TAB_CLOSED_KEY);
+        localStorage.removeItem(AUTH_LAST_ACTIVITY_KEY);
         localStorage.removeItem('portal_auth_token');
         localStorage.removeItem('portal_cached_user');
         localStorage.removeItem('portal_current_view');
@@ -488,6 +545,8 @@ export default function App() {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('portal_tab_active', 'true');
       sessionStorage.removeItem('portal_tab_closing');
+      localStorage.removeItem(AUTH_LAST_TAB_CLOSED_KEY);
+      localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, String(Date.now()));
     }
     setCurrentUser(user);
     setShowAdminLoginModal(false);
