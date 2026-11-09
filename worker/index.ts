@@ -1511,7 +1511,7 @@ export default {
               const res = await env.DB.prepare(`SELECT COUNT(*) as c FROM "${mod}"${publicWhere}`).first<{ c: number }>();
               counts[mod] = Number(res?.c) || 0;
               if (columns.has('status')) {
-                const pendingConditions = [`LOWER(COALESCE(status, '')) NOT IN ('approved', 'published')`];
+                const pendingConditions = [`LOWER(COALESCE(status, '')) NOT IN ('approved', 'published', 'rejected', 'archived')`];
                 if (columns.has('publicity_level')) pendingConditions.push(`LOWER(COALESCE(publicity_level, 'private')) <> 'public'`);
                 const pending = await env.DB.prepare(`SELECT COUNT(*) as c FROM "${mod}" WHERE ${pendingConditions.join(' OR ')}`).first<{ c: number }>();
                 pendingApprovalsCount += Number(pending?.c) || 0;
