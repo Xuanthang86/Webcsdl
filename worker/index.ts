@@ -1785,7 +1785,7 @@ export default {
                 'filing_date', 'application_date', 'grant_date', 'issue_date', 'created_at'
               ]),
               aggregateModuleYears('experts', expertsByYear, [
-                'start_work_year', 'work_start_year', 'joined_at', 'join_date', 'registration_year', 'registration_date', 'created_at'
+                'start_work_year', 'work_start_year', 'start_year', 'joined_at', 'join_date', 'registration_year', 'registration_date', 'year', 'namcongtac', 'namthamgia', 'namdangky', 'created_at'
               ]),
               aggregateModuleYears('investors', investorsByYear, [
                 'investment_date', 'registration_date', 'founded_date', 'created_at'
@@ -1848,7 +1848,7 @@ export default {
               aggregateModuleGroups('startup_projects', projectsByField, ['field', 'business_field', 'startup_field', 'sector', 'linhvuckhoinghiep', 'linhvuc']),
               aggregateModuleGroups('startup_projects', projectsBySchool, ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school']),
               aggregateModuleGroups('startup_projects', projectsByWard, ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality']),
-              aggregateModuleGroups('startup_ideas', ideasByField, ['field', 'startup_field', 'sector', 'linhvuckhoinghiep', 'linhvuc']),
+              aggregateModuleGroups('startup_ideas', ideasByField, ['field', 'idea_field', 'field_of_idea', 'startup_field', 'business_field', 'sector', 'industry', 'linhvuckhoinghiep', 'linhvuc']),
               aggregateModuleGroups('startup_ideas', ideasBySchool, ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school']),
               aggregateModuleGroups('startup_ideas', ideasByWard, ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality']),
               aggregateModuleGroups('support_organizations', supportOrgsByField, ['field', 'service_area', 'sector', 'organization_type', 'type'])
@@ -1918,7 +1918,7 @@ export default {
             const projectColumns = new Set((projectInfo.results || []).map((column: any) => String(column.name)));
             const projectRows = await env.DB.prepare('SELECT * FROM startup_projects' + buildPublicVisibilityWhere(projectColumns)).all<any>();
             const normalizeProjectOrigin = (value: any) => String(value ?? '').normalize('NFD')
-              .replace(/[\\u0300-\\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+              .replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
             for (const row of projectRows.results || []) {
               let custom: Record<string, any> = {};
               try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; } catch { custom = {}; }
