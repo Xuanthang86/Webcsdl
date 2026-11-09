@@ -303,9 +303,9 @@ export default function App() {
       setFeaturedSupportOrgs(supportOrgs.slice(0, 3));
       setFeaturedProjects(projects.slice(0, 3));
       setFeaturedIdeas(ideas.slice(0, 3));
-      setFeaturedWards(wards.slice(0, 3));
-      setFeaturedUniversities(universities.slice(0, 3));
-      setFeaturedPopularStartups(popStartups.slice(0, 3));
+      setFeaturedWards(wards);
+      setFeaturedUniversities(universities);
+      setFeaturedPopularStartups(popStartups);
       setFeaturedInvestors(investors.slice(0, 3));
       setFeaturedFunds(funds.slice(0, 3));
       setFeaturedNeeds(needs.slice(0, 3));
