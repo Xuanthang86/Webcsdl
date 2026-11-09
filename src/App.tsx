@@ -65,11 +65,47 @@ class DetailModalErrorBoundary extends React.Component<
 const AUTH_TAB_CHANNEL = 'webcsdl-auth-tab-session';
 const AUTH_LAST_TAB_CLOSED_KEY = 'portal_last_tab_closed_at';
 const AUTH_LAST_ACTIVITY_KEY = 'portal_last_activity_at';
+const AUTH_ACTIVE_TABS_KEY = 'portal_active_tab_leases';
 const AUTH_IDLE_TIMEOUT_MS = 40 * 60 * 1000;
 const AUTH_CLOSED_TAB_TIMEOUT_MS = 20 * 60 * 1000;
+const AUTH_TAB_LEASE_MS = 2 * 60 * 1000;
+
+function getCurrentAuthTabId(): string {
+  let tabId = window.sessionStorage.getItem('portal_tab_id');
+  if (!tabId) {
+    tabId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `tab-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    window.sessionStorage.setItem('portal_tab_id', tabId);
+  }
+  return tabId;
+}
+
+function readActiveAuthTabLeases(): Record<string, number> {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(AUTH_ACTIVE_TABS_KEY) || '{}');
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const now = Date.now();
+    return Object.fromEntries(Object.entries(parsed).filter(([, value]) =>
+      typeof value === 'number' && now - value < AUTH_TAB_LEASE_MS
+    )) as Record<string, number>;
+  } catch {
+    return {};
+  }
+}
+
+function updateActiveAuthTabLease(tabId: string, active: boolean): void {
+  const leases = readActiveAuthTabLeases();
+  if (active) leases[tabId] = Date.now();
+  else delete leases[tabId];
+  window.localStorage.setItem(AUTH_ACTIVE_TABS_KEY, JSON.stringify(leases));
+}
 
 async function hasAnotherActiveAuthTab(): Promise<boolean> {
-  if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') return false;
+  if (typeof window === 'undefined') return false;
+  const ownTabId = window.sessionStorage.getItem('portal_tab_id') || '';
+  if (Object.keys(readActiveAuthTabLeases()).some(tabId => tabId !== ownTabId)) return true;
+  if (typeof BroadcastChannel === 'undefined') return false;
   return new Promise(resolve => {
     const channel = new BroadcastChannel(AUTH_TAB_CHANNEL);
     let found = false;
@@ -221,6 +257,8 @@ export default function App() {
       // A tab may reuse the browser-session cookie for up to 20 minutes after
       // it was closed. After that grace period, a new tab must authenticate again.
       if (typeof window !== 'undefined') {
+        const tabId = getCurrentAuthTabId();
+        updateActiveAuthTabLease(tabId, true);
         const lastTabClosedAt = Number(window.localStorage.getItem(AUTH_LAST_TAB_CLOSED_KEY) || 0);
         const closedLongEnough = lastTabClosedAt > 0 && Date.now() - lastTabClosedAt >= AUTH_CLOSED_TAB_TIMEOUT_MS;
         const peerTabIsActive = await hasAnotherActiveAuthTab();
@@ -231,6 +269,7 @@ export default function App() {
           window.sessionStorage.removeItem('portal_tab_active');
           window.sessionStorage.removeItem('portal_tab_closing');
         } else {
+          window.localStorage.removeItem(AUTH_LAST_TAB_CLOSED_KEY);
           window.sessionStorage.setItem('portal_tab_active', 'true');
           window.sessionStorage.removeItem('portal_tab_closing');
         }
@@ -331,13 +370,21 @@ export default function App() {
         }
       };
     }
+    const tabId = getCurrentAuthTabId();
+    const refreshTabLease = () => updateActiveAuthTabLease(tabId, true);
     const markTabClosing = () => {
-      if (window.sessionStorage.getItem('portal_tab_active') === 'true') {
+      updateActiveAuthTabLease(tabId, false);
+      const anotherTabRemains = Object.keys(readActiveAuthTabLeases()).length > 0;
+      if (!anotherTabRemains && window.sessionStorage.getItem('portal_tab_active') === 'true') {
         window.sessionStorage.setItem('portal_tab_closing', 'true');
         window.localStorage.setItem(AUTH_LAST_TAB_CLOSED_KEY, String(Date.now()));
       }
     };
+    const tabLeaseHeartbeat = window.setInterval(refreshTabLease, 30 * 1000);
     window.addEventListener('pagehide', markTabClosing);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') refreshTabLease();
+    });
 
     const handleAuthExpired = () => {
       const adminWasOpen = window.sessionStorage.getItem('portal_current_view') === 'admin' || window.location.hash === '#admin';
@@ -355,6 +402,7 @@ export default function App() {
     return () => {
       window.removeEventListener('portal:auth-expired', handleAuthExpired);
       window.removeEventListener('pagehide', markTabClosing);
+      window.clearInterval(tabLeaseHeartbeat);
       authChannel?.close();
     };
   }, []);
@@ -546,6 +594,7 @@ export default function App() {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('portal_tab_active', 'true');
       sessionStorage.removeItem('portal_tab_closing');
+      updateActiveAuthTabLease(getCurrentAuthTabId(), true);
       localStorage.removeItem(AUTH_LAST_TAB_CLOSED_KEY);
       localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, String(Date.now()));
     }
