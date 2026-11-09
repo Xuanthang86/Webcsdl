@@ -1028,7 +1028,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Sản phẩm giải quyết vấn đề:</span>
-                    <p className="sm:col-span-2 text-slate-700 leading-relaxed">{entity.problemSolved || entity.description}</p>
+                    <p className="sm:col-span-2 text-slate-700 leading-relaxed">{entity.problemSolved || entity.description || 'Chưa cập nhật'}</p>
                   </div>
 
                   {/* RESTRICTED: Số lượng thành viên tham gia */}
@@ -1124,7 +1124,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <span className="font-semibold text-slate-500">Địa chỉ hoạt động (Nếu có):</span>
                     <div className="sm:col-span-2">
                       {isAuthorized ? (
-                        <span className="text-slate-800">{entity.address || '54 Nguyễn Lương Bằng, Liên Chiểu, Đà Nẵng'}</span>
+                        <span className="text-slate-800">{entity.address || 'Chưa cập nhật'}</span>
                       ) : (
                         <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
                           <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
@@ -1143,7 +1143,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <span className="font-semibold text-slate-500">Ý tưởng thuộc Xã/phường - Trường học:</span>
                     <div className="sm:col-span-2">
                       {isAuthorized ? (
-                        <span className="font-semibold text-slate-800">{entity.wardSchool || 'Phường Hòa Khánh Bắc - Đại học Bách Khoa ĐHĐN'}</span>
+                        <span className="font-semibold text-slate-800">{entity.wardSchool || 'Chưa cập nhật'}</span>
                       ) : (
                         <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
                           <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
@@ -1176,7 +1176,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <span className="font-semibold text-slate-500">Số lượng thành viên tham gia:</span>
                     <div className="sm:col-span-2">
                       {isAuthorized ? (
-                        <span className="font-mono font-bold text-slate-900">{entity.memberCount || 3} thành viên</span>
+                        <span className="font-mono font-bold text-slate-900">{entity.memberCount ? `${entity.memberCount} thành viên` : 'Chưa cập nhật'}</span>
                       ) : (
                         <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
                           <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
@@ -1208,7 +1208,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tên thầy/cô giáo hướng dẫn:</span>
-                    <span className="sm:col-span-2 font-semibold text-indigo-900">{entity.mentorTeacher || 'TS. Huỳnh Tấn Đạt'}</span>
+                    <span className="sm:col-span-2 font-semibold text-indigo-900">{entity.mentorTeacher || 'Chưa cập nhật'}</span>
                   </div>
 
                   {/* RESTRICTED: Đơn vị đang học tập/công tác */}
@@ -1216,7 +1216,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <span className="font-semibold text-slate-500">Đơn vị học tập / công tác:</span>
                     <div className="sm:col-span-2">
                       {isAuthorized ? (
-                        <span className="text-slate-800 font-medium">{entity.currentAffiliation || 'Trường Đại học Bách Khoa - Đại học Đà Nẵng, 54 Nguyễn Lương Bằng, Q. Liên Chiểu'}</span>
+                        <span className="text-slate-800 font-medium">{entity.currentAffiliation || 'Chưa cập nhật'}</span>
                       ) : (
                         <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
                           <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
