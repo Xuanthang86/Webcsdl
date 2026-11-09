@@ -137,7 +137,7 @@ function buildPublicVisibilityWhere(columns: Set<string>): string {
   return ' WHERE ' + conditions.join(' AND ');
 }
 function normalizeSnapshotSchemaSql(sql: string): string { return sql.replace(/[`"\[\]]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); }
-// Browser-session cookie: closing the browser ends the login session; do not persist it for seven days.
+// Browser-session cookie: do not persist across normal browser shutdown; browser session-restore settings may restore session cookies.
 function createSessionCookie(token: string): string { return `danang_session=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Lax`; }
 
 function isPrivilegedMessageReader(user: any): boolean {
