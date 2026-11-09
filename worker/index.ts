@@ -997,14 +997,16 @@ export default {
 
       // D. Auth: Current User (`/api/auth/me`)
       if (url.pathname === '/api/auth/me') {
-        // Short-lived token renewed only after recent user activity; the client enforces a 40-minute idle timeout.
+        // Admin sessions use a short token renewed only after recent activity.
+        // Other authenticated roles retain their existing longer session policy.
         // The cookie itself remains browser-session-only (no Max-Age/Expires).
+        const adminSession = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'].includes(currentUser.role);
         const refreshedToken = currentUser.role !== 'public_user' && cookieToken
           ? await signToken({
               uid: currentUser.id,
               role: currentUser.role,
               iat: Date.now(),
-              exp: Date.now() + 41 * 60 * 1000
+              exp: Date.now() + (adminSession ? 41 * 60 * 1000 : 12 * 60 * 60 * 1000)
             }, secret)
           : null;
         const sessionCookie = refreshedToken ? createSessionCookie(refreshedToken) : undefined;
@@ -1140,11 +1142,12 @@ export default {
           managedModules: Array.isArray(loginManagedModules) ? loginManagedModules : []
         };
 
+        const adminSession = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'].includes(userRow.role);
         const sessionToken = await signToken({
           uid: userRow.id,
           role: userRow.role,
           iat: Date.now(),
-          exp: Date.now() + 41 * 60 * 1000
+          exp: Date.now() + (adminSession ? 41 * 60 * 1000 : 12 * 60 * 60 * 1000)
         }, secret);
 
         // Keep the HttpOnly cookie scoped to the current browser session.
