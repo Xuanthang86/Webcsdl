@@ -494,6 +494,8 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   useEffect(() => {
     loadData();
     setSelectedIds([]);
+    setSearchQuery('');
+    setStatusFilter('all');
     setCurrentPage(1);
     setTaskLevelFilter('all');
     setTaskYearFilter('all');
