@@ -135,23 +135,9 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
   const taskFields = toBreakdown(stats?.tasksByField);
   const taskUnits = toBreakdown(stats?.tasksByUnit);
   const taskLevels = toBreakdown(stats?.tasksByLevel);
-  const projectYears = toBreakdown(stats?.projectsByYear);
-  const projectFields = toBreakdown(stats?.projectsByField);
 
   // School vs Ward distributions for Projects & Ideas
-  const projectSchoolsCount = stats?.projectsBySchool 
-    ? Object.values(stats.projectsBySchool).reduce((a, b) => a + b, 0) 
-    : 0;
-  const projectWardsCount = stats?.projectsByWard 
-    ? Object.values(stats.projectsByWard).reduce((a, b) => a + b, 0) 
-    : 0;
 
-  const ideaSchoolsCount = stats?.ideasBySchool 
-    ? Object.values(stats.ideasBySchool).reduce((a, b) => a + b, 0) 
-    : 0;
-  const ideaWardsCount = stats?.ideasByWard 
-    ? Object.values(stats.ideasByWard).reduce((a, b) => a + b, 0) 
-    : 0;
 
   const totalTasks = stats?.totalScienceTasks || 0;
   const acceptedTasks = Math.min(stats?.tasksAccepted ?? 0, totalTasks);
@@ -534,16 +520,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
                       );
                     })}
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-rose-100 text-[11px]">
-                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1">
-                      <div className="font-semibold text-emerald-800">Dự án khởi nghiệp theo năm</div>
-                      {projectYears.slice(0, 5).map(item => <div key={item.name} className="flex justify-between gap-2"><span>{item.name}</span><strong>{item.count}</strong></div>)}
-                    </div>
-                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1">
-                      <div className="font-semibold text-emerald-800">Dự án khởi nghiệp theo lĩnh vực</div>
-                      {projectFields.slice(0, 5).map(item => <div key={item.name} className="flex justify-between gap-2"><span className="truncate">{item.name}</span><strong>{item.count}</strong></div>)}
-                    </div>
-                  </div>
+
                 </div>
               )}
             </div>
@@ -662,47 +639,9 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               })}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-100 text-xs">
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5"><div className="font-semibold text-[11px] uppercase tracking-wider text-emerald-800">Dự án khởi nghiệp theo năm</div>{projectYears.slice(0, 8).map(item => <div key={item.name} className="flex justify-between gap-2 border-b border-slate-200/60 py-1"><span>{item.name}</span><strong>{item.count}</strong></div>)}</div>
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5"><div className="font-semibold text-[11px] uppercase tracking-wider text-emerald-800">Dự án khởi nghiệp theo lĩnh vực</div>{projectFields.slice(0, 8).map(item => <div key={item.name} className="flex justify-between gap-2 border-b border-slate-200/60 py-1"><span className="truncate">{item.name}</span><strong>{item.count}</strong></div>)}</div>
-            </div>
 
-            {/* Highlighted Distribution: Phân loại Dự án & Ý tưởng khởi nghiệp theo Trường học vs Xã/phường */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-100 text-xs">
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                <div className="flex items-center justify-between font-semibold text-emerald-900 text-[11px] uppercase tracking-wider">
-                  <span>Dự án khởi nghiệp phân theo Trường học vs Xã/phường:</span>
-                  <span className="font-mono font-bold text-slate-900">{stats?.totalProjects || 0} dự án</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  <div className="p-2 bg-white rounded-lg border border-emerald-200 flex justify-between shadow-2xs">
-                    <span className="text-slate-700 font-medium">Khối Trường học:</span>
-                    <span className="font-mono font-bold text-emerald-800">{projectSchoolsCount} dự án</span>
-                  </div>
-                  <div className="p-2 bg-white rounded-lg border border-emerald-200 flex justify-between shadow-2xs">
-                    <span className="text-slate-700 font-medium">Địa bàn Xã/phường:</span>
-                    <span className="font-mono font-bold text-emerald-800">{projectWardsCount} dự án</span>
-                  </div>
-                </div>
-              </div>
 
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                <div className="flex items-center justify-between font-semibold text-amber-900 text-[11px] uppercase tracking-wider">
-                  <span>Ý tưởng khởi nghiệp phân theo Trường học vs Xã/phường:</span>
-                  <span className="font-mono font-bold text-slate-900">{stats?.totalIdeas || 0} ý tưởng</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  <div className="p-2 bg-white rounded-lg border border-amber-200 flex justify-between shadow-2xs">
-                    <span className="text-slate-700 font-medium">Khối Trường học:</span>
-                    <span className="font-mono font-bold text-amber-800">{ideaSchoolsCount} ý tưởng</span>
-                  </div>
-                  <div className="p-2 bg-white rounded-lg border border-amber-200 flex justify-between shadow-2xs">
-                    <span className="text-slate-700 font-medium">Địa bàn Xã/phường:</span>
-                    <span className="font-mono font-bold text-amber-800">{ideaWardsCount} ý tưởng</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+
 
           </div>
         )}
