@@ -388,6 +388,27 @@ apiRouter.get('/stats', (req: AuthenticatedRequest, res: Response) => {
 });
 
 // 4. Global Search
+// Only privileged reviewers or users explicitly granted the module may see full expert contact details.
+const canViewExpertContacts = (user: AuthenticatedRequest['user']): boolean => Boolean(
+  user && (
+    ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'].includes(user.role) ||
+    Boolean(user.managedModules?.includes('experts'))
+  )
+);
+
+const protectExpertContactFields = (record: any, canViewFullContact: boolean): any => {
+  if (canViewFullContact || !record || typeof record !== 'object') return record;
+  const protectedRecord = { ...record };
+  for (const key of Object.keys(protectedRecord)) {
+    if (!/(phone|mobile|telephone|tel)/i.test(key)) continue;
+    const value = protectedRecord[key];
+    if (value === null || value === undefined || value === '') continue;
+    const digits = String(value).replace(/\\D/g, '');
+    protectedRecord[key] = digits.length >= 9 ? `${digits.slice(0, 4)}.xxx.xxx` : 'Chưa cập nhật';
+  }
+  return protectedRecord;
+};
+
 apiRouter.get('/search', (req: AuthenticatedRequest, res: Response) => {
   const query = (req.query.q as string) || '';
   const moduleType = (req.query.moduleType as string) || '';
@@ -405,10 +426,16 @@ apiRouter.get('/search', (req: AuthenticatedRequest, res: Response) => {
     isPublicOnly
   );
 
+  const safeResults = results.map(record =>
+    record.moduleType === 'experts'
+      ? protectExpertContactFields(record, canViewExpertContacts(req.user))
+      : record
+  );
+
   res.json({
     success: true,
-    total: results.length,
-    results
+    total: safeResults.length,
+    results: safeResults
   });
 });
 
@@ -420,7 +447,7 @@ apiRouter.get('/modules/:moduleType', (req: AuthenticatedRequest, res: Response)
     return;
   }
   const isPublicOnly = req.query.publicOnly === 'true' || req.user?.role === 'public_user';
-  const records = db.getModuleRecords(moduleType, isPublicOnly);
+  const records = [...db.getModuleRecords(moduleType, isPublicOnly)];
 
   // Sorting: specialized for Wards (Phường -> Xã -> Đặc khu) and Universities (Đại học -> Cao đẳng) per Section VI
   if (moduleType === 'wards') {
@@ -460,11 +487,25 @@ apiRouter.get('/modules/:moduleType', (req: AuthenticatedRequest, res: Response)
     });
   }
 
+  const total = records.length;
+  const requestedLimit = Number(req.query.limit);
+  const requestedOffset = Number(req.query.offset);
+  const limit = Number.isFinite(requestedLimit) && requestedLimit > 0
+    ? Math.min(Math.floor(requestedLimit), 5000)
+    : total;
+  const offset = Number.isFinite(requestedOffset) && requestedOffset > 0
+    ? Math.floor(requestedOffset)
+    : 0;
+  const page = records.slice(offset, offset + limit);
+  const data = moduleType === 'experts'
+    ? page.map(record => protectExpertContactFields(record, canViewExpertContacts(req.user)))
+    : page;
+
   res.json({
     success: true,
     moduleType,
-    total: records.length,
-    data: records
+    total,
+    data
   });
 });
 
@@ -490,9 +531,13 @@ apiRouter.get('/modules/:moduleType/:id', (req: AuthenticatedRequest, res: Respo
   // Also fetch related entities
   const relationships = db.getEntityRelationships(id);
 
+  const safeRecord = moduleType === 'experts'
+    ? protectExpertContactFields(record, canViewExpertContacts(req.user))
+    : record;
+
   res.json({
     success: true,
-    data: record,
+    data: safeRecord,
     relationships
   });
 });
