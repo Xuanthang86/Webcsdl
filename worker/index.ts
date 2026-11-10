@@ -94,9 +94,9 @@ async function ensureModuleCodeColumn(db: D1Database, moduleName: string): Promi
   return columns.has('code');
 }
 
-async function generateModuleCode(db: D1Database, moduleName: string): Promise<string> {
+async function generateModuleCode(db: D1Database, moduleName: string, codeColumnReady = false): Promise<string> {
   const prefix = MODULE_CODE_PREFIX[moduleName];
-  if (!prefix || !(await ensureModuleCodeColumn(db, moduleName))) return '';
+  if (!prefix || (!codeColumnReady && !(await ensureModuleCodeColumn(db, moduleName)))) return '';
   for (let attempt = 0; attempt < 30; attempt++) {
     const digits = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, '0');
     const code = `${prefix}-${digits}`;
@@ -116,7 +116,7 @@ async function ensureModuleRecordCodes(db: D1Database, moduleName: string): Prom
   const validPattern = new RegExp('^' + prefix + '-\\d{6}$', 'u');
   for (const row of rows.results || []) {
     if (validPattern.test(String(row.code || '').trim())) continue;
-    const nextCode = await generateModuleCode(db, moduleName);
+    const nextCode = await generateModuleCode(db, moduleName, true);
     const result = await db.prepare(`UPDATE "${moduleName}" SET code = ? WHERE id = ?`)
       .bind(nextCode, row.id).run();
     if (!result.success || Number(result.meta?.changes || 0) !== 1) {
@@ -3528,7 +3528,7 @@ export default {
               const suppliedCode = String(values.code || '').trim();
               const validCode = new RegExp(`^${prefix}-\\d{6}$`, 'u').test(suppliedCode);
               const existingCode = String(duplicate?.code || '').trim();
-              values.code = validCode ? suppliedCode : (new RegExp(`^${prefix}-\\d{6}$`, 'u').test(existingCode) ? existingCode : await generateModuleCode(env.DB, moduleName));
+              values.code = validCode ? suppliedCode : (new RegExp(`^${prefix}-\\d{6}$`, 'u').test(existingCode) ? existingCode : await generateModuleCode(env.DB, moduleName, true));
             }
             if (tableColumns.has('created_at')) values.created_at = duplicate?.created_at || new Date().toISOString();
             if (tableColumns.has('updated_at')) values.updated_at = new Date().toISOString();
@@ -3564,7 +3564,7 @@ export default {
               else if (column === 'verification_status') values[column] = 'unverified';
               else if (column === 'publicity_level') values[column] = 'private';
               else if (column === 'status') values[column] = 'draft';
-              else if (column === 'code') values[column] = MODULE_CODE_PREFIX[moduleName] ? await generateModuleCode(env.DB, moduleName) : `${moduleName.toUpperCase()}-${crypto.randomUUID().replace(/-/g, '').slice(0, 6).toUpperCase()}`;
+              else if (column === 'code') values[column] = MODULE_CODE_PREFIX[moduleName] ? await generateModuleCode(env.DB, moduleName, true) : `${moduleName.toUpperCase()}-${crypto.randomUUID().replace(/-/g, '').slice(0, 6).toUpperCase()}`;
               else values[column] = /(INT|REAL|NUM|DEC|BOOL|FLOAT|DOUBLE)/.test(String(columnInfo.type || '').toUpperCase()) ? 0 : '';
             }
 
