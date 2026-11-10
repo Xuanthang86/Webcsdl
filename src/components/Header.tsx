@@ -260,7 +260,7 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
 
               {/* Main Category Dropdown Menu */}
-              <div className="absolute left-0 top-full -mt-1 hidden group-hover/dropdown:block w-72 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 text-xs animate-in fade-in slide-in-from-top-1 duration-150">
+              <div className="absolute left-0 top-full -mt-1 hidden group-hover/dropdown:block w-72 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 text-[13px] animate-in fade-in slide-in-from-top-1 duration-150">
                 <button
                   onClick={() => handleChooseCategory('science_tasks')}
                   className="w-full text-left px-3.5 py-2 hover:bg-teal-50 hover:text-teal-900 text-slate-800 font-medium flex items-center justify-between transition-colors"
@@ -319,8 +319,8 @@ export const Header: React.FC<HeaderProps> = ({
                   </button>
 
                   {/* Submenu on hover */}
-                  <div className="absolute left-full top-0 hidden group-hover/eco:block w-72 bg-white rounded-xl shadow-xl border border-slate-200 py-2 -ml-1 text-xs animate-in fade-in duration-100">
-                    <div className="px-3.5 py-1 text-[11px] font-bold text-teal-800 uppercase tracking-wider border-b border-slate-100 mb-1">
+                  <div className="absolute left-full top-0 hidden group-hover/eco:block w-72 bg-white rounded-xl shadow-xl border border-slate-200 py-2 -ml-1 text-[13px] animate-in fade-in duration-100">
+                    <div className="px-3.5 py-1 text-xs font-bold text-teal-800 uppercase tracking-wider border-b border-slate-100 mb-1">
                       Các loại dữ liệu trong Hệ sinh thái
                     </div>
                     <button
