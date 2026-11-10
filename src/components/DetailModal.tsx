@@ -43,6 +43,7 @@ interface DetailModalProps {
   entity: BaseEntity | null;
   relationships: EntityRelationship[];
   currentUser?: User;
+  detailLoading?: boolean;
   onOpenAdminLogin?: () => void;
   onClose: () => void;
   onOpenEntity: (moduleType: string, id: string) => void;
@@ -68,6 +69,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
   entity,
   relationships,
   currentUser,
+  detailLoading = false,
   onOpenAdminLogin,
   onClose,
   onOpenEntity,
@@ -306,6 +308,13 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
         onClick={(e) => e.stopPropagation()}
       >
         
+        {detailLoading && (
+          <div className="flex items-center gap-2 px-4 sm:px-6 py-2 bg-teal-50 text-teal-800 border-b border-teal-100 text-xs font-medium" role="status" aria-live="polite">
+            <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-teal-600 border-t-transparent animate-spin" />
+            Đang tải dữ liệu chi tiết...
+          </div>
+        )}
+
         {/* Modal Top Header */}
         <div className="sticky top-0 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 z-10">
           <div className="w-full min-w-0 space-y-1.5">
@@ -684,7 +693,13 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       </div>
                       <div>
                         <span className="text-slate-400 block mb-0.5">Điện thoại liên hệ:</span>
-                        <span className="font-mono font-semibold text-slate-800">Không công khai số điện thoại</span>
+                        <span className="font-mono font-semibold text-slate-800">
+                          {safeDisplayValue(
+                            entity.phone || entity.phoneNumber || entity.phone_number || entity.mobile ||
+                            entity.mobilePhone || entity.mobile_phone || entity.telephone ||
+                            entity.contactPhone || entity.contact_phone
+                          )}
+                        </span>
                       </div>
                       <div className="sm:col-span-2">
                         <span className="text-slate-400 block mb-0.5">Lĩnh vực nghiên cứu:</span>
