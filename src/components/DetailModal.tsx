@@ -149,7 +149,9 @@ export const DetailModal: React.FC<DetailModalProps> = ({
     const safeTitle = String(entity.moduleType === 'experts' ? expertDisplayName : (entity.title || 'ban_ghi')).slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_');
     const exportPrefix = moduleCodePrefixes[entity.moduleType || ''];
     const expertCode = exportPrefix && entity.code
-      && new RegExp('^' + exportPrefix + '-\\d{6}
+      && new RegExp('^' + exportPrefix + '-\\d{6}$', 'u').test(String(entity.code).trim())
+      ? String(entity.code).trim()
+      : 'chua-cap-ma';
     const rawDocName = fileName || `Ho_so_${expertCode}_${safeTitle}.txt`;
     const docName = rawDocName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9._-]/g, '_');
     const content = `================================================================================
