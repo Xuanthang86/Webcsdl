@@ -1936,12 +1936,7 @@ export default {
               ecosystemClassifications[moduleName] = target;
             }));
 
-            try {
-              const initiativeInfo = await env.DB.prepare('PRAGMA table_info(initiatives)').all<any>();
-              const initiativeColumns = new Set((initiativeInfo.results || []).map((column: any) => String(column.name)));
-              const inf = await env.DB.prepare(`SELECT COALESCE(NULLIF(field, ''), 'Lĩnh vực khác') as f, COUNT(*) as c FROM initiatives ${buildPublicVisibilityWhere(initiativeColumns)} GROUP BY f`).all<any>();
-              for (const r of (inf.results || [])) { if (r.f) initiativesByField[r.f] = Number(r.c) || 0; }
-            } catch {}
+
           }
 
           // Classify approved/public startup ideas by the source column supplied in Excel.
