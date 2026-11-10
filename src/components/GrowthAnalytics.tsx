@@ -58,8 +58,8 @@ const PieBreakdown: React.FC<BreakdownProps> = ({ title, source, accent }) => {
   return (
     <section data-accent={accent} className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="border-l-4 border-teal-600 pl-2 text-base lg:text-lg font-extrabold text-slate-900">{title}</h3>
-        <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-sm lg:text-base font-bold text-slate-700">Tổng {formatCount(total)}</span>
+        <h3 className="border-l-4 border-teal-600 pl-2 text-base lg:text-base font-extrabold text-slate-900">{title}</h3>
+        <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-sm lg:text-sm font-bold text-slate-700">Tổng {formatCount(total)}</span>
       </div>
       {segments.length ? (
         <div className="grid grid-cols-1 sm:grid-cols-[150px_minmax(0,1fr)] items-center gap-4">
@@ -109,7 +109,7 @@ const PieBreakdown: React.FC<BreakdownProps> = ({ title, source, accent }) => {
                   onFocus={() => setActiveIndex(segment.index)}
                   onBlur={() => setActiveIndex(null)}
                   onClick={() => setActiveIndex(isActive ? null : segment.index)}
-                  className={'flex w-full items-center justify-between gap-2 rounded-md px-2 py-1 text-left text-sm transition-all ' + (isActive ? 'bg-slate-100 font-extrabold text-slate-950 shadow-sm' : 'text-sm lg:text-base text-slate-700 hover:bg-slate-50')}
+                  className={'flex w-full items-center justify-between gap-2 rounded-md px-2 py-1 text-left text-sm transition-all ' + (isActive ? 'bg-slate-100 font-extrabold text-slate-950 shadow-sm' : 'text-sm lg:text-sm text-slate-700 hover:bg-slate-50')}
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     <span className="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: PALETTE[segment.index % PALETTE.length] }} />
@@ -166,8 +166,8 @@ const YearBarBreakdown: React.FC<BreakdownProps> = ({ title, source, accent }) =
 
 const SectionHeading: React.FC<{ title: string; total: number }> = ({ title, total }) => (
   <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-    <h3 className="text-lg font-extrabold text-slate-950">{title}</h3>
-    <span className="text-sm font-extrabold text-slate-700">Tổng: {formatCount(total)}</span>
+    <h3 className="text-lg lg:text-base font-extrabold text-slate-950">{title}</h3>
+    <span className="text-sm lg:text-sm font-extrabold text-slate-700">Tổng: {formatCount(total)}</span>
   </div>
 );
 
@@ -317,7 +317,7 @@ export const GrowthAnalytics: React.FC<GrowthAnalyticsProps> = ({ stats }) => {
     <section className="mx-auto w-full max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 space-y-4">
       <div className="flex flex-col gap-2 border-b border-slate-100 pb-3">
         <div>
-          <h2 className="text-base lg:text-lg font-extrabold text-slate-950">Biểu đồ Phân tích & Thống kê Tăng trưởng</h2>
+          <h2 className="text-base lg:text-lg lg:text-base font-extrabold text-slate-950">Biểu đồ Phân tích & Thống kê Tăng trưởng</h2>
           <p className="mt-1 text-sm text-slate-600">Số liệu tổng hợp từ hồ sơ đã phê duyệt và đủ điều kiện công khai; có thể chọn từng nhóm dữ liệu để xem cơ cấu chi tiết.</p>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
@@ -327,7 +327,7 @@ export const GrowthAnalytics: React.FC<GrowthAnalyticsProps> = ({ stats }) => {
               type="button"
               onClick={() => setActiveTab(tab.key)}
               aria-pressed={activeTab === tab.key}
-              className={'flex min-h-14 min-w-0 flex-col items-start justify-center gap-1 rounded-xl border px-3 py-2 text-left text-base lg:text-lg font-extrabold leading-tight transition-all ' + (activeTab === tab.key ? tab.active + ' shadow-md ring-2 ring-offset-1 ring-slate-300' : tab.tint + ' hover:-translate-y-0.5 hover:shadow-sm')}
+              className={'flex min-h-14 min-w-0 flex-col items-start justify-center gap-1 rounded-xl border px-3 py-2 text-left text-base lg:text-base font-extrabold leading-tight transition-all ' + (activeTab === tab.key ? tab.active + ' shadow-md ring-2 ring-offset-1 ring-slate-300' : tab.tint + ' hover:-translate-y-0.5 hover:shadow-sm')}
             >
               <span className="break-words">{tab.label}</span>
               <span className={'font-mono text-sm ' + (activeTab === tab.key ? 'text-white/90' : 'opacity-75')}>{formatCount(tab.total)} hồ sơ</span>
