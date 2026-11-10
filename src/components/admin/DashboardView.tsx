@@ -11,6 +11,7 @@ interface DashboardViewProps {
   stats: AggregatedStats | null;
   currentUser?: User;
   systemConfig: SystemConfig;
+  onNavigateModule: (mod: string) => void;
   onOpenTestRunner: () => void;
 }
 
@@ -18,6 +19,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   stats: rawStats,
   currentUser,
   systemConfig,
+  onNavigateModule,
   onOpenTestRunner
 }) => {
   const [selectedYear, setSelectedYear] = useState<string>('all');
@@ -100,32 +102,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     ...defaultYears,
     ...yearMaps.flatMap(yearMap => Object.keys(yearMap || {}))
   ])).filter(year => /^\\d{4}$/.test(year)).sort();
-  return (
-      <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 min-w-0 space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <span className={'h-1 w-5 shrink-0 rounded ' + colorClass} aria-hidden="true" />
-          <h3 className="text-xs font-bold text-slate-800 flex-1">{title}</h3>
-          <span className="text-[10px] font-mono text-slate-500">Tổng: {total.toLocaleString('vi-VN')}</span>
-        </div>
-        {visibleEntries.length ? (
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-            <div role="img" aria-label={'Biểu đồ tròn ' + title} className="w-36 h-36 sm:w-40 sm:h-40 shrink-0 rounded-full border border-white shadow-sm" style={{ background: pieBackground }} />
-            <div className="w-full min-w-0 space-y-1.5">
-              {visibleEntries.map(([name, count], index) => (
-                <div key={name} className="flex items-center justify-between gap-2 text-[11px]">
-                  <span className="flex min-w-0 items-center gap-2 text-slate-600">
-                    <span className="w-2.5 h-2.5 shrink-0 rounded-sm" style={{ backgroundColor: palette[index % palette.length] }} />
-                    <span className="truncate" title={name}>{name}</span>
-                  </span>
-                  <span className="shrink-0 font-mono font-semibold text-slate-800">{count.toLocaleString('vi-VN')} ({total > 0 ? (count / total * 100).toFixed(1) : '0.0'}%)</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : <p className="text-[11px] text-slate-500">Chưa có dữ liệu phân loại.</p>}
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-6">
