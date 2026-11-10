@@ -1907,10 +1907,41 @@ export default {
               } catch (error) { console.error('Không thể tổng hợp phân loại ' + table + ':', error); }
             };
 
+            const aggregateScienceTaskLevels = async () => {
+              try {
+                const info = await env.DB.prepare('PRAGMA table_info("science_tasks")').all<any>();
+                const columns = new Set((info.results || []).map((column: any) => String(column.name)));
+                const rows = await env.DB.prepare('SELECT * FROM "science_tasks"' + buildPublicVisibilityWhere(columns)).all<any>();
+                const normalize = (value: any) => String(value ?? '').normalize('NFD')
+                  .replace(/[\\u0300-\\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().replace(/[_\\s-]+/g, ' ').trim();
+                for (const row of rows.results || []) {
+                  let custom: Record<string, any> = {};
+                  try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; } catch { custom = {}; }
+                  const candidates = ['management_level', 'task_level', 'project_level', 'level', 'capquanly', 'capdetai'];
+                  let raw: any = null;
+                  for (const candidate of candidates) {
+                    const key = normalize(candidate);
+                    const physicalKey = Object.keys(row).find(name => normalize(name) === key);
+                    const customKey = Object.keys(custom).find(name => normalize(name) === key);
+                    const value = physicalKey ? row[physicalKey] : customKey ? custom[customKey] : null;
+                    if (value !== null && value !== undefined && String(value).trim()) { raw = value; break; }
+                  }
+                  const value = normalize(raw);
+                  let bucket = '';
+                  if (/(cap bo|bo nganh|quoc gia|nha nuoc|nafosted)/.test(value)) bucket = 'Cấp Bộ';
+                  else if (/(cap tinh|cap thanh pho|tinh thanh pho|ubnd tinh|ubnd thanh pho|thanh pho)/.test(value)) bucket = 'Cấp Tỉnh/Thành phố';
+                  else if (/(cap co so|cap truong|co so)/.test(value)) bucket = 'Cấp Cơ sở';
+                  if (bucket) tasksByLevel[bucket] = (tasksByLevel[bucket] || 0) + 1;
+                }
+              } catch (error) {
+                console.error('Không thể chuẩn hóa thống kê đề tài theo cấp quản lý:', error);
+              }
+            };
+
             await Promise.all([
               aggregateModulePrimaryGroup('science_tasks', tasksByField, ['field', 'scientific_field', 'research_field', 'linhvuc', 'linhvuckhoahoc']),
               aggregateModuleGroups('science_tasks', tasksByUnit, ['lead_agency', 'managing_agency', 'lead_organization', 'lead_unit', 'host_organization', 'host_unit', 'implementing_organization', 'implementing_unit', 'owner_name', 'receiving_unit', 'organization', 'agency', 'agency_name', 'coquanchutri', 'donvichutri', 'donvithuchien']),
-              aggregateModuleGroups('science_tasks', tasksByLevel, ['management_level', 'task_level', 'project_level', 'level', 'capquanly', 'capdetai']),
+              aggregateScienceTaskLevels(),
               aggregateModuleGroups('startups', startupsByField, ['business_field', 'business_sector', 'startup_sector', 'field', 'sector', 'industry', 'industry_sector', 'linhvuckinhdoanh', 'linhvuchoatdong', 'nganhnghe', 'nganhkinhdoanh', 'linhvuc']),
               aggregateModuleGroups('startup_projects', projectsByField, ['field', 'business_field', 'business_sector', 'startup_field', 'startup_sector', 'sector', 'industry', 'linhvuchoatdong', 'nganhnghe', 'linhvuckhoinghiep', 'linhvuc']),
               aggregateModuleGroups('startup_projects', projectsBySchool, ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school', 'tentruong', 'tendonvitruong', 'truonghoc', 'cosodaotao', 'cosogiaoduc']),
