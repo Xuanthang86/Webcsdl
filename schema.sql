@@ -94,6 +94,7 @@ CREATE INDEX IF NOT EXISTS idx_initiatives_field ON initiatives(field);
 CREATE TABLE IF NOT EXISTS experts (
     id TEXT PRIMARY KEY,
     stt INTEGER,
+    code TEXT,
     name TEXT NOT NULL,
     birth_year INTEGER,
     email TEXT,
@@ -117,6 +118,7 @@ CREATE INDEX IF NOT EXISTS idx_experts_specialization ON experts(specialization)
 CREATE TABLE IF NOT EXISTS startups (
     id TEXT PRIMARY KEY,
     stt INTEGER,
+    code TEXT,
     name TEXT NOT NULL,
     operating_address TEXT,
     website TEXT,
@@ -145,6 +147,7 @@ CREATE INDEX IF NOT EXISTS idx_startups_year ON startups(founding_year);
 CREATE TABLE IF NOT EXISTS support_organizations (
     id TEXT PRIMARY KEY,
     stt INTEGER,
+    code TEXT,
     name TEXT NOT NULL,
     address TEXT,
     organization_type TEXT,
@@ -165,6 +168,7 @@ CREATE INDEX IF NOT EXISTS idx_support_orgs_name ON support_organizations(name);
 CREATE TABLE IF NOT EXISTS startup_projects (
     id TEXT PRIMARY KEY,
     stt INTEGER,
+    code TEXT,
     title TEXT NOT NULL,
     operating_address TEXT,
     field TEXT,
@@ -190,6 +194,7 @@ CREATE INDEX IF NOT EXISTS idx_projects_field ON startup_projects(field);
 CREATE TABLE IF NOT EXISTS startup_ideas (
     id TEXT PRIMARY KEY,
     stt INTEGER,
+    code TEXT,
     title TEXT NOT NULL,
     operating_address TEXT,
     field TEXT,
@@ -215,6 +220,7 @@ CREATE INDEX IF NOT EXISTS idx_ideas_field ON startup_ideas(field);
 CREATE TABLE IF NOT EXISTS wards (
     id TEXT PRIMARY KEY,
     stt INTEGER,
+    code TEXT,
     name TEXT NOT NULL,
     address TEXT,
     district TEXT,
@@ -229,6 +235,7 @@ CREATE TABLE IF NOT EXISTS wards (
 CREATE TABLE IF NOT EXISTS universities (
     id TEXT PRIMARY KEY,
     stt INTEGER,
+    code TEXT,
     name TEXT NOT NULL,
     ward TEXT,
     address TEXT,
@@ -244,6 +251,7 @@ CREATE TABLE IF NOT EXISTS universities (
 CREATE TABLE IF NOT EXISTS featured_startups (
     id TEXT PRIMARY KEY,
     stt INTEGER,
+    code TEXT,
     project_name TEXT NOT NULL,
     website_link TEXT,
     field TEXT,
@@ -277,6 +285,7 @@ CREATE TABLE IF NOT EXISTS patents (
 -- nguyên vẹn trong data_json để không làm mất cột từ Excel/CSV.
 CREATE TABLE IF NOT EXISTS organizations (
     id TEXT PRIMARY KEY,
+    code TEXT,
     name TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'draft',
     data_json TEXT,
@@ -286,6 +295,7 @@ CREATE TABLE IF NOT EXISTS organizations (
 );
 CREATE TABLE IF NOT EXISTS investors (
     id TEXT PRIMARY KEY,
+    code TEXT,
     name TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'draft',
     data_json TEXT,
@@ -295,6 +305,7 @@ CREATE TABLE IF NOT EXISTS investors (
 );
 CREATE TABLE IF NOT EXISTS investment_funds (
     id TEXT PRIMARY KEY,
+    code TEXT,
     name TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'draft',
     data_json TEXT,
@@ -304,6 +315,7 @@ CREATE TABLE IF NOT EXISTS investment_funds (
 );
 CREATE TABLE IF NOT EXISTS technologies (
     id TEXT PRIMARY KEY,
+    code TEXT,
     title TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'draft',
     data_json TEXT,
@@ -313,6 +325,7 @@ CREATE TABLE IF NOT EXISTS technologies (
 );
 CREATE TABLE IF NOT EXISTS programs (
     id TEXT PRIMARY KEY,
+    code TEXT,
     title TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'draft',
     data_json TEXT,
@@ -322,6 +335,7 @@ CREATE TABLE IF NOT EXISTS programs (
 );
 CREATE TABLE IF NOT EXISTS collaboration_needs (
     id TEXT PRIMARY KEY,
+    code TEXT,
     title TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'draft',
     data_json TEXT,
@@ -331,6 +345,7 @@ CREATE TABLE IF NOT EXISTS collaboration_needs (
 );
 CREATE TABLE IF NOT EXISTS publications (
     id TEXT PRIMARY KEY,
+    code TEXT,
     title TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'draft',
     data_json TEXT,
@@ -340,6 +355,7 @@ CREATE TABLE IF NOT EXISTS publications (
 );
 CREATE TABLE IF NOT EXISTS lab_equipments (
     id TEXT PRIMARY KEY,
+    code TEXT,
     name TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'draft',
     data_json TEXT,
@@ -349,6 +365,7 @@ CREATE TABLE IF NOT EXISTS lab_equipments (
 );
 CREATE TABLE IF NOT EXISTS policies (
     id TEXT PRIMARY KEY,
+    code TEXT,
     title TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'draft',
     data_json TEXT,
