@@ -168,10 +168,15 @@ function hydrateModuleRow(row: any, moduleName?: string): any {
   if (moduleName === 'startup_projects' && !merged.projectName) merged.projectName = merged.title || merged.name;
   if (moduleName === 'startup_projects' || moduleName === 'startup_ideas') {
     const originType = merged.originType || merged.origin_type || merged.ideaOriginType || merged.idea_origin_type ||
-      merged.projectOriginType || merged.project_origin_type || merged.wardSchoolType || merged.ward_school_type || '';
+      merged.projectOriginType || merged.project_origin_type || merged.wardSchoolType || merged.ward_school_type ||
+      merged.schoolWardType || merged.school_ward_type || merged.belongsToType || merged.belongs_to_type ||
+      merged.ideaBelongTo || merged.idea_belong_to || merged.projectBelongTo || merged.project_belong_to || '';
     if (originType) merged.originType = originType;
     const affiliation = merged.wardSchool || merged.ward_school || merged.wardOrSchool || merged.ward_or_school ||
-      merged.schoolName || merged.school_name || merged.wardName || merged.ward_name || '';
+      merged.schoolName || merged.school_name || merged.universityName || merged.university_name ||
+      merged.wardName || merged.ward_name || merged.school || merged.ward || merged.affiliatedSchool ||
+      merged.affiliated_school || merged.affiliatedUnit || merged.affiliated_unit || merged.currentAffiliation ||
+      merged.current_affiliation || merged.educationalInstitution || merged.educational_institution || '';
     if (affiliation) merged.wardSchool = affiliation;
     if (moduleName === 'startup_projects' && !merged.projectName) merged.projectName = merged.title || merged.name || '';
     if (moduleName === 'startup_ideas') {
