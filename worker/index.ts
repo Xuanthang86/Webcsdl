@@ -151,12 +151,12 @@ function hydrateModuleRow(row: any, moduleName?: string): any {
   const invalidImportTitle = String(merged.title || '').startsWith(`${moduleName || ''}_imp_`) || (merged.title && String(merged.title) === String(merged.id || ''));
   if (!merged.title || invalidImportTitle) {
     const titleCandidates: Record<string, any[]> = {
-      initiatives: [merged.initiativeName, merged.initiative_name, merged.solutionName, merged.name],
-      startups: [merged.companyName, merged.company_name, merged.name],
-      startup_projects: [merged.projectName, merged.project_name, merged.name],
-      startup_ideas: [merged.ideaName, merged.idea_name, merged.ideaTitle, merged.name],
-      wards: [merged.wardName, merged.ward_name, merged.name],
-      universities: [merged.universityName, merged.university_name, merged.schoolName, merged.school_name, merged.name],
+      initiatives: [merged.initiativeName, merged.initiative_name, merged.initiativeTitle, merged.initiative_title, merged.solutionName, merged.solution_name, merged.tenSangKien, merged.ten_sang_kien, merged.name],
+      startups: [merged.companyName, merged.company_name, merged.startupName, merged.startup_name, merged.businessName, merged.business_name, merged.name],
+      startup_projects: [merged.projectName, merged.project_name, merged.projectTitle, merged.project_title, merged.tenDuAn, merged.ten_du_an, merged.name],
+      startup_ideas: [merged.ideaName, merged.idea_name, merged.ideaTitle, merged.idea_title, merged.tenYTuong, merged.ten_y_tuong, merged.name],
+      wards: [merged.wardName, merged.ward_name, merged.tenXaPhuong, merged.ten_xa_phuong, merged.name],
+      universities: [merged.universityName, merged.university_name, merged.schoolName, merged.school_name, merged.institutionName, merged.institution_name, merged.tenTruong, merged.ten_truong, merged.name],
       experts: [merged.fullName, merged.full_name, merged.expertName, merged.expert_name, merged.name],
       patents: [merged.patentName, merged.patent_name, merged.inventionName, merged.name],
       support_organizations: [merged.organizationName, merged.organization_name, merged.name]
