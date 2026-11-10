@@ -187,8 +187,6 @@ export const GrowthAnalytics: React.FC<GrowthAnalyticsProps> = ({ stats }) => {
     { key: 'investors', label: 'Nhà đầu tư', total: safeStats.totalInvestors || 0, tint: 'border-teal-200 bg-teal-50 text-teal-900', active: 'border-teal-700 bg-teal-700 text-white' },
     { key: 'investment_funds', label: 'Quỹ đầu tư', total: safeStats.totalFunds || 0, tint: 'border-violet-200 bg-violet-50 text-violet-900', active: 'border-violet-700 bg-violet-700 text-white' }
   ];
-  const active = tabs.find(tab => tab.key === activeTab) || tabs[0];
-
   const renderPanel = () => {
     switch (activeTab) {
       case 'tasks':
