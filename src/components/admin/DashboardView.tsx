@@ -64,23 +64,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     startupsByYear: {}
   };
 
-  const formatVND = (amount: number) => {
-    if (amount >= 1000000000) return `${(amount / 1000000000).toFixed(1)} tỷ VND`;
-    if (amount >= 1000000) return `${(amount / 1000000).toFixed(0)} triệu VND`;
-    return `${amount.toLocaleString()} VND`;
-  };
-
-  // Filtered stats by year if selected
-  const activeYearData = selectedYear !== 'all' && stats.yearlyStats?.[selectedYear] 
-    ? stats.yearlyStats[selectedYear] 
-    : null;
-
-  const displayTasksCount = activeYearData ? activeYearData.tasks : stats.totalScienceTasks;
-  const displayInitiativesCount = activeYearData ? activeYearData.initiatives : stats.totalInitiatives;
-  const displayStartupsCount = activeYearData ? activeYearData.startups : stats.totalStartups;
-  const displayBudget = activeYearData ? activeYearData.budget : stats.totalBudgetApproved;
-  const displaySavings = activeYearData ? activeYearData.savings : stats.totalCostSavings;
-
   const defaultYears = Array.from(
     { length: Math.max(6, currentYear - 2021 + 1) },
     (_, index) => String(2021 + index)
@@ -101,7 +84,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const availableYears = Array.from(new Set([
     ...defaultYears,
     ...yearMaps.flatMap(yearMap => Object.keys(yearMap || {}))
-  ])).filter(year => /^\\d{4}$/.test(year)).sort();
+  ])).filter(year => /^\d{4}$/.test(year)).sort();
 
   return (
     <div className="space-y-6">
