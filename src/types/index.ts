@@ -205,10 +205,16 @@ export interface AggregatedStats {
   tasksByField?: Record<string, number>;
   tasksByYear?: Record<string, number>;
   initiativesByField?: Record<string, number>;
+  initiativesBySpecialty?: Record<string, number>;
+  initiativesByUnit?: Record<string, number>;
   initiativesByYear?: Record<string, number>;
   startupsByYear?: Record<string, number>;
+  featuredStartupsByYear?: Record<string, number>;
+  featuredStartupsByField?: Record<string, number>;
   investorsByYear?: Record<string, number>;
+  investorsByField?: Record<string, number>;
   investmentFundsByYear?: Record<string, number>;
+  investmentFundsByField?: Record<string, number>;
   yearlyStats?: Record<string, { tasks: number; initiatives: number; startups: number; budget: number; savings: number }>;
   expertsByField?: Record<string, number>;
   expertsByAcademicTitle?: Record<string, number>;
