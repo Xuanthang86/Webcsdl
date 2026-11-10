@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BaseEntity, AggregatedStats, SystemConfig } from '../types';
 import { SearchHero } from './SearchHero';
 import { HomeOverviewDashboard } from './HomeOverviewDashboard';
+import { GrowthAnalytics } from './GrowthAnalytics';
 import { 
   ArrowRight, 
   Lightbulb, 
@@ -109,6 +110,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
         systemConfig={systemConfig}
         onNavigateBrowse={onNavigateBrowse}
       />
+
+      <div className="mt-6 px-4 sm:px-6 lg:px-8">
+        <GrowthAnalytics stats={stats} />
+      </div>
 
       {/* 2. Thanh tìm kiếm và các điều kiện phục vụ tìm kiếm (Gắn liền với Dashboard, loại bỏ hoàn toàn khoảng trắng) */}
       <SearchHero
