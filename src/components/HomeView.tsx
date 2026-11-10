@@ -449,7 +449,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         {/* ================= 5. DỮ LIỆU HỆ SINH THÁI (Hiển thị các loại dữ liệu con, mỗi loại 3 dữ liệu mới nhất) ================= */}
         {/* Bao gồm: DOANH NGHIỆP KHỞI NGHIỆP SÁNG TẠO, TỔ CHỨC TRUNG GIAN, DỰ ÁN KHỞI NGHIỆP, Ý TƯỞNG KHỞI NGHIỆP, DANH SÁCH XÃ/PHƯỜNG, TRƯỜNG ĐH/CĐ, DN KHỞI NGHIỆP TIÊU BIỂU */}
-        <section className="space-y-5 pt-4 border-t border-slate-200">
+        <section className="desktop-ecosystem-text space-y-5 pt-4 border-t border-slate-200">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2 border-b border-slate-200">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
