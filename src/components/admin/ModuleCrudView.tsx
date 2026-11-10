@@ -1314,7 +1314,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">
-                      Lĩnh vực chuyên môn
+                      {moduleType === 'startup_projects' ? 'Lĩnh vực khởi nghiệp' : 'Lĩnh vực chuyên môn'}
                     </label>
                     <input
                       type="text"
@@ -1335,6 +1335,33 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                     />
                   </div>
                 </div>
+
+                {moduleType === 'startup_projects' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-lg border border-emerald-200 bg-emerald-50/50 p-3">
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Dự án thuộc Xã/phường - Trường học</label>
+                      <select
+                        value={extraFields.originType || ''}
+                        onChange={(e) => setExtra('originType', e.target.value)}
+                        className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      >
+                        <option value="">Chọn một loại hình</option>
+                        <option value="Trường học">Trường học</option>
+                        <option value="Xã/phường">Xã/phường</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Tên trường học hoặc xã/phường</label>
+                      <input
+                        type="text"
+                        value={extraFields.wardSchool || ''}
+                        onChange={(e) => setExtra('wardSchool', e.target.value)}
+                        placeholder="Chỉ nhập một trường học hoặc một xã/phường"
+                        className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">
@@ -1760,30 +1787,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                 {/* Module 6: DỰ ÁN KHỞI NGHIỆP */}
                 {moduleType === 'startup_projects' && (
                   <div className="space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Dự án thuộc Xã/phường - Trường học</label>
-                        <select
-                          value={extraFields.originType || ''}
-                          onChange={(e) => setExtra('originType', e.target.value)}
-                          className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
-                        >
-                          <option value="">Chọn một loại hình</option>
-                          <option value="Trường học">Trường học</option>
-                          <option value="Xã/phường">Xã/phường</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Tên trường học hoặc xã/phường</label>
-                        <input
-                          type="text"
-                          value={extraFields.wardSchool || ''}
-                          onChange={(e) => setExtra('wardSchool', e.target.value)}
-                          placeholder="Chỉ nhập một trường học hoặc một xã/phường"
-                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
-                        />
-                      </div>
-                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block font-semibold text-slate-700 mb-1">Địa chỉ hoạt động</label>
