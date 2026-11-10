@@ -65,6 +65,27 @@ const ALLOWED_MODULES = [
 ];
 
 
+const MODULE_CODE_PREFIX: Record<string, string> = {
+  science_tasks: 'DT', initiatives: 'SKTP', patents: 'SC', experts: 'CG', startups: 'DNKNST',
+  support_organizations: 'TCTG', startup_projects: 'DAKN', startup_ideas: 'YTKN', wards: 'XP',
+  universities: 'ĐHCĐ', featured_startups: 'DNKNTB', investors: 'NĐT', investment_funds: 'QĐT'
+};
+
+async function generateModuleCode(db: D1Database, moduleName: string): Promise<string> {
+  const prefix = MODULE_CODE_PREFIX[moduleName];
+  if (!prefix) return '';
+  const info = await db.prepare(`PRAGMA table_info("${moduleName}")`).all<any>();
+  const columns = new Set((info.results || []).map((column: any) => String(column.name)));
+  if (!columns.has('code')) return '';
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const digits = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, '0');
+    const code = `${prefix}-${digits}`;
+    const exists = await db.prepare(`SELECT 1 AS found FROM "${moduleName}" WHERE code = ? LIMIT 1`).bind(code).first<any>();
+    if (!exists) return code;
+  }
+  throw new Error(`Không thể cấp mã định danh duy nhất cho phân hệ ${moduleName}.`);
+}
+
 // Convert API field names to the physical SQLite column convention.
 function toSqlColumn(key: string): string {
   return key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
@@ -88,7 +109,7 @@ function hydrateModuleRow(row: any, moduleName?: string): any {
   }
   // Keep flexible custom fields, but never let data_json override authoritative D1 columns.
   const merged: Record<string, any> = { ...custom, ...normalized, moduleType: moduleName || row.module_type || row.moduleType };
-  if (!merged.title) merged.title = merged.name || merged.companyName || merged.projectName || merged.fullName || '';
+  if (!merged.title) merged.title = merged.name || merged.companyName || merged.projectName || merged.fullName || merged.initiativeName || merged.initiative_name || merged.wardName || merged.ward_name || merged.universityName || merged.university_name || merged.schoolName || merged.school_name || '';
   if (moduleName === 'startups' && !merged.companyName) merged.companyName = merged.name || merged.title;
   if (moduleName === 'startup_projects' && !merged.projectName) merged.projectName = merged.title || merged.name;
   if (moduleName === 'startup_ideas') {
@@ -2965,6 +2986,7 @@ export default {
           for (const protectedField of ['status', 'verificationStatus', 'verification_status', 'publicityLevel', 'publicity_level', 'approvedBy', 'approved_by', 'verifiedBy', 'verified_by', 'createdBy', 'created_by', 'id', 'history']) delete clean[protectedField];
           const newId = `${moduleName.slice(0, 4)}_${Date.now()}`;
           clean.id = newId;
+          if (MODULE_CODE_PREFIX[moduleName]) clean.code = await generateModuleCode(env.DB, moduleName);
           clean.created_at = new Date().toISOString();
           clean.updated_at = new Date().toISOString();
           clean.status = currentUser.role === 'public_user' ? 'submitted' : 'draft';
@@ -3355,6 +3377,13 @@ export default {
               id: duplicate?.id || id,
               status: duplicate ? (duplicate.status || 'draft') : 'draft'
             };
+            if (tableColumns.has('code') && MODULE_CODE_PREFIX[moduleName]) {
+              const prefix = MODULE_CODE_PREFIX[moduleName];
+              const suppliedCode = String(values.code || '').trim();
+              const validCode = new RegExp(`^${prefix}-\\d{6}$`, 'u').test(suppliedCode);
+              const existingCode = String(duplicate?.code || '').trim();
+              values.code = validCode ? suppliedCode : (new RegExp(`^${prefix}-\\d{6}$`, 'u').test(existingCode) ? existingCode : await generateModuleCode(env.DB, moduleName));
+            }
             if (tableColumns.has('created_at')) values.created_at = duplicate?.created_at || new Date().toISOString();
             if (tableColumns.has('updated_at')) values.updated_at = new Date().toISOString();
             if (tableColumns.has('created_by')) values.created_by = duplicate?.created_by || currentUser.fullName;
@@ -3389,7 +3418,7 @@ export default {
               else if (column === 'verification_status') values[column] = 'unverified';
               else if (column === 'publicity_level') values[column] = 'private';
               else if (column === 'status') values[column] = 'draft';
-              else if (column === 'code') values[column] = `${moduleName.toUpperCase()}-${crypto.randomUUID().replace(/-/g, '').slice(0, 12).toUpperCase()}`;
+              else if (column === 'code') values[column] = MODULE_CODE_PREFIX[moduleName] ? await generateModuleCode(env.DB, moduleName) : `${moduleName.toUpperCase()}-${crypto.randomUUID().replace(/-/g, '').slice(0, 6).toUpperCase()}`;
               else values[column] = /(INT|REAL|NUM|DEC|BOOL|FLOAT|DOUBLE)/.test(String(columnInfo.type || '').toUpperCase()) ? 0 : '';
             }
 
