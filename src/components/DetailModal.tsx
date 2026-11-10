@@ -391,7 +391,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Mã / STT:</span>
-                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{safeDisplayValue(entity.code ?? entity.id)}</span>
+                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{displayCode || 'Đang cập nhật mã'}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tên đề tài:</span>
@@ -619,8 +619,8 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   </div>
                   {entity.moduleType !== 'experts' ? (
                     <span className="font-mono text-teal-800">{displayCode || 'Đang cập nhật mã'}</span>
-                  ) : (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_') ? (
-                    <span className="font-mono text-teal-800">{entity.code}</span>
+                  ) : (displayCode ? (
+                    <span className="font-mono text-teal-800">{displayCode}</span>
                   ) : null)}
                 </div>
                 <div className="divide-y divide-slate-100 text-xs">
