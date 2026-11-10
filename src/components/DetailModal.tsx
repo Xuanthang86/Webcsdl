@@ -147,9 +147,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({
   const handleDownloadFile = async (fileName?: string) => {
     const expertDisplayName = entity.fullName || entity.full_name || entity.expertName || entity.expert_name || entity.name || entity.title || 'chuyen_gia';
     const safeTitle = String(entity.moduleType === 'experts' ? expertDisplayName : (entity.title || 'ban_ghi')).slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_');
-    const expertCode = entity.moduleType === 'experts'
-      ? (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_') ? entity.code : 'chua-cap-nhat')
-      : (entity.code || entity.id);
+    const exportPrefix = moduleCodePrefixes[entity.moduleType || ''];
+    const expertCode = exportPrefix && entity.code
+      && new RegExp('^' + exportPrefix + '-\\d{6}$', 'u').test(String(entity.code).trim())
+      ? String(entity.code).trim()
+      : 'chua-cap-ma';
     const rawDocName = fileName || `Ho_so_${expertCode}_${safeTitle}.txt`;
     const docName = rawDocName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9._-]/g, '_');
     const content = `================================================================================
@@ -245,12 +247,31 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
   const moduleCodePrefixes: Record<string, string> = {
     science_tasks: 'DT', initiatives: 'SKTP', patents: 'SC', experts: 'CG', startups: 'DNKNST',
     support_organizations: 'TCTG', startup_projects: 'DAKN', startup_ideas: 'YTKN', wards: 'XP',
-    universities: 'ĐHCĐ', featured_startups: 'DNKNTB', investors: 'NĐT', investment_funds: 'QĐT'
+    universities: 'ĐHCĐ', featured_startups: 'DNKNTB', investors: 'NĐT', investment_funds: 'QĐT',
+    organizations: 'TCKHCN', technologies: 'CN', programs: 'CT', collaboration_needs: 'NC',
+    publications: 'CB', lab_equipments: 'PTN', policies: 'CS'
   };
   const expectedCodePrefix = moduleCodePrefixes[entity.moduleType || ''];
-  const displayCode = expectedCodePrefix
-    ? (entity.code && new RegExp(`^${expectedCodePrefix}-\\d{6}$`, 'u').test(String(entity.code).trim()) ? entity.code : '')
-    : (entity.code && entity.code !== entity.id && !String(entity.code).startsWith(`${entity.moduleType}_imp_`) ? entity.code : '');
+  const displayCode = expectedCodePrefix && entity.code
+    && new RegExp('^' + expectedCodePrefix + '-\\d{6}$', 'u').test(String(entity.code).trim())
+    ? String(entity.code).trim()
+    : '';
+  const rawEntityTitle = String(entity.title || '');
+  const invalidImportTitle = rawEntityTitle === String(entity.id || '') || rawEntityTitle.startsWith(`${entity.moduleType || ''}_imp_`);
+  const detailTitleCandidates: Record<string, any[]> = {
+    initiatives: [entity.initiativeName, entity.initiative_name, entity.initiativeTitle, entity.initiative_title, entity.solutionName, entity.solution_name, entity.name],
+    startups: [entity.companyName, entity.company_name, entity.startupName, entity.startup_name, entity.name],
+    startup_projects: [entity.projectName, entity.project_name, entity.projectTitle, entity.project_title, entity.name],
+    startup_ideas: [entity.ideaName, entity.idea_name, entity.ideaTitle, entity.idea_title, entity.name],
+    wards: [entity.wardName, entity.ward_name, entity.wardTitle, entity.name],
+    universities: [entity.universityName, entity.university_name, entity.schoolName, entity.school_name, entity.institutionName, entity.name],
+    experts: [entity.fullName, entity.full_name, entity.expertName, entity.expert_name, entity.name],
+    patents: [entity.patentName, entity.patent_name, entity.name],
+    support_organizations: [entity.organizationName, entity.organization_name, entity.name]
+  };
+  const detailTitle = invalidImportTitle
+    ? detailTitleCandidates[entity.moduleType || '']?.find(value => value && String(value) !== String(entity.id || '') && !String(value).startsWith(`${entity.moduleType || ''}_imp_`)) || 'Hồ sơ dữ liệu'
+    : rawEntityTitle || 'Hồ sơ dữ liệu';
 
   const formatVND = (num?: number) => {
     if (!num) return '0 đ';
