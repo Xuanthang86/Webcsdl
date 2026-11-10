@@ -203,8 +203,15 @@ export const api = {
   },
 
   // Module records
-  async getModuleRecords(moduleType: ModuleType, sortBy?: string, order?: 'asc' | 'desc', publicOnly?: boolean): Promise<BaseEntity[]> {
-    const pageSize = 500;
+  async getModuleRecords(
+    moduleType: ModuleType,
+    sortBy?: string,
+    order?: 'asc' | 'desc',
+    publicOnly?: boolean,
+    maxRecords?: number
+  ): Promise<BaseEntity[]> {
+    // Home cards need only the newest few records; full lists are fetched in larger pages.
+    const pageSize = maxRecords && maxRecords > 0 ? Math.min(Math.floor(maxRecords), 5000) : 5000;
     const allRecords: BaseEntity[] = [];
     let offset = 0;
     let total = Number.POSITIVE_INFINITY;
@@ -222,10 +229,10 @@ export const api = {
       const page: BaseEntity[] = Array.isArray(json.data) ? json.data : [];
       allRecords.push(...page);
       total = Number.isFinite(Number(json.total)) ? Number(json.total) : allRecords.length;
-      if (page.length === 0 || page.length < pageSize) break;
+      if (page.length === 0 || page.length < pageSize || (maxRecords && allRecords.length >= maxRecords)) break;
       offset += page.length;
     }
-    return allRecords;
+    return maxRecords ? allRecords.slice(0, maxRecords) : allRecords;
   },
 
   async getRecordById(moduleType: ModuleType, id: string): Promise<{ data: BaseEntity; relationships: EntityRelationship[] }> {
