@@ -84,6 +84,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       item.publicPhone || item.public_phone || item.leaderPhone || item.leader_phone ||
       item.expertPhone || item.expert_phone || ''
     ).trim();
+    if (/^\d{4}\.xxx\.xxx$/i.test(value)) return value;
     const digits = value.replace(/\D/g, '');
     return digits.length >= 9 ? `${digits.slice(0, 4)}.xxx.xxx` : 'Chưa cập nhật';
   };
