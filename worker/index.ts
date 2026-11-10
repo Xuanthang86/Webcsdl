@@ -1798,10 +1798,10 @@ export default {
                 'start_work_year', 'work_start_year', 'start_year', 'joined_at', 'join_date', 'registration_year', 'registration_date', 'year', 'namcongtac', 'namthamgia', 'namdangky', 'created_at'
               ]),
               aggregateModuleYears('investors', investorsByYear, [
-                'investment_date', 'registration_date', 'founded_date', 'created_at'
+                'investment_date', 'investment_year', 'registration_date', 'registration_year', 'founded_date', 'founded_year', 'created_at'
               ]),
               aggregateModuleYears('investment_funds', investmentFundsByYear, [
-                'launch_date', 'established_date', 'founded_date', 'created_at'
+                'launch_date', 'launch_year', 'established_date', 'establishment_year', 'founded_date', 'founded_year', 'created_at'
               ]),
               aggregateModuleYears('featured_startups', featuredStartupsByYear, [
                 'founded_date', 'founded_year', 'establishment_date', 'established_year', 'created_at'
@@ -1898,11 +1898,11 @@ export default {
               aggregateModuleGroups('startup_ideas', ideasBySchool, ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school', 'tentruong', 'tendonvitruong', 'truonghoc', 'cosodaotao', 'cosogiaoduc']),
               aggregateModuleGroups('startup_ideas', ideasByWard, ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality', 'tenxaphuong', 'xaphuong', 'phuongxa', 'dackhu']),
               aggregateModuleGroups('support_organizations', supportOrgsByField, ['field', 'service_area', 'sector', 'organization_type', 'type']),
-              aggregateModuleGroups('initiatives', initiativesByField, ['field', 'recognition_field', 'initiative_field', 'sector', 'linhvuccongnhan', 'linhvuc']),
-              aggregateModuleGroups('initiatives', initiativesBySpecialty, ['specialty', 'specialization', 'professional_field', 'initiative_specialty', 'chuyenganh', 'chuyennganh', 'chuyennganhchinh']),
-              aggregateModuleGroups('initiatives', initiativesByUnit, ['lead_unit', 'lead_organization', 'host_organization', 'implementing_unit', 'organization', 'agency', 'unit', 'donvichutri', 'coquanchutri']),
-              aggregateModuleGroups('investors', investorsByField, ['investment_field', 'investment_sector', 'focus_sector', 'sector', 'industry', 'field', 'linhvucdautu', 'nganhdautu', 'linhvuc']),
-              aggregateModuleGroups('investment_funds', investmentFundsByField, ['investment_field', 'investment_sector', 'focus_sector', 'sector', 'industry', 'field', 'linhvucdautu', 'nganhdautu', 'linhvuc']),
+              aggregateModuleGroups('initiatives', initiativesByField, ['field', 'recognition_field', 'recognized_field', 'initiative_field', 'recognition_domain', 'sector', 'linhvuccongnhan', 'linhvuc']),
+              aggregateModuleGroups('initiatives', initiativesBySpecialty, ['specialty', 'specialization', 'professional_field', 'initiative_specialty', 'research_field', 'discipline', 'major', 'chuyenganh', 'chuyennganh', 'chuyennganhchinh']),
+              aggregateModuleGroups('initiatives', initiativesByUnit, ['lead_unit', 'lead_agency', 'managing_agency', 'lead_organization', 'host_organization', 'implementing_unit', 'implementing_organization', 'receiving_unit', 'organization_name', 'organization', 'agency_name', 'agency', 'unit', 'donvichutri', 'coquanchutri', 'donvithuchien']),
+              aggregateModuleGroups('investors', investorsByField, ['investment_field', 'investment_sector', 'investment_focus', 'focus_sector', 'business_sector', 'sector', 'industry', 'field', 'linhvucdautu', 'nganhdautu', 'linhvuc']),
+              aggregateModuleGroups('investment_funds', investmentFundsByField, ['investment_field', 'investment_sector', 'investment_focus', 'focus_sector', 'business_sector', 'sector', 'industry', 'field', 'linhvucdautu', 'nganhdautu', 'linhvuc']),
               aggregateModuleGroups('featured_startups', featuredStartupsByField, ['business_field', 'business_sector', 'industry', 'sector', 'field', 'linhvuckinhdoanh', 'linhvuchoatdong', 'nganhnghe', 'linhvuc'])
             ]);
 
