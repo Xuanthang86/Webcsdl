@@ -1614,6 +1614,7 @@ export default {
           const ideasByYear: Record<string, number> = {};
           const projectsByYear: Record<string, number> = {};
           const patentsByYear: Record<string, number> = {};
+          const featuredStartupsByYear: Record<string, number> = {};
           const tasksByField: Record<string, number> = {};
           const tasksByUnit: Record<string, number> = {};
           const tasksByLevel: Record<string, number> = {};
@@ -1626,6 +1627,11 @@ export default {
           const ideasBySchool: Record<string, number> = {};
           const ideasByWard: Record<string, number> = {};
           const initiativesByField: Record<string, number> = {};
+          const initiativesBySpecialty: Record<string, number> = {};
+          const initiativesByUnit: Record<string, number> = {};
+          const investorsByField: Record<string, number> = {};
+          const investmentFundsByField: Record<string, number> = {};
+          const featuredStartupsByField: Record<string, number> = {};
           const supportOrgsByField: Record<string, number> = {};
           const ecosystemClassifications: Record<string, Record<string, number>> = {};
           const ideasByOrigin: Record<string, number> = { school: 0, ward: 0, other: 0 };
@@ -1644,6 +1650,7 @@ export default {
             ideasByYear[yr] = 0;
             projectsByYear[yr] = 0;
             patentsByYear[yr] = 0;
+            featuredStartupsByYear[yr] = 0;
             expertsByYear[yr] = 0;
             supportOrgsByYear[yr] = 0;
             universitiesByYear[yr] = 0;
@@ -1796,6 +1803,9 @@ export default {
               aggregateModuleYears('investment_funds', investmentFundsByYear, [
                 'launch_date', 'established_date', 'founded_date', 'created_at'
               ]),
+              aggregateModuleYears('featured_startups', featuredStartupsByYear, [
+                'founded_date', 'founded_year', 'establishment_date', 'established_year', 'created_at'
+              ]),
               aggregateModuleYears('support_organizations', supportOrgsByYear, [
                 'established_date', 'founded_date', 'establishment_year', 'created_at'
               ]),
@@ -1806,6 +1816,41 @@ export default {
                 'effective_date', 'formed_date', 'created_at'
               ])
             ]);
+
+            // Count one task in exactly one primary field bucket. The previous
+            // multi-label aggregation counted a record more than once when its
+            // field value contained separators, causing totals such as 703 > 698.
+            const aggregateModulePrimaryGroup = async (table: string, target: Record<string, number>, candidateFields: string[]) => {
+              try {
+                const tableInfo = await env.DB.prepare('PRAGMA table_info("' + table + '")').all<any>();
+                const tableColumns = new Set((tableInfo.results || []).map((column: any) => String(column.name)));
+                const rows = await env.DB.prepare('SELECT * FROM "' + table + '"' + buildPublicVisibilityWhere(tableColumns)).all<any>();
+                const normalizeKey = (value: string) => value.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[_\\s-]/g, '').toLowerCase();
+                for (const row of rows.results || []) {
+                  let custom: Record<string, any> = {};
+                  try {
+                    custom = row.data_json ? JSON.parse(String(row.data_json)) : {};
+                    if (!custom || typeof custom !== 'object' || Array.isArray(custom)) custom = {};
+                  } catch { custom = {}; }
+                  let rawValue: any = null;
+                  for (const candidate of candidateFields) {
+                    const key = normalizeKey(candidate);
+                    const physicalKey = Object.keys(row).find(name => normalizeKey(name) === key);
+                    const customKey = Object.keys(custom).find(name => normalizeKey(name) === key);
+                    const value = physicalKey ? row[physicalKey] : customKey ? custom[customKey] : null;
+                    if (value !== null && value !== undefined && String(value).trim() !== '') {
+                      rawValue = value;
+                      break;
+                    }
+                  }
+                  const labels = Array.isArray(rawValue) ? rawValue : rawValue === null ? [] : String(rawValue).split(/[;|\\n]+/);
+                  const primaryLabel = labels.map((value: any) => String(value ?? '').trim()).find((value: string) => value.length > 0) || 'Chưa cập nhật';
+                  target[primaryLabel] = (target[primaryLabel] || 0) + 1;
+                }
+              } catch (error) {
+                console.error('Không thể tổng hợp phân loại chính ' + table + ':', error);
+              }
+            };
 
             // Aggregate physical and custom fields. Missing values remain visible,
             // and multiple distinct labels on one record are counted once per label.
@@ -1844,7 +1889,7 @@ export default {
             };
 
             await Promise.all([
-              aggregateModuleGroups('science_tasks', tasksByField, ['field', 'scientific_field', 'research_field', 'linhvuc', 'linhvuckhoahoc']),
+              aggregateModulePrimaryGroup('science_tasks', tasksByField, ['field', 'scientific_field', 'research_field', 'linhvuc', 'linhvuckhoahoc']),
               aggregateModuleGroups('science_tasks', tasksByUnit, ['lead_agency', 'managing_agency', 'lead_organization', 'lead_unit', 'host_organization', 'host_unit', 'implementing_organization', 'implementing_unit', 'owner_name', 'receiving_unit', 'organization', 'agency', 'agency_name', 'coquanchutri', 'donvichutri', 'donvithuchien']),
               aggregateModuleGroups('science_tasks', tasksByLevel, ['management_level', 'task_level', 'project_level', 'level', 'capquanly', 'capdetai']),
               aggregateModuleGroups('startups', startupsByField, ['business_field', 'business_sector', 'startup_sector', 'field', 'sector', 'industry', 'industry_sector', 'linhvuckinhdoanh', 'linhvuchoatdong', 'nganhnghe', 'nganhkinhdoanh', 'linhvuc']),
@@ -1854,7 +1899,13 @@ export default {
               aggregateModuleGroups('startup_ideas', ideasByField, ['field', 'idea_field', 'field_of_idea', 'startup_field', 'business_field', 'business_sector', 'sector', 'industry', 'linhvuchoatdong', 'nganhnghe', 'linhvuckhoinghiep', 'linhvuc']),
               aggregateModuleGroups('startup_ideas', ideasBySchool, ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school', 'tentruong', 'tendonvitruong', 'truonghoc', 'cosodaotao', 'cosogiaoduc']),
               aggregateModuleGroups('startup_ideas', ideasByWard, ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality', 'tenxaphuong', 'xaphuong', 'phuongxa', 'dackhu']),
-              aggregateModuleGroups('support_organizations', supportOrgsByField, ['field', 'service_area', 'sector', 'organization_type', 'type'])
+              aggregateModuleGroups('support_organizations', supportOrgsByField, ['field', 'service_area', 'sector', 'organization_type', 'type']),
+              aggregateModuleGroups('initiatives', initiativesByField, ['field', 'recognition_field', 'initiative_field', 'sector', 'linhvuccongnhan', 'linhvuc']),
+              aggregateModuleGroups('initiatives', initiativesBySpecialty, ['specialty', 'specialization', 'professional_field', 'initiative_specialty', 'chuyenganh', 'chuyennganh', 'chuyennganhchinh']),
+              aggregateModuleGroups('initiatives', initiativesByUnit, ['lead_unit', 'lead_organization', 'host_organization', 'implementing_unit', 'organization', 'agency', 'unit', 'donvichutri', 'coquanchutri']),
+              aggregateModuleGroups('investors', investorsByField, ['investment_field', 'investment_sector', 'focus_sector', 'sector', 'industry', 'field', 'linhvucdautu', 'nganhdautu', 'linhvuc']),
+              aggregateModuleGroups('investment_funds', investmentFundsByField, ['investment_field', 'investment_sector', 'focus_sector', 'sector', 'industry', 'field', 'linhvucdautu', 'nganhdautu', 'linhvuc']),
+              aggregateModuleGroups('featured_startups', featuredStartupsByField, ['business_field', 'business_sector', 'industry', 'sector', 'field', 'linhvuckinhdoanh', 'linhvuchoatdong', 'nganhnghe', 'linhvuc'])
             ]);
 
             const ecosystemGroupDefinitions: Record<string, string[]> = {
@@ -2082,6 +2133,7 @@ export default {
               expertsBySpecialty,
               expertsByTitle,
               supportOrgsByYear,
+              featuredStartupsByYear,
               universitiesByYear,
               wardsByYear,
               tasksByField,
@@ -2097,7 +2149,13 @@ export default {
               ideasByWard,
               supportOrgsByField,
               investorsByYear,
+              investorsByField,
               investmentFundsByYear,
+              investmentFundsByField,
+              featuredStartupsByField,
+              featuredStartupsByYear,
+              initiativesBySpecialty,
+              initiativesByUnit,
               expertsByAcademicTitle,
               initiativesByField,
               yearlyStats
