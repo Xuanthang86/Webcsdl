@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from './services/api';
 import { 
   BaseEntity, 
@@ -186,6 +186,8 @@ export default function App() {
   // Detail Modal state
   const [activeDetailEntity, setActiveDetailEntity] = useState<BaseEntity | null>(null);
   const [activeRelationships, setActiveRelationships] = useState<EntityRelationship[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const detailRequestRef = useRef(0);
 
   // Action Modals
   const [showSubmitModal, setShowSubmitModal] = useState(false);
@@ -227,7 +229,10 @@ export default function App() {
       }
 
       // 1. Load User
-      const userRes = await api.getCurrentUser();
+      const userRes = await api.getCurrentUser().catch((err) => {
+        console.warn('Không tải được trạng thái đăng nhập; vẫn tiếp tục tải dữ liệu công khai:', err);
+        return { user: undefined as any, availableRoles: [] };
+      });
       const administrativeRoles = ['super_admin', 'system_admin', 'agency_leader', 'data_officer', 'evaluator_expert'];
       if (userRes?.user && (currentView !== 'admin' || administrativeRoles.includes(userRes.user.role))) {
         setCurrentUser(userRes.user);
@@ -243,12 +248,14 @@ export default function App() {
       setAvailableRoles(userRes.availableRoles || []);
 
       // 2. Load Config & Stats
-      const [configData, statsData] = await Promise.all([
+      const [configResult, statsResult] = await Promise.allSettled([
         api.getConfig(),
         api.getStats()
       ]);
-      setSystemConfig(configData);
-      setStats(statsData);
+      if (configResult.status === 'fulfilled') setSystemConfig(configResult.value);
+      else console.warn('Không tải được cấu hình cổng dữ liệu:', configResult.reason);
+      if (statsResult.status === 'fulfilled') setStats(statsResult.value);
+      else console.warn('Không tải được số liệu tổng hợp:', statsResult.reason);
 
       // 3. Load Featured Showcase Data for all 10 types (top 3 each, public approved only)
       const [
@@ -268,21 +275,21 @@ export default function App() {
         needs,
         pols
       ] = await Promise.all([
-        api.getModuleRecords('science_tasks', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'science_tasks' as any }))),
-        api.getModuleRecords('initiatives', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'initiatives' as any }))),
-        api.getModuleRecords('patents', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'patents' as any }))),
-        api.getModuleRecords('experts', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'experts' as any }))),
-        api.getModuleRecords('startups', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'startups' as any }))),
-        api.getModuleRecords('support_organizations', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'support_organizations' as any }))),
-        api.getModuleRecords('startup_projects', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'startup_projects' as any }))),
-        api.getModuleRecords('startup_ideas', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'startup_ideas' as any }))),
-        api.getModuleRecords('wards', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'wards' as any }))),
-        api.getModuleRecords('universities', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'universities' as any }))),
-        api.getModuleRecords('featured_startups', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'featured_startups' as any }))),
-        api.getModuleRecords('investors', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'investors' as any }))).catch(() => [] as BaseEntity[]),
-        api.getModuleRecords('investment_funds', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'investment_funds' as any }))).catch(() => [] as BaseEntity[]),
-        api.getModuleRecords('collaboration_needs', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'collaboration_needs' as any }))),
-        api.getModuleRecords('policies', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'policies' as any })))
+        api.getModuleRecords('science_tasks', undefined, undefined, true, 3).then(l => l.map(r => ({ ...r, moduleType: 'science_tasks' as any }))).catch(() => [] as BaseEntity[]),
+        api.getModuleRecords('initiatives', undefined, undefined, true, 3).then(l => l.map(r => ({ ...r, moduleType: 'initiatives' as any }))).catch(() => [] as BaseEntity[]),
+        api.getModuleRecords('patents', undefined, undefined, true, 3).then(l => l.map(r => ({ ...r, moduleType: 'patents' as any }))).catch(() => [] as BaseEntity[]),
+        api.getModuleRecords('experts', undefined, undefined, true, 3).then(l => l.map(r => ({ ...r, moduleType: 'experts' as any }))).catch(() => [] as BaseEntity[]),
+        api.getModuleRecords('startups', undefined, undefined, true, 3).then(l => l.map(r => ({ ...r, moduleType: 'startups' as any }))).catch(() => [] as BaseEntity[]),
+        api.getModuleRecords('support_organizations', undefined, undefined, true, 3).then(l => l.map(r => ({ ...r, moduleType: 'support_organizations' as any }))).catch(() => [] as BaseEntity[]),
+        api.getModuleRecords('startup_projects', undefined, undefined, true, 3).then(l => l.map(r => ({ ...r, moduleType: 'startup_projects' as any }))).catch(() => [] as BaseEntity[]),
+        api.getModuleRecords('startup_ideas', undefined, undefined, true, 3).then(l => l.map(r => ({ ...r, moduleType: 'startup_ideas' as any }))).catch(() => [] as BaseEntity[]),
+        api.getModuleRecords('wards', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'wards' as any }))).catch(() => [] as BaseEntity[]),
+        api.getModuleRecords('universities', undefined, undefined, true).then(l => l.map(r => ({ ...r, moduleType: 'universities' as any }))).catch(() => [] as BaseEntity[]),
+        api.getModuleRecords('featured_startups', undefined, undefined, true, 3).then(l => l.map(r => ({ ...r, moduleType: 'featured_startups' as any }))).catch(() => [] as BaseEntity[]),
+        api.getModuleRecords('investors', undefined, undefined, true, 3).then(l => l.map(r => ({ ...r, moduleType: 'investors' as any }))).catch(() => [] as BaseEntity[]),
+        api.getModuleRecords('investment_funds', undefined, undefined, true, 3).then(l => l.map(r => ({ ...r, moduleType: 'investment_funds' as any }))).catch(() => [] as BaseEntity[]),
+        api.getModuleRecords('collaboration_needs', undefined, undefined, true, 3).then(l => l.map(r => ({ ...r, moduleType: 'collaboration_needs' as any }))).catch(() => [] as BaseEntity[]),
+        api.getModuleRecords('policies', undefined, undefined, true, 3).then(l => l.map(r => ({ ...r, moduleType: 'policies' as any }))).catch(() => [] as BaseEntity[])
       ]);
 
       setFeaturedTasks(tasks.slice(0, 3));
@@ -477,18 +484,28 @@ export default function App() {
   const handleOpenDetail = async (entity: BaseEntity) => {
     if (!entity || !entity.id) return;
     const modType = entity.moduleType || 'science_tasks';
+    const requestId = ++detailRequestRef.current;
+
+    // Open the selected record immediately; enrich it with the full server record in the background.
+    setActiveDetailEntity({ ...entity, moduleType: modType });
+    setActiveRelationships([]);
+    setDetailLoading(true);
+
     try {
       const full = await api.getRecordById(modType as any, entity.id);
+      if (requestId !== detailRequestRef.current) return;
       const record = full?.data && typeof full.data === 'object' && !Array.isArray(full.data)
         ? full.data
         : entity;
       setActiveDetailEntity({ ...record, moduleType: modType });
       setActiveRelationships(Array.isArray(full?.relationships) ? full.relationships : []);
     } catch (err) {
+      if (requestId !== detailRequestRef.current) return;
       console.error('[Dashboard] Không tải được hồ sơ chi tiết:', { moduleType: modType, recordId: entity.id, error: err });
-      // Keep the selected list record visible as a safe fallback instead of crashing or opening a blank page.
       setActiveDetailEntity({ ...entity, moduleType: modType });
       setActiveRelationships([]);
+    } finally {
+      if (requestId === detailRequestRef.current) setDetailLoading(false);
     }
   };
 
@@ -657,14 +674,23 @@ export default function App() {
       {activeDetailEntity && (
         <DetailModalErrorBoundary
           key={`${activeDetailEntity.moduleType || 'science_tasks'}:${activeDetailEntity.id || 'record'}`}
-          onClose={() => setActiveDetailEntity(null)}
+          onClose={() => {
+            detailRequestRef.current += 1;
+            setDetailLoading(false);
+            setActiveDetailEntity(null);
+          }}
         >
           <DetailModal
             entity={activeDetailEntity}
             relationships={activeRelationships}
             currentUser={currentUser}
+            detailLoading={detailLoading}
             onOpenAdminLogin={() => setShowAdminLoginModal(true)}
-            onClose={() => setActiveDetailEntity(null)}
+            onClose={() => {
+            detailRequestRef.current += 1;
+            setDetailLoading(false);
+            setActiveDetailEntity(null);
+          }}
             onOpenEntity={handleOpenRelatedEntity}
             onOpenConnectModal={handleOpenConnectModal}
           />
