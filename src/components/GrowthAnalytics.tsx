@@ -317,7 +317,7 @@ export const GrowthAnalytics: React.FC<GrowthAnalyticsProps> = ({ stats }) => {
     <section className="mx-auto w-full max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 space-y-4">
       <div className="flex flex-col gap-2 border-b border-slate-100 pb-3">
         <div>
-          <h2 className="text-base lg:text-lg lg:text-base font-extrabold text-slate-950">Biểu đồ Phân tích & Thống kê Tăng trưởng</h2>
+          <h2 className="text-base lg:text-base font-extrabold text-slate-950">Biểu đồ Phân tích & Thống kê Tăng trưởng</h2>
           <p className="mt-1 text-sm text-slate-600">Số liệu tổng hợp từ hồ sơ đã phê duyệt và đủ điều kiện công khai; có thể chọn từng nhóm dữ liệu để xem cơ cấu chi tiết.</p>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
