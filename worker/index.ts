@@ -2064,8 +2064,8 @@ export default {
                   }
                   const value = normalize(raw);
                   let bucket = '';
-                  if (/(cap bo|bo nganh|quoc gia|nha nuoc|nafosted|bo khoa hoc|bo khcn)/.test(value)) bucket = 'Cấp Bộ';
-                  else if (/(cap tinh|cap thanh pho|tinh thanh pho|ubnd tinh|ubnd thanh pho|thanh pho|cap dia phuong)/.test(value)) bucket = 'Cấp Tỉnh/Thành phố';
+                  if (/(^bo$|^cap bo|bo nganh|quoc gia|nha nuoc|trung uong|nafosted|bo khoa hoc|bo khcn)/.test(value)) bucket = 'Cấp Bộ';
+                  else if (/(cap tinh|cap thanh pho|tinh thanh pho|ubnd tinh|ubnd thanh pho|thanh pho|cap dia phuong|dia phuong)/.test(value)) bucket = 'Cấp Tỉnh/Thành phố';
                   else if (/(cap co so|cap truong|co so|truong dai hoc|truong cao dang|don vi co so)/.test(value)) bucket = 'Cấp Cơ sở';
                   if (bucket) tasksByLevel[bucket] = (tasksByLevel[bucket] || 0) + 1;
                 }
