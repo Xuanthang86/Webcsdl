@@ -1771,16 +1771,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                           <option value="Xã/phường">Xã/phường</option>
                         </select>
                       </div>
-                      <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Tên trường học hoặc xã/phường</label>
-                        <input
-                          type="text"
-                          value={extraFields.wardSchool || ''}
-                          onChange={(e) => setExtra('wardSchool', e.target.value)}
-                          placeholder="Chỉ nhập một trường học hoặc một xã/phường"
-                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
-                        />
-                      </div>
+
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
@@ -1913,12 +1904,12 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                         />
                       </div>
                       <div>
-                        <label className="block font-semibold text-slate-700 mb-1">Ý tưởng thuộc Xã/phường - Trường học</label>
+                        <label className="block font-semibold text-slate-700 mb-1">Tên trường học hoặc xã/phường</label>
                         <input
                           type="text"
                           value={extraFields.wardSchool || ''}
                           onChange={(e) => setExtra('wardSchool', e.target.value)}
-                          placeholder="VD: Phường Hòa Khánh Bắc - ĐH Bách Khoa Đà Nẵng"
+                          placeholder="Chỉ nhập một trường học hoặc một xã/phường"
                           className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
                         />
                       </div>
