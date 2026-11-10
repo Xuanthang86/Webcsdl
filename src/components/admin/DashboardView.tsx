@@ -1,30 +1,16 @@
 import React, { useState } from 'react';
 import { AggregatedStats, User, SystemConfig } from '../../types';
 import { HomeOverviewDashboard } from '../HomeOverviewDashboard';
-import { 
-  CheckCircle2, 
-  FlaskConical, 
-  Lightbulb, 
-  Rocket, 
-  Award, 
-  Users, 
-  Building2, 
-  BookOpen, 
-  Link2, 
-  TrendingUp, 
-  ArrowRight,
+import { GrowthAnalytics } from '../GrowthAnalytics';
+import {
+  CheckCircle2,
   Filter,
-  BarChart3,
-  Calendar,
-  Layers,
   Sparkles
 } from 'lucide-react';
-
 interface DashboardViewProps {
   stats: AggregatedStats | null;
   currentUser?: User;
   systemConfig: SystemConfig;
-  onNavigateModule: (mod: string) => void;
   onOpenTestRunner: () => void;
 }
 
@@ -32,15 +18,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   stats: rawStats,
   currentUser,
   systemConfig,
-  onNavigateModule,
   onOpenTestRunner
 }) => {
   const [selectedYear, setSelectedYear] = useState<string>('all');
-  const [yearDisplayMode, setYearDisplayMode] = useState<'recent' | 'single' | 'range'>('recent');
-  const [chartSingleYear, setChartSingleYear] = useState<string>(String(new Date().getFullYear()));
-  const [chartFromYear, setChartFromYear] = useState<string>(String(new Date().getFullYear() - 4));
-  const [chartToYear, setChartToYear] = useState<string>(String(new Date().getFullYear()));
-  const [chartTab, setChartTab] = useState<'tasks' | 'initiatives' | 'startups' | 'patents' | 'experts' | 'projects' | 'ideas' | 'support_orgs' | 'investors' | 'investment_funds'>('tasks');
 
   const currentYear = new Date().getFullYear();
   const stats: AggregatedStats = rawStats || {
@@ -104,78 +84,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     (_, index) => String(2021 + index)
   );
   const yearMaps = [
-    yearBreakdown(stats.tasksByYear),
+    stats.tasksByYear,
     stats.initiativesByYear,
-    yearBreakdown(stats.startupsByYear),
+    stats.startupsByYear,
     stats.patentsByYear,
-    yearBreakdown(stats.expertsByYear),
-    yearBreakdown(stats.projectsByYear),
-    yearBreakdown(stats.ideasByYear),
-    yearBreakdown(stats.supportOrgsByYear),
-    yearBreakdown(stats.investorsByYear),
+    stats.expertsByYear,
+    stats.projectsByYear,
+    stats.ideasByYear,
+    stats.featuredStartupsByYear,
+    stats.supportOrgsByYear,
+    stats.investorsByYear,
     stats.investmentFundsByYear
   ];
   const availableYears = Array.from(new Set([
     ...defaultYears,
     ...yearMaps.flatMap(yearMap => Object.keys(yearMap || {}))
-  ])).filter(year => /^\d{4}$/.test(year)).sort();
-  const recentFiveYears = availableYears.filter(year =>
-    Number(year) >= currentYear - 4 && Number(year) <= currentYear
-  );
-  const rangeStart = Math.min(Number(chartFromYear), Number(chartToYear));
-  const rangeEnd = Math.max(Number(chartFromYear), Number(chartToYear));
-  const displayYears = yearDisplayMode === 'single'
-    ? [chartSingleYear]
-    : yearDisplayMode === 'range'
-      ? availableYears.filter(year => Number(year) >= rangeStart && Number(year) <= rangeEnd)
-      : (recentFiveYears.length > 0 ? recentFiveYears : availableYears.slice(-5));
-  const yearBreakdown = (source?: Record<string, number>): Record<string, number> => Object.fromEntries(
-    displayYears
-      .map(year => [year, Number(source?.[year] ?? (source as any)?.[Number(year)]) || 0] as [string, number])
-      .filter(([, count]) => count > 0)
-  );
-  const maxInitiativesYear = Math.max(...displayYears.map(y => (stats.initiativesByYear?.[y] ?? (stats.initiativesByYear as any)?.[Number(y)]) || 0), 1);
-  const maxPatentsYear = Math.max(...displayYears.map(y => stats.patentsByYear?.[y] || 0), 1);
-  const ecosystemClassificationData = (stats as any).ecosystemClassifications || {};
-  const ecosystemClassificationCards = [
-    { key: 'science_tasks', label: 'Nhiệm vụ khoa học và công nghệ', total: stats.totalScienceTasks },
-    { key: 'initiatives', label: 'Sáng kiến thành phố', total: stats.totalInitiatives },
-    { key: 'experts', label: 'Chuyên gia', total: stats.totalExperts },
-    { key: 'organizations', label: 'Tổ chức khoa học và công nghệ', total: stats.totalOrganizations },
-    { key: 'startups', label: 'Doanh nghiệp khởi nghiệp sáng tạo', total: stats.totalStartups },
-    { key: 'support_organizations', label: 'Tổ chức trung gian', total: stats.totalSupportOrgs },
-    { key: 'startup_projects', label: 'Dự án khởi nghiệp', total: stats.totalProjects },
-    { key: 'startup_ideas', label: 'Ý tưởng khởi nghiệp', total: stats.totalIdeas },
-    { key: 'featured_startups', label: 'Doanh nghiệp khởi nghiệp tiêu biểu', total: stats.totalFeaturedStartups },
-    { key: 'investors', label: 'Nhà đầu tư', total: stats.totalInvestors },
-    { key: 'investment_funds', label: 'Quỹ đầu tư', total: stats.totalFunds },
-    { key: 'patents', label: 'Sáng chế và sở hữu trí tuệ', total: stats.totalPatents },
-    { key: 'technologies', label: 'Công nghệ và kết quả nghiên cứu', total: stats.totalTechnologies },
-    { key: 'programs', label: 'Chương trình hỗ trợ', total: stats.totalPrograms },
-    { key: 'collaboration_needs', label: 'Nhu cầu kết nối', total: stats.totalCollaborationNeeds },
-    { key: 'publications', label: 'Bài báo và công bố khoa học', total: stats.totalPublications },
-    { key: 'lab_equipments', label: 'Phòng thí nghiệm và thiết bị', total: stats.totalLabEquipments },
-    { key: 'policies', label: 'Chính sách và văn bản', total: stats.totalPolicies }
-  ];
-
-  const renderBreakdown = (title: string, source?: Record<string, number>, colorClass = 'bg-teal-600') => {
-    const sortedEntries = Object.entries(source || {})
-      .map(([name, count]) => [name, Number(count) || 0] as [string, number])
-      .filter(([, count]) => count > 0)
-      .sort((a, b) => b[1] - a[1]);
-    const visibleEntries = sortedEntries.slice(0, 9);
-    const remainingCount = sortedEntries.slice(9).reduce((sum, [, count]) => sum + count, 0);
-    if (remainingCount > 0) visibleEntries.push(['Khác', remainingCount]);
-    const total = visibleEntries.reduce((sum, [, count]) => sum + count, 0);
-    const palette = ['#0f766e', '#2563eb', '#7c3aed', '#d97706', '#0891b2', '#be123c', '#4d7c0f', '#9333ea', '#0369a1', '#64748b'];
-    let cursor = 0;
-    const gradientStops = visibleEntries.map(([, count], index) => {
-      const start = cursor;
-      cursor += total > 0 ? (count / total) * 100 : 0;
-      return palette[index % palette.length] + ' ' + start + '% ' + cursor + '%';
-    });
-    const pieBackground = visibleEntries.length ? 'conic-gradient(' + gradientStops.join(', ') + ')' : '#e2e8f0';
-    return (
+  ])).filter(year => /^\\d{4}$/.test(year)).sort();
+  return (
       <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 min-w-0 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <span className={'h-1 w-5 shrink-0 rounded ' + colorClass} aria-hidden="true" />
@@ -249,328 +174,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       <HomeOverviewDashboard stats={stats} systemConfig={systemConfig} showIntro={false} onNavigateBrowse={(category) => onNavigateModule(category || 'science_tasks')} />
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-        <div>
-          <h2 className="text-sm font-bold text-slate-900">Phân loại dữ liệu Hệ sinh thái</h2>
-          <p className="text-xs text-slate-500 mt-1">Thống kê theo trường phân loại thực tế của từng phân hệ; chỉ tính hồ sơ đã phê duyệt và công khai.</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-          {ecosystemClassificationCards.filter(card => card.total > 0).map(card => {
-            const groups = Object.entries(ecosystemClassificationData[card.key] || {})
-              .map(([label, count]) => [label, Number(count) || 0] as [string, number])
-              .sort((a, b) => b[1] - a[1])
-              .slice(0, 5);
-            return (
-              <div key={card.key} className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-xs font-bold text-slate-800">{card.label}</h3>
-                  <span className="text-xs font-mono font-bold text-teal-800">{card.total}</span>
-                </div>
-                {groups.length > 0 ? (
-                  <div className="mt-2 space-y-1.5">
-                    {groups.map(([label, count]) => (
-                      <div key={label} className="flex items-center justify-between gap-2 text-[11px]">
-                        <span className="min-w-0 truncate text-slate-600" title={label}>{label}</span>
-                        <span className="shrink-0 font-mono font-semibold text-slate-800">{count}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-2 text-[11px] text-slate-500">Chưa có trường phân loại được ghi nhận.</p>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        {ecosystemClassificationCards.every(card => !card.total) && (
-          <p className="text-xs text-slate-500">Chưa có hồ sơ hệ sinh thái đã được phê duyệt và công khai để thống kê.</p>
-        )}
-      </div>
-
-      {/* Interactive Charts & Breakdowns Section */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-        <div className="flex flex-col gap-3 pb-3 border-b border-slate-100 min-w-0">
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-teal-700" />
-              <span>Biểu đồ Phân tích & Thống kê Tăng trưởng</span>
-            </h2>
-            <p className="text-xs text-slate-500">
-              Phân tích theo năm, lĩnh vực, đơn vị, cấp quản lý, trường học/xã phường, chuyên gia, tổ chức trung gian và nhà đầu tư
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 w-full min-w-0">
-            {[
-              { key: 'tasks', label: 'Đề tài KH&CN' },
-              { key: 'initiatives', label: 'Sáng kiến' },
-              { key: 'startups', label: 'Doanh nghiệp ĐMST' },
-              { key: 'patents', label: 'Sở hữu trí tuệ' },
-              { key: 'experts', label: 'Chuyên gia' },
-              { key: 'projects', label: 'Dự án khởi nghiệp' },
-              { key: 'ideas', label: 'Ý tưởng khởi nghiệp' },
-              { key: 'support_orgs', label: 'Tổ chức trung gian' },
-              { key: 'investors', label: 'Nhà đầu tư' },
-              { key: 'investment_funds', label: 'Quỹ đầu tư' }
-            ].map(tab => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setChartTab(tab.key as typeof chartTab)}
-                className={`min-w-0 min-h-9 px-2.5 py-2 rounded-lg text-[11px] font-semibold leading-tight text-center whitespace-normal break-words transition-colors cursor-pointer ${chartTab === tab.key ? 'bg-white text-teal-900 shadow-xs ring-1 ring-teal-100' : 'bg-white/50 text-slate-600 hover:bg-white hover:text-slate-900'}`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-xl bg-slate-50 border border-slate-200 p-3 min-w-0">
-          <div className="text-xs font-bold text-slate-700 shrink-0">Khoảng thời gian:</div>
-          <div className="flex flex-wrap items-center gap-2 min-w-0">
-            <select
-              value={yearDisplayMode}
-              onChange={(event) => setYearDisplayMode(event.target.value as 'recent' | 'single' | 'range')}
-              className="min-h-9 max-w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
-              aria-label="Chế độ hiển thị năm của biểu đồ"
-            >
-              <option value="recent">5 năm gần nhất</option>
-              <option value="single">Theo một năm</option>
-              <option value="range">Từ năm đến năm</option>
-            </select>
-            {yearDisplayMode === 'single' && (
-              <select
-                value={chartSingleYear}
-                onChange={(event) => setChartSingleYear(event.target.value)}
-                className="min-h-9 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700"
-                aria-label="Chọn năm thống kê"
-              >
-                {availableYears.map(year => <option key={year} value={year}>{year}</option>)}
-              </select>
-            )}
-            {yearDisplayMode === 'range' && (
-              <>
-                <select
-                  value={chartFromYear}
-                  onChange={(event) => setChartFromYear(event.target.value)}
-                  className="min-h-9 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700"
-                  aria-label="Từ năm"
-                >
-                  {availableYears.map(year => <option key={year} value={year}>{year}</option>)}
-                </select>
-                <span className="text-xs text-slate-500">đến</span>
-                <select
-                  value={chartToYear}
-                  onChange={(event) => setChartToYear(event.target.value)}
-                  className="min-h-9 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700"
-                  aria-label="Đến năm"
-                >
-                  {availableYears.map(year => <option key={year} value={year}>{year}</option>)}
-                </select>
-              </>
-            )}
-          </div>
-          <span className="text-[11px] text-slate-500 sm:ml-auto">
-            {displayYears.length > 0 ? (displayYears.length === 1 ? displayYears[0] : displayYears[0] + ' – ' + displayYears[displayYears.length - 1]) : 'Chưa có năm phù hợp'}
-          </span>
-        </div>
-
-        {/* Tab 1: Đề tài KH&CN Charts */}
-        {chartTab === 'tasks' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-2">
-            {renderBreakdown('Đề tài theo năm', stats.tasksByYear, 'bg-blue-600')}
-            {renderBreakdown('Đề tài theo lĩnh vực chuyên ngành', stats.tasksByField || stats.fieldBreakdown, 'bg-teal-600')}
-            {renderBreakdown('Đề tài theo đơn vị chủ trì', stats.tasksByUnit, 'bg-blue-600')}
-            {renderBreakdown('Đề tài theo cấp quản lý', stats.tasksByLevel, 'bg-indigo-600')}
-          </div>
-        )}
-
-        {/* Tab 2: Sáng kiến Thành phố Charts */}
-        {chartTab === 'initiatives' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-            {/* By Field */}
-            <div className="space-y-3">
-              <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
-                <span>Thống kê Sáng kiến theo Lĩnh vực công nhận:</span>
-                <span className="text-[11px] text-amber-700 font-mono font-bold">Tổng: {stats.totalInitiatives}</span>
-              </div>
-              <div className="space-y-2.5">
-                {Object.entries(stats.initiativesByField || {}).map(([f, count], idx) => {
-                  const pct = Math.round((count / (stats.totalInitiatives || 1)) * 100);
-                  return (
-                    <div key={idx} className="space-y-1">
-                      <div className="flex justify-between text-xs text-slate-700">
-                        <span className="truncate max-w-[240px] font-medium">{f}</span>
-                        <span className="font-mono font-semibold">{count} sáng kiến ({pct}%)</span>
-                      </div>
-                      <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                          style={{ width: `${count > 0 ? Math.max(pct, 4) : 0}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* By Year */}
-            <div className="space-y-3">
-              <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
-                <span>Thống kê Sáng kiến được công nhận theo năm:</span>
-                <span className="text-[11px] text-amber-800 font-mono font-bold">Hiệu quả lan tỏa</span>
-              </div>
-              <div className="h-48 flex items-end justify-between gap-2 sm:gap-4 pt-6 px-2 sm:px-4 min-w-0 w-full overflow-hidden bg-slate-50 rounded-xl border border-slate-100">
-                {displayYears.map(yr => {
-                  const count = (stats.initiativesByYear?.[yr] ?? (stats.initiativesByYear as any)?.[Number(yr)]) || 0;
-                  const heightPct = count > 0 ? Math.max(10, Math.round((count / maxInitiativesYear) * 100)) : 0;
-                  return (
-                    <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
-                      <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-amber-700">{count}</span>
-                      <div 
-                        className="w-full max-w-[36px] bg-amber-500 group-hover:bg-amber-600 rounded-t-md transition-all duration-300"
-                        style={{ height: `${heightPct}%` }}
-                      />
-                      <span className="text-[11px] font-semibold text-slate-600 mt-1">{yr}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="text-[11px] text-slate-500 italic text-center">
-                Số lượng sáng kiến có tác dụng ảnh hưởng được Hội đồng thành phố công nhận theo từng năm.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 3: Doanh nghiệp ĐMST Charts */}
-        {chartTab === 'startups' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-2">
-            <div className="lg:col-span-2 flex items-center justify-between gap-2 text-xs font-bold text-slate-800"><span>Doanh nghiệp khởi nghiệp sáng tạo</span><span className="font-mono text-purple-700">Tổng: {stats.totalStartups || 0}</span></div>
-            {renderBreakdown('Doanh nghiệp khởi nghiệp sáng tạo theo năm', stats.startupsByYear, 'bg-purple-600')}
-            {renderBreakdown('Doanh nghiệp khởi nghiệp sáng tạo theo lĩnh vực', stats.startupsByField, 'bg-violet-600')}
-          </div>
-        )}
-
-        {/* Tab 4: Sáng chế & Sở hữu trí tuệ Charts */}
-        {chartTab === 'patents' && (
-          <div className="space-y-3 pt-2">
-            <div className="font-bold text-xs text-slate-800 flex items-center justify-between">
-              <span>Thống kê số lượng Sáng chế và Văn bằng SHTT nộp đơn/cấp bằng theo năm:</span>
-              <span className="text-[11px] text-indigo-700 font-mono font-bold">Tổng: {stats.totalPatents || 0}</span>
-            </div>
-            <div className="h-48 flex items-end justify-between gap-2 sm:gap-4 pt-6 px-2 sm:px-8 min-w-0 w-full overflow-hidden bg-slate-50 rounded-xl border border-slate-100">
-              {displayYears.map(yr => {
-                const count = stats.patentsByYear?.[yr] || 0;
-                const heightPct = count > 0 ? Math.max(8, Math.round((count / maxPatentsYear) * 100)) : 0;
-                return (
-                  <div key={yr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
-                    <span className="text-[11px] font-mono font-bold text-slate-800 group-hover:text-indigo-700">{count}</span>
-                    <div 
-                      className="w-full max-w-[48px] bg-indigo-600 group-hover:bg-indigo-700 rounded-t-md transition-all duration-300"
-                      style={{ height: `${heightPct}%` }}
-                    />
-                    <span className="text-[11px] font-semibold text-slate-600 mt-1">{yr}</span>
-                  </div>
-                );
-              })}
-            </div>
-            <p className="text-[11px] text-slate-500 italic text-center">
-              Số lượng bằng sáng chế, giải pháp hữu ích và văn bằng sở hữu trí tuệ được bảo hộ hợp pháp.
-            </p>
-          </div>
-        )}
-
-        {/* Tab 5: Chuyên gia & Nhà khoa học Charts */}
-        {chartTab === 'experts' && (
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between gap-2 text-xs font-bold text-slate-800"><span>Phân bổ chuyên gia và nhà khoa học theo các tiêu chí</span><span className="font-mono text-cyan-700">Tổng: {stats.totalExperts || 0}</span></div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {renderBreakdown('Chuyên gia theo năm', stats.expertsByYear, 'bg-cyan-600')}
-              {renderBreakdown('Chuyên gia theo lĩnh vực', stats.expertsByField, 'bg-cyan-600')}
-              {renderBreakdown('Chuyên gia theo chuyên ngành', stats.expertsBySpecialty, 'bg-sky-600')}
-              {renderBreakdown('Chuyên gia theo học hàm', stats.expertsByAcademicTitle, 'bg-violet-600')}
-              {renderBreakdown('Chuyên gia theo học vị', stats.expertsByDegree, 'bg-indigo-600')}
-              {renderBreakdown('Chuyên gia theo đơn vị công tác', stats.expertsByWorkplace, 'bg-teal-600')}
-            </div>
-          </div>
-        )}
-
-        {/* Tab 6: Dự án khởi nghiệp Charts */}
-        {chartTab === 'projects' && (
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between gap-2 text-xs font-bold text-slate-800"><span>Dự án khởi nghiệp theo các tiêu chí</span><span className="font-mono text-emerald-700">Tổng: {stats.totalProjects || 0}</span></div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {renderBreakdown('Dự án khởi nghiệp theo năm', stats.projectsByYear, 'bg-emerald-600')}
-              {renderBreakdown('Dự án khởi nghiệp theo lĩnh vực', stats.projectsByField, 'bg-emerald-600')}
-              {renderBreakdown('Dự án khởi nghiệp theo trường học', stats.projectsBySchool, 'bg-teal-600')}
-              {renderBreakdown('Dự án khởi nghiệp theo xã/phường', stats.projectsByWard, 'bg-cyan-600')}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-              <div className="rounded-lg border border-violet-200 bg-violet-50 p-3"><div className="font-semibold text-violet-800">Thuộc trường học</div><div className="mt-1 text-lg font-bold font-mono text-violet-900">{stats.projectsByOrigin?.school || 0}</div></div>
-              <div className="rounded-lg border border-sky-200 bg-sky-50 p-3"><div className="font-semibold text-sky-800">Thuộc xã/phường</div><div className="mt-1 text-lg font-bold font-mono text-sky-900">{stats.projectsByOrigin?.ward || 0}</div></div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3"><div className="font-semibold text-slate-700">Chưa xác định</div><div className="mt-1 text-lg font-bold font-mono text-slate-900">{stats.projectsByOrigin?.other || 0}</div></div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 7: Ý tưởng khởi nghiệp Charts */}
-        {chartTab === 'ideas' && (
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between gap-2 text-xs font-bold text-slate-800"><span>Ý tưởng khởi nghiệp theo các tiêu chí</span><span className="font-mono text-amber-700">Tổng: {stats.totalIdeas || 0}</span></div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {renderBreakdown('Ý tưởng khởi nghiệp theo năm', stats.ideasByYear, 'bg-amber-500')}
-              {renderBreakdown('Ý tưởng khởi nghiệp theo lĩnh vực', stats.ideasByField, 'bg-amber-500')}
-              {renderBreakdown('Ý tưởng khởi nghiệp theo trường học', stats.ideasBySchool, 'bg-violet-600')}
-              {renderBreakdown('Ý tưởng khởi nghiệp theo xã/phường', stats.ideasByWard, 'bg-sky-600')}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-              <div className="rounded-lg border border-violet-200 bg-violet-50 p-3"><div className="font-semibold text-violet-800">Thuộc trường học</div><div className="mt-1 text-lg font-bold font-mono text-violet-900">{(stats as any).ideasByOrigin?.school || 0}</div></div>
-              <div className="rounded-lg border border-sky-200 bg-sky-50 p-3"><div className="font-semibold text-sky-800">Thuộc xã/phường</div><div className="mt-1 text-lg font-bold font-mono text-sky-900">{(stats as any).ideasByOrigin?.ward || 0}</div></div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3"><div className="font-semibold text-slate-700">Chưa xác định</div><div className="mt-1 text-lg font-bold font-mono text-slate-900">{(stats as any).ideasByOrigin?.other || 0}</div></div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 8: Tổ chức hỗ trợ Charts */}
-        {chartTab === 'support_orgs' && (
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between gap-2 text-xs font-bold text-slate-800"><span>Tổ chức trung gian theo các tiêu chí</span><span className="font-mono text-rose-700">Tổng: {stats.totalSupportOrgs || 0}</span></div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {renderBreakdown('Tổ chức trung gian theo năm', stats.supportOrgsByYear, 'bg-rose-600')}
-              {renderBreakdown('Tổ chức trung gian theo lĩnh vực / loại hình', stats.supportOrgsByField, 'bg-rose-600')}
-            </div>
-          </div>
-        )}
-
-        {/* Tab 9: Nhà đầu tư */}
-        {chartTab === 'investors' && (
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between gap-2 text-xs font-bold text-slate-800"><span>Nhà đầu tư theo năm</span><span className="font-mono text-teal-800">Tổng: {stats.totalInvestors || 0}</span></div>
-            {renderBreakdown('Cơ cấu nhà đầu tư theo năm', stats.investorsByYear, 'bg-teal-600')}
-          </div>
-        )}
-
-        {/* Tab 10: Quỹ đầu tư */}
-        {chartTab === 'investment_funds' && (
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between gap-2 text-xs font-bold text-slate-800"><span>Quỹ đầu tư theo năm</span><span className="font-mono text-indigo-800">Tổng: {stats.totalFunds || 0}</span></div>
-            {renderBreakdown('Cơ cấu quỹ đầu tư theo năm', yearBreakdown(stats.investmentFundsByYear), 'bg-indigo-600')}
-          </div>
-        )}
-
-      </div>
+      <GrowthAnalytics stats={stats} />
 
       {/* Grid: Approval Queue & Module Matrix */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Approvals & Workflow Queue */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-slate-900">
-                Hàng Đợi Kiểm Duyệt & Trạng Thái Thẩm Định
+                Hàng đợi kiểm duyệt & trạng thái thẩm định
               </h2>
               <p className="text-xs text-slate-500">
                 Phân bổ hồ sơ theo các giai đoạn trong vòng đời nghiệp vụ
@@ -611,44 +225,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* Quick Module Navigation Matrix */}
-          <div className="pt-2 border-t border-slate-100">
-            <div className="text-xs font-semibold text-slate-700 mb-2">Truy cập nhanh 13 phân hệ quản trị:</div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-              {[
-                { key: 'science_tasks', label: '1. Nhiệm vụ KH&CN' },
-                { key: 'initiatives', label: '2. Sáng kiến TP' },
-                { key: 'experts', label: '3. Chuyên gia' },
-                { key: 'organizations', label: '4. Tổ chức KH&CN' },
-                { key: 'startups', label: '5. Doanh nghiệp ĐMST' },
-                { key: 'startup_projects', label: '6. Dự án khởi nghiệp' },
-                { key: 'startup_ideas', label: '7. Ý tưởng khởi nghiệp' },
-                { key: 'investors', label: '8. Nhà đầu tư' },
-                { key: 'investment_funds', label: '9. Quỹ đầu tư' },
-                { key: 'support_organizations', label: '10. Vườn ươm / TT ĐMST' },
-                { key: 'technologies', label: '11. Công nghệ & KQNC' },
-                { key: 'programs', label: '12. Chương trình hỗ trợ' },
-                { key: 'collaboration_needs', label: '13. Nhu cầu kết nối' }
-              ].map(m => (
-                <button
-                  key={m.key}
-                  onClick={() => onNavigateModule(m.key)}
-                  className="p-2 text-left bg-slate-50 hover:bg-teal-50 hover:text-teal-900 rounded-lg border border-slate-200 transition-colors flex items-center justify-between text-slate-700 cursor-pointer"
-                >
-                  <span className="truncate">{m.label}</span>
-                  <ArrowRight className="w-3 h-3 text-slate-400 shrink-0" />
-                </button>
-              ))}
-            </div>
-          </div>
-
         </div>
 
         {/* System Summary Information Box */}
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
           <div>
             <h2 className="text-sm font-bold text-slate-900">
-              Tổng Thể Năng Lực KHCN & ĐMST
+              Tổng thể năng lực KHCN & KHĐMST
             </h2>
             <p className="text-xs text-slate-500">
               Chỉ số tích hợp toàn hệ sinh thái thành phố
