@@ -56,7 +56,7 @@ const PieBreakdown: React.FC<BreakdownProps> = ({ title, source, accent }) => {
   const active = activeIndex === null ? null : segments[activeIndex];
 
   return (
-    <section className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+    <section data-accent={accent} className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h3 className="border-l-4 border-teal-600 pl-2 text-sm font-extrabold text-slate-900">{title}</h3>
         <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-700">Tổng {formatCount(total)}</span>
