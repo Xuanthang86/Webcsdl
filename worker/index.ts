@@ -2042,7 +2042,7 @@ export default {
                 const columns = new Set((info.results || []).map((column: any) => String(column.name)));
                 const rows = await env.DB.prepare('SELECT * FROM "science_tasks"' + buildPublicVisibilityWhere(columns)).all<any>();
                 const normalize = (value: any) => String(value ?? '').normalize('NFD')
-                  .replace(/[\\u0300-\\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().replace(/[_\\s-]+/g, ' ').trim();
+                  .replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().replace(/[_\s-]+/g, ' ').trim();
                 for (const row of rows.results || []) {
                   let custom: Record<string, any> = {};
                   try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; } catch { custom = {}; }
