@@ -149,7 +149,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
     const safeTitle = String(entity.moduleType === 'experts' ? expertDisplayName : (entity.title || 'ban_ghi')).slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_');
     const exportPrefix = moduleCodePrefixes[entity.moduleType || ''];
     const expertCode = exportPrefix && entity.code
-      && new RegExp('^' + exportPrefix + '-\\d{6}$', 'u').test(String(entity.code).trim())
+      && new RegExp('^' + exportPrefix + '-[0-9]{6}$', 'u').test(String(entity.code).trim())
       ? String(entity.code).trim()
       : 'chua-cap-ma';
     const rawDocName = fileName || `Ho_so_${expertCode}_${safeTitle}.txt`;
@@ -253,7 +253,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
   };
   const expectedCodePrefix = moduleCodePrefixes[entity.moduleType || ''];
   const displayCode = expectedCodePrefix && entity.code
-    && new RegExp('^' + expectedCodePrefix + '-\\d{6}$', 'u').test(String(entity.code).trim())
+    && new RegExp('^' + expectedCodePrefix + '-[0-9]{6}$', 'u').test(String(entity.code).trim())
     ? String(entity.code).trim()
     : '';
   const rawEntityTitle = String(entity.title || '');
