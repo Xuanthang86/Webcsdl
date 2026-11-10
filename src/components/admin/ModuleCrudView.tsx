@@ -27,7 +27,7 @@ import {
 import * as XLSX from 'xlsx';
 import { AttachmentManagerModal } from '../AttachmentManagerModal';
 import { deliverFile } from '../../utils/fileDownload';
-import { getScienceTaskUnits, getScienceTaskYears, matchesScienceTaskLevel, normalizeScienceTaskText } from '../../utils/scienceTaskFilters';
+import { getScienceTaskUnits, getScienceTaskYears, getScienceTaskLevel, matchesScienceTaskLevel, normalizeScienceTaskText } from '../../utils/scienceTaskFilters';
 
 interface ModuleCrudViewProps {
   moduleType: ModuleType;
@@ -94,6 +94,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
   onOpenImport,
   onManageRelations
 }) => {
+  const showClassificationColumns = !['wards', 'universities'].includes(moduleType);
   const [records, setRecords] = useState<BaseEntity[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -841,9 +842,8 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
               >
                 <option value="all">Tất cả cấp quản lý</option>
                 <option value="Cấp Bộ">Cấp Bộ</option>
-                <option value="Cấp Thành phố">Cấp Tỉnh/Thành phố</option>
+                <option value="Cấp Tỉnh/Thành phố">Cấp Tỉnh/Thành phố</option>
                 <option value="Cấp Cơ sở">Cấp Cơ sở</option>
-                <option value="Chưa phân loại">Chưa phân loại</option>
               </select>
               <select
                 aria-label="Lọc năm thực hiện"
@@ -942,8 +942,10 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                 <th className="py-3 px-4 w-12 text-center">STT</th>
                 <th className="py-3 px-4 w-32">Mã bản ghi</th>
                 <th className="py-3 px-4">Tên / Tiêu đề</th>
-                <th className="py-3 px-4 w-40">Lĩnh vực</th>
-                <th className="py-3 px-4 w-44">Đơn vị / Cá nhân</th>
+                {showClassificationColumns && <>
+                  <th className="py-3 px-4 w-40">Lĩnh vực</th>
+                  <th className="py-3 px-4 w-44">Đơn vị / Cá nhân</th>
+                </>}
                 <th className="py-3 px-4 w-28 text-center">Trạng thái</th>
                 <th className="py-3 px-4 w-24 text-center">Công khai</th>
                 <th className="py-3 px-4 w-36 text-right">Thao tác</th>
@@ -952,13 +954,13 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={canDelete ? 9 : 8} className="py-8 text-center text-slate-400">
+                  <td colSpan={(canDelete ? 7 : 6) + (showClassificationColumns ? 2 : 0)} className="py-8 text-center text-slate-400">
                     Đang tải dữ liệu...
                   </td>
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={canDelete ? 9 : 8} className="py-8 text-center text-slate-400">
+                  <td colSpan={(canDelete ? 7 : 6) + (showClassificationColumns ? 2 : 0)} className="py-8 text-center text-slate-400">
                     Không có bản ghi nào phù hợp với điều kiện lọc.
                   </td>
                 </tr>
@@ -994,7 +996,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       {/* Specialized Contextual Metadata per Module */}
                       {moduleType === 'science_tasks' && (
                         <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
-                          {item.managementLevel && <span className="bg-teal-50 text-teal-700 px-1.5 py-0.2 rounded border border-teal-200">{item.managementLevel}</span>}
+                          <span className="bg-teal-50 text-teal-700 px-1.5 py-0.2 rounded border border-teal-200">{({ national: 'Cấp Bộ', provincial: 'Cấp Tỉnh/Thành phố', local: 'Cấp Cơ sở', unknown: 'Chưa xác định' } as const)[getScienceTaskLevel(item)]}</span>
                           {item.principalInvestigator && <span>Chủ nhiệm: <strong className="text-slate-700">{item.principalInvestigator}</strong></span>}
                           {item.executionTime && <span className="text-slate-400">· {item.executionTime}</span>}
                         </div>
@@ -1072,12 +1074,10 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                         </div>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-slate-600 truncate max-w-[160px]">
-                      {item.field || item.primaryField || '—'}
-                    </td>
-                    <td className="py-3 px-4 text-slate-600 truncate max-w-[170px]">
-                      {item.ownerName || item.proposingOrg || item.leadOrganization || item.leaderName || item.representative || item.workplace || item.mentorTeacher || '—'}
-                    </td>
+                    {showClassificationColumns && <>
+                      <td className="py-3 px-4 text-slate-600 truncate max-w-[160px]">{item.field || item.primaryField || '—'}</td>
+                      <td className="py-3 px-4 text-slate-600 truncate max-w-[170px]">{item.ownerName || item.proposingOrg || item.leadOrganization || item.leaderName || item.representative || item.workplace || item.mentorTeacher || '—'}</td>
+                    </>}
                     <td className="py-3 px-4 text-center">
                       <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${
                         item.status === 'approved' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
@@ -1348,9 +1348,8 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                           onChange={(e) => setExtra('managementLevel', e.target.value)}
                           className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
                         >
-                          <option value="Cấp Quốc gia / Nhà nước">Cấp Quốc gia / Nhà nước</option>
-                          <option value="Cấp Bộ / Ngành">Cấp Bộ / Ngành</option>
-                          <option value="Cấp Thành phố">Cấp Thành phố</option>
+                          <option value="Cấp Bộ">Cấp Bộ</option>
+                          <option value="Cấp Tỉnh/Thành phố">Cấp Tỉnh/Thành phố</option>
                           <option value="Cấp Cơ sở">Cấp Cơ sở</option>
                         </select>
                       </div>
