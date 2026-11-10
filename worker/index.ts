@@ -166,11 +166,18 @@ function hydrateModuleRow(row: any, moduleName?: string): any {
   }
   if (moduleName === 'startups' && !merged.companyName) merged.companyName = merged.name || merged.title;
   if (moduleName === 'startup_projects' && !merged.projectName) merged.projectName = merged.title || merged.name;
-  if (moduleName === 'startup_ideas') {
-    if (!merged.title) merged.title = merged.ideaName || merged.ideaTitle || merged.name || '';
-    if (!merged.description) merged.description = merged.summary || merged.ideaSummary || merged.idea_summary || '';
-    if (!merged.wardSchool) merged.wardSchool = merged.wardOrSchool || merged.ward_school || merged.ward_or_school ||
-      merged.affiliatedUnit || merged.currentAffiliation || merged.schoolName || merged.wardName || merged.originType || merged.origin_type || '';
+  if (moduleName === 'startup_projects' || moduleName === 'startup_ideas') {
+    const originType = merged.originType || merged.origin_type || merged.ideaOriginType || merged.idea_origin_type ||
+      merged.projectOriginType || merged.project_origin_type || merged.wardSchoolType || merged.ward_school_type || '';
+    if (originType) merged.originType = originType;
+    const affiliation = merged.wardSchool || merged.ward_school || merged.wardOrSchool || merged.ward_or_school ||
+      merged.schoolName || merged.school_name || merged.wardName || merged.ward_name || '';
+    if (affiliation) merged.wardSchool = affiliation;
+    if (moduleName === 'startup_projects' && !merged.projectName) merged.projectName = merged.title || merged.name || '';
+    if (moduleName === 'startup_ideas') {
+      if (!merged.title) merged.title = merged.ideaName || merged.ideaTitle || merged.name || '';
+      if (!merged.description) merged.description = merged.summary || merged.ideaSummary || merged.idea_summary || '';
+    }
   }
   return merged;
 }
@@ -1989,37 +1996,49 @@ export default {
                   }
                   return null;
                 };
+                const scalarLabel = (value: any): string => {
+                  if (Array.isArray(value)) return value.map(scalarLabel).find(Boolean) || '';
+                  if (value && typeof value === 'object') {
+                    const nested = value.name ?? value.label ?? value.title ?? value.value ?? value.text;
+                    return nested === undefined || nested === null ? '' : scalarLabel(nested);
+                  }
+                  return String(value ?? '').trim();
+                };
                 const classify = (value: any): 'school' | 'ward' | 'other' => {
-                  const label = String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+                  const label = scalarLabel(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
                   const schoolMatch = label.match(/truong|dai hoc|cao dang|school|university|college/);
                   const wardMatch = label.match(/xa|phuong|dackhu|ward|commune|thi tran/);
-                  const school = Boolean(schoolMatch);
-                  const ward = Boolean(wardMatch);
-                  if (school && ward) return (schoolMatch!.index ?? Infinity) < (wardMatch!.index ?? Infinity) ? 'school' : 'ward';
-                  if (school) return 'school';
-                  if (ward) return 'ward';
-                  if (/^(school|truong hoc)$/.test(label.trim())) return 'school';
-                  if (/^(ward|xa phuong|dia ban)$/.test(label.trim())) return 'ward';
+                  if (schoolMatch && !wardMatch) return 'school';
+                  if (wardMatch && !schoolMatch) return 'ward';
+                  if (/^(school|truong hoc)$/.test(label)) return 'school';
+                  if (/^(ward|xa phuong|dia ban)$/.test(label)) return 'ward';
                   return 'other';
                 };
                 const combinedFields = [
-                  'origin_type', 'idea_origin_type', 'project_origin_type', 'classification_type',
-                  'category_type', 'belong_to', 'affiliation_type', 'ward_or_school', 'ward_school',
-                  'wardSchool', 'school_ward', 'schoolWard', 'thuocxaphuongtruonghoc'
+                  'origin_type', 'idea_origin_type', 'project_origin_type', 'classification_type', 'origin_category',
+                  'category_type', 'belong_to', 'belongs_to', 'affiliation_type', 'ward_or_school', 'ward_school',
+                  'wardSchool', 'school_ward', 'schoolWard', 'school_or_ward', 'ward_school_type',
+                  'idea_belongs_to', 'project_belongs_to', 'thuocxaphuongtruonghoc'
                 ];
-                const schoolFields = ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school', 'tentruong', 'tendonvitruong', 'truonghoc', 'cosodaotao', 'cosogiaoduc'];
-                const wardFields = ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality', 'tenxaphuong', 'xaphuong', 'phuongxa', 'dackhu'];
+                const schoolFields = ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school', 'tentruong', 'tendonvitruong', 'truonghoc', 'cosodaotao', 'cosogiaoduc', 'school_affiliation'];
+                const wardFields = ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality', 'tenxaphuong', 'xaphuong', 'phuongxa', 'dackhu', 'ward_affiliation'];
                 for (const row of rows.results || []) {
                   let custom: Record<string, any> = {};
                   try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; } catch { custom = {}; }
                   if (!custom || typeof custom !== 'object' || Array.isArray(custom)) custom = {};
                   const explicit = readValue(row, custom, combinedFields);
                   let classification = explicit !== null ? classify(explicit) : 'other';
-                  if (explicit === null) {
+                  if (classification === 'other') {
+                    const affiliationValue = readValue(row, custom, ['wardSchool', 'ward_school', 'wardOrSchool', 'ward_or_school', 'schoolWard', 'school_ward']);
+                    classification = classify(affiliationValue);
+                  }
+                  if (classification === 'other') {
                     const schoolValue = readValue(row, custom, schoolFields);
                     const wardValue = readValue(row, custom, wardFields);
-                    if (schoolValue && !wardValue) classification = classify(schoolValue) === 'other' ? 'school' : classify(schoolValue);
-                    else if (wardValue && !schoolValue) classification = classify(wardValue) === 'other' ? 'ward' : classify(wardValue);
+                    // A record belongs to exactly one group. When both name fields
+                    // exist, only an explicit origin type can decide the group.
+                    if (schoolValue && !wardValue) classification = 'school';
+                    else if (wardValue && !schoolValue) classification = 'ward';
                   }
                   if (classification === 'school') {
                     schoolTarget['Trường học'] = (schoolTarget['Trường học'] || 0) + 1;
@@ -2047,9 +2066,12 @@ export default {
                   let custom: Record<string, any> = {};
                   try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; } catch { custom = {}; }
                   const candidates = [
-                    'management_level', 'managementLevel', 'task_level', 'taskLevel', 'project_level', 'projectLevel',
-                    'level', 'management_scope', 'funding_level', 'research_level', 'capquanly', 'capquanlydetai',
-                    'capdetai', 'capdoquanly', 'capquanlydetainhiemvu', 'loaidetai', 'nguonkinhphi'
+                    'management_level', 'managementLevel', 'management_level_name', 'management_level_type',
+                    'task_level', 'taskLevel', 'project_level', 'projectLevel', 'level', 'level_name',
+                    'management_scope', 'funding_level', 'research_level', 'funding_source', 'funding_agency',
+                    'granting_agency', 'managing_unit', 'managing_agency', 'agency_type', 'task_category',
+                    'capquanly', 'capquanlydetai', 'capdetai', 'capdoquanly', 'capquanlydetainhiemvu',
+                    'loaidetai', 'nguonkinhphi', 'coquanquanly', 'donvichuquan', 'capthuchien'
                   ];
                   let raw: any = null;
                   for (const candidate of candidates) {
@@ -2062,12 +2084,28 @@ export default {
                       ? physicalValue : customValue;
                     if (value !== null && value !== undefined && String(value).trim()) { raw = value; break; }
                   }
-                  const value = normalize(raw);
+                  const scalar = raw && typeof raw === 'object'
+                    ? (raw.name ?? raw.label ?? raw.title ?? raw.value ?? raw.text ?? '')
+                    : raw;
+                  let value = normalize(scalar);
                   let bucket = '';
-                  if (/(^bo$|^cap bo|bo nganh|quoc gia|nha nuoc|trung uong|nafosted|bo khoa hoc|bo khcn)/.test(value)) bucket = 'Cấp Bộ';
-                  else if (/(cap tinh|cap thanh pho|tinh thanh pho|ubnd tinh|ubnd thanh pho|thanh pho|cap dia phuong|dia phuong)/.test(value)) bucket = 'Cấp Tỉnh/Thành phố';
-                  else if (/(cap co so|cap truong|co so|truong dai hoc|truong cao dang|don vi co so)/.test(value)) bucket = 'Cấp Cơ sở';
-                  if (bucket) tasksByLevel[bucket] = (tasksByLevel[bucket] || 0) + 1;
+                  if (/(^bo$|^cap bo|bo nganh|quoc gia|nha nuoc|trung uong|nafosted|bo khoa hoc|bo khcn|bo quan ly)/.test(value)) bucket = 'Cấp Bộ';
+                  else if (/(cap tinh|cap thanh pho|tinh thanh pho|ubnd tinh|ubnd thanh pho|thanh pho|cap dia phuong|dia phuong|so khoa hoc|ubnd quan|ubnd huyen)/.test(value)) bucket = 'Cấp Tỉnh/Thành phố';
+                  else if (/(cap co so|cap truong|co so|truong dai hoc|truong cao dang|don vi co so|truong hoc)/.test(value)) bucket = 'Cấp Cơ sở';
+                  if (!bucket) {
+                    // Use the managing authority as a secondary source when legacy
+                    // rows store the level outside the dedicated level field.
+                    const authority = normalize([
+                      row.managing_agency, row.managing_unit, row.lead_agency, row.lead_organization,
+                      row.host_organization, row.funding_agency, row.funding_source,
+                      custom.managingAgency, custom.managingUnit, custom.leadAgency,
+                      custom.leadOrganization, custom.hostOrganization, custom.fundingAgency, custom.fundingSource
+                    ].map(item => item && typeof item === 'object' ? (item.name ?? item.label ?? item.value ?? '') : item).filter(Boolean).join(' '));
+                    if (/(bo khoa hoc|bo khcn|bo nganh|nafosted|quoc gia|trung uong)/.test(authority)) bucket = 'Cấp Bộ';
+                    else if (/(ubnd|so khoa hoc|thanh pho da nang|cap tinh|cap thanh pho)/.test(authority)) bucket = 'Cấp Tỉnh/Thành phố';
+                    else bucket = 'Cấp Cơ sở';
+                  }
+                  tasksByLevel[bucket] = (tasksByLevel[bucket] || 0) + 1;
                 }
               } catch (error) {
                 console.error('Không thể chuẩn hóa thống kê đề tài theo cấp quản lý:', error);
