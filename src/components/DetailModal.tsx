@@ -1175,7 +1175,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <span className="font-semibold text-slate-500">Ý tưởng thuộc Xã/phường - Trường học:</span>
                     <div className="sm:col-span-2">
                       {isAuthorized ? (
-                        <span className="font-semibold text-slate-800">{entity.wardSchool || 'Chưa cập nhật'}</span>
+                        <span className="font-semibold text-slate-800">{entity.wardSchool || entity.wardOrSchool || entity.ward_or_school || entity.affiliatedUnit || entity.currentAffiliation || entity.originType || 'Chưa cập nhật'}</span>
                       ) : (
                         <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
                           <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
