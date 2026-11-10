@@ -97,7 +97,7 @@ async function ensureModuleRecordCodes(db: D1Database, moduleName: string): Prom
   const columns = new Set((info.results || []).map((column: any) => String(column.name)));
   if (!columns.has('id') || !columns.has('code')) return;
   const rows = await db.prepare(`SELECT id, code FROM "${moduleName}" ORDER BY id`).all<any>();
-  const validPattern = new RegExp('^' + prefix.replace(/[.*+?^${}()|[\\]\\]/g, '\\\\$&') + '-\\\\d{6}$', 'u');
+  const validPattern = new RegExp('^' + prefix + '-\\d{6}$', 'u');
   for (const row of rows.results || []) {
     if (validPattern.test(String(row.code || '').trim())) continue;
     const nextCode = await generateModuleCode(db, moduleName);
@@ -1925,7 +1925,10 @@ export default {
                     const key = normalizeKey(candidate);
                     const physicalKey = Object.keys(row).find(name => normalizeKey(name) === key);
                     const customKey = Object.keys(custom).find(name => normalizeKey(name) === key);
-                    const value = physicalKey ? row[physicalKey] : customKey ? custom[customKey] : null;
+                    const physicalValue = physicalKey ? row[physicalKey] : null;
+                    const customValue = customKey ? custom[customKey] : null;
+                    const value = physicalValue !== null && physicalValue !== undefined && String(physicalValue).trim()
+                      ? physicalValue : customValue;
                     if (value !== null && value !== undefined && String(value).trim() !== '') { rawValue = value; break; }
                   }
                   const labels = Array.isArray(rawValue) ? rawValue : rawValue === null ? [] : String(rawValue).split(/[;|\n]+/);
@@ -1943,6 +1946,74 @@ export default {
                   if (!added) target['Chưa cập nhật'] = (target['Chưa cập nhật'] || 0) + 1;
                 }
               } catch (error) { console.error('Không thể tổng hợp phân loại ' + table + ':', error); }
+            };
+
+            const aggregateModuleOrigin = async (
+              table: string,
+              schoolTarget: Record<string, number>,
+              wardTarget: Record<string, number>,
+              originTarget: Record<string, number>
+            ) => {
+              try {
+                const info = await env.DB.prepare('PRAGMA table_info("' + table + '")').all<any>();
+                const columns = new Set((info.results || []).map((column: any) => String(column.name)));
+                const rows = await env.DB.prepare('SELECT * FROM "' + table + '"' + buildPublicVisibilityWhere(columns)).all<any>();
+                const normalizeKey = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').replace(/[_\s-]/g, '').toLowerCase();
+                const readValue = (row: any, custom: Record<string, any>, candidates: string[]) => {
+                  for (const candidate of candidates) {
+                    const key = normalizeKey(candidate);
+                    const physicalKey = Object.keys(row).find(name => normalizeKey(name) === key);
+                    const customKey = Object.keys(custom).find(name => normalizeKey(name) === key);
+                    const physicalValue = physicalKey ? row[physicalKey] : null;
+                    const customValue = customKey ? custom[customKey] : null;
+                    const value = physicalValue !== null && physicalValue !== undefined && String(physicalValue).trim()
+                      ? physicalValue : customValue;
+                    if (value !== null && value !== undefined && String(value).trim()) return value;
+                  }
+                  return null;
+                };
+                const classify = (value: any): 'school' | 'ward' | 'other' => {
+                  const label = String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+                  const school = /(truong|dai hoc|cao dang|school|university|college)/.test(label);
+                  const ward = /(xa|phuong|dackhu|ward|commune|thi tran)/.test(label);
+                  if (school && !ward) return 'school';
+                  if (ward && !school) return 'ward';
+                  if (/^(school|truong hoc)$/.test(label.trim())) return 'school';
+                  if (/^(ward|xa phuong|dia ban)$/.test(label.trim())) return 'ward';
+                  return 'other';
+                };
+                const combinedFields = [
+                  'ward_or_school', 'ward_school', 'wardSchool', 'school_ward', 'schoolWard',
+                  'origin_type', 'idea_origin_type', 'project_origin_type', 'classification_type',
+                  'category_type', 'belong_to', 'affiliation_type', 'thuocxaphuongtruonghoc'
+                ];
+                const schoolFields = ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school', 'tentruong', 'tendonvitruong', 'truonghoc', 'cosodaotao', 'cosogiaoduc'];
+                const wardFields = ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality', 'tenxaphuong', 'xaphuong', 'phuongxa', 'dackhu'];
+                for (const row of rows.results || []) {
+                  let custom: Record<string, any> = {};
+                  try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; } catch { custom = {}; }
+                  if (!custom || typeof custom !== 'object' || Array.isArray(custom)) custom = {};
+                  const explicit = readValue(row, custom, combinedFields);
+                  let classification = explicit !== null ? classify(explicit) : 'other';
+                  if (explicit === null) {
+                    const schoolValue = readValue(row, custom, schoolFields);
+                    const wardValue = readValue(row, custom, wardFields);
+                    if (schoolValue && !wardValue) classification = classify(schoolValue) === 'other' ? 'school' : classify(schoolValue);
+                    else if (wardValue && !schoolValue) classification = classify(wardValue) === 'other' ? 'ward' : classify(wardValue);
+                  }
+                  if (classification === 'school') {
+                    schoolTarget['Trường học'] = (schoolTarget['Trường học'] || 0) + 1;
+                    originTarget.school = (originTarget.school || 0) + 1;
+                  } else if (classification === 'ward') {
+                    wardTarget['Xã/phường'] = (wardTarget['Xã/phường'] || 0) + 1;
+                    originTarget.ward = (originTarget.ward || 0) + 1;
+                  } else {
+                    originTarget.other = (originTarget.other || 0) + 1;
+                  }
+                }
+              } catch (error) {
+                console.error('Không thể tổng hợp phân loại địa bàn/trường học ' + table + ':', error);
+              }
             };
 
             const aggregateScienceTaskLevels = async () => {
@@ -1989,11 +2060,9 @@ export default {
               aggregateScienceTaskLevels(),
               aggregateModuleGroups('startups', startupsByField, ['business_field', 'business_sector', 'startup_sector', 'field', 'sector', 'industry', 'industry_sector', 'linhvuckinhdoanh', 'linhvuchoatdong', 'nganhnghe', 'nganhkinhdoanh', 'linhvuc']),
               aggregateModuleGroups('startup_projects', projectsByField, ['field', 'business_field', 'business_sector', 'startup_field', 'startup_sector', 'sector', 'industry', 'linhvuchoatdong', 'nganhnghe', 'linhvuckhoinghiep', 'linhvuc']),
-              aggregateModuleGroups('startup_projects', projectsBySchool, ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school', 'tentruong', 'tendonvitruong', 'truonghoc', 'cosodaotao', 'cosogiaoduc']),
-              aggregateModuleGroups('startup_projects', projectsByWard, ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality', 'tenxaphuong', 'xaphuong', 'phuongxa', 'dackhu']),
+              aggregateModuleOrigin('startup_projects', projectsBySchool, projectsByWard, projectsByOrigin),
               aggregateModuleGroups('startup_ideas', ideasByField, ['field', 'idea_field', 'field_of_idea', 'startup_field', 'business_field', 'business_sector', 'sector', 'industry', 'linhvuchoatdong', 'nganhnghe', 'linhvuckhoinghiep', 'linhvuc']),
-              aggregateModuleGroups('startup_ideas', ideasBySchool, ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school', 'tentruong', 'tendonvitruong', 'truonghoc', 'cosodaotao', 'cosogiaoduc']),
-              aggregateModuleGroups('startup_ideas', ideasByWard, ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality', 'tenxaphuong', 'xaphuong', 'phuongxa', 'dackhu']),
+              aggregateModuleOrigin('startup_ideas', ideasBySchool, ideasByWard, ideasByOrigin),
               aggregateModuleGroups('support_organizations', supportOrgsByField, ['field', 'service_area', 'sector', 'organization_type', 'type']),
               aggregateModuleGroups('initiatives', initiativesByField, ['field', 'recognition_field', 'recognized_field', 'initiative_field', 'recognition_domain', 'sector', 'linhvuccongnhan', 'linhvuc']),
               aggregateModuleGroups('initiatives', initiativesBySpecialty, ['specialty', 'specialization', 'professional_field', 'initiative_specialty', 'research_field', 'discipline', 'major', 'chuyenganh', 'chuyennganh', 'chuyennganhchinh']),
@@ -2034,30 +2103,7 @@ export default {
 
           }
 
-          // Classify approved/public startup ideas by the source column supplied in Excel.
-          try {
-            const ideaInfo = await env.DB.prepare('PRAGMA table_info(startup_ideas)').all<any>();
-            const ideaColumns = new Set((ideaInfo.results || []).map((column: any) => String(column.name)));
-            const ideaRows = await env.DB.prepare('SELECT * FROM startup_ideas' + buildPublicVisibilityWhere(ideaColumns)).all<any>();
-            const normalizeOrigin = (value: any) => String(value ?? '').normalize('NFD')
-              .replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
-            for (const row of ideaRows.results || []) {
-              let custom: Record<string, any> = {};
-              try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; } catch { custom = {}; }
-              const raw = row.ward_or_school ?? row.ward_school ?? row.wardSchool ??
-                row.school_ward ?? row.schoolWard ?? row.school_ward_type ?? row.idea_origin_type ?? row.origin_type ??
-                row.classification_type ?? row.category_type ??
-                custom.wardOrSchool ?? custom.wardSchool ?? custom.ward_or_school ?? custom.schoolWard ??
-                custom.school_ward ?? custom.schoolWardType ?? custom.ideaOriginType ?? custom.originType ??
-                custom.classificationType ?? custom.categoryType ?? '';
-              const label = normalizeOrigin(raw);
-              if (/(truong|dai hoc|cao dang|school|university|college)/.test(label)) ideasByOrigin.school++;
-              else if (/(xa|phuong|dackhu|ward|commune)/.test(label)) ideasByOrigin.ward++;
-              else ideasByOrigin.other++;
-            }
-          } catch (error) {
-            console.error('Không thể tổng hợp phân loại ý tưởng khởi nghiệp:', error);
-          }
+          // Origin totals are generated by the mutually-exclusive aggregator above.
 
           // Classify approved/public startup projects by their school/ward origin.
           try {
