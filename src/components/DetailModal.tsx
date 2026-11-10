@@ -233,6 +233,17 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const moduleDisplayNames: Record<string, string> = {
+    science_tasks: 'Đề tài, nhiệm vụ KH&CN', initiatives: 'Sáng kiến có tác dụng, ảnh hưởng đối với thành phố',
+    patents: 'Sáng chế & Sở hữu trí tuệ', experts: 'Chuyên gia & Nhà khoa học', startups: 'Doanh nghiệp khởi nghiệp sáng tạo',
+    support_organizations: 'Tổ chức trung gian', startup_projects: 'Dự án khởi nghiệp', startup_ideas: 'Ý tưởng khởi nghiệp',
+    wards: 'Danh sách xã/phường', universities: 'Trường Đại học/Cao đẳng', featured_startups: 'Doanh nghiệp khởi nghiệp tiêu biểu',
+    investors: 'Nhà đầu tư', investment_funds: 'Quỹ đầu tư', organizations: 'Tổ chức KH&CN', technologies: 'Công nghệ & Kết quả nghiên cứu',
+    programs: 'Chương trình hỗ trợ', collaboration_needs: 'Nhu cầu kết nối & Hợp tác', publications: 'Bài báo & Công bố khoa học',
+    lab_equipments: 'Thiết bị & Phòng thí nghiệm trọng điểm', policies: 'Chính sách, Văn bản & Quy định'
+  };
+  const displayCode = entity.code && entity.code !== entity.id && !String(entity.code).startsWith(`${entity.moduleType}_imp_`) ? entity.code : '';
+
   const formatVND = (num?: number) => {
     if (!num) return '0 đ';
     return `${Number(num).toLocaleString()} đ`;
@@ -270,17 +281,11 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
         <div className="sticky top-0 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 z-10">
           <div className="w-full min-w-0 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              {(entity.moduleType !== 'experts' || (entity.code && entity.code !== entity.id && !String(entity.code).startsWith('experts_imp_'))) && !(entity.moduleType === 'startup_ideas' && String(entity.id || '').startsWith('startup_ideas_imp_')) && (
-                <>
-                  <span className="font-mono font-medium text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                    {entity.moduleType === 'experts' ? entity.code : (entity.code || entity.id)}
-                  </span>
-                  <span aria-hidden="true">·</span>
-                </>
-              )}
-              <span className="font-semibold text-slate-700 capitalize">
-                {entity.moduleType === 'experts' ? 'Chuyên gia' : (entity.moduleType || 'science_tasks').replace(/_/g, ' ')}
-              </span>
+              {displayCode && <>
+                <span className="font-mono font-medium text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">{displayCode}</span>
+                <span aria-hidden="true">·</span>
+              </>}
+              <span className="font-semibold text-slate-700">{moduleDisplayNames[entity.moduleType || 'science_tasks'] || 'Thông tin dữ liệu'}</span>
               <span aria-hidden="true">·</span>
               <span>Cập nhật: {formatDateSafe(entity.updatedAt || entity.createdAt)}</span>
               {isAuthorized && (
