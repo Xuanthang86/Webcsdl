@@ -192,7 +192,7 @@ ${isAuthorized ? `
 - Chức danh nghiên cứu: ${safeDisplayValue(entity.researchTitle)}
 - Chức vụ: ${safeDisplayValue(entity.jobTitle || entity.position)}
 - Email: ${safeDisplayValue(entity.email || entity.publicEmail)}
-- Điện thoại: Không công khai
+- Điện thoại: ${isAuthorized ? safeDisplayValue(entity.phone || entity.phoneNumber || entity.phone_number || entity.mobile || entity.mobilePhone || entity.mobile_phone || entity.telephone || entity.contactPhone || entity.contact_phone) : 'Không công khai số điện thoại'}
 - Lĩnh vực: ${safeDisplayValue(entity.field)}
 - Đơn vị công tác: ${safeDisplayValue(entity.workplace || entity.leadOrganization || entity.organization)}
 - Quá trình đào tạo: ${safeDisplayValue(entity.trainingProcess)}
