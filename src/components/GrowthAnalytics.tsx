@@ -327,7 +327,7 @@ export const GrowthAnalytics: React.FC<GrowthAnalyticsProps> = ({ stats }) => {
               type="button"
               onClick={() => setActiveTab(tab.key)}
               aria-pressed={activeTab === tab.key}
-              className={'flex min-h-14 min-w-0 flex-col items-start justify-center gap-1 rounded-xl border px-3 py-2 text-left text-sm font-extrabold leading-tight transition-all ' + (activeTab === tab.key ? tab.active + ' shadow-md ring-2 ring-offset-1 ring-slate-300' : tab.tint + ' hover:-translate-y-0.5 hover:shadow-sm')}
+              className={'flex min-h-14 min-w-0 flex-col items-start justify-center gap-1 rounded-xl border px-3 py-2 text-left text-base lg:text-lg font-extrabold leading-tight transition-all ' + (activeTab === tab.key ? tab.active + ' shadow-md ring-2 ring-offset-1 ring-slate-300' : tab.tint + ' hover:-translate-y-0.5 hover:shadow-sm')}
             >
               <span className="break-words">{tab.label}</span>
               <span className={'font-mono text-sm ' + (activeTab === tab.key ? 'text-white/90' : 'opacity-75')}>{formatCount(tab.total)} hồ sơ</span>
