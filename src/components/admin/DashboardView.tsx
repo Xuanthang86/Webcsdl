@@ -148,7 +148,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      <HomeOverviewDashboard stats={stats} systemConfig={systemConfig} showIntro={false} onNavigateBrowse={(category) => onNavigateModule(category || 'science_tasks')} />
+      <HomeOverviewDashboard stats={stats} systemConfig={systemConfig} showIntro={false} showEcosystemDetailBreakdown={false} onNavigateBrowse={(category) => onNavigateModule(category || 'science_tasks')} />
 
       <GrowthAnalytics stats={stats} />
 
