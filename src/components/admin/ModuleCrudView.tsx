@@ -1051,6 +1051,8 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       {moduleType === 'startup_projects' && (
                         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-1">
                           {item.address && <span>Đ/c: {item.address}</span>}
+                          {item.originType && <span className="bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded border border-emerald-200">{item.originType}</span>}
+                          {item.wardSchool && <span>{item.wardSchool}</span>}
                           {item.incubator && <span className="bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded border border-emerald-200">Ươm tạo: {item.incubator}</span>}
                           {item.startYear && <span className="text-slate-400">· Năm KN: {item.startYear}</span>}
                         </div>
