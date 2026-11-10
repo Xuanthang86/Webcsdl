@@ -2146,7 +2146,6 @@ export default {
               investmentFundsByYear,
               investmentFundsByField,
               featuredStartupsByField,
-              featuredStartupsByYear,
               initiativesBySpecialty,
               initiativesByUnit,
               expertsByAcademicTitle,
