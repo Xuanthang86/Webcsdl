@@ -68,7 +68,9 @@ const ALLOWED_MODULES = [
 const MODULE_CODE_PREFIX: Record<string, string> = {
   science_tasks: 'DT', initiatives: 'SKTP', patents: 'SC', experts: 'CG', startups: 'DNKNST',
   support_organizations: 'TCTG', startup_projects: 'DAKN', startup_ideas: 'YTKN', wards: 'XP',
-  universities: 'ĐHCĐ', featured_startups: 'DNKNTB', investors: 'NĐT', investment_funds: 'QĐT'
+  universities: 'ĐHCĐ', featured_startups: 'DNKNTB', investors: 'NĐT', investment_funds: 'QĐT',
+  organizations: 'TCKHCN', technologies: 'CN', programs: 'CT', collaboration_needs: 'NC',
+  publications: 'CB', lab_equipments: 'PTN', policies: 'CS'
 };
 
 async function generateModuleCode(db: D1Database, moduleName: string): Promise<string> {
@@ -84,6 +86,27 @@ async function generateModuleCode(db: D1Database, moduleName: string): Promise<s
     if (!exists) return code;
   }
   throw new Error(`Không thể cấp mã định danh duy nhất cho phân hệ ${moduleName}.`);
+}
+
+// Backfill missing/legacy import identifiers for an authorized administrator.
+// Existing valid codes remain unchanged; sequential updates avoid reusing a code.
+async function ensureModuleRecordCodes(db: D1Database, moduleName: string): Promise<void> {
+  const prefix = MODULE_CODE_PREFIX[moduleName];
+  if (!prefix) return;
+  const info = await db.prepare(`PRAGMA table_info("${moduleName}")`).all<any>();
+  const columns = new Set((info.results || []).map((column: any) => String(column.name)));
+  if (!columns.has('id') || !columns.has('code')) return;
+  const rows = await db.prepare(`SELECT id, code FROM "${moduleName}" ORDER BY id`).all<any>();
+  const validPattern = new RegExp('^' + prefix.replace(/[.*+?^${}()|[\\]\\]/g, '\\\\$&') + '-\\\\d{6}$', 'u');
+  for (const row of rows.results || []) {
+    if (validPattern.test(String(row.code || '').trim())) continue;
+    const nextCode = await generateModuleCode(db, moduleName);
+    const result = await db.prepare(`UPDATE "${moduleName}" SET code = ? WHERE id = ?`)
+      .bind(nextCode, row.id).run();
+    if (!result.success || Number(result.meta?.changes || 0) !== 1) {
+      throw new Error(`Không thể cấp mã bản ghi cho hồ sơ ${String(row.id)} trong phân hệ ${moduleName}.`);
+    }
+  }
 }
 
 // Convert API field names to the physical SQLite column convention.
@@ -109,7 +132,22 @@ function hydrateModuleRow(row: any, moduleName?: string): any {
   }
   // Keep flexible custom fields, but never let data_json override authoritative D1 columns.
   const merged: Record<string, any> = { ...custom, ...normalized, moduleType: moduleName || row.module_type || row.moduleType };
-  if (!merged.title) merged.title = merged.name || merged.companyName || merged.projectName || merged.fullName || merged.initiativeName || merged.initiative_name || merged.wardName || merged.ward_name || merged.universityName || merged.university_name || merged.schoolName || merged.school_name || '';
+  const invalidImportTitle = String(merged.title || '').startsWith(`${moduleName || ''}_imp_`) || (merged.title && String(merged.title) === String(merged.id || ''));
+  if (!merged.title || invalidImportTitle) {
+    const titleCandidates: Record<string, any[]> = {
+      initiatives: [merged.initiativeName, merged.initiative_name, merged.solutionName, merged.name],
+      startups: [merged.companyName, merged.company_name, merged.name],
+      startup_projects: [merged.projectName, merged.project_name, merged.name],
+      startup_ideas: [merged.ideaName, merged.idea_name, merged.ideaTitle, merged.name],
+      wards: [merged.wardName, merged.ward_name, merged.name],
+      universities: [merged.universityName, merged.university_name, merged.schoolName, merged.school_name, merged.name],
+      experts: [merged.fullName, merged.full_name, merged.expertName, merged.expert_name, merged.name],
+      patents: [merged.patentName, merged.patent_name, merged.inventionName, merged.name],
+      support_organizations: [merged.organizationName, merged.organization_name, merged.name]
+    };
+    const candidates = [...(titleCandidates[moduleName || ''] || []), merged.name, merged.projectName, merged.ideaName, merged.fullName, merged.initiativeName];
+    merged.title = candidates.find(value => value !== null && value !== undefined && String(value).trim() && String(value) !== String(merged.id || '') && !String(value).startsWith(`${moduleName || ''}_imp_`)) || '';
+  }
   if (moduleName === 'startups' && !merged.companyName) merged.companyName = merged.name || merged.title;
   if (moduleName === 'startup_projects' && !merged.projectName) merged.projectName = merged.title || merged.name;
   if (moduleName === 'startup_ideas') {
@@ -1917,20 +1955,27 @@ export default {
                 for (const row of rows.results || []) {
                   let custom: Record<string, any> = {};
                   try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; } catch { custom = {}; }
-                  const candidates = ['management_level', 'task_level', 'project_level', 'level', 'capquanly', 'capdetai'];
+                  const candidates = [
+                    'management_level', 'managementLevel', 'task_level', 'taskLevel', 'project_level', 'projectLevel',
+                    'level', 'management_scope', 'funding_level', 'research_level', 'capquanly', 'capquanlydetai',
+                    'capdetai', 'capdoquanly', 'capquanlydetainhiemvu', 'loaidetai', 'nguonkinhphi'
+                  ];
                   let raw: any = null;
                   for (const candidate of candidates) {
                     const key = normalize(candidate);
                     const physicalKey = Object.keys(row).find(name => normalize(name) === key);
                     const customKey = Object.keys(custom).find(name => normalize(name) === key);
-                    const value = physicalKey ? row[physicalKey] : customKey ? custom[customKey] : null;
+                    const physicalValue = physicalKey ? row[physicalKey] : null;
+                    const customValue = customKey ? custom[customKey] : null;
+                    const value = physicalValue !== null && physicalValue !== undefined && String(physicalValue).trim()
+                      ? physicalValue : customValue;
                     if (value !== null && value !== undefined && String(value).trim()) { raw = value; break; }
                   }
                   const value = normalize(raw);
                   let bucket = '';
-                  if (/(cap bo|bo nganh|quoc gia|nha nuoc|nafosted)/.test(value)) bucket = 'Cấp Bộ';
-                  else if (/(cap tinh|cap thanh pho|tinh thanh pho|ubnd tinh|ubnd thanh pho|thanh pho)/.test(value)) bucket = 'Cấp Tỉnh/Thành phố';
-                  else if (/(cap co so|cap truong|co so)/.test(value)) bucket = 'Cấp Cơ sở';
+                  if (/(cap bo|bo nganh|quoc gia|nha nuoc|nafosted|bo khoa hoc|bo khcn)/.test(value)) bucket = 'Cấp Bộ';
+                  else if (/(cap tinh|cap thanh pho|tinh thanh pho|ubnd tinh|ubnd thanh pho|thanh pho|cap dia phuong)/.test(value)) bucket = 'Cấp Tỉnh/Thành phố';
+                  else if (/(cap co so|cap truong|co so|truong dai hoc|truong cao dang|don vi co so)/.test(value)) bucket = 'Cấp Cơ sở';
                   if (bucket) tasksByLevel[bucket] = (tasksByLevel[bucket] || 0) + 1;
                 }
               } catch (error) {
@@ -2942,8 +2987,9 @@ export default {
         if (recordId && request.method === 'GET') {
           if (env.DB) {
             try {
+              if (canViewRestrictedModule(currentUser, moduleName)) await ensureModuleRecordCodes(env.DB, moduleName);
               const rawItem = await env.DB.prepare(`SELECT * FROM ${moduleName} WHERE id = ?`).bind(recordId).first<any>();
-              const item = hydrateModuleRow(rawItem);
+              const item = hydrateModuleRow(rawItem, moduleName);
               if (!item) {
                 return jsonResponse({ success: false, message: 'Không tìm thấy bản ghi.' }, 404, corsHeaders);
               }
@@ -2979,6 +3025,7 @@ export default {
               const limit = Math.min(500, Math.max(1, parseInt(url.searchParams.get('limit') || '200', 10) || 200));
               const offset = Math.max(0, parseInt(url.searchParams.get('offset') || '0', 10) || 0);
               const canViewRestrictedRecords = canViewRestrictedModule(currentUser, moduleName);
+              if (canViewRestrictedRecords) await ensureModuleRecordCodes(env.DB, moduleName);
               const publicOnly = url.searchParams.get('publicOnly') === 'true' || !canViewRestrictedRecords;
               let visibilityWhere = '';
               if (publicOnly) {
