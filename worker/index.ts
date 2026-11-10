@@ -1983,9 +1983,9 @@ export default {
                   return 'other';
                 };
                 const combinedFields = [
-                  'ward_or_school', 'ward_school', 'wardSchool', 'school_ward', 'schoolWard',
                   'origin_type', 'idea_origin_type', 'project_origin_type', 'classification_type',
-                  'category_type', 'belong_to', 'affiliation_type', 'thuocxaphuongtruonghoc'
+                  'category_type', 'belong_to', 'affiliation_type', 'ward_or_school', 'ward_school',
+                  'wardSchool', 'school_ward', 'schoolWard', 'thuocxaphuongtruonghoc'
                 ];
                 const schoolFields = ['school_name', 'school', 'university_name', 'university', 'educational_institution', 'affiliated_school', 'tentruong', 'tendonvitruong', 'truonghoc', 'cosodaotao', 'cosogiaoduc'];
                 const wardFields = ['ward_name', 'ward', 'commune_name', 'commune', 'administrative_unit', 'locality', 'tenxaphuong', 'xaphuong', 'phuongxa', 'dackhu'];
@@ -2115,12 +2115,10 @@ export default {
             for (const row of projectRows.results || []) {
               let custom: Record<string, any> = {};
               try { custom = row.data_json ? JSON.parse(String(row.data_json)) : {}; } catch { custom = {}; }
-              const raw = row.ward_or_school ?? row.ward_school ?? row.wardSchool ??
-                row.school_ward ?? row.schoolWard ?? row.school_ward_type ?? row.idea_origin_type ?? row.origin_type ??
-                row.classification_type ?? row.category_type ??
-                custom.wardOrSchool ?? custom.wardSchool ?? custom.ward_or_school ?? custom.schoolWard ??
-                custom.school_ward ?? custom.schoolWardType ?? custom.ideaOriginType ?? custom.originType ??
-                custom.classificationType ?? custom.categoryType ?? '';
+              const raw = row.origin_type ?? row.idea_origin_type ?? row.ward_or_school ?? row.ward_school ?? row.wardSchool ??
+                row.school_ward ?? row.schoolWard ?? row.school_ward_type ?? row.classification_type ?? row.category_type ??
+                custom.originType ?? custom.ideaOriginType ?? custom.wardOrSchool ?? custom.wardSchool ?? custom.ward_or_school ??
+                custom.schoolWard ?? custom.school_ward ?? custom.schoolWardType ?? custom.classificationType ?? custom.categoryType ?? '';
               const label = normalizeProjectOrigin(raw);
               if (/(truong|dai hoc|cao dang|school|university|college)/.test(label)) projectsByOrigin.school++;
               else if (/(xa|phuong|dackhu|ward|commune)/.test(label)) projectsByOrigin.ward++;
@@ -3340,7 +3338,9 @@ export default {
           linhvuckhoinghiep: 'field', tomtatveduan: 'summary',
           soluongthanhvienthamgiaduan: 'members_count', duanduocuomtaotutochuc: 'incubated_at',
           tenytuong: 'title', tenytuongkhoinghiep: 'title', thuocxaphuong: 'ward_or_school',
-          ytuongthuocxaphuongtruonghoc: 'ward_or_school', tomtatveytuong: 'summary',
+          ytuongthuocxaphuongtruonghoc: 'ward_or_school', duanthuocxaphuongtruonghoc: 'origin_type',
+          loaihinhthuocxaphuongtruonghoc: 'origin_type', loaithuocxaphuongtruonghoc: 'origin_type',
+          tenxaphuonghoactruonghoc: 'ward_or_school', tomtatveytuong: 'summary',
           soluongthanhvienthamgiaytuong: 'members_count', nguoidungdaunhomytuong: 'leader_name',
           tengiaovienhuongdan: 'mentor_name', nhomytuongdanghoctapcongtactaidonvinao: 'affiliated_unit',
           tenxaphuongdackhu: 'name', tenxaphuong: 'name', tentruong: 'name',
@@ -3445,7 +3445,8 @@ export default {
             if (key.startsWith('soluongthanhvienthamgia') && ['startup_projects', 'startup_ideas'].includes(moduleName)) target = 'members_count';
             else if (key.startsWith('soluongthanhvienthamgia')) target = 'team_size';
             if (key.startsWith('nhomytuongdanghoctapcongtactaidonvi')) target = 'affiliated_unit';
-            if (key.startsWith('thuocxaphuong') && moduleName === 'startup_ideas') target = 'ward_or_school';
+            if (key.startsWith('thuocxaphuong') && ['startup_ideas', 'startup_projects'].includes(moduleName)) target = 'ward_or_school';
+            if (['duanthuocxaphuongtruonghoc', 'loaihinhthuocxaphuongtruonghoc', 'loaithuocxaphuongtruonghoc'].includes(key)) target = 'origin_type';
             if (key.startsWith('thuocxaphuong') && ['universities', 'featured_startups'].includes(moduleName)) target = 'ward';
             if (key.startsWith('tenduan') && moduleName === 'startup_projects') target = primaryColumn;
             if (key.startsWith('tenduan') && moduleName === 'featured_startups') target = 'project_name';
