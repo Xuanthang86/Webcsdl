@@ -995,7 +995,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                         />
                       </td>
                     )}
-                    <td className="py-3 px-4 text-center text-slate-400 font-mono text-xs lg:text-xs">
+                    <td className="py-3 px-4 text-center text-slate-400 font-mono text-sm lg:text-xs">
                       {(currentPage - 1) * pageSize + idx + 1}
                     </td>
                     <td className="py-3 px-4 font-mono text-sm lg:text-sm font-semibold text-teal-800 whitespace-nowrap">
