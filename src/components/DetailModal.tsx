@@ -149,9 +149,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
     const safeTitle = String(entity.moduleType === 'experts' ? expertDisplayName : (entity.title || 'ban_ghi')).slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_');
     const exportPrefix = moduleCodePrefixes[entity.moduleType || ''];
     const expertCode = exportPrefix && entity.code
-      && new RegExp('^' + exportPrefix + '-\\d{6}$', 'u').test(String(entity.code).trim())
-      ? String(entity.code).trim()
-      : 'chua-cap-ma';
+      && new RegExp('^' + exportPrefix + '-\\d{6}
     const rawDocName = fileName || `Ho_so_${expertCode}_${safeTitle}.txt`;
     const docName = rawDocName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9._-]/g, '_');
     const content = `================================================================================
@@ -259,12 +257,12 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
   const rawEntityTitle = String(entity.title || '');
   const invalidImportTitle = rawEntityTitle === String(entity.id || '') || rawEntityTitle.startsWith(`${entity.moduleType || ''}_imp_`);
   const detailTitleCandidates: Record<string, any[]> = {
-    initiatives: [entity.initiativeName, entity.initiative_name, entity.solutionName, entity.name],
+    initiatives: [entity.initiativeName, entity.initiative_name, entity.initiativeTitle, entity.initiative_title, entity.solutionName, entity.solution_name, entity.name],
     startups: [entity.companyName, entity.company_name, entity.name],
     startup_projects: [entity.projectName, entity.project_name, entity.projectTitle, entity.project_title, entity.name],
     startup_ideas: [entity.ideaName, entity.idea_name, entity.ideaTitle, entity.idea_title, entity.name],
     wards: [entity.wardName, entity.ward_name, entity.wardTitle, entity.name],
-    universities: [entity.universityName, entity.university_name, entity.schoolName, entity.school_name, entity.institutionName, entity.name],
+    universities: [entity.universityName, entity.university_name, entity.schoolName, entity.school_name, entity.institutionName, entity.institution_name, entity.name],
     experts: [entity.fullName, entity.full_name, entity.expertName, entity.expert_name, entity.name],
     patents: [entity.patentName, entity.patent_name, entity.name],
     support_organizations: [entity.organizationName, entity.organization_name, entity.name]
@@ -1658,12 +1656,12 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
   const rawEntityTitle = String(entity.title || '');
   const invalidImportTitle = rawEntityTitle === String(entity.id || '') || rawEntityTitle.startsWith(`${entity.moduleType || ''}_imp_`);
   const detailTitleCandidates: Record<string, any[]> = {
-    initiatives: [entity.initiativeName, entity.initiative_name, entity.solutionName, entity.name],
+    initiatives: [entity.initiativeName, entity.initiative_name, entity.initiativeTitle, entity.initiative_title, entity.solutionName, entity.solution_name, entity.name],
     startups: [entity.companyName, entity.company_name, entity.name],
     startup_projects: [entity.projectName, entity.project_name, entity.projectTitle, entity.project_title, entity.name],
     startup_ideas: [entity.ideaName, entity.idea_name, entity.ideaTitle, entity.idea_title, entity.name],
     wards: [entity.wardName, entity.ward_name, entity.wardTitle, entity.name],
-    universities: [entity.universityName, entity.university_name, entity.schoolName, entity.school_name, entity.institutionName, entity.name],
+    universities: [entity.universityName, entity.university_name, entity.schoolName, entity.school_name, entity.institutionName, entity.institution_name, entity.name],
     experts: [entity.fullName, entity.full_name, entity.expertName, entity.expert_name, entity.name],
     patents: [entity.patentName, entity.patent_name, entity.name],
     support_organizations: [entity.organizationName, entity.organization_name, entity.name]
