@@ -73,12 +73,30 @@ const MODULE_CODE_PREFIX: Record<string, string> = {
   publications: 'CB', lab_equipments: 'PTN', policies: 'CS'
 };
 
+async function ensureModuleCodeColumn(db: D1Database, moduleName: string): Promise<boolean> {
+  if (!MODULE_CODE_PREFIX[moduleName]) return false;
+  const readColumns = async () => {
+    const info = await db.prepare(`PRAGMA table_info("${moduleName}")`).all<any>();
+    return new Set((info.results || []).map((column: any) => String(column.name)));
+  };
+  let columns = await readColumns();
+  if (!columns.has('id')) return false;
+  if (!columns.has('code')) {
+    try {
+      await db.exec(`ALTER TABLE "${moduleName}" ADD COLUMN code TEXT`);
+    } catch (error) {
+      // A concurrent administrator may have added the same additive column.
+      columns = await readColumns();
+      if (!columns.has('code')) throw error;
+    }
+    columns = await readColumns();
+  }
+  return columns.has('code');
+}
+
 async function generateModuleCode(db: D1Database, moduleName: string): Promise<string> {
   const prefix = MODULE_CODE_PREFIX[moduleName];
-  if (!prefix) return '';
-  const info = await db.prepare(`PRAGMA table_info("${moduleName}")`).all<any>();
-  const columns = new Set((info.results || []).map((column: any) => String(column.name)));
-  if (!columns.has('code')) return '';
+  if (!prefix || !(await ensureModuleCodeColumn(db, moduleName))) return '';
   for (let attempt = 0; attempt < 30; attempt++) {
     const digits = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, '0');
     const code = `${prefix}-${digits}`;
@@ -93,9 +111,7 @@ async function generateModuleCode(db: D1Database, moduleName: string): Promise<s
 async function ensureModuleRecordCodes(db: D1Database, moduleName: string): Promise<void> {
   const prefix = MODULE_CODE_PREFIX[moduleName];
   if (!prefix) return;
-  const info = await db.prepare(`PRAGMA table_info("${moduleName}")`).all<any>();
-  const columns = new Set((info.results || []).map((column: any) => String(column.name)));
-  if (!columns.has('id') || !columns.has('code')) return;
+  if (!(await ensureModuleCodeColumn(db, moduleName))) return;
   const rows = await db.prepare(`SELECT id, code FROM "${moduleName}" ORDER BY id`).all<any>();
   const validPattern = new RegExp('^' + prefix + '-\\d{6}$', 'u');
   for (const row of rows.results || []) {
