@@ -940,8 +940,8 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       {/* Records Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm lg:text-sm text-slate-700">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-xs lg:text-xs tracking-wider">
+          <table className="w-full text-left text-sm lg:text-xs text-slate-700">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-xs lg:text-[11px] tracking-wider">
               <tr>
                 {canDelete && (
                   <th className="py-3 px-2 w-9 text-center">
@@ -995,23 +995,23 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                         />
                       </td>
                     )}
-                    <td className="py-3 px-4 text-center text-slate-400 font-mono text-sm lg:text-xs">
+                    <td className="py-3 px-4 text-center text-slate-400 font-mono text-sm lg:text-[11px]">
                       {(currentPage - 1) * pageSize + idx + 1}
                     </td>
-                    <td className="py-3 px-4 font-mono text-sm lg:text-sm font-semibold text-teal-800 whitespace-nowrap">
+                    <td className="py-3 px-4 font-mono text-sm lg:text-xs font-semibold text-teal-800 whitespace-nowrap">
                       {getDisplayRecordCode(item, moduleType)}
                     </td>
                     <td className="py-3 px-4">
                       <div 
                         onClick={() => onViewDetail(item)}
-                        className="font-semibold text-base lg:text-base leading-snug text-slate-900 hover:text-teal-800 cursor-pointer whitespace-normal break-words"
+                        className="font-semibold text-base lg:text-sm leading-snug text-slate-900 hover:text-teal-800 cursor-pointer whitespace-normal break-words"
                       >
                         {item.title}
                       </div>
                       
                       {/* Specialized Contextual Metadata per Module */}
                       {moduleType === 'science_tasks' && (
-                        <div className="flex flex-wrap items-center gap-2 text-sm lg:text-xs text-slate-500 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 text-sm lg:text-[11px] text-slate-500 mt-1">
                           <span className="bg-teal-50 text-teal-700 px-1.5 py-0.2 rounded border border-teal-200">{({ national: 'Cấp Bộ', provincial: 'Cấp Tỉnh/Thành phố', local: 'Cấp Cơ sở', unknown: 'Chưa xác định' } as const)[getScienceTaskLevel(item)]}</span>
                           {item.principalInvestigator && <span>Chủ nhiệm: <strong className="text-slate-700">{item.principalInvestigator}</strong></span>}
                           {item.executionTime && <span className="text-slate-400">· {item.executionTime}</span>}
@@ -1019,7 +1019,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       )}
 
                       {moduleType === 'initiatives' && (
-                        <div className="flex flex-wrap items-center gap-2 text-sm lg:text-xs text-slate-500 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 text-sm lg:text-[11px] text-slate-500 mt-1">
                           {item.recognitionYear && <span className="bg-amber-50 text-amber-800 font-semibold px-1.5 py-0.2 rounded border border-amber-200">Năm {item.recognitionYear}</span>}
                           {item.authors && <span>Tác giả: <strong className="text-slate-700">{item.authors}</strong></span>}
                           {item.ownerAddress && <span className="text-slate-400">· Đ/c: {item.ownerAddress}</span>}
@@ -1027,7 +1027,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       )}
 
                       {moduleType === 'experts' && (
-                        <div className="flex flex-wrap items-center gap-2 text-sm lg:text-xs text-slate-500 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 text-sm lg:text-[11px] text-slate-500 mt-1">
                           {item.birthYear && <span className="text-slate-600">Sinh: {item.birthYear}</span>}
                           {item.email && <span className="text-teal-700">{item.email}</span>}
                           {item.specialty && <span className="bg-blue-50 text-blue-700 px-1.5 py-0.2 rounded border border-blue-200">{item.specialty}</span>}
@@ -1035,7 +1035,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       )}
 
                       {moduleType === 'startups' && (
-                        <div className="flex flex-wrap items-center gap-2 text-sm lg:text-xs text-slate-500 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 text-sm lg:text-[11px] text-slate-500 mt-1">
                           {item.address && <span>Đ/c: {item.address}</span>}
                           {item.foundedYear && <span className="text-slate-400">· Khởi nghiệp: {item.foundedYear}</span>}
                           {item.website && <a href={item.website} target="_blank" rel="noreferrer" className="text-teal-600 hover:underline">Website</a>}
@@ -1043,13 +1043,13 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       )}
 
                       {moduleType === 'support_organizations' && item.address && (
-                        <div className="text-sm lg:text-xs text-slate-500 mt-1">
+                        <div className="text-sm lg:text-[11px] text-slate-500 mt-1">
                           Địa chỉ: {item.address}
                         </div>
                       )}
 
                       {moduleType === 'startup_projects' && (
-                        <div className="flex flex-wrap items-center gap-2 text-sm lg:text-xs text-slate-500 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 text-sm lg:text-[11px] text-slate-500 mt-1">
                           {item.address && <span>Đ/c: {item.address}</span>}
                           {item.originType && <span className="bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded border border-emerald-200">{item.originType}</span>}
                           {item.wardSchool && <span>{item.wardSchool}</span>}
@@ -1059,20 +1059,20 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       )}
 
                       {moduleType === 'startup_ideas' && (
-                        <div className="flex flex-wrap items-center gap-2 text-sm lg:text-xs text-slate-500 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 text-sm lg:text-[11px] text-slate-500 mt-1">
                           {item.wardSchool && <span className="bg-yellow-50 text-yellow-800 px-1.5 py-0.2 rounded border border-yellow-200">{item.wardSchool}</span>}
                           {item.mentorTeacher && <span>GV hướng dẫn: {item.mentorTeacher}</span>}
                         </div>
                       )}
 
                       {moduleType === 'wards' && item.address && (
-                        <div className="text-sm lg:text-xs text-slate-500 mt-1">
+                        <div className="text-sm lg:text-[11px] text-slate-500 mt-1">
                           Địa chỉ: {item.address}
                         </div>
                       )}
 
                       {moduleType === 'universities' && (
-                        <div className="flex flex-wrap items-center gap-2 text-sm lg:text-xs text-slate-500 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 text-sm lg:text-[11px] text-slate-500 mt-1">
                           {item.ward && <span className="bg-purple-50 text-purple-700 px-1.5 py-0.2 rounded border border-purple-200">{item.ward}</span>}
                           {item.address && <span>Địa chỉ: {item.address}</span>}
                         </div>
@@ -1093,11 +1093,11 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       )}
                     </td>
                     {showClassificationColumns && <>
-                      <td className="py-3 px-4 text-sm lg:text-xs text-slate-600 truncate max-w-[160px]">{item.field || item.primaryField || '—'}</td>
-                      <td className="py-3 px-4 text-sm lg:text-xs text-slate-600 truncate max-w-[170px]">{item.ownerName || item.proposingOrg || item.leadOrganization || item.leaderName || item.representative || item.workplace || item.mentorTeacher || '—'}</td>
+                      <td className="py-3 px-4 text-sm lg:text-[11px] text-slate-600 truncate max-w-[160px]">{item.field || item.primaryField || '—'}</td>
+                      <td className="py-3 px-4 text-sm lg:text-[11px] text-slate-600 truncate max-w-[170px]">{item.ownerName || item.proposingOrg || item.leadOrganization || item.leaderName || item.representative || item.workplace || item.mentorTeacher || '—'}</td>
                     </>}
                     <td className="py-3 px-4 text-center">
-                      <span className={`inline-block px-2 py-0.5 rounded text-sm lg:text-xs font-medium ${
+                      <span className={`inline-block px-2 py-0.5 rounded text-sm lg:text-[11px] font-medium ${
                         item.status === 'approved' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
                         item.status === 'under_review' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
                         item.status === 'needs_revision' ? 'bg-orange-50 text-orange-800 border border-orange-200' :
@@ -1107,7 +1107,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       </span>
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <span className={`text-sm lg:text-xs font-medium ${(['approved', 'published'].includes(String(item.status || '').toLowerCase()) && item.publicityLevel === 'public') ? 'text-emerald-700' : 'text-slate-400'}`}>
+                      <span className={`text-sm lg:text-[11px] font-medium ${(['approved', 'published'].includes(String(item.status || '').toLowerCase()) && item.publicityLevel === 'public') ? 'text-emerald-700' : 'text-slate-400'}`}>
                         {(['approved', 'published'].includes(String(item.status || '').toLowerCase()) && item.publicityLevel === 'public') ? 'Công khai' : 'Nội bộ'}
                       </span>
                     </td>
