@@ -743,7 +743,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                             STT {idx + 1}
                           </span>
                           <span className="text-[11px] text-amber-800 font-medium truncate max-w-[150px]">
-                            {item.wardSchool || 'Trường Đại học'}
+                            {item.wardSchool || item.wardOrSchool || item.ward_or_school || item.affiliatedUnit || item.originType || 'Chưa cập nhật'}
                           </span>
                         </div>
                         <h4 className="font-bold text-slate-900 group-hover:text-yellow-800 transition-colors text-sm line-clamp-2">
