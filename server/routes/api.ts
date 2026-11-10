@@ -400,7 +400,7 @@ const protectExpertContactFields = (record: any, canViewFullContact: boolean): a
   if (canViewFullContact || !record || typeof record !== 'object') return record;
   const protectedRecord = { ...record };
   for (const key of Object.keys(protectedRecord)) {
-    if (!/(phone|mobile|telephone|tel)/i.test(key)) continue;
+    if (!/(phone|mobile|telephone|^tel$)/i.test(key)) continue;
     const value = protectedRecord[key];
     if (value === null || value === undefined || value === '') continue;
     const digits = String(value).replace(/\\D/g, '');
