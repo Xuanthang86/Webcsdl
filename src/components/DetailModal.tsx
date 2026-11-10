@@ -242,7 +242,15 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
     programs: 'Chương trình hỗ trợ', collaboration_needs: 'Nhu cầu kết nối & Hợp tác', publications: 'Bài báo & Công bố khoa học',
     lab_equipments: 'Thiết bị & Phòng thí nghiệm trọng điểm', policies: 'Chính sách, Văn bản & Quy định'
   };
-  const displayCode = entity.code && entity.code !== entity.id && !String(entity.code).startsWith(`${entity.moduleType}_imp_`) ? entity.code : '';
+  const moduleCodePrefixes: Record<string, string> = {
+    science_tasks: 'DT', initiatives: 'SKTP', patents: 'SC', experts: 'CG', startups: 'DNKNST',
+    support_organizations: 'TCTG', startup_projects: 'DAKN', startup_ideas: 'YTKN', wards: 'XP',
+    universities: 'ĐHCĐ', featured_startups: 'DNKNTB', investors: 'NĐT', investment_funds: 'QĐT'
+  };
+  const expectedCodePrefix = moduleCodePrefixes[entity.moduleType || ''];
+  const displayCode = expectedCodePrefix
+    ? (entity.code && new RegExp(`^${expectedCodePrefix}-\\d{6}$`, 'u').test(String(entity.code).trim()) ? entity.code : '')
+    : (entity.code && entity.code !== entity.id && !String(entity.code).startsWith(`${entity.moduleType}_imp_`) ? entity.code : '');
 
   const formatVND = (num?: number) => {
     if (!num) return '0 đ';
