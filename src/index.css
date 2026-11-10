@@ -19,3 +19,16 @@
   }
 }
 
+
+/* Tăng nhẹ cỡ chữ các danh mục Hệ sinh thái trên laptop/PC; giữ nguyên mobile. */
+@media (min-width: 1024px) {
+  .desktop-ecosystem-text .text-xs {
+    font-size: 13px !important;
+  }
+  .desktop-ecosystem-text .text-sm {
+    font-size: 15px !important;
+  }
+  .desktop-ecosystem-text .text-\[11px\] {
+    font-size: 12px !important;
+  }
+}
