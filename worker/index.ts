@@ -1825,7 +1825,7 @@ export default {
                 const tableInfo = await env.DB.prepare('PRAGMA table_info("' + table + '")').all<any>();
                 const tableColumns = new Set((tableInfo.results || []).map((column: any) => String(column.name)));
                 const rows = await env.DB.prepare('SELECT * FROM "' + table + '"' + buildPublicVisibilityWhere(tableColumns)).all<any>();
-                const normalizeKey = (value: string) => value.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[_\\s-]/g, '').toLowerCase();
+                const normalizeKey = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[_\s-]/g, '').toLowerCase();
                 for (const row of rows.results || []) {
                   let custom: Record<string, any> = {};
                   try {
@@ -1843,7 +1843,7 @@ export default {
                       break;
                     }
                   }
-                  const labels = Array.isArray(rawValue) ? rawValue : rawValue === null ? [] : String(rawValue).split(/[;|\\n]+/);
+                  const labels = Array.isArray(rawValue) ? rawValue : rawValue === null ? [] : String(rawValue).split(/[;|\n]+/);
                   const primaryLabel = labels.map((value: any) => String(value ?? '').trim()).find((value: string) => value.length > 0) || 'Chưa cập nhật';
                   target[primaryLabel] = (target[primaryLabel] || 0) + 1;
                 }
@@ -1852,8 +1852,6 @@ export default {
               }
             };
 
-            // Aggregate physical and custom fields. Missing values remain visible,
-            // and multiple distinct labels on one record are counted once per label.
             const aggregateModuleGroups = async (table: string, target: Record<string, number>, candidateFields: string[]) => {
               try {
                 const tableInfo = await env.DB.prepare('PRAGMA table_info("' + table + '")').all<any>();
