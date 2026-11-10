@@ -257,7 +257,7 @@ function redactPublicDetail(item: any, moduleName: string): any {
     science_tasks: ['members', 'projectTeam', 'participants', 'evidenceFile', 'evidenceDocuments', 'attachmentSummary', 'attachments', 'archiveCode', 'archiveSymbol', 'storageCode', 'warehouseCode'],
     experts: ['dateOfBirth', 'birthDate', 'gender', 'academicRank', 'degree', 'startYear', 'startWorkYear', 'researchTitle', 'position', 'jobTitle', 'email', 'publicEmail', 'phone', 'publicPhone', 'field', 'workplace', 'organization', 'currentAffiliation', 'trainingProcess', 'workExperience', 'foreignLanguages', 'education', 'educationHistory', 'workHistory', 'languages', 'publications', 'qualifications', 'researchOutputs', 'projects', 'projectLevel', 'projectDuration', 'projectMembers', 'projectRole', 'projectStatus', 'awards', 'experienceNotes'],
     startup_projects: ['operatingAddress', 'address', 'summary', 'teamSize', 'memberCount', 'leaderPhone', 'leaderEmail'],
-    startup_ideas: ['operatingAddress', 'address', 'wardOrSchool', 'wardSchool', 'summary', 'problemSolved', 'teamSize', 'memberCount', 'leaderPhone', 'leaderEmail', 'affiliatedUnit', 'organization']
+    startup_ideas: ['operatingAddress', 'address', 'summary', 'problemSolved', 'teamSize', 'memberCount', 'leaderPhone', 'leaderEmail', 'organization']
   };
   const safe = { ...item };
   for (const key of restrictedByModule[moduleName] || []) delete safe[key];
