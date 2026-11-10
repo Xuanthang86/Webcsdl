@@ -76,6 +76,18 @@ export const HomeView: React.FC<HomeViewProps> = ({
     const value = String(item.email || item.contactEmail || item.contact_email || item.publicEmail || item.public_email || item.public_contact_email || item.emailAddress || item.email_address || '').trim();
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? value : 'Chưa cập nhật';
   };
+  // Trang chủ chỉ hiển thị số điện thoại ở dạng che một phần; không để lộ số đầy đủ.
+  const maskedPhone = (item: BaseEntity) => {
+    const value = String(
+      item.phone || item.phoneNumber || item.phone_number || item.mobile || item.mobilePhone ||
+      item.mobile_phone || item.telephone || item.contactPhone || item.contact_phone ||
+      item.publicPhone || item.public_phone || item.leaderPhone || item.leader_phone ||
+      item.expertPhone || item.expert_phone || ''
+    ).trim();
+    const digits = value.replace(/\D/g, '');
+    return digits.length >= 9 ? `${digits.slice(0, 4)}.xxx.xxx` : 'Chưa cập nhật';
+  };
+
   const publicWebsite = (item: BaseEntity) =>
     item.website || item.websiteUrl || item.website_url || item.web || '';
   const websiteHref = (value: string) =>
@@ -411,7 +423,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     </div>
                     <div>
                       <span className="text-slate-400 font-medium">Liên hệ:</span>{' '}
-                      <span className="font-medium text-slate-600">Không công khai số điện thoại</span>
+                      <span className="font-mono font-medium text-slate-600">{maskedPhone(item)}</span>
                     </div>
                     <div>
                       <span className="text-slate-400 font-medium">Chuyên ngành:</span>{' '}
@@ -583,9 +595,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     >
                       <div className="space-y-2.5">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="hidden sm:inline font-mono text-rose-900 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                            STT {idx + 1}
-                          </span>
                           <span className="text-[11px] font-mono text-slate-500">
                             Năm bắt đầu: {item.foundedYear || '2023'}
                           </span>
@@ -686,9 +695,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="hidden sm:inline font-mono text-emerald-900 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                            STT {idx + 1}
-                          </span>
                           <span className="text-[11px] font-mono text-slate-500">Năm {item.startYear || '2024'}</span>
                         </div>
                         <h4 className="font-bold text-slate-900 group-hover:text-emerald-800 transition-colors text-sm line-clamp-2">
@@ -739,9 +745,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="hidden sm:inline font-mono text-yellow-900 font-bold bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200">
-                            STT {idx + 1}
-                          </span>
                           <span className="text-[11px] text-amber-800 font-medium truncate max-w-[150px]">
                             {item.wardSchool || item.wardOrSchool || item.ward_or_school || item.affiliatedUnit || item.originType || 'Chưa cập nhật'}
                           </span>
