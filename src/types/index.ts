@@ -205,8 +205,6 @@ export interface AggregatedStats {
   tasksByField?: Record<string, number>;
   tasksByYear?: Record<string, number>;
   initiativesByField?: Record<string, number>;
-  initiativesBySpecialty?: Record<string, number>;
-  initiativesByUnit?: Record<string, number>;
   initiativesByYear?: Record<string, number>;
   startupsByYear?: Record<string, number>;
   featuredStartupsByYear?: Record<string, number>;
@@ -243,7 +241,6 @@ export interface AggregatedStats {
   ideasByWard?: Record<string, number>;
   wardsByAreaType?: Record<string, number>;
   universitiesByType?: Record<string, number>;
-  featuredStartupsByField?: Record<string, number>;
   patentsByYear?: Record<string, number>;
   patentsByField?: Record<string, number>;
   supportOrgsByYear?: Record<string, number>;
