@@ -37,6 +37,18 @@ interface ModuleCrudViewProps {
   onManageRelations: (entity: BaseEntity) => void;
 }
 
+const MODULE_CODE_PREFIXES: Partial<Record<ModuleType, string>> = {
+  science_tasks: 'DT', initiatives: 'SKTP', patents: 'SC', experts: 'CG', startups: 'DNKNST',
+  support_organizations: 'TCTG', startup_projects: 'DAKN', startup_ideas: 'YTKN', wards: 'XP',
+  universities: 'ĐHCĐ', featured_startups: 'DNKNTB', investors: 'NĐT', investment_funds: 'QĐT'
+};
+
+const getDisplayRecordCode = (item: BaseEntity, moduleType: ModuleType): string => {
+  const prefix = MODULE_CODE_PREFIXES[moduleType];
+  if (prefix) return item.code && new RegExp(`^${prefix}-\\d{6}$`, 'u').test(String(item.code).trim()) ? item.code : '—';
+  return item.code && item.code !== item.id && !String(item.code).startsWith(`${moduleType}_imp_`) ? item.code : (String(item.id || '').startsWith(`${moduleType}_imp_`) ? '—' : item.id || '—');
+};
+
 export const MODULE_NAMES: Record<ModuleType, string> = {
   science_tasks: 'Đề tài, nhiệm vụ KH&CN',
   initiatives: 'Sáng kiến có tác dụng, ảnh hưởng đối với thành phố',
@@ -415,15 +427,15 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       let sampleRows: Record<string, any>[] = [];
       if (moduleType === 'science_tasks') {
         sampleRows = [
-          { 'code': 'NV-KHCN-01', 'title': 'Nghiên cứu ứng dụng AI trong quản lý giao thông', 'field': 'Công nghệ thông tin', 'ownerName': 'Đại học Bách Khoa', 'principalInvestigator': 'PGS.TS Nguyễn Văn A', 'managementLevel': 'Cấp thành phố', 'executionTime': '2024-2026', 'totalBudgetApproved': 1500000000 }
+          { 'code': 'DT-123456', 'title': 'Nghiên cứu ứng dụng AI trong quản lý giao thông', 'field': 'Công nghệ thông tin', 'ownerName': 'Đại học Bách Khoa', 'principalInvestigator': 'PGS.TS Nguyễn Văn A', 'managementLevel': 'Cấp thành phố', 'executionTime': '2024-2026', 'totalBudgetApproved': 1500000000 }
         ];
       } else if (moduleType === 'initiatives') {
         sampleRows = [
-          { 'code': 'SK-TP-01', 'title': 'Giải pháp tiết kiệm năng lượng tòa nhà hành chính', 'field': 'Tiết kiệm năng lượng', 'ownerName': 'Trung tâm Tiết kiệm Năng lượng', 'recognitionYear': 2026, 'authors': 'Nguyễn Văn B', 'costSavings': 250000000 }
+          { 'code': 'SKTP-234567', 'title': 'Giải pháp tiết kiệm năng lượng tòa nhà hành chính', 'field': 'Tiết kiệm năng lượng', 'ownerName': 'Trung tâm Tiết kiệm Năng lượng', 'recognitionYear': 2026, 'authors': 'Nguyễn Văn B', 'costSavings': 250000000 }
         ];
       } else if (moduleType === 'experts') {
         sampleRows = [
-          { 'code': 'CG-01', 'title': 'GS.TS. Trần Quốc Hùng', 'field': 'Tự động hóa', 'ownerName': 'Đại học Bách Khoa', 'birthYear': '1975', 'email': 'hung.tq@dut.udn.vn', 'phone': '0905123456', 'specialty': 'Robot y tế & Tự động hóa', 'academicDegree': 'Tiến sĩ' }
+          { 'code': 'CG-345678', 'title': 'GS.TS. Trần Quốc Hùng', 'field': 'Tự động hóa', 'ownerName': 'Đại học Bách Khoa', 'birthYear': '1975', 'email': 'hung.tq@dut.udn.vn', 'phone': '0905123456', 'specialty': 'Robot y tế & Tự động hóa', 'academicDegree': 'Tiến sĩ' }
         ];
       } else if (moduleType === 'startups') {
         sampleRows = [
@@ -983,7 +995,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       {(currentPage - 1) * pageSize + idx + 1}
                     </td>
                     <td className="py-3 px-4 font-mono font-medium text-teal-800">
-                      {item.code && item.code !== item.id && !String(item.code).startsWith(`${moduleType}_imp_`) ? item.code : (String(item.id || '').startsWith(`${moduleType}_imp_`) ? '—' : item.id || '—')}
+                      {getDisplayRecordCode(item, moduleType)}
                     </td>
                     <td className="py-3 px-4">
                       <div 
@@ -1344,7 +1356,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       <div>
                         <label className="block font-semibold text-slate-700 mb-1">Cấp quản lý</label>
                         <select
-                          value={extraFields.managementLevel || 'Cấp Thành phố'}
+                          value={extraFields.managementLevel || 'Cấp Tỉnh/Thành phố'}
                           onChange={(e) => setExtra('managementLevel', e.target.value)}
                           className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
                         >
