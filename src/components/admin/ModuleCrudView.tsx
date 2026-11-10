@@ -40,13 +40,17 @@ interface ModuleCrudViewProps {
 const MODULE_CODE_PREFIXES: Partial<Record<ModuleType, string>> = {
   science_tasks: 'DT', initiatives: 'SKTP', patents: 'SC', experts: 'CG', startups: 'DNKNST',
   support_organizations: 'TCTG', startup_projects: 'DAKN', startup_ideas: 'YTKN', wards: 'XP',
-  universities: 'ĐHCĐ', featured_startups: 'DNKNTB', investors: 'NĐT', investment_funds: 'QĐT'
+  universities: 'ĐHCĐ', featured_startups: 'DNKNTB', investors: 'NĐT', investment_funds: 'QĐT',
+  organizations: 'TCKHCN', technologies: 'CN', programs: 'CT', collaboration_needs: 'NC',
+  publications: 'CB', lab_equipments: 'PTN', policies: 'CS'
 };
 
 const getDisplayRecordCode = (item: BaseEntity, moduleType: ModuleType): string => {
   const prefix = MODULE_CODE_PREFIXES[moduleType];
-  if (prefix) return item.code && new RegExp(`^${prefix}-\\d{6}$`, 'u').test(String(item.code).trim()) ? item.code : '—';
-  return item.code && item.code !== item.id && !String(item.code).startsWith(`${moduleType}_imp_`) ? item.code : (String(item.id || '').startsWith(`${moduleType}_imp_`) ? '—' : item.id || '—');
+  if (!prefix) return item.code && item.code !== item.id ? String(item.code) : '—';
+  return item.code && new RegExp('^' + prefix + '-\\d{6}$', 'u').test(String(item.code).trim())
+    ? String(item.code).trim()
+    : 'Đang cập nhật mã';
 };
 
 export const MODULE_NAMES: Record<ModuleType, string> = {
@@ -936,8 +940,8 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
       {/* Records Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
+          <table className="w-full text-left text-sm text-slate-700">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-xs tracking-wider">
               <tr>
                 {canDelete && (
                   <th className="py-3 px-2 w-9 text-center">
@@ -991,23 +995,23 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                         />
                       </td>
                     )}
-                    <td className="py-3 px-4 text-center text-slate-400 font-mono text-[11px]">
+                    <td className="py-3 px-4 text-center text-slate-400 font-mono text-xs">
                       {(currentPage - 1) * pageSize + idx + 1}
                     </td>
-                    <td className="py-3 px-4 font-mono font-medium text-teal-800">
+                    <td className="py-3 px-4 font-mono text-sm font-semibold text-teal-800 whitespace-nowrap">
                       {getDisplayRecordCode(item, moduleType)}
                     </td>
                     <td className="py-3 px-4">
                       <div 
                         onClick={() => onViewDetail(item)}
-                        className="font-semibold text-slate-900 hover:text-teal-800 cursor-pointer line-clamp-1"
+                        className="font-semibold text-base leading-snug text-slate-900 hover:text-teal-800 cursor-pointer whitespace-normal break-words"
                       >
                         {item.title}
                       </div>
                       
                       {/* Specialized Contextual Metadata per Module */}
                       {moduleType === 'science_tasks' && (
-                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-1">
                           <span className="bg-teal-50 text-teal-700 px-1.5 py-0.2 rounded border border-teal-200">{({ national: 'Cấp Bộ', provincial: 'Cấp Tỉnh/Thành phố', local: 'Cấp Cơ sở', unknown: 'Chưa xác định' } as const)[getScienceTaskLevel(item)]}</span>
                           {item.principalInvestigator && <span>Chủ nhiệm: <strong className="text-slate-700">{item.principalInvestigator}</strong></span>}
                           {item.executionTime && <span className="text-slate-400">· {item.executionTime}</span>}
@@ -1015,7 +1019,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       )}
 
                       {moduleType === 'initiatives' && (
-                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-1">
                           {item.recognitionYear && <span className="bg-amber-50 text-amber-800 font-semibold px-1.5 py-0.2 rounded border border-amber-200">Năm {item.recognitionYear}</span>}
                           {item.authors && <span>Tác giả: <strong className="text-slate-700">{item.authors}</strong></span>}
                           {item.ownerAddress && <span className="text-slate-400">· Đ/c: {item.ownerAddress}</span>}
@@ -1023,7 +1027,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       )}
 
                       {moduleType === 'experts' && (
-                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-1">
                           {item.birthYear && <span className="text-slate-600">Sinh: {item.birthYear}</span>}
                           {item.email && <span className="text-teal-700">{item.email}</span>}
                           {item.specialty && <span className="bg-blue-50 text-blue-700 px-1.5 py-0.2 rounded border border-blue-200">{item.specialty}</span>}
@@ -1031,7 +1035,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       )}
 
                       {moduleType === 'startups' && (
-                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-1">
                           {item.address && <span>Đ/c: {item.address}</span>}
                           {item.foundedYear && <span className="text-slate-400">· Khởi nghiệp: {item.foundedYear}</span>}
                           {item.website && <a href={item.website} target="_blank" rel="noreferrer" className="text-teal-600 hover:underline">Website</a>}
@@ -1039,13 +1043,13 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       )}
 
                       {moduleType === 'support_organizations' && item.address && (
-                        <div className="text-[10px] text-slate-500 mt-1">
+                        <div className="text-xs text-slate-500 mt-1">
                           Địa chỉ: {item.address}
                         </div>
                       )}
 
                       {moduleType === 'startup_projects' && (
-                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-1">
                           {item.address && <span>Đ/c: {item.address}</span>}
                           {item.incubator && <span className="bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded border border-emerald-200">Ươm tạo: {item.incubator}</span>}
                           {item.startYear && <span className="text-slate-400">· Năm KN: {item.startYear}</span>}
@@ -1053,27 +1057,27 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       )}
 
                       {moduleType === 'startup_ideas' && (
-                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-1">
                           {item.wardSchool && <span className="bg-yellow-50 text-yellow-800 px-1.5 py-0.2 rounded border border-yellow-200">{item.wardSchool}</span>}
                           {item.mentorTeacher && <span>GV hướng dẫn: {item.mentorTeacher}</span>}
                         </div>
                       )}
 
                       {moduleType === 'wards' && item.address && (
-                        <div className="text-[10px] text-slate-500 mt-1">
+                        <div className="text-xs text-slate-500 mt-1">
                           Địa chỉ: {item.address}
                         </div>
                       )}
 
                       {moduleType === 'universities' && (
-                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-1">
                           {item.ward && <span className="bg-purple-50 text-purple-700 px-1.5 py-0.2 rounded border border-purple-200">{item.ward}</span>}
                           {item.address && <span>Địa chỉ: {item.address}</span>}
                         </div>
                       )}
 
                       {moduleType === 'featured_startups' && item.website && (
-                        <div className="text-[10px] mt-1">
+                        <div className="text-xs mt-1">
                           <a href={item.website} target="_blank" rel="noreferrer" className="text-teal-600 hover:underline">
                             {item.website}
                           </a>
@@ -1081,7 +1085,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       )}
 
                       {item.description && !['wards', 'universities', 'featured_startups'].includes(moduleType) && (
-                        <div className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
+                        <div className="text-xs text-slate-400 line-clamp-1 mt-0.5">
                           {item.description}
                         </div>
                       )}
@@ -1091,7 +1095,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       <td className="py-3 px-4 text-slate-600 truncate max-w-[170px]">{item.ownerName || item.proposingOrg || item.leadOrganization || item.leaderName || item.representative || item.workplace || item.mentorTeacher || '—'}</td>
                     </>}
                     <td className="py-3 px-4 text-center">
-                      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${
+                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                         item.status === 'approved' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
                         item.status === 'under_review' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
                         item.status === 'needs_revision' ? 'bg-orange-50 text-orange-800 border border-orange-200' :
@@ -1101,7 +1105,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       </span>
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <span className={`text-[11px] font-medium ${(['approved', 'published'].includes(String(item.status || '').toLowerCase()) && item.publicityLevel === 'public') ? 'text-emerald-700' : 'text-slate-400'}`}>
+                      <span className={`text-xs font-medium ${(['approved', 'published'].includes(String(item.status || '').toLowerCase()) && item.publicityLevel === 'public') ? 'text-emerald-700' : 'text-slate-400'}`}>
                         {(['approved', 'published'].includes(String(item.status || '').toLowerCase()) && item.publicityLevel === 'public') ? 'Công khai' : 'Nội bộ'}
                       </span>
                     </td>
@@ -1756,6 +1760,30 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Dự án thuộc Xã/phường - Trường học</label>
+                        <select
+                          value={extraFields.originType || ''}
+                          onChange={(e) => setExtra('originType', e.target.value)}
+                          className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        >
+                          <option value="">Chọn một loại hình</option>
+                          <option value="Trường học">Trường học</option>
+                          <option value="Xã/phường">Xã/phường</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Tên trường học hoặc xã/phường</label>
+                        <input
+                          type="text"
+                          value={extraFields.wardSchool || ''}
+                          onChange={(e) => setExtra('wardSchool', e.target.value)}
+                          placeholder="Chỉ nhập một trường học hoặc một xã/phường"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
                         <label className="block font-semibold text-slate-700 mb-1">Địa chỉ hoạt động</label>
                         <input
                           type="text"
@@ -1849,6 +1877,30 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                 {/* Module 7: Ý TƯỞNG KHỞI NGHIỆP */}
                 {moduleType === 'startup_ideas' && (
                   <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Ý tưởng thuộc Xã/phường - Trường học</label>
+                        <select
+                          value={extraFields.originType || ''}
+                          onChange={(e) => setExtra('originType', e.target.value)}
+                          className="w-full h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        >
+                          <option value="">Chọn một loại hình</option>
+                          <option value="Trường học">Trường học</option>
+                          <option value="Xã/phường">Xã/phường</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Tên trường học hoặc xã/phường</label>
+                        <input
+                          type="text"
+                          value={extraFields.wardSchool || ''}
+                          onChange={(e) => setExtra('wardSchool', e.target.value)}
+                          placeholder="Chỉ nhập một trường học hoặc một xã/phường"
+                          className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-slate-900"
+                        />
+                      </div>
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block font-semibold text-slate-700 mb-1">Địa chỉ hoạt động (Nếu có)</label>
