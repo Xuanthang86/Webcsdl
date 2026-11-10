@@ -169,7 +169,8 @@ function hydrateModuleRow(row: any, moduleName?: string): any {
   if (moduleName === 'startup_ideas') {
     if (!merged.title) merged.title = merged.ideaName || merged.ideaTitle || merged.name || '';
     if (!merged.description) merged.description = merged.summary || merged.ideaSummary || merged.idea_summary || '';
-    if (!merged.wardSchool) merged.wardSchool = merged.wardOrSchool || merged.ward_school || merged.ward_or_school || '';
+    if (!merged.wardSchool) merged.wardSchool = merged.wardOrSchool || merged.ward_school || merged.ward_or_school ||
+      merged.affiliatedUnit || merged.currentAffiliation || merged.schoolName || merged.wardName || merged.originType || merged.origin_type || '';
   }
   return merged;
 }
@@ -1990,10 +1991,13 @@ export default {
                 };
                 const classify = (value: any): 'school' | 'ward' | 'other' => {
                   const label = String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
-                  const school = /(truong|dai hoc|cao dang|school|university|college)/.test(label);
-                  const ward = /(xa|phuong|dackhu|ward|commune|thi tran)/.test(label);
-                  if (school && !ward) return 'school';
-                  if (ward && !school) return 'ward';
+                  const schoolMatch = label.match(/truong|dai hoc|cao dang|school|university|college/);
+                  const wardMatch = label.match(/xa|phuong|dackhu|ward|commune|thi tran/);
+                  const school = Boolean(schoolMatch);
+                  const ward = Boolean(wardMatch);
+                  if (school && ward) return (schoolMatch!.index ?? Infinity) < (wardMatch!.index ?? Infinity) ? 'school' : 'ward';
+                  if (school) return 'school';
+                  if (ward) return 'ward';
                   if (/^(school|truong hoc)$/.test(label.trim())) return 'school';
                   if (/^(ward|xa phuong|dia ban)$/.test(label.trim())) return 'ward';
                   return 'other';
@@ -3257,6 +3261,7 @@ export default {
           return jsonResponse({ success: false, message: 'CSDL D1 chưa kết nối.' }, 500, corsHeaders);
         }
 
+        await ensureModuleCodeColumn(env.DB, moduleName);
         const tableColumns = await ensureModuleImportSchema(env.DB, moduleName);
         const tableInfoResult = await env.DB.prepare(`PRAGMA table_info(${moduleName})`).all<any>();
         const requiredInsertColumns = (tableInfoResult.results || []).filter((column: any) => Number(column.notnull) === 1 && column.dflt_value === null && String(column.name) !== 'id');
