@@ -258,11 +258,11 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
   const invalidImportTitle = rawEntityTitle === String(entity.id || '') || rawEntityTitle.startsWith(`${entity.moduleType || ''}_imp_`);
   const detailTitleCandidates: Record<string, any[]> = {
     initiatives: [entity.initiativeName, entity.initiative_name, entity.initiativeTitle, entity.initiative_title, entity.solutionName, entity.solution_name, entity.name],
-    startups: [entity.companyName, entity.company_name, entity.name],
+    startups: [entity.companyName, entity.company_name, entity.startupName, entity.startup_name, entity.name],
     startup_projects: [entity.projectName, entity.project_name, entity.projectTitle, entity.project_title, entity.name],
     startup_ideas: [entity.ideaName, entity.idea_name, entity.ideaTitle, entity.idea_title, entity.name],
     wards: [entity.wardName, entity.ward_name, entity.wardTitle, entity.name],
-    universities: [entity.universityName, entity.university_name, entity.schoolName, entity.school_name, entity.institutionName, entity.institution_name, entity.name],
+    universities: [entity.universityName, entity.university_name, entity.schoolName, entity.school_name, entity.institutionName, entity.name],
     experts: [entity.fullName, entity.full_name, entity.expertName, entity.expert_name, entity.name],
     patents: [entity.patentName, entity.patent_name, entity.name],
     support_organizations: [entity.organizationName, entity.organization_name, entity.name]
@@ -323,7 +323,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
               )}
             </div>
             <h2 className="w-full min-w-0 text-lg sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug break-words [overflow-wrap:anywhere]">
-              {detailTitle}
+              {(entity.moduleType === 'experts' ? (entity.fullName || entity.full_name || entity.expertName || entity.expert_name || entity.name || (entity.title && entity.title !== entity.id && !String(entity.title).startsWith('experts_imp_') ? entity.title : 'Hồ sơ chuyên gia')) : entity.title) || 'Không có tiêu đề'}
             </h2>
           </div>
 
@@ -389,7 +389,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Mã / STT:</span>
-                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{safeDisplayValue(entity.code ?? entity.id)}</span>
+                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{displayCode || 'Đang cập nhật mã'}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tên đề tài:</span>
@@ -499,7 +499,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tên sáng kiến:</span>
-                    <span className="sm:col-span-2 font-bold text-slate-900 text-sm">{detailTitle}</span>
+                    <span className="sm:col-span-2 font-bold text-slate-900 text-base lg:text-lg">{detailTitle}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tác giả sáng kiến:</span>
@@ -554,12 +554,12 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tên sáng chế / Giải pháp:</span>
-                    <span className="sm:col-span-2 font-bold text-slate-900 text-sm">{detailTitle}</span>
+                    <span className="sm:col-span-2 font-bold text-slate-900 text-base lg:text-lg">{detailTitle}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Số bằng / Số đơn:</span>
                     <span className="sm:col-span-2 font-mono font-bold text-purple-900 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-block w-fit">
-                      {entity.patentNumber || entity.code || '28492/SHTT'}
+                      {entity.patentNumber || displayCode || 'Đang cập nhật mã'}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
@@ -1043,11 +1043,10 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <span className="font-semibold text-slate-500">Lĩnh vực khởi nghiệp:</span>
                     <span className="sm:col-span-2 font-semibold text-teal-800">{entity.field || 'Đa ngành'}</span>
                   </div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Dự án thuộc Xã/phường - Trường học:</span>
                     <span className="sm:col-span-2 font-semibold text-slate-800">
-                      {[entity.originType || entity.origin_type, entity.wardSchool || entity.wardOrSchool || entity.ward_or_school || entity.affiliatedUnit].filter(Boolean).join(' – ') || 'Chưa cập nhật'}
+                      {[entity.originType || entity.origin_type, entity.wardSchool || entity.ward_school || entity.wardOrSchool || entity.ward_or_school || entity.affiliatedUnit].filter(Boolean).join(' – ') || 'Chưa cập nhật'}
                     </span>
                   </div>
 
@@ -1176,19 +1175,18 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <span className="font-semibold text-slate-500">Lĩnh vực khởi nghiệp:</span>
                     <span className="sm:col-span-2 font-semibold text-teal-800">{entity.field || 'Đa ngành'}</span>
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Dự án thuộc Xã/phường - Trường học:</span>
+                    <span className="sm:col-span-2 font-semibold text-slate-800">
+                      {[entity.originType || entity.origin_type, entity.wardSchool || entity.ward_school || entity.wardOrSchool || entity.ward_or_school || entity.affiliatedUnit].filter(Boolean).join(' – ') || 'Chưa cập nhật'}
+                    </span>
+                  </div>
 
-                  {/* RESTRICTED: Ý tưởng thuộc Xã/phường - Trường học */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Ý tưởng thuộc Xã/phường - Trường học:</span>
-                    <div className="sm:col-span-2">
-                      {isAuthorized ? (
-                        <span className="font-semibold text-slate-800">{entity.wardSchool || entity.wardOrSchool || entity.ward_or_school || entity.affiliatedUnit || entity.currentAffiliation || entity.originType || 'Chưa cập nhật'}</span>
-                      ) : (
-                        <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
-                          <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
-                        </span>
-                      )}
-                    </div>
+                    <span className="sm:col-span-2 font-semibold text-slate-800">
+                      {[entity.originType || entity.origin_type, entity.wardSchool || entity.ward_school || entity.wardOrSchool || entity.ward_or_school || entity.affiliatedUnit || entity.currentAffiliation].filter(Boolean).join(' – ') || 'Chưa cập nhật'}
+                    </span>
                   </div>
 
                   {/* RESTRICTED: Tóm tắt về ý tưởng (150-200 từ) */}
@@ -1657,11 +1655,11 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
   const invalidImportTitle = rawEntityTitle === String(entity.id || '') || rawEntityTitle.startsWith(`${entity.moduleType || ''}_imp_`);
   const detailTitleCandidates: Record<string, any[]> = {
     initiatives: [entity.initiativeName, entity.initiative_name, entity.initiativeTitle, entity.initiative_title, entity.solutionName, entity.solution_name, entity.name],
-    startups: [entity.companyName, entity.company_name, entity.name],
+    startups: [entity.companyName, entity.company_name, entity.startupName, entity.startup_name, entity.name],
     startup_projects: [entity.projectName, entity.project_name, entity.projectTitle, entity.project_title, entity.name],
     startup_ideas: [entity.ideaName, entity.idea_name, entity.ideaTitle, entity.idea_title, entity.name],
     wards: [entity.wardName, entity.ward_name, entity.wardTitle, entity.name],
-    universities: [entity.universityName, entity.university_name, entity.schoolName, entity.school_name, entity.institutionName, entity.institution_name, entity.name],
+    universities: [entity.universityName, entity.university_name, entity.schoolName, entity.school_name, entity.institutionName, entity.name],
     experts: [entity.fullName, entity.full_name, entity.expertName, entity.expert_name, entity.name],
     patents: [entity.patentName, entity.patent_name, entity.name],
     support_organizations: [entity.organizationName, entity.organization_name, entity.name]
@@ -1788,7 +1786,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                 <div className="divide-y divide-slate-100 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Mã / STT:</span>
-                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{safeDisplayValue(entity.code ?? entity.id)}</span>
+                    <span className="sm:col-span-2 font-mono font-bold text-teal-800">{displayCode || 'Đang cập nhật mã'}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tên đề tài:</span>
@@ -1898,7 +1896,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tên sáng kiến:</span>
-                    <span className="sm:col-span-2 font-bold text-slate-900 text-sm">{detailTitle}</span>
+                    <span className="sm:col-span-2 font-bold text-slate-900 text-base lg:text-lg">{detailTitle}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tác giả sáng kiến:</span>
@@ -1953,12 +1951,12 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Tên sáng chế / Giải pháp:</span>
-                    <span className="sm:col-span-2 font-bold text-slate-900 text-sm">{detailTitle}</span>
+                    <span className="sm:col-span-2 font-bold text-slate-900 text-base lg:text-lg">{detailTitle}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Số bằng / Số đơn:</span>
                     <span className="sm:col-span-2 font-mono font-bold text-purple-900 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-block w-fit">
-                      {entity.patentNumber || entity.code || '28492/SHTT'}
+                      {entity.patentNumber || displayCode || 'Đang cập nhật mã'}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
@@ -2442,11 +2440,10 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <span className="font-semibold text-slate-500">Lĩnh vực khởi nghiệp:</span>
                     <span className="sm:col-span-2 font-semibold text-teal-800">{entity.field || 'Đa ngành'}</span>
                   </div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Dự án thuộc Xã/phường - Trường học:</span>
                     <span className="sm:col-span-2 font-semibold text-slate-800">
-                      {[entity.originType || entity.origin_type, entity.wardSchool || entity.wardOrSchool || entity.ward_or_school || entity.affiliatedUnit].filter(Boolean).join(' – ') || 'Chưa cập nhật'}
+                      {[entity.originType || entity.origin_type, entity.wardSchool || entity.ward_school || entity.wardOrSchool || entity.ward_or_school || entity.affiliatedUnit].filter(Boolean).join(' – ') || 'Chưa cập nhật'}
                     </span>
                   </div>
 
@@ -2575,19 +2572,18 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                     <span className="font-semibold text-slate-500">Lĩnh vực khởi nghiệp:</span>
                     <span className="sm:col-span-2 font-semibold text-teal-800">{entity.field || 'Đa ngành'}</span>
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Dự án thuộc Xã/phường - Trường học:</span>
+                    <span className="sm:col-span-2 font-semibold text-slate-800">
+                      {[entity.originType || entity.origin_type, entity.wardSchool || entity.ward_school || entity.wardOrSchool || entity.ward_or_school || entity.affiliatedUnit].filter(Boolean).join(' – ') || 'Chưa cập nhật'}
+                    </span>
+                  </div>
 
-                  {/* RESTRICTED: Ý tưởng thuộc Xã/phường - Trường học */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Ý tưởng thuộc Xã/phường - Trường học:</span>
-                    <div className="sm:col-span-2">
-                      {isAuthorized ? (
-                        <span className="font-semibold text-slate-800">{[entity.originType || entity.origin_type, entity.wardSchool || entity.wardOrSchool || entity.ward_or_school || entity.affiliatedUnit || entity.currentAffiliation].filter(Boolean).join(' – ') || 'Chưa cập nhật'}</span>
-                      ) : (
-                        <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
-                          <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
-                        </span>
-                      )}
-                    </div>
+                    <span className="sm:col-span-2 font-semibold text-slate-800">
+                      {[entity.originType || entity.origin_type, entity.wardSchool || entity.ward_school || entity.wardOrSchool || entity.ward_or_school || entity.affiliatedUnit || entity.currentAffiliation].filter(Boolean).join(' – ') || 'Chưa cập nhật'}
+                    </span>
                   </div>
 
                   {/* RESTRICTED: Tóm tắt về ý tưởng (150-200 từ) */}
