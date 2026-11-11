@@ -866,8 +866,8 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
         <div className="space-y-10">
           {Object.entries(groupedResults).map(([modKey, modItems]) => {
             const modTitle = MODULE_LIST_TITLES[modKey] || `DANH SÁCH ${modKey.toUpperCase()}`;
-            const displayItems = modItems.slice(0, 5);
-            const remainingCount = modItems.length - 5;
+            const displayItems = modItems.slice(0, 6);
+            const remainingCount = modItems.length - 6;
 
             return (
               <section key={modKey} className="space-y-4">
