@@ -192,7 +192,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     <span className="font-mono text-teal-800 font-bold bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
                       {item.code || `NV-KHCN-00${idx + 1}`}
                     </span>
-                    <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded ${
+                      String(item.managementLevel || item.managingAgency || 'Cấp Thành phố').toLocaleLowerCase('vi').includes('cơ sở')
+                        ? 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+                        : (String(item.managementLevel || item.managingAgency || 'Cấp Thành phố').toLocaleLowerCase('vi').includes('tỉnh') ||
+                           String(item.managementLevel || item.managingAgency || 'Cấp Thành phố').toLocaleLowerCase('vi').includes('thành phố'))
+                        ? 'border border-blue-200 bg-blue-50 text-blue-800'
+                        : 'border border-slate-200 bg-slate-100 text-slate-600'
+                    }`}>
                       {item.managementLevel || item.managingAgency || 'Cấp Thành phố'}
                     </span>
                   </div>
@@ -223,20 +230,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   </div>
                 </div>
 
-                <div className="pt-3 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className={`font-semibold text-[11px] ${
-                    item.acceptanceResult === 'Đang nghiệm thu' || item.status === 'under_review'
-                      ? 'text-amber-700'
-                      : (item.acceptanceResult === 'Đã nghiệm thu' || item.acceptanceResult === 'Xuất sắc' || item.acceptanceResult === 'Đạt' || item.status === 'approved')
-                      ? 'text-emerald-700'
-                      : 'text-slate-600'
-                  }`}>
-                    {item.acceptanceResult === 'Đang nghiệm thu' || item.status === 'under_review'
-                      ? 'Đang nghiệm thu'
-                      : (item.acceptanceResult === 'Đã nghiệm thu' || item.acceptanceResult === 'Xuất sắc' || item.acceptanceResult === 'Đạt' || item.status === 'approved')
-                      ? 'Đã nghiệm thu'
-                      : 'Chưa nghiệm thu'}
-                  </span>
+                <div className="pt-3 mt-4 border-t border-slate-100 flex items-center justify-end text-xs">
                   <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
                     Xem chi tiết
                     <ArrowRight className="w-3 h-3" />
@@ -308,10 +302,12 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   </div>
                 </div>
 
-                <div className="pt-3 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-emerald-700 font-mono font-bold text-[11px]">
-                    Làm lợi: {formatVND(item.costSavings)}
-                  </span>
+                <div className="pt-3 mt-4 border-t border-slate-100 flex items-center justify-end text-xs">
+                  {Number(item.costSavings) > 0 && (
+                    <span className="text-emerald-700 font-mono font-bold text-[11px] mr-auto">
+                      Làm lợi: {formatVND(Number(item.costSavings))}
+                    </span>
+                  )}
                   <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
                     Xem chi tiết
                     <ArrowRight className="w-3 h-3" />
@@ -450,9 +446,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 </div>
 
                 <div className="pt-3 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-[11px] text-slate-500 truncate max-w-[180px]">
-                    {item.workplace || item.organization || 'ĐH Đà Nẵng'}
-                  </span>
+                  {(() => {
+                    const expertOrganization = String(item.workplace || item.organization || '').trim();
+                    const isCityAdministration = expertOrganization.toLocaleLowerCase('vi').includes('ủy ban nhân dân thành phố đà nẵng');
+                    return expertOrganization && !isCityAdministration ? (
+                      <span className="text-[11px] text-slate-500 truncate max-w-[180px]">
+                        {expertOrganization}
+                      </span>
+                    ) : null;
+                  })()}
                   <span className="text-teal-800 font-semibold group-hover:underline flex items-center gap-1 text-[11px]">
                     Xem hồ sơ
                     <ArrowRight className="w-3 h-3" />
@@ -727,7 +729,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         </div>
                       </div>
                       <div className="pt-2 mt-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-400">
-                        <span>{item.memberCount || 4} thành viên</span>
+                        <span className="font-medium text-slate-600">Số lượng thành viên tham gia: <strong className="text-slate-900">{(() => {
+                          const team = [item.foundingTeam, item.teamMembers, item.members, item.projectMembers, item.participants]
+                            .find(value => Array.isArray(value));
+                          if (Array.isArray(team)) return team.filter(member => String(member ?? '').trim()).length;
+                          const explicitCount = [item.memberCount, item.member_count, item.teamSize, item.team_size]
+                            .find(value => value !== null && value !== undefined && String(value).trim() !== '');
+                          const parsedCount = Number.parseInt(String(explicitCount ?? ''), 10);
+                          return Number.isFinite(parsedCount) && parsedCount >= 0 ? parsedCount : 'Chưa cập nhật';
+                        })()}</strong></span>
                         <span className="text-teal-800 font-semibold group-hover:underline">Chi tiết →</span>
                       </div>
                     </div>
@@ -779,7 +789,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         </div>
                       </div>
                       <div className="pt-2 mt-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-400">
-                        <span>{item.memberCount || 3} thành viên</span>
+                        <span className="font-medium text-slate-600">Số lượng thành viên tham gia: <strong className="text-slate-900">{(() => {
+                          const team = [item.teamMembers, item.foundingTeam, item.members, item.ideaMembers, item.participants]
+                            .find(value => Array.isArray(value));
+                          if (Array.isArray(team)) return team.filter(member => String(member ?? '').trim()).length;
+                          const explicitCount = [item.memberCount, item.member_count, item.teamSize, item.team_size]
+                            .find(value => value !== null && value !== undefined && String(value).trim() !== '');
+                          const parsedCount = Number.parseInt(String(explicitCount ?? ''), 10);
+                          return Number.isFinite(parsedCount) && parsedCount >= 0 ? parsedCount : 'Chưa cập nhật';
+                        })()}</strong></span>
                         <span className="text-teal-800 font-semibold group-hover:underline">Chi tiết →</span>
                       </div>
                     </div>
@@ -793,7 +811,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
                 <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
                   <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2"><MapPin className="w-4 h-4 text-indigo-600" /><span>Danh sách xã/phường/đặc khu</span></h3>
-                  <span className="text-xs text-slate-500 whitespace-nowrap">{featuredWards.length} đơn vị</span>
+                  <span className="inline-flex items-center rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-sm font-extrabold text-indigo-800 shadow-xs">{featuredWards.length} đơn vị</span>
                 </div>
                 <div className="max-h-[500px] overflow-auto rounded-xl border border-slate-200">
                   <table className="w-full min-w-[850px] text-xs text-left">
@@ -831,7 +849,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
                 <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
                   <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2"><School className="w-4 h-4 text-violet-600" /><span>Trường Đại học/Cao đẳng</span></h3>
-                  <span className="text-xs text-slate-500 whitespace-nowrap">{featuredUniversities.length} trường</span>
+                  <span className="inline-flex items-center rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1 text-sm font-extrabold text-violet-800 shadow-xs">{featuredUniversities.length} trường</span>
                 </div>
                 <div className="max-h-[500px] overflow-auto rounded-xl border border-slate-200">
                   <table className="w-full min-w-[1050px] text-xs text-left">
