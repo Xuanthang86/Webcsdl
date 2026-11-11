@@ -359,7 +359,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
             <div className="flex items-center justify-between gap-3 pb-3 mb-3 border-b border-rose-100">
               <div className="text-sm font-bold text-rose-900 flex items-center gap-2">
                 <Rocket className="w-4 h-4 text-rose-700" />
-                <span>Cơ cấu dữ liệu Hệ sinh thái (9 loại)</span>
+                <span>Cơ cấu dữ liệu Hệ sinh thái</span>
               </div>
               <button
                 type="button"
@@ -384,7 +384,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
                       <IconComp className="w-4 h-4 text-rose-700 shrink-0" />
                       <span className="font-mono font-bold text-sm text-slate-900">{item.count}</span>
                     </div>
-                    <div className="text-[11px] font-medium text-slate-700 leading-snug">
+                    <div className="text-xs font-bold text-slate-900 leading-snug">
                       {item.label}
                     </div>
                   </button>
@@ -392,18 +392,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
               })}
             </div>
 
-            {showEcosystemDetailBreakdown && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 pt-3 border-t border-rose-100 text-xs">
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
-                  <div className="font-semibold text-emerald-800">Dự án khởi nghiệp theo năm</div>
-                  {projectYears.slice(0, 5).map(item => <div key={item.name} className="flex justify-between gap-2"><span>{item.name}</span><strong>{item.count}</strong></div>)}
-                </div>
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
-                  <div className="font-semibold text-emerald-800">Dự án khởi nghiệp theo lĩnh vực</div>
-                  {projectFields.slice(0, 5).map(item => <div key={item.name} className="flex justify-between gap-2"><span className="truncate">{item.name}</span><strong>{item.count}</strong></div>)}
-                </div>
-              </div>
-            )}
+
           </div>
         )}
 
