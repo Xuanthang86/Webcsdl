@@ -86,11 +86,17 @@ export const HomeView: React.FC<HomeViewProps> = ({
       'phoneNo', 'phone_no', 'mobile_number', 'workPhone', 'work_phone', 'officePhone',
       'office_phone', 'sdt', 'soDienThoai', 'so_dien_thoai', 'dienThoai', 'dien_thoai'
     ];
+    const normalizePhoneKey = (key: string) => key
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[đĐ]/g, 'd')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toLowerCase();
     const directValue = phoneKeys.map(key => item[key]).find(value =>
       value !== null && value !== undefined && String(value).trim() !== ''
     );
     const dynamicEntry = Object.entries(item).find(([key, value]) =>
-      /(phone|mobile|telephone|^tel$|sdt|so.?dien.?thoai|dien.?thoai)/i.test(key) &&
+      /(phone|mobile|telephone|^tel$|sodienthoai|dienthoai|^sdt$)/.test(normalizePhoneKey(key)) &&
       value !== null && value !== undefined && String(value).trim() !== ''
     );
     const value = directValue ?? dynamicEntry?.[1];
