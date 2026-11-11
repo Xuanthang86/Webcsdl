@@ -408,7 +408,7 @@ const protectExpertContactFields = (record: any, canViewFullContact: boolean): a
     // Avoid re-masking values that have already been safely masked.
     if (/^\d{4}\.x{3}\.x{3}$/i.test(phoneText)) continue;
     const digits = phoneText.replace(/\D/g, '');
-    protectedRecord[key] = digits.length >= 9 ? \`${digits.slice(0, 4)}.xxx.xxx\` : 'Chưa cập nhật';
+    protectedRecord[key] = digits.length >= 9 ? digits.slice(0, 4) + '.xxx.xxx' : 'Chưa cập nhật';
   }
   return protectedRecord;
 };
