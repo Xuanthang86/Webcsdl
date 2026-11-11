@@ -255,15 +255,42 @@ function redactPublicDetail(item: any, moduleName: string): any {
   if (!item) return item;
   const restrictedByModule: Record<string, string[]> = {
     science_tasks: ['members', 'projectTeam', 'participants', 'evidenceFile', 'evidenceDocuments', 'attachmentSummary', 'attachments', 'archiveCode', 'archiveSymbol', 'storageCode', 'warehouseCode'],
-    experts: ['dateOfBirth', 'birthDate', 'gender', 'academicRank', 'degree', 'startYear', 'startWorkYear', 'researchTitle', 'position', 'jobTitle', 'email', 'publicEmail', 'phone', 'publicPhone', 'field', 'workplace', 'organization', 'currentAffiliation', 'trainingProcess', 'workExperience', 'foreignLanguages', 'education', 'educationHistory', 'workHistory', 'languages', 'publications', 'qualifications', 'researchOutputs', 'projects', 'projectLevel', 'projectDuration', 'projectMembers', 'projectRole', 'projectStatus', 'awards', 'experienceNotes'],
+    experts: ['dateOfBirth', 'birthDate', 'startYear', 'startWorkYear', 'position', 'jobTitle', 'email', 'publicEmail', 'currentAffiliation', 'trainingProcess', 'workExperience', 'education', 'educationHistory', 'workHistory', 'languages', 'publications', 'qualifications', 'researchOutputs', 'projects', 'projectLevel', 'projectDuration', 'projectMembers', 'projectRole', 'projectStatus', 'awards', 'experienceNotes'],
     startup_projects: ['operatingAddress', 'address', 'summary', 'teamSize', 'memberCount', 'leaderPhone', 'leaderEmail'],
     startup_ideas: ['operatingAddress', 'address', 'summary', 'problemSolved', 'teamSize', 'memberCount', 'leaderPhone', 'leaderEmail', 'organization']
   };
   const safe = { ...item };
-  for (const key of restrictedByModule[moduleName] || []) delete safe[key];
-  // Never expose personal phone numbers or mixed contact strings in public API responses.
+  const normalizePublicKey = (value: string) => value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toLowerCase();
+  const restrictedKeys = new Set((restrictedByModule[moduleName] || []).map(normalizePublicKey));
   for (const key of Object.keys(safe)) {
-    if (/(phone|mobile|telephone|sodienthoai|contactinfo)/i.test(key)) delete safe[key];
+    if (restrictedKeys.has(normalizePublicKey(key))) delete safe[key];
+  }
+
+  // Public expert profiles retain an obfuscated phone number; other modules
+  // continue to hide personal phone/contact fields completely.
+  for (const key of Object.keys(safe)) {
+    const normalizedKey = normalizePublicKey(key);
+    if (normalizedKey === 'contactinfo') {
+      delete safe[key];
+      continue;
+    }
+    if (!/(phone|mobile|telephone|^tel$|sodienthoai|dienthoai|^sdt$)/.test(normalizedKey)) continue;
+    if (moduleName !== 'experts') {
+      delete safe[key];
+      continue;
+    }
+    const value = safe[key];
+    if (value === null || value === undefined || String(value).trim() === '') continue;
+    const phoneText = String(value).trim();
+    if (/^\d{4}\.x{3}\.x{3}$/i.test(phoneText)) continue;
+    let digits = phoneText.replace(/\D/g, '');
+    if (digits.startsWith('84') && digits.length >= 11) digits = '0' + digits.slice(2);
+    safe[key] = digits.length >= 9 ? digits.slice(0, 4) + '.xxx.xxx' : 'Chưa cập nhật';
   }
   return safe;
 }
