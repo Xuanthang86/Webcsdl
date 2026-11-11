@@ -720,7 +720,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         <div className="text-xs text-slate-600 space-y-1">
                           <div><span className="text-slate-400">Lĩnh vực:</span> <strong>{item.field}</strong></div>
                           <div><span className="text-slate-400">Người đứng đầu:</span> {item.leaderName || item.ownerName}</div>
-                          <div className="truncate"><span className="text-slate-400">Ươm tạo từ:</span> {item.incubator || 'Trung tâm ĐMST Đà Nẵng'}</div>
+                          <div className="truncate"><span className="text-slate-400">Ươm tạo từ:</span> {item.incubator || item.incubatorName || item.incubator_name || item.incubationOrganization || item.incubation_organization || item.incubationCenter || item.incubation_center || item.incubatedBy || item.incubated_by || item.incubationSource || item.incubation_source || item.originIncubator || item.origin_incubator || 'Tự hình thành dự án'}</div>
                           <div className="line-clamp-2 text-[11px] text-slate-500 pt-1 border-t border-slate-200">
                             <span className="font-semibold text-slate-700">Giải quyết:</span> {item.problemSolved || item.description}
                           </div>
