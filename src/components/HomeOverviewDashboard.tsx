@@ -327,7 +327,7 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
                         ? 'bg-rose-700 text-white border-rose-600 shadow-xs'
                         : 'text-rose-800 border-rose-300 bg-rose-50 hover:bg-rose-100'
                     }`}
-                    title="Bấm để xem Cơ cấu 7 loại dữ liệu con"
+                    title="Bấm để xem Cơ cấu 9 loại dữ liệu con"
                   >
                     <span>Cơ cấu</span>
                     <ChevronDown className={`w-2.5 h-2.5 transition-transform ${showEcosystemDetails ? 'rotate-180' : ''}`} />
@@ -348,78 +348,64 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Mặt trước chỉ hiển thị tổng số dữ liệu, không hiển thị các dòng con */}
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
-                <span className="text-[11px] text-slate-500">Xem 9 loại con:</span>
-                <button
-                  type="button"
-                  onClick={handleToggleEcosystemDetails}
-                  className="text-rose-700 hover:text-rose-900 font-semibold text-[11px] underline flex items-center gap-1 cursor-pointer"
-                >
-                  {showEcosystemDetails ? 'Ẩn Cơ cấu' : 'Xem Cơ cấu →'}
-                </button>
-              </div>
 
-              {/* Mobile breakdown rendered IMMEDIATELY inside Card 5 for mobile view */}
-              {showEcosystemDetails && (
-                <div className="block lg:hidden mt-3 pt-3 border-t border-rose-200 space-y-3 animate-in fade-in duration-150">
-                  <div className="flex items-center justify-between pb-1.5 border-b border-rose-200">
-                    <div className="text-[11px] font-bold text-rose-900 uppercase tracking-wider flex items-center gap-1.5">
-                      <Rocket className="w-3.5 h-3.5 text-rose-700" />
-                      <span>Cơ cấu Hệ sinh thái (9 loại)</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowEcosystemDetails(false)}
-                      className="text-[10px] text-slate-600 hover:text-slate-900 px-2 py-0.5 rounded bg-slate-100 cursor-pointer"
-                    >
-                      Đóng ✕
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    {ecosystemItems.map(item => {
-                      const IconComp = item.icon;
-                      return (
-                        <button
-                          key={item.key}
-                          type="button"
-                          onClick={() => {
-                            onNavigateBrowse(item.key);
-                          }}
-                          className="p-2 rounded-lg bg-slate-50 hover:bg-rose-50/60 border border-slate-200 text-left transition-colors flex flex-col justify-between cursor-pointer"
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <IconComp className="w-3.5 h-3.5 text-rose-700" />
-                            <span className="font-mono font-bold text-xs text-slate-900">{item.count}</span>
-                          </div>
-                          <div className="text-[10px] text-slate-700 line-clamp-2 leading-tight">
-                            {item.label}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-{showEcosystemDetailBreakdown && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-rose-100 text-[11px]">
-                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1">
-                      <div className="font-semibold text-emerald-800">Dự án khởi nghiệp theo năm</div>
-                      {projectYears.slice(0, 5).map(item => <div key={item.name} className="flex justify-between gap-2"><span>{item.name}</span><strong>{item.count}</strong></div>)}
-                    </div>
-                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1">
-                      <div className="font-semibold text-emerald-800">Dự án khởi nghiệp theo lĩnh vực</div>
-                      {projectFields.slice(0, 5).map(item => <div key={item.name} className="flex justify-between gap-2"><span className="truncate">{item.name}</span><strong>{item.count}</strong></div>)}
-                    </div>
-                  </div>
-)}
-                </div>
-              )}
             </div>
           </div>
 
         </div>
 
+        {showEcosystemDetails && (
+          <div className="mt-4 rounded-2xl border border-rose-200 bg-white p-4 sm:p-5 shadow-xs animate-in fade-in duration-150">
+            <div className="flex items-center justify-between gap-3 pb-3 mb-3 border-b border-rose-100">
+              <div className="text-sm font-bold text-rose-900 flex items-center gap-2">
+                <Rocket className="w-4 h-4 text-rose-700" />
+                <span>Cơ cấu dữ liệu Hệ sinh thái (9 loại)</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEcosystemDetails(false)}
+                className="text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 cursor-pointer"
+              >
+                Đóng ✕
+              </button>
+            </div>
 
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 text-xs">
+              {ecosystemItems.map(item => {
+                const IconComp = item.icon;
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => onNavigateBrowse(item.key)}
+                    className="min-h-[76px] p-3 rounded-xl bg-slate-50 hover:bg-rose-50/60 border border-slate-200 hover:border-rose-300 text-left transition-colors flex flex-col justify-between cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <IconComp className="w-4 h-4 text-rose-700 shrink-0" />
+                      <span className="font-mono font-bold text-sm text-slate-900">{item.count}</span>
+                    </div>
+                    <div className="text-[11px] font-medium text-slate-700 leading-snug">
+                      {item.label}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {showEcosystemDetailBreakdown && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 pt-3 border-t border-rose-100 text-xs">
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
+                  <div className="font-semibold text-emerald-800">Dự án khởi nghiệp theo năm</div>
+                  {projectYears.slice(0, 5).map(item => <div key={item.name} className="flex justify-between gap-2"><span>{item.name}</span><strong>{item.count}</strong></div>)}
+                </div>
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
+                  <div className="font-semibold text-emerald-800">Dự án khởi nghiệp theo lĩnh vực</div>
+                  {projectFields.slice(0, 5).map(item => <div key={item.name} className="flex justify-between gap-2"><span className="truncate">{item.name}</span><strong>{item.count}</strong></div>)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
       </div>
     </div>
