@@ -74,11 +74,11 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-teal-900 via-teal-800 to-slate-900 text-white px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <SlidersHorizontal className="w-5 h-5 text-teal-400" />
             <div>
-              <h3 className="font-bold text-sm">Tìm Kiếm Nâng Cao Theo Từng Loại Dữ Liệu</h3>
+              <h3 className="font-bold text-sm">Tìm kiếm nâng cao theo từng loại dữ liệu</h3>
               <p className="text-[11px] text-teal-300">Bộ lọc đa tiêu chí chuyên sâu cho 17 phân hệ dữ liệu</p>
             </div>
           </div>
