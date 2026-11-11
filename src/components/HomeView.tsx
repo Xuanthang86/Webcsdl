@@ -76,7 +76,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     const value = String(item.email || item.contactEmail || item.contact_email || item.publicEmail || item.public_email || item.public_contact_email || item.emailAddress || item.email_address || '').trim();
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? value : 'Chưa cập nhật';
   };
-  // Trang chủ chỉ hiển thị số điện thoại ở dạng che một phần; không để lộ số đầy đủ.
+  // Số điện thoại được API trả về theo quyền: đã che với tài khoản xem chung, đầy đủ với tài khoản được cấp quyền.
   const displayExpertPhone = (item: BaseEntity) => {
     // API đã trả số đầy đủ cho tài khoản được cấp quyền và số đã che cho tài khoản xem chung.
     const phoneKeys = [
