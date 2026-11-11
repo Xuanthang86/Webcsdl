@@ -889,7 +889,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
                 <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
                   <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2"><Star className="w-4 h-4 text-amber-600" /><span>Doanh nghiệp khởi nghiệp tiêu biểu</span></h3>
-                  <span className="text-xs text-slate-500 whitespace-nowrap">{featuredPopularStartups.length} doanh nghiệp</span>
+                  <span className="inline-flex items-center rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-sm font-extrabold text-emerald-800 shadow-xs">{featuredPopularStartups.length} doanh nghiệp</span>
                 </div>
                 <div className="max-h-[500px] overflow-auto rounded-xl border border-slate-200">
                   <table className="w-full min-w-[1450px] text-xs text-left">
