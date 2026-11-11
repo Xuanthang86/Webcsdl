@@ -77,16 +77,26 @@ export const HomeView: React.FC<HomeViewProps> = ({
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? value : 'Chưa cập nhật';
   };
   // Trang chủ chỉ hiển thị số điện thoại ở dạng che một phần; không để lộ số đầy đủ.
-  const maskedPhone = (item: BaseEntity) => {
-    const value = String(
-      item.phone || item.phoneNumber || item.phone_number || item.mobile || item.mobilePhone ||
-      item.mobile_phone || item.telephone || item.contactPhone || item.contact_phone ||
-      item.publicPhone || item.public_phone || item.leaderPhone || item.leader_phone ||
-      item.expertPhone || item.expert_phone || ''
-    ).trim();
-    if (/^\d{4}\.xxx\.xxx$/i.test(value)) return value;
-    const digits = value.replace(/\D/g, '');
-    return digits.length >= 9 ? `${digits.slice(0, 4)}.xxx.xxx` : 'Chưa cập nhật';
+  const displayExpertPhone = (item: BaseEntity) => {
+    // API đã trả số đầy đủ cho tài khoản được cấp quyền và số đã che cho tài khoản xem chung.
+    const phoneKeys = [
+      'phone', 'phoneNumber', 'phone_number', 'mobile', 'mobilePhone', 'mobile_phone',
+      'telephone', 'telephoneNumber', 'telephone_number', 'tel', 'contactPhone', 'contact_phone',
+      'publicPhone', 'public_phone', 'leaderPhone', 'leader_phone', 'expertPhone', 'expert_phone',
+      'phoneNo', 'phone_no', 'mobile_number', 'workPhone', 'work_phone', 'officePhone',
+      'office_phone', 'sdt', 'soDienThoai', 'so_dien_thoai', 'dienThoai', 'dien_thoai'
+    ];
+    const directValue = phoneKeys.map(key => item[key]).find(value =>
+      value !== null && value !== undefined && String(value).trim() !== ''
+    );
+    const dynamicEntry = Object.entries(item).find(([key, value]) =>
+      /(phone|mobile|telephone|^tel$|sdt|so.?dien.?thoai|dien.?thoai)/i.test(key) &&
+      value !== null && value !== undefined && String(value).trim() !== ''
+    );
+    const value = directValue ?? dynamicEntry?.[1];
+    return value === null || value === undefined || String(value).trim() === ''
+      ? 'Chưa cập nhật'
+      : String(value).trim();
   };
 
   const publicWebsite = (item: BaseEntity) =>
@@ -424,7 +434,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     </div>
                     <div>
                       <span className="text-slate-400 font-medium">Liên hệ:</span>{' '}
-                      <span className="font-mono font-medium text-slate-600">{maskedPhone(item)}</span>
+                      <span className="font-mono font-medium text-slate-600">{displayExpertPhone(item)}</span>
                     </div>
                     <div>
                       <span className="text-slate-400 font-medium">Chuyên ngành:</span>{' '}
