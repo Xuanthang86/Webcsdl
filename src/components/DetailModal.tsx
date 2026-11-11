@@ -65,6 +65,28 @@ const safeDisplayValue = (value: any, fallback = 'Chưa cập nhật'): string =
   return fallback;
 };
 
+const normalizeExpertFieldKey = (value: string): string => value
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/[đĐ]/g, 'd')
+  .replace(/[^a-zA-Z0-9]/g, '')
+  .toLowerCase();
+
+const getExpertField = (record: any, aliases: string[]): any => {
+  if (!record || typeof record !== 'object') return undefined;
+  for (const alias of aliases) {
+    const direct = record[alias];
+    if (direct !== null && direct !== undefined && String(direct).trim() !== '') return direct;
+    const normalizedAlias = normalizeExpertFieldKey(alias);
+    const matchingKey = Object.keys(record).find(key =>
+      normalizeExpertFieldKey(key) === normalizedAlias &&
+      record[key] !== null && record[key] !== undefined && String(record[key]).trim() !== ''
+    );
+    if (matchingKey) return record[matchingKey];
+  }
+  return undefined;
+};
+
 export const DetailModal: React.FC<DetailModalProps> = ({
   entity,
   relationships,
@@ -640,36 +662,36 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Năm sinh:</span>
-                    <span className="sm:col-span-2 font-mono font-semibold text-slate-800">{safeDisplayValue(entity.birthYear ?? entity.birth_year ?? entity.yearOfBirth ?? entity.year_of_birth, '')}</span>
+                    <span className="sm:col-span-2 font-mono font-semibold text-slate-800">{safeDisplayValue(getExpertField(entity, ['birthYear', 'birth_year', 'yearOfBirth', 'year_of_birth', 'namsinh']), '')}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Chuyên ngành:</span>
-                    <span className="sm:col-span-2 font-semibold text-teal-800">{safeDisplayValue(entity.specialty ?? entity.primaryField ?? entity.primary_field ?? entity.specialization ?? entity.major ?? '', '')}</span>
+                    <span className="sm:col-span-2 font-semibold text-teal-800">{safeDisplayValue(getExpertField(entity, ['specialty', 'primaryField', 'primary_field', 'specialization', 'major', 'discipline', 'chuyennganh', 'chuyennganhdaotao', 'chuyennganhchinh', 'chuyenmon']), '')}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Giới tính:</span>
-                    <span className="sm:col-span-2 font-medium text-slate-800">{safeDisplayValue(entity.gender ?? entity.sex ?? '', '')}</span>
+                    <span className="sm:col-span-2 font-medium text-slate-800">{safeDisplayValue(getExpertField(entity, ['gender', 'sex', 'gioitinh']), '')}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Học hàm:</span>
-                    <span className="sm:col-span-2 font-semibold text-teal-900">{safeDisplayValue(entity.academicRank ?? entity.academic_rank ?? entity.academicTitle ?? entity.academic_title ?? '', '')}</span>
+                    <span className="sm:col-span-2 font-semibold text-teal-900">{safeDisplayValue(getExpertField(entity, ['academicRank', 'academic_rank', 'academicTitle', 'academic_title', 'rank', 'hocham']), '')}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Học vị:</span>
-                    <span className="sm:col-span-2 font-semibold text-teal-900">{safeDisplayValue(entity.degree ?? entity.academicDegree ?? entity.academic_degree ?? '', '')}</span>
+                    <span className="sm:col-span-2 font-semibold text-teal-900">{safeDisplayValue(getExpertField(entity, ['degree', 'academicDegree', 'academic_degree', 'qualification', 'hocvi', 'trinhdo']), '')}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Chức danh nghiên cứu:</span>
-                    <span className="sm:col-span-2 font-medium text-slate-800">{safeDisplayValue(entity.researchTitle ?? entity.research_title ?? entity.researcherTitle ?? entity.researcher_title ?? '', '')}</span>
+                    <span className="sm:col-span-2 font-medium text-slate-800">{safeDisplayValue(getExpertField(entity, ['researchTitle', 'research_title', 'researcherTitle', 'researcher_title', 'chucdanhnghiencuu']), '')}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Lĩnh vực:</span>
-                    <span className="sm:col-span-2 font-semibold text-slate-800">{safeDisplayValue(entity.field ?? entity.researchField ?? entity.research_field ?? '', '')}</span>
+                    <span className="sm:col-span-2 font-semibold text-slate-800">{safeDisplayValue(getExpertField(entity, ['field', 'researchField', 'research_field', 'professionalField', 'professional_field', 'expertiseArea', 'expertise_area', 'researchArea', 'research_area', 'linhvuc']), '')}</span>
                   </div>
                   {!isAuthorized && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                       <span className="font-semibold text-slate-500">Ngoại ngữ:</span>
-                      <span className="sm:col-span-2 font-medium text-slate-800">{safeDisplayValue(entity.foreignLanguages ?? entity.foreign_languages ?? entity.languages ?? entity.languageSkills ?? entity.language_skills ?? '', '')}</span>
+                      <span className="sm:col-span-2 font-medium text-slate-800">{safeDisplayValue(getExpertField(entity, ['foreignLanguages', 'foreign_languages', 'languages', 'languageSkills', 'language_skills', 'ngoaingu']), '')}</span>
                     </div>
                   )}
 
