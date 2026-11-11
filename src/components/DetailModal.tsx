@@ -84,10 +84,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({
 
   // Foreign Languages State with built-in languages & dynamic add
   const [languages, setLanguages] = useState<string[]>(() => {
-    if (entity?.foreignLanguages) {
-      if (Array.isArray(entity.foreignLanguages)) return entity.foreignLanguages;
-      if (typeof entity.foreignLanguages === 'string') {
-        return entity.foreignLanguages.split(',').map((s: string) => s.trim()).filter(Boolean);
+    const savedLanguages = entity?.foreignLanguages ?? entity?.foreign_languages ?? entity?.languages ?? entity?.languageSkills ?? entity?.language_skills;
+    if (savedLanguages) {
+      if (Array.isArray(savedLanguages)) return savedLanguages;
+      if (typeof savedLanguages === 'string') {
+        return savedLanguages.split(',').map((s: string) => s.trim()).filter(Boolean);
       }
     }
     return [];
@@ -639,12 +640,39 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Năm sinh:</span>
-                    <span className="sm:col-span-2 font-mono font-semibold text-slate-800">{entity.birthYear || 'Chưa cập nhật'}</span>
+                    <span className="sm:col-span-2 font-mono font-semibold text-slate-800">{safeDisplayValue(entity.birthYear ?? entity.birth_year ?? entity.yearOfBirth ?? entity.year_of_birth, '')}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Chuyên ngành:</span>
-                    <span className="sm:col-span-2 font-semibold text-teal-800">{entity.specialty || entity.primaryField || entity.field || 'Chưa cập nhật'}</span>
+                    <span className="sm:col-span-2 font-semibold text-teal-800">{safeDisplayValue(entity.specialty ?? entity.primaryField ?? entity.primary_field ?? entity.specialization ?? entity.major ?? '', '')}</span>
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Giới tính:</span>
+                    <span className="sm:col-span-2 font-medium text-slate-800">{safeDisplayValue(entity.gender ?? entity.sex ?? '', '')}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Học hàm:</span>
+                    <span className="sm:col-span-2 font-semibold text-teal-900">{safeDisplayValue(entity.academicRank ?? entity.academic_rank ?? entity.academicTitle ?? entity.academic_title ?? '', '')}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Học vị:</span>
+                    <span className="sm:col-span-2 font-semibold text-teal-900">{safeDisplayValue(entity.degree ?? entity.academicDegree ?? entity.academic_degree ?? '', '')}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Chức danh nghiên cứu:</span>
+                    <span className="sm:col-span-2 font-medium text-slate-800">{safeDisplayValue(entity.researchTitle ?? entity.research_title ?? entity.researcherTitle ?? entity.researcher_title ?? '', '')}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                    <span className="font-semibold text-slate-500">Lĩnh vực:</span>
+                    <span className="sm:col-span-2 font-semibold text-slate-800">{safeDisplayValue(entity.field ?? entity.researchField ?? entity.research_field ?? '', '')}</span>
+                  </div>
+                  {!isAuthorized && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
+                      <span className="font-semibold text-slate-500">Ngoại ngữ:</span>
+                      <span className="sm:col-span-2 font-medium text-slate-800">{safeDisplayValue(entity.foreignLanguages ?? entity.foreign_languages ?? entity.languages ?? entity.languageSkills ?? entity.language_skills ?? '', '')}</span>
+                    </div>
+                  )}
+
                 </div>
               </div>
 
