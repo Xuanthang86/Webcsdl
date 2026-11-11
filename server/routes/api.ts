@@ -399,12 +399,16 @@ const canViewExpertContacts = (user: AuthenticatedRequest['user']): boolean => B
 const protectExpertContactFields = (record: any, canViewFullContact: boolean): any => {
   if (canViewFullContact || !record || typeof record !== 'object') return record;
   const protectedRecord = { ...record };
+  const phoneKeyPattern = /(phone|mobile|telephone|^tel$|sdt|so.?dien.?thoai|dien.?thoai)/i;
   for (const key of Object.keys(protectedRecord)) {
-    if (!/(phone|mobile|telephone|^tel$)/i.test(key)) continue;
+    if (!phoneKeyPattern.test(key)) continue;
     const value = protectedRecord[key];
-    if (value === null || value === undefined || value === '') continue;
-    const digits = String(value).replace(/\\D/g, '');
-    protectedRecord[key] = digits.length >= 9 ? `${digits.slice(0, 4)}.xxx.xxx` : 'Chưa cập nhật';
+    if (value === null || value === undefined || String(value).trim() === '') continue;
+    const phoneText = String(value).trim();
+    // Avoid re-masking values that have already been safely masked.
+    if (/^\d{4}\.x{3}\.x{3}$/i.test(phoneText)) continue;
+    const digits = phoneText.replace(/\D/g, '');
+    protectedRecord[key] = digits.length >= 9 ? \`${digits.slice(0, 4)}.xxx.xxx\` : 'Chưa cập nhật';
   }
   return protectedRecord;
 };
