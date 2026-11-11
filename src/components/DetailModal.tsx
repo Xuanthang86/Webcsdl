@@ -1099,9 +1099,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       {isAuthorized ? (
                         <span className="text-slate-800">{entity.address || 'Quận Liên Chiểu, TP. Đà Nẵng'}</span>
                       ) : (
-                        <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
-                          <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
-                        </span>
+                        null
                       )}
                     </div>
                   </div>
@@ -1124,9 +1122,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       {isAuthorized ? (
                         <p className="text-slate-700 leading-relaxed">{entity.description || 'Chưa cập nhật nội dung tóm tắt.'}</p>
                       ) : (
-                        <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
-                          <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
-                        </span>
+                        null
                       )}
                     </div>
                   </div>
@@ -1143,9 +1139,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       {isAuthorized ? (
                         <span className="font-mono font-bold text-slate-900">{entity.memberCount || 5} thành viên</span>
                       ) : (
-                        <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
-                          <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
-                        </span>
+                        null
                       )}
                     </div>
                   </div>
@@ -1162,9 +1156,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       {isAuthorized ? (
                         <span className="font-mono font-medium text-slate-900">Không công khai số điện thoại</span>
                       ) : (
-                        <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
-                          <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
-                        </span>
+                        null
                       )}
                     </div>
                   </div>
@@ -1176,16 +1168,14 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       {isAuthorized ? (
                         <span className="font-mono text-teal-800">{entity.leaderEmail || entity.publicEmail || 'leader@duan.vn'}</span>
                       ) : (
-                        <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
-                          <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
-                        </span>
+                        null
                       )}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
                     <span className="font-semibold text-slate-500">Dự án được ươm tạo từ tổ chức:</span>
-                    <span className="sm:col-span-2 font-semibold text-teal-800">{entity.incubator || 'Tự hình thành dự án'}</span>
+                    <span className="sm:col-span-2 font-semibold text-teal-800">{entity.incubator || entity.incubatorName || entity.incubator_name || entity.incubationOrganization || entity.incubation_organization || entity.incubationCenter || entity.incubation_center || entity.incubatedBy || entity.incubated_by || entity.incubationSource || entity.incubation_source || entity.originIncubator || entity.origin_incubator || 'Tự hình thành dự án'}</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5 gap-1 hover:bg-slate-50/50">
@@ -1231,9 +1221,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       {isAuthorized ? (
                         <span className="text-slate-800">{entity.address || 'Chưa cập nhật'}</span>
                       ) : (
-                        <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
-                          <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
-                        </span>
+                        null
                       )}
                     </div>
                   </div>
@@ -1257,9 +1245,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       {isAuthorized ? (
                         <p className="text-slate-700 leading-relaxed whitespace-pre-line">{entity.description || entity.summary || 'Chưa cập nhật nội dung tóm tắt chi tiết.'}</p>
                       ) : (
-                        <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
-                          <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
-                        </span>
+                        null
                       )}
                     </div>
                   </div>
@@ -1276,9 +1262,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       {isAuthorized ? (
                         <span className="font-mono font-bold text-slate-900">{entity.memberCount ? `${entity.memberCount} thành viên` : 'Chưa cập nhật'}</span>
                       ) : (
-                        <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
-                          <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
-                        </span>
+                        null
                       )}
                     </div>
                   </div>
@@ -1297,9 +1281,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                           {entity.leaderEmail || entity.publicEmail || '—'}
                         </span>
                       ) : (
-                        <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
-                          <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
-                        </span>
+                        null
                       )}
                     </div>
                   </div>
@@ -1316,9 +1298,7 @@ Tra cứu trực tuyến tại Cổng thông tin KH&CN Thành phố.
                       {isAuthorized ? (
                         <span className="text-slate-800 font-medium">{entity.currentAffiliation || 'Chưa cập nhật'}</span>
                       ) : (
-                        <span className="text-amber-800 font-mono text-[11px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1">
-                          <Lock className="w-3 h-3" /> Yêu cầu tài khoản có thẩm quyền xem
-                        </span>
+                        null
                       )}
                     </div>
                   </div>
