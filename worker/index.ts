@@ -255,7 +255,7 @@ function redactPublicDetail(item: any, moduleName: string): any {
   if (!item) return item;
   const restrictedByModule: Record<string, string[]> = {
     science_tasks: ['members', 'projectTeam', 'participants', 'evidenceFile', 'evidenceDocuments', 'attachmentSummary', 'attachments', 'archiveCode', 'archiveSymbol', 'storageCode', 'warehouseCode'],
-    experts: ['dateOfBirth', 'birthDate', 'startYear', 'startWorkYear', 'position', 'jobTitle', 'email', 'publicEmail', 'currentAffiliation', 'trainingProcess', 'workExperience', 'education', 'educationHistory', 'workHistory', 'languages', 'publications', 'qualifications', 'researchOutputs', 'projects', 'projectLevel', 'projectDuration', 'projectMembers', 'projectRole', 'projectStatus', 'awards', 'experienceNotes'],
+    experts: ['dateOfBirth', 'birthDate', 'startYear', 'startWorkYear', 'position', 'jobTitle', 'email', 'publicEmail', 'currentAffiliation', 'trainingProcess', 'workExperience', 'education', 'educationHistory', 'workHistory', 'publications', 'qualifications', 'researchOutputs', 'projects', 'projectLevel', 'projectDuration', 'projectMembers', 'projectRole', 'projectStatus', 'awards', 'experienceNotes'],
     startup_projects: ['operatingAddress', 'address', 'summary', 'teamSize', 'memberCount', 'leaderPhone', 'leaderEmail'],
     startup_ideas: ['operatingAddress', 'address', 'summary', 'problemSolved', 'teamSize', 'memberCount', 'leaderPhone', 'leaderEmail', 'organization']
   };
