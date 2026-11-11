@@ -40,6 +40,11 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
   // Dynamic Current Year for live statistics
   const currentYear = new Date().getFullYear();
 
+  const handleToggleEcosystemDetails = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowEcosystemDetails(prev => !prev);
+  };
+
   // Format Vietnamese currency with dots: 6,5 tỷ đồng
   const formatVND = (num?: number) => {
     if (!num) return '0 đồng';
@@ -380,7 +385,6 @@ export const HomeOverviewDashboard: React.FC<HomeOverviewDashboardProps> = ({
                           key={item.key}
                           type="button"
                           onClick={() => {
-                            setShowExpertDetails(false);
                             onNavigateBrowse(item.key);
                           }}
                           className="p-2 rounded-lg bg-slate-50 hover:bg-rose-50/60 border border-slate-200 text-left transition-colors flex flex-col justify-between cursor-pointer"
