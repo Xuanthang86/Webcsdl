@@ -33,8 +33,6 @@ export const getScienceTaskLevel = (record: BaseEntity): ScienceTaskLevel => {
   };
 
   const explicitLevel = classify(explicit);
-  if (explicitLevel !== 'unknown') return explicitLevel;
-
   const managementMetadata = normalizeScienceTaskText([
     record.managingAgency,
     record.source,
@@ -46,6 +44,13 @@ export const getScienceTaskLevel = (record: BaseEntity): ScienceTaskLevel => {
     (record as any).program_name,
     (record as any).project_type
   ].filter(value => typeof value === 'string' && value.trim()).join(' '));
+
+  // The rural-mountain program is a separate reporting group even when
+  // legacy records also carry a generic local-level value.
+  if (explicitLevel === 'rural_mountain' || /du an nong thon mien nui|nong thon mien nui/.test(managementMetadata)) {
+    return 'rural_mountain';
+  }
+  if (explicitLevel !== 'unknown') return explicitLevel;
 
   // Check higher-level indicators first to prevent a city/provincial record
   // from also falling through into the local-level bucket.
