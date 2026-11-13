@@ -37,12 +37,26 @@ export const getScienceTaskLevel = (record: BaseEntity): ScienceTaskLevel => {
     record.managingAgency,
     record.source,
     record.fundingProgram,
+    record.funding_program,
+    record.fundingProgramName,
+    record.funding_program_name,
     record.programName,
+    record.program_name,
     record.program,
+    record.programType,
+    record.program_type,
     record.projectType,
-    (record as any).fundingProgramName,
-    (record as any).program_name,
-    (record as any).project_type
+    record.project_type,
+    record.projectTypeName,
+    record.project_type_name,
+    record.projectCategory,
+    record.project_category,
+    record.projectName,
+    record.project_name,
+    record.taskCategory,
+    record.task_category,
+    record.fundingSourceName,
+    record.funding_source_name
   ].filter(value => typeof value === 'string' && value.trim()).join(' '));
 
   // The rural-mountain program is a separate reporting group even when
