@@ -2125,18 +2125,21 @@ export default {
                     ? (raw.name ?? raw.label ?? raw.title ?? raw.value ?? raw.text ?? '')
                     : raw;
                   let value = normalize(scalar);
-                  const programMetadata = normalize([
-                    row.program_name, row.program, row.program_type, row.funding_program, row.funding_program_name,
-                    row.project_type, row.project_type_name, row.project_category, row.project_name, row.task_category,
-                    row.funding_source_name,
-                    custom.programName, custom.program, custom.programType, custom.program_type,
-                    custom.fundingProgram, custom.funding_program, custom.fundingProgramName, custom.funding_program_name,
-                    custom.projectType, custom.project_type, custom.projectTypeName, custom.project_type_name,
-                    custom.projectCategory, custom.project_category, custom.projectName, custom.project_name,
-                    custom.taskCategory, custom.task_category, custom.fundingSourceName, custom.funding_source_name
-                  ].map(item => item && typeof item === 'object'
+                  // Inspect every known metadata field, not only the first populated
+                  // management-level field. Legacy rows may store the rural program
+                  // name in a separate funding/program column or inside data_json.
+                  const allMetadata = candidates.map(candidate => {
+                    const key = normalize(candidate);
+                    const physicalKey = Object.keys(row).find(name => normalize(name) === key);
+                    const customKey = Object.keys(custom).find(name => normalize(name) === key);
+                    const physicalValue = physicalKey ? row[physicalKey] : null;
+                    const customValue = customKey ? custom[customKey] : null;
+                    return physicalValue !== null && physicalValue !== undefined && String(physicalValue).trim()
+                      ? physicalValue : customValue;
+                  }).map(item => item && typeof item === 'object'
                     ? (item.name ?? item.label ?? item.title ?? item.value ?? item.text ?? '')
-                    : item).filter(Boolean).join(' '));
+                    : item).filter(item => item !== null && item !== undefined && String(item).trim());
+                  const programMetadata = normalize(allMetadata.join(' '));
                   let bucket = '';
                   if (/du an nong thon mien nui|nong thon mien nui/.test(value + ' ' + programMetadata)) bucket = 'Dự án nông thôn miền núi';
                   else if (/(^bo$|^cap bo|bo nganh|quoc gia|nha nuoc|trung uong|nafosted|bo khoa hoc|bo khcn|bo quan ly)/.test(value)) bucket = 'Cấp Bộ';
