@@ -2103,7 +2103,8 @@ export default {
                     'management_scope', 'funding_level', 'research_level', 'funding_source', 'funding_agency',
                     'granting_agency', 'managing_unit', 'managing_agency', 'agency_type', 'task_category',
                     'capquanly', 'capquanlydetai', 'capdetai', 'capdoquanly', 'capquanlydetainhiemvu',
-                    'loaidetai', 'nguonkinhphi', 'coquanquanly', 'donvichuquan', 'capthuchien'
+                    'loaidetai', 'nguonkinhphi', 'coquanquanly', 'donvichuquan', 'capthuchien',
+                    'program_name', 'programName', 'funding_program', 'fundingProgram', 'project_type', 'projectType'
                   ];
                   let raw: any = null;
                   for (const candidate of candidates) {
@@ -2120,8 +2121,13 @@ export default {
                     ? (raw.name ?? raw.label ?? raw.title ?? raw.value ?? raw.text ?? '')
                     : raw;
                   let value = normalize(scalar);
+                  const programMetadata = normalize([
+                    row.program_name, row.funding_program, row.project_type, row.task_category,
+                    custom.programName, custom.fundingProgram, custom.projectType, custom.taskCategory
+                  ].filter(Boolean).join(' '));
                   let bucket = '';
-                  if (/(^bo$|^cap bo|bo nganh|quoc gia|nha nuoc|trung uong|nafosted|bo khoa hoc|bo khcn|bo quan ly)/.test(value)) bucket = 'Cấp Bộ';
+                  if (/du an nong thon mien nui|nong thon mien nui/.test(value + ' ' + programMetadata)) bucket = 'Dự án nông thôn miền núi';
+                  else if (/(^bo$|^cap bo|bo nganh|quoc gia|nha nuoc|trung uong|nafosted|bo khoa hoc|bo khcn|bo quan ly)/.test(value)) bucket = 'Cấp Bộ';
                   else if (/(cap tinh|cap thanh pho|tinh thanh pho|ubnd tinh|ubnd thanh pho|thanh pho|cap dia phuong|dia phuong|so khoa hoc|ubnd quan|ubnd huyen)/.test(value)) bucket = 'Cấp Tỉnh/Thành phố';
                   else if (/(cap co so|cap truong|co so|truong dai hoc|truong cao dang|don vi co so|truong hoc)/.test(value)) bucket = 'Cấp Cơ sở';
                   if (!bucket) {
@@ -2133,7 +2139,8 @@ export default {
                       custom.managingAgency, custom.managingUnit, custom.leadAgency,
                       custom.leadOrganization, custom.hostOrganization, custom.fundingAgency, custom.fundingSource
                     ].map(item => item && typeof item === 'object' ? (item.name ?? item.label ?? item.value ?? '') : item).filter(Boolean).join(' '));
-                    if (/(bo khoa hoc|bo khcn|bo nganh|nafosted|quoc gia|trung uong)/.test(authority)) bucket = 'Cấp Bộ';
+                    if (/du an nong thon mien nui|nong thon mien nui/.test(authority + ' ' + programMetadata)) bucket = 'Dự án nông thôn miền núi';
+                    else if (/(bo khoa hoc|bo khcn|bo nganh|nafosted|quoc gia|trung uong)/.test(authority)) bucket = 'Cấp Bộ';
                     else if (/(ubnd|so khoa hoc|thanh pho da nang|cap tinh|cap thanh pho)/.test(authority)) bucket = 'Cấp Tỉnh/Thành phố';
                     else bucket = 'Cấp Cơ sở';
                   }
