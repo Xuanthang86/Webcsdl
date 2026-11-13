@@ -903,7 +903,15 @@ class DatabaseManager {
     tasks.forEach(t => {
       const unit = t.leadOrganization || t.ownerName || 'Cơ quan chủ trì khác';
       tasksByUnit[unit] = (tasksByUnit[unit] || 0) + 1;
-      const ruralMetadata = [t.managementLevel, t.managingAgency, t.programName, t.fundingProgram, t.projectType, t.taskCategory]
+      const ruralMetadata = [
+        t.managementLevel, t.managingAgency, t.programName, t.program, t.programType, t.program_type,
+        t.fundingProgram, t.funding_program, t.fundingProgramName, t.funding_program_name,
+        t.projectType, t.project_type, t.projectTypeName, t.project_type_name,
+        t.projectCategory, t.project_category, t.projectName, t.project_name,
+        t.taskCategory, t.task_category, t.fundingSourceName, t.funding_source_name
+      ].map(value => value && typeof value === 'object'
+        ? (value.name ?? value.label ?? value.title ?? value.value ?? value.text ?? '')
+        : value)
         .filter(Boolean).join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
       const lvl = /du an nong thon mien nui|nong thon mien nui/.test(ruralMetadata)
         ? 'Dự án nông thôn miền núi'
