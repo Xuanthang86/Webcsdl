@@ -48,6 +48,7 @@ const PieBreakdown: React.FC<BreakdownProps> = ({ title, source, accent, order }
             if (normalized.includes('bộ')) return 0;
             if (normalized.includes('tỉnh') || normalized.includes('thành phố')) return 1;
             if (normalized.includes('cơ sở')) return 2;
+            if (normalized.includes('nông thôn miền núi')) return 3;
             return order.length;
           };
           return rank(a.name) - rank(b.name) || b.count - a.count;
@@ -212,7 +213,7 @@ export const GrowthAnalytics: React.FC<GrowthAnalyticsProps> = ({ stats }) => {
               <YearBarBreakdown title="Theo năm" source={safeStats.tasksByYear} accent="bg-blue-600" />
               <PieBreakdown title="Theo lĩnh vực chuyên ngành" source={safeStats.tasksByField || safeStats.fieldBreakdown} accent="blue" />
               <PieBreakdown title="Theo đơn vị chủ trì" source={safeStats.tasksByUnit} accent="blue" />
-              <PieBreakdown title="Theo cấp quản lý" source={safeStats.tasksByLevel} accent="blue" order={["Cấp Bộ", "Cấp Tỉnh/Thành phố", "Cấp Cơ sở"]} />
+              <PieBreakdown title="Theo cấp quản lý" source={safeStats.tasksByLevel} accent="blue" order={["Cấp Bộ", "Cấp Tỉnh/Thành phố", "Cấp Cơ sở", "Dự án nông thôn miền núi"]} />
             </div>
           </div>
         );
