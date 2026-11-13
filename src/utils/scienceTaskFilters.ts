@@ -1,6 +1,6 @@
 import type { BaseEntity } from '../types';
 
-export type ScienceTaskLevel = 'national' | 'provincial' | 'local' | 'unknown';
+export type ScienceTaskLevel = 'national' | 'provincial' | 'local' | 'rural_mountain' | 'unknown';
 
 export const normalizeScienceTaskText = (value: unknown): string =>
   String(value ?? '')
@@ -24,6 +24,7 @@ export const getScienceTaskLevel = (record: BaseEntity): ScienceTaskLevel => {
   const classify = (value: string): ScienceTaskLevel => {
     if (!value) return 'unknown';
 
+    if (/du an nong thon mien nui|nong thon mien nui/.test(value)) return 'rural_mountain';
     if (/cap co so|cap truong|co so/.test(value)) return 'local';
     if (/(^| )bo($| )|quoc gia|nha nuoc|cap bo|bo khoa hoc|bo kh\s*&\s*cn|bo khcn|bo nganh|nafosted/.test(value)) return 'national';
     if (/tinh|thanh pho|cap tinh|cap thanh pho|ubnd tinh|ubnd thanh pho/.test(value)) return 'provincial';
@@ -40,7 +41,10 @@ export const getScienceTaskLevel = (record: BaseEntity): ScienceTaskLevel => {
     record.fundingProgram,
     record.programName,
     record.program,
-    record.projectType
+    record.projectType,
+    (record as any).fundingProgramName,
+    (record as any).program_name,
+    (record as any).project_type
   ].filter(value => typeof value === 'string' && value.trim()).join(' '));
 
   // Check higher-level indicators first to prevent a city/provincial record
@@ -50,6 +54,9 @@ export const getScienceTaskLevel = (record: BaseEntity): ScienceTaskLevel => {
   }
   if (/cap tinh|cap thanh pho|tinh thanh pho|ubnd tinh|ubnd thanh pho|thanh pho da nang|so khoa hoc va cong nghe|quy phat trien khoa hoc va cong nghe thanh pho|chuong trinh .*thanh pho|de an .*thanh pho/.test(managementMetadata)) {
     return 'provincial';
+  }
+  if (/du an nong thon mien nui|nong thon mien nui/.test(managementMetadata)) {
+    return 'rural_mountain';
   }
   if (/cap co so|cap truong/.test(managementMetadata)) {
     return 'local';
@@ -63,6 +70,7 @@ export const matchesScienceTaskLevel = (record: BaseEntity, selectedLevel: strin
   if (selectedLevel === 'Cấp Bộ' || selectedLevel === 'Cấp Quốc gia' || selectedLevel === 'Cấp Bộ / Ngành' || selectedLevel === 'Cấp Quốc gia / Nhà nước') return level === 'national';
   if (selectedLevel === 'Cấp Tỉnh/Thành phố' || selectedLevel === 'Cấp Thành phố' || selectedLevel === 'Cấp Tỉnh' || selectedLevel === 'Cấp tỉnh/thành phố') return level === 'provincial';
   if (selectedLevel === 'Cấp Cơ sở') return level === 'local';
+  if (selectedLevel === 'Dự án nông thôn miền núi') return level === 'rural_mountain';
   if (selectedLevel === 'Chưa phân loại' || selectedLevel === 'Chưa xác định') return level === 'unknown';
   return true;
 };
