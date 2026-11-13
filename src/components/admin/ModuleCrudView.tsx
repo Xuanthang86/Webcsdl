@@ -860,6 +860,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                 <option value="Cấp Bộ">Cấp Bộ</option>
                 <option value="Cấp Tỉnh/Thành phố">Cấp Tỉnh/Thành phố</option>
                 <option value="Cấp Cơ sở">Cấp Cơ sở</option>
+                <option value="Dự án nông thôn miền núi">Dự án nông thôn miền núi</option>
               </select>
               <select
                 aria-label="Lọc năm thực hiện"
@@ -1012,7 +1013,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                       {/* Specialized Contextual Metadata per Module */}
                       {moduleType === 'science_tasks' && (
                         <div className="flex flex-wrap items-center gap-2 text-sm lg:text-[11px] text-slate-500 mt-1">
-                          <span className="bg-teal-50 text-teal-700 px-1.5 py-0.2 rounded border border-teal-200">{({ national: 'Cấp Bộ', provincial: 'Cấp Tỉnh/Thành phố', local: 'Cấp Cơ sở', unknown: 'Chưa xác định' } as const)[getScienceTaskLevel(item)]}</span>
+                          <span className="bg-teal-50 text-teal-700 px-1.5 py-0.2 rounded border border-teal-200">{({ national: 'Cấp Bộ', provincial: 'Cấp Tỉnh/Thành phố', local: 'Cấp Cơ sở', rural_mountain: 'Dự án nông thôn miền núi', unknown: 'Chưa xác định' } as const)[getScienceTaskLevel(item)]}</span>
                           {item.principalInvestigator && <span>Chủ nhiệm: <strong className="text-slate-700">{item.principalInvestigator}</strong></span>}
                           {item.executionTime && <span className="text-slate-400">· {item.executionTime}</span>}
                         </div>
@@ -1396,6 +1397,7 @@ export const ModuleCrudView: React.FC<ModuleCrudViewProps> = ({
                           <option value="Cấp Bộ">Cấp Bộ</option>
                           <option value="Cấp Tỉnh/Thành phố">Cấp Tỉnh/Thành phố</option>
                           <option value="Cấp Cơ sở">Cấp Cơ sở</option>
+                          <option value="Dự án nông thôn miền núi">Dự án nông thôn miền núi</option>
                         </select>
                       </div>
                       <div>
