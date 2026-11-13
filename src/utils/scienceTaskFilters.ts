@@ -57,7 +57,9 @@ export const getScienceTaskLevel = (record: BaseEntity): ScienceTaskLevel => {
     record.task_category,
     record.fundingSourceName,
     record.funding_source_name
-  ].filter(value => typeof value === 'string' && value.trim()).join(' '));
+  ].map(value => value && typeof value === 'object'
+    ? (value.name ?? value.label ?? value.title ?? value.value ?? value.text ?? '')
+    : value).filter(value => typeof value === 'string' && value.trim()).join(' '));
 
   // The rural-mountain program is a separate reporting group even when
   // legacy records also carry a generic local-level value.
