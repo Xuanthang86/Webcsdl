@@ -2104,7 +2104,11 @@ export default {
                     'granting_agency', 'managing_unit', 'managing_agency', 'agency_type', 'task_category',
                     'capquanly', 'capquanlydetai', 'capdetai', 'capdoquanly', 'capquanlydetainhiemvu',
                     'loaidetai', 'nguonkinhphi', 'coquanquanly', 'donvichuquan', 'capthuchien',
-                    'program_name', 'programName', 'funding_program', 'fundingProgram', 'project_type', 'projectType'
+                    'program_name', 'programName', 'program', 'program_type', 'programType',
+                    'funding_program', 'fundingProgram', 'funding_program_name', 'fundingProgramName',
+                    'project_type', 'projectType', 'project_type_name', 'projectTypeName',
+                    'project_category', 'projectCategory', 'project_name', 'projectName',
+                    'funding_source_name', 'fundingSourceName'
                   ];
                   let raw: any = null;
                   for (const candidate of candidates) {
@@ -2122,9 +2126,17 @@ export default {
                     : raw;
                   let value = normalize(scalar);
                   const programMetadata = normalize([
-                    row.program_name, row.funding_program, row.project_type, row.task_category,
-                    custom.programName, custom.fundingProgram, custom.projectType, custom.taskCategory
-                  ].filter(Boolean).join(' '));
+                    row.program_name, row.program, row.program_type, row.funding_program, row.funding_program_name,
+                    row.project_type, row.project_type_name, row.project_category, row.project_name, row.task_category,
+                    row.funding_source_name,
+                    custom.programName, custom.program, custom.programType, custom.program_type,
+                    custom.fundingProgram, custom.funding_program, custom.fundingProgramName, custom.funding_program_name,
+                    custom.projectType, custom.project_type, custom.projectTypeName, custom.project_type_name,
+                    custom.projectCategory, custom.project_category, custom.projectName, custom.project_name,
+                    custom.taskCategory, custom.task_category, custom.fundingSourceName, custom.funding_source_name
+                  ].map(item => item && typeof item === 'object'
+                    ? (item.name ?? item.label ?? item.title ?? item.value ?? item.text ?? '')
+                    : item).filter(Boolean).join(' '));
                   let bucket = '';
                   if (/du an nong thon mien nui|nong thon mien nui/.test(value + ' ' + programMetadata)) bucket = 'Dự án nông thôn miền núi';
                   else if (/(^bo$|^cap bo|bo nganh|quoc gia|nha nuoc|trung uong|nafosted|bo khoa hoc|bo khcn|bo quan ly)/.test(value)) bucket = 'Cấp Bộ';
