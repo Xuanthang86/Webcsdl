@@ -903,7 +903,11 @@ class DatabaseManager {
     tasks.forEach(t => {
       const unit = t.leadOrganization || t.ownerName || 'Cơ quan chủ trì khác';
       tasksByUnit[unit] = (tasksByUnit[unit] || 0) + 1;
-      const lvl = t.managementLevel || t.managingAgency || 'Cấp Thành phố';
+      const ruralMetadata = [t.managementLevel, t.managingAgency, t.programName, t.fundingProgram, t.projectType, t.taskCategory]
+        .filter(Boolean).join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+      const lvl = /du an nong thon mien nui|nong thon mien nui/.test(ruralMetadata)
+        ? 'Dự án nông thôn miền núi'
+        : (t.managementLevel || t.managingAgency || 'Cấp Thành phố');
       tasksByLevel[lvl] = (tasksByLevel[lvl] || 0) + 1;
     });
 
